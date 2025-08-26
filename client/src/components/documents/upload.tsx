@@ -84,10 +84,10 @@ export function Upload() {
 
       return response.json();
     },
-    onSuccess: () => {
+    onSuccess: (data: any) => {
       toast({
-        title: "Sucesso!",
-        description: "Documento enviado e sendo processado automaticamente.",
+        title: "Upload Concluído!",
+        description: "Documento enviado. Processamento OCR + IA iniciado automaticamente conforme PRD.",
       });
       
       // Reset form and file
