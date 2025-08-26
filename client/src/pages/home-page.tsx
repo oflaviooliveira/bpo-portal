@@ -5,6 +5,7 @@ import { Dashboard } from "@/components/dashboard/dashboard";
 import { Inbox } from "@/components/documents/inbox";
 import { Upload } from "@/components/documents/upload";
 import { Scheduled } from "@/components/documents/scheduled";
+import { Reconciliation } from "@/components/documents/reconciliation";
 
 type Section = 'dashboard' | 'inbox' | 'upload' | 'scheduled' | 'reconciliation' | 'emission' | 'archived' | 'clients' | 'users';
 
@@ -22,12 +23,7 @@ export default function HomePage() {
       case 'scheduled':
         return <Scheduled />;
       case 'reconciliation':
-        return (
-          <div className="p-6">
-            <h2 className="font-gilroy font-bold text-2xl text-foreground mb-4">Conciliação</h2>
-            <p className="text-muted-foreground">Funcionalidade em desenvolvimento</p>
-          </div>
-        );
+        return <Reconciliation />;
       case 'emission':
         return (
           <div className="p-6">

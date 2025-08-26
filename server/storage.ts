@@ -6,7 +6,7 @@ import {
   type InsertCategory, type InsertCostCenter
 } from "@shared/schema";
 import { db } from "./db";
-import { eq, and, desc, count, sum, avg, inArray } from "drizzle-orm";
+import { eq, and, desc, count, sum, avg, inArray, gte, lte, lt } from "drizzle-orm";
 import session from "express-session";
 import connectPg from "connect-pg-simple";
 import { pool } from "./db";
@@ -248,6 +248,19 @@ export class DatabaseStorage implements IStorage {
 
     if (filters.bankId) {
       conditions.push(eq(documents.bankId, filters.bankId));
+    }
+
+    // Date filters for scheduled documents
+    if (filters.dueDateFrom) {
+      conditions.push(gte(documents.dueDate, new Date(filters.dueDateFrom)));
+    }
+
+    if (filters.dueDateTo) {
+      if (filters.overdue) {
+        conditions.push(lt(documents.dueDate, new Date(filters.dueDateTo)));
+      } else {
+        conditions.push(lte(documents.dueDate, new Date(filters.dueDateTo)));
+      }
     }
 
     return await db

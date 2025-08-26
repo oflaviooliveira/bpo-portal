@@ -17,7 +17,12 @@ const statusConfig = {
   RECEBIDO: { label: "Recebido", className: "bg-blue-100 text-blue-800" },
   VALIDANDO: { label: "Validando", className: "bg-yellow-100 text-yellow-800" },
   PENDENTE_REVISAO: { label: "Pendente Revisão", className: "bg-orange-100 text-orange-800" },
-  CLASSIFICADO: { label: "Processado", className: "bg-green-100 text-green-800" },
+  CLASSIFICADO: { label: "Classificado", className: "bg-green-100 text-green-800" },
+  PAGO_A_CONCILIAR: { label: "Pago - A Conciliar", className: "bg-purple-100 text-purple-800" },
+  AGENDADO: { label: "Agendado", className: "bg-indigo-100 text-indigo-800" },
+  A_PAGAR_HOJE: { label: "A Pagar Hoje", className: "bg-red-100 text-red-800" },
+  AGUARDANDO_RECEBIMENTO: { label: "Aguardando Recebimento", className: "bg-cyan-100 text-cyan-800" },
+  EM_CONCILIACAO: { label: "Em Conciliação", className: "bg-amber-100 text-amber-800" },
   ARQUIVADO: { label: "Arquivado", className: "bg-gray-100 text-gray-800" },
 };
 

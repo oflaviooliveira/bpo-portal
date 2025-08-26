@@ -440,6 +440,64 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
+  // Scheduled documents endpoints
+  app.get("/api/documents/scheduled/today", isAuthenticated, async (req, res) => {
+    try {
+      const user = req.user!;
+      const today = new Date();
+      today.setHours(0, 0, 0, 0);
+      const tomorrow = new Date(today);
+      tomorrow.setDate(tomorrow.getDate() + 1);
+      
+      const documents = await storage.getDocuments(user.tenantId, { 
+        status: ["AGENDADO", "A_PAGAR_HOJE"],
+        dueDateFrom: today.toISOString(),
+        dueDateTo: tomorrow.toISOString()
+      });
+      res.json(documents);
+    } catch (error) {
+      console.error("Today scheduled error:", error);
+      res.status(500).json({ error: "Erro ao carregar agendados de hoje" });
+    }
+  });
+
+  app.get("/api/documents/scheduled/next7days", isAuthenticated, async (req, res) => {
+    try {
+      const user = req.user!;
+      const today = new Date();
+      const next7Days = new Date(today);
+      next7Days.setDate(next7Days.getDate() + 7);
+      
+      const documents = await storage.getDocuments(user.tenantId, { 
+        status: ["AGENDADO"],
+        dueDateFrom: today.toISOString(),
+        dueDateTo: next7Days.toISOString()
+      });
+      res.json(documents);
+    } catch (error) {
+      console.error("Next 7 days error:", error);
+      res.status(500).json({ error: "Erro ao carregar próximos 7 dias" });
+    }
+  });
+
+  app.get("/api/documents/scheduled/overdue", isAuthenticated, async (req, res) => {
+    try {
+      const user = req.user!;
+      const today = new Date();
+      today.setHours(0, 0, 0, 0);
+      
+      const documents = await storage.getDocuments(user.tenantId, { 
+        status: ["AGENDADO", "A_PAGAR_HOJE"],
+        dueDateTo: today.toISOString(),
+        overdue: true
+      });
+      res.json(documents);
+    } catch (error) {
+      console.error("Overdue error:", error);
+      res.status(500).json({ error: "Erro ao carregar atrasados" });
+    }
+  });
+
   // Async document processing function using comprehensive processor
   async function processDocumentAsync(documentId: string, tenantId: string) {
     try {

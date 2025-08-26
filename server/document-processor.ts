@@ -377,15 +377,16 @@ Seja preciso e conservador na extração. Se não tiver certeza, marque como nul
   }
 
   private getNextStatus(documentType: string): string {
-    // Implementar transições de estado conforme PRD
+    // Transições de estado conforme PRD
     switch (documentType) {
       case "PAGO":
         return "PAGO_A_CONCILIAR";
       case "AGENDADO":
         return "AGENDADO";
       case "BOLETO":
+        return "AGUARDANDO_RECEBIMENTO"; // Boleto aguarda pagamento
       case "NF":
-        return "AGENDAR";
+        return "AGUARDANDO_RECEBIMENTO"; // NF aguarda recebimento
       default:
         return "CLASSIFICADO";
     }
