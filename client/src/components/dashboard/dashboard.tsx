@@ -13,7 +13,7 @@ export function Dashboard() {
     queryKey: ["/api/documents"],
   });
 
-  const recentDocuments = documents?.slice(0, 5) || [];
+  const recentDocuments = Array.isArray(documents) ? documents.slice(0, 5) : [];
 
   const recentActivities = [
     {

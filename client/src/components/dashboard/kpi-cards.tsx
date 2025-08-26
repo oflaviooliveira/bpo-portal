@@ -1,5 +1,6 @@
 import { Card, CardContent } from "@/components/ui/card";
 import { TrendingUp, TrendingDown, BarChart3, AlertTriangle } from "lucide-react";
+import React from "react";
 
 interface KpiCardsProps {
   stats?: {

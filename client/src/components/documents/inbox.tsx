@@ -113,7 +113,7 @@ export function Inbox() {
               </TableRow>
             </TableHeader>
             <TableBody>
-              {documents?.length === 0 ? (
+              {!Array.isArray(documents) || documents.length === 0 ? (
                 <TableRow>
                   <TableCell colSpan={6} className="text-center py-8 text-muted-foreground">
                     Nenhum documento encontrado
@@ -179,7 +179,7 @@ export function Inbox() {
                       </div>
                     </TableCell>
                   </TableRow>
-                ))
+                )) || []
               )}
             </TableBody>
           </Table>
