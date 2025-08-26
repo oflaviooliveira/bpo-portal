@@ -6,7 +6,7 @@ import {
   type InsertCategory, type InsertCostCenter
 } from "@shared/schema";
 import { db } from "./db";
-import { eq, and, desc, count, sum, avg } from "drizzle-orm";
+import { eq, and, desc, count, sum, avg, inArray } from "drizzle-orm";
 import session from "express-session";
 import connectPg from "connect-pg-simple";
 import { pool } from "./db";
@@ -231,7 +231,11 @@ export class DatabaseStorage implements IStorage {
     const conditions = [eq(documents.tenantId, tenantId)];
 
     if (filters.status) {
-      conditions.push(eq(documents.status, filters.status));
+      if (Array.isArray(filters.status)) {
+        conditions.push(inArray(documents.status, filters.status));
+      } else {
+        conditions.push(eq(documents.status, filters.status));
+      }
     }
 
     if (filters.documentType) {
@@ -240,6 +244,10 @@ export class DatabaseStorage implements IStorage {
 
     if (filters.clientId) {
       conditions.push(eq(documents.clientId, filters.clientId));
+    }
+
+    if (filters.bankId) {
+      conditions.push(eq(documents.bankId, filters.bankId));
     }
 
     return await db

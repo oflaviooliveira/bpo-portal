@@ -2,8 +2,7 @@ import type { Express } from "express";
 import { createServer, type Server } from "http";
 import { setupAuth, isAuthenticated } from "./auth";
 import { storage } from "./storage";
-import { processDocumentWithOCR } from "./ocr";
-import { analyzeDocumentWithAI } from "./ai";
+import { documentProcessor } from "./document-processor";
 import multer from "multer";
 import path from "path";
 import fs from "fs/promises";
@@ -164,7 +163,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
         userId: user.id,
       });
 
-      // Process document asynchronously
+      // Process document asynchronously using new processor
       processDocumentAsync(document.id, user.tenantId);
 
       res.json({ 
@@ -433,124 +432,14 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
-  // Async document processing function
+  // Async document processing function using comprehensive processor
   async function processDocumentAsync(documentId: string, tenantId: string) {
     try {
-      // Update status to VALIDATING
-      await storage.updateDocument(documentId, tenantId, { status: "VALIDANDO" });
-      
-      await storage.createDocumentLog({
-        documentId,
-        action: "PROCESSING_START",
-        status: "SUCCESS",
-        details: { stage: "OCR" },
-      });
-
-      // Get document
-      const document = await storage.getDocument(documentId, tenantId);
-      if (!document) return;
-
-      // Process with OCR
-      const ocrResult = await processDocumentWithOCR(document.filePath);
-      
-      // Process with AI
-      const aiResult = await analyzeDocumentWithAI(ocrResult.text, document.fileName);
-
-      // Cross-validation logic
-      const validationResult = performCrossValidation(document, ocrResult, aiResult);
-
-      // Update document with results
-      const updates: any = {
-        ocrText: ocrResult.text,
-        ocrConfidence: ocrResult.confidence,
-        aiAnalysis: aiResult,
-        aiProvider: aiResult.provider,
-      };
-
-      if (validationResult.isValid) {
-        updates.status = "CLASSIFICADO";
-        updates.isValidated = true;
-        
-        // Apply AI extracted values if validation passes
-        if (aiResult.amount && !document.amount) {
-          updates.amount = aiResult.amount;
-        }
-        if (aiResult.dueDate && !document.dueDate) {
-          updates.dueDate = new Date(aiResult.dueDate);
-        }
-      } else {
-        updates.status = "PENDENTE_REVISAO";
-        updates.validationErrors = validationResult.errors;
-      }
-
-      await storage.updateDocument(documentId, tenantId, updates);
-
-      await storage.createDocumentLog({
-        documentId,
-        action: "PROCESSING_COMPLETE",
-        status: validationResult.isValid ? "SUCCESS" : "NEEDS_REVIEW",
-        details: {
-          ocrConfidence: ocrResult.confidence,
-          aiProvider: aiResult.provider,
-          validationResult,
-        },
-      });
-
+      const result = await documentProcessor.processDocument(documentId, tenantId);
+      console.log(`Document ${documentId} processing completed:`, result.status);
     } catch (error) {
-      console.error("Document processing error:", error);
-      
-      await storage.updateDocument(documentId, tenantId, {
-        status: "PENDENTE_REVISAO",
-        validationErrors: [{ type: "PROCESSING_ERROR", message: "Erro no processamento automático" }],
-      });
-
-      await storage.createDocumentLog({
-        documentId,
-        action: "PROCESSING_ERROR",
-        status: "ERROR",
-        details: { error: error.message },
-      });
+      console.error(`Document ${documentId} processing failed:`, error);
     }
-  }
-
-  function performCrossValidation(document: any, ocrResult: any, aiResult: any) {
-    const errors: any[] = [];
-    
-    // Check OCR confidence
-    if (ocrResult.confidence < 80) {
-      errors.push({
-        type: "LOW_OCR_CONFIDENCE",
-        message: `Baixa confiança no OCR: ${ocrResult.confidence}%`,
-      });
-    }
-
-    // Cross-validate amount if provided
-    if (document.amount && aiResult.amount) {
-      const docAmount = Number(document.amount);
-      const aiAmount = Number(aiResult.amount);
-      const variance = Math.abs(docAmount - aiAmount) / docAmount;
-      
-      if (variance > 0.1) { // 10% tolerance
-        errors.push({
-          type: "AMOUNT_MISMATCH",
-          message: `Divergência no valor: Manual R$ ${docAmount} vs IA R$ ${aiAmount}`,
-        });
-      }
-    }
-
-    // Validate filename patterns
-    const filename = document.fileName.toLowerCase();
-    if (document.documentType === "PAGO" && !filename.includes("pag")) {
-      errors.push({
-        type: "FILENAME_MISMATCH",
-        message: "Nome do arquivo não condiz com tipo 'Pago'",
-      });
-    }
-
-    return {
-      isValid: errors.length === 0,
-      errors,
-    };
   }
 
   const httpServer = createServer(app);
