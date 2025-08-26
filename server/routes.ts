@@ -432,7 +432,9 @@ export async function registerRoutes(app: Express): Promise<Server> {
   app.get("/api/documents/archived", isAuthenticated, async (req, res) => {
     try {
       const user = req.user!;
-      const documents = await storage.getDocuments(user.tenantId, { status: "ARQUIVADO" });
+      const documents = await storage.getDocuments(user.tenantId, { 
+        status: ["ARQUIVADO"] 
+      });
       res.json(documents);
     } catch (error) {
       console.error("Archived error:", error);
@@ -536,6 +538,66 @@ export async function registerRoutes(app: Express): Promise<Server> {
       console.error(`Document ${documentId} processing failed:`, error);
     }
   }
+
+  // Document actions endpoint
+  app.patch("/api/documents/:id/action", isAuthenticated, async (req, res) => {
+    try {
+      const { id } = req.params;
+      const { action, dueDate, notes } = req.body;
+      const user = req.user!;
+
+      if (!isValidUUID(id)) {
+        return res.status(400).json({ error: "ID de documento inválido" });
+      }
+
+      const document = await storage.getDocument(id, user.tenantId);
+      if (!document) {
+        return res.status(404).json({ error: "Documento não encontrado" });
+      }
+
+      let newStatus = document.status;
+      let updates: any = {};
+
+      switch (action) {
+        case "approve":
+          if (document.documentType === "PAGO") {
+            newStatus = "PAGO_A_CONCILIAR";
+          } else if (document.documentType === "AGENDADO") {
+            newStatus = "AGENDADO";
+          } else if (document.documentType === "EMITIR_BOLETO" || document.documentType === "EMITIR_NF") {
+            newStatus = "AGUARDANDO_RECEBIMENTO";
+          } else {
+            newStatus = "CLASSIFICADO";
+          }
+          break;
+        
+        case "schedule":
+          if (dueDate) {
+            updates.dueDate = new Date(dueDate);
+            newStatus = "AGENDADO";
+          }
+          break;
+        
+        case "revise":
+          newStatus = "PENDENTE_REVISAO";
+          if (notes) {
+            updates.notes = notes;
+          }
+          break;
+        
+        default:
+          return res.status(400).json({ error: "Ação inválida" });
+      }
+
+      updates.status = newStatus;
+      await storage.updateDocument(id, user.tenantId, updates);
+
+      res.json({ message: "Ação realizada com sucesso", status: newStatus });
+    } catch (error) {
+      console.error("Document action error:", error);
+      res.status(500).json({ error: "Erro ao processar ação" });
+    }
+  });
 
   const httpServer = createServer(app);
   return httpServer;

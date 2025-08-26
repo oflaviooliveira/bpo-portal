@@ -1,5 +1,5 @@
 import { useState } from "react";
-import { useQuery } from "@tanstack/react-query";
+import { useQuery, useMutation } from "@tanstack/react-query";
 import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
@@ -11,7 +11,13 @@ import {
   TableHeader, 
   TableRow 
 } from "@/components/ui/table";
-import { Filter, RefreshCw, FileText, Eye, Edit, AlertTriangle } from "lucide-react";
+import { Filter, RefreshCw, FileText, Eye, Edit, AlertTriangle, Calendar, CheckCircle2, CreditCard, Receipt } from "lucide-react";
+import { apiRequest, queryClient } from "@/lib/queryClient";
+import { useToast } from "@/hooks/use-toast";
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
+import { Textarea } from "@/components/ui/textarea";
 
 const statusConfig = {
   RECEBIDO: { label: "Recebido", className: "bg-blue-100 text-blue-800" },
@@ -28,6 +34,10 @@ const statusConfig = {
 
 export function Inbox() {
   const [filter, setFilter] = useState<string>("");
+  const [selectedDoc, setSelectedDoc] = useState<any>(null);
+  const [showActionDialog, setShowActionDialog] = useState(false);
+  const [actionType, setActionType] = useState<"approve" | "schedule" | "revise" | null>(null);
+  const { toast } = useToast();
 
   const { data: documents, isLoading, refetch } = useQuery({
     queryKey: ["/api/documents"],
@@ -35,6 +45,58 @@ export function Inbox() {
 
   const handleRefresh = () => {
     refetch();
+  };
+
+  // Mutation para ações operacionais
+  const actionMutation = useMutation({
+    mutationFn: async ({ documentId, action, data }: { documentId: string, action: string, data?: any }) => {
+      const response = await apiRequest("PATCH", `/api/documents/${documentId}/action`, { action, ...data });
+      return response.json();
+    },
+    onSuccess: () => {
+      toast({
+        title: "Ação realizada com sucesso",
+        description: "O documento foi processado.",
+      });
+      queryClient.invalidateQueries({ queryKey: ["/api/documents"] });
+      setShowActionDialog(false);
+      setSelectedDoc(null);
+      setActionType(null);
+    },
+    onError: (error: any) => {
+      toast({
+        title: "Erro ao processar",
+        description: error.message || "Erro interno do servidor",
+        variant: "destructive",
+      });
+    },
+  });
+
+  const handleDocumentAction = (doc: any, action: "approve" | "schedule" | "revise") => {
+    setSelectedDoc(doc);
+    setActionType(action);
+    setShowActionDialog(true);
+  };
+
+  const handleSubmitAction = () => {
+    if (!selectedDoc || !actionType) return;
+
+    let actionData: any = {};
+    
+    if (actionType === "approve") {
+      actionData = { action: "approve" };
+    } else if (actionType === "schedule") {
+      const dueDate = (document.getElementById("schedule-date") as HTMLInputElement)?.value;
+      actionData = { action: "schedule", dueDate };
+    } else if (actionType === "revise") {
+      const notes = (document.getElementById("revision-notes") as HTMLTextAreaElement)?.value;
+      actionData = { action: "revise", notes };
+    }
+
+    actionMutation.mutate({
+      documentId: selectedDoc.id,
+      ...actionData
+    });
   };
 
   const formatCurrency = (value: string | number | null) => {
@@ -174,13 +236,72 @@ export function Inbox() {
                         >
                           <Eye className="w-4 h-4 text-blue-600" />
                         </Button>
-                        <Button 
-                          variant="ghost" 
-                          size="sm"
-                          data-testid={`button-edit-${doc.id}`}
-                        >
-                          <Edit className="w-4 h-4 text-gquicks-primary" />
-                        </Button>
+                        
+                        {/* Ações operacionais baseadas no status e tipo do documento */}
+                        {doc.status === "PENDENTE_REVISAO" && (
+                          <>
+                            <Button 
+                              variant="outline" 
+                              size="sm"
+                              onClick={() => handleDocumentAction(doc, "approve")}
+                              className="text-green-600 border-green-600 hover:bg-green-600 hover:text-white"
+                              data-testid={`button-approve-${doc.id}`}
+                            >
+                              <CheckCircle2 className="w-4 h-4 mr-1" />
+                              Aprovar
+                            </Button>
+                            <Button 
+                              variant="outline" 
+                              size="sm"
+                              onClick={() => handleDocumentAction(doc, "revise")}
+                              className="text-orange-600 border-orange-600 hover:bg-orange-600 hover:text-white"
+                              data-testid={`button-revise-${doc.id}`}
+                            >
+                              <Edit className="w-4 h-4 mr-1" />
+                              Revisar
+                            </Button>
+                          </>
+                        )}
+                        
+                        {(doc.status === "RECEBIDO" || doc.status === "CLASSIFICADO") && doc.documentType === "AGENDADO" && (
+                          <Button 
+                            variant="outline" 
+                            size="sm"
+                            onClick={() => handleDocumentAction(doc, "schedule")}
+                            className="text-purple-600 border-purple-600 hover:bg-purple-600 hover:text-white"
+                            data-testid={`button-schedule-${doc.id}`}
+                          >
+                            <Calendar className="w-4 h-4 mr-1" />
+                            Agendar
+                          </Button>
+                        )}
+
+                        {(doc.status === "RECEBIDO" || doc.status === "CLASSIFICADO") && doc.documentType === "PAGO" && (
+                          <Button 
+                            variant="outline" 
+                            size="sm"
+                            onClick={() => handleDocumentAction(doc, "approve")}
+                            className="text-cyan-600 border-cyan-600 hover:bg-cyan-600 hover:text-white"
+                            data-testid={`button-conciliate-${doc.id}`}
+                          >
+                            <CreditCard className="w-4 h-4 mr-1" />
+                            Conciliar
+                          </Button>
+                        )}
+
+                        {(doc.status === "RECEBIDO" || doc.status === "CLASSIFICADO") && 
+                         (doc.documentType === "EMITIR_BOLETO" || doc.documentType === "EMITIR_NF") && (
+                          <Button 
+                            variant="outline" 
+                            size="sm"
+                            onClick={() => handleDocumentAction(doc, "approve")}
+                            className="text-indigo-600 border-indigo-600 hover:bg-indigo-600 hover:text-white"
+                            data-testid={`button-emit-${doc.id}`}
+                          >
+                            <Receipt className="w-4 h-4 mr-1" />
+                            Emitir
+                          </Button>
+                        )}
                       </div>
                     </TableCell>
                   </TableRow>
@@ -190,6 +311,72 @@ export function Inbox() {
           </Table>
         </CardContent>
       </Card>
+
+      {/* Action Dialog */}
+      <Dialog open={showActionDialog} onOpenChange={setShowActionDialog}>
+        <DialogContent className="max-w-lg">
+          <DialogHeader>
+            <DialogTitle>
+              {actionType === "approve" && "Aprovar Documento"}
+              {actionType === "schedule" && "Agendar Documento"}
+              {actionType === "revise" && "Solicitar Revisão"}
+            </DialogTitle>
+          </DialogHeader>
+          
+          <div className="grid gap-4 py-4">
+            {actionType === "schedule" && (
+              <div className="grid gap-2">
+                <Label htmlFor="schedule-date">Data de Vencimento</Label>
+                <Input
+                  id="schedule-date"
+                  type="date"
+                  required
+                />
+              </div>
+            )}
+            
+            {actionType === "revise" && (
+              <div className="grid gap-2">
+                <Label htmlFor="revision-notes">Motivo da Revisão</Label>
+                <Textarea
+                  id="revision-notes"
+                  placeholder="Descreva o que precisa ser revisado..."
+                  rows={3}
+                  required
+                />
+              </div>
+            )}
+
+            {actionType === "approve" && selectedDoc && (
+              <div className="grid gap-2">
+                <p className="text-sm text-muted-foreground">
+                  Confirma a aprovação do documento <strong>{selectedDoc.originalName}</strong>?
+                </p>
+                <p className="text-sm">
+                  Tipo: <strong>{selectedDoc.documentType}</strong>
+                </p>
+              </div>
+            )}
+
+            <div className="flex justify-end space-x-2 pt-4">
+              <Button
+                variant="outline"
+                onClick={() => setShowActionDialog(false)}
+                disabled={actionMutation.isPending}
+              >
+                Cancelar
+              </Button>
+              <Button
+                className="bg-gquicks-primary hover:bg-gquicks-primary/90"
+                onClick={handleSubmitAction}
+                disabled={actionMutation.isPending}
+              >
+                {actionMutation.isPending ? "Processando..." : "Confirmar"}
+              </Button>
+            </div>
+          </div>
+        </DialogContent>
+      </Dialog>
     </div>
   );
 }
