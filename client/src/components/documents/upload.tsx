@@ -1,4 +1,4 @@
-import { useState } from "react";
+import React, { useState } from "react";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { z } from "zod";
@@ -14,24 +14,74 @@ import { useToast } from "@/hooks/use-toast";
 import { CloudUpload, X, Upload as UploadIcon } from "lucide-react";
 import { apiRequest } from "@/lib/queryClient";
 
-const uploadSchema = z.object({
+// FASE 2: Formulários dinâmicos por tipo de documento conforme PRD
+const baseUploadSchema = z.object({
   clientId: z.string().min(1, "Cliente é obrigatório"),
-  bankId: z.string().optional(),
-  categoryId: z.string().optional(),
-  costCenterId: z.string().optional(),
-  documentType: z.enum(["PAGO", "AGENDADO", "BOLETO", "NF"], {
+  documentType: z.enum(["PAGO", "AGENDADO", "EMITIR_BOLETO", "EMITIR_NF"], {
     required_error: "Tipo de solicitação é obrigatório",
   }),
-  amount: z.string().optional(),
-  dueDate: z.string().optional(),
+});
+
+const pagoSchema = baseUploadSchema.extend({
+  documentType: z.literal("PAGO"),
+  bankId: z.string().min(1, "Banco é obrigatório para pagamentos"),
+  categoryId: z.string().min(1, "Categoria é obrigatória"),
+  amount: z.string().min(1, "Valor é obrigatório"),
+  paymentDate: z.string().min(1, "Data de pagamento é obrigatória"),
+  supplier: z.string().min(1, "Fornecedor/Descrição é obrigatório"),
+  costCenterId: z.string().optional(),
   notes: z.string().optional(),
 });
+
+const agendadoSchema = baseUploadSchema.extend({
+  documentType: z.literal("AGENDADO"),
+  bankId: z.string().min(1, "Banco é obrigatório para agendamentos"),
+  amount: z.string().min(1, "Valor é obrigatório"),
+  dueDate: z.string().min(1, "Data de vencimento é obrigatória"),
+  beneficiary: z.string().min(1, "Favorecido é obrigatório"),
+  bankCode: z.string().optional(),
+  instructions: z.string().optional(),
+  costCenterId: z.string().optional(),
+  notes: z.string().optional(),
+});
+
+const boletoSchema = baseUploadSchema.extend({
+  documentType: z.literal("EMITIR_BOLETO"),
+  amount: z.string().min(1, "Valor é obrigatório"),
+  dueDate: z.string().min(1, "Data de vencimento é obrigatória"),
+  payerDocument: z.string().min(1, "CNPJ/CPF do tomador é obrigatório"),
+  payerName: z.string().min(1, "Nome do tomador é obrigatório"),
+  payerAddress: z.string().min(1, "Endereço é obrigatório"),
+  payerEmail: z.string().email("Email inválido").min(1, "Email é obrigatório"),
+  instructions: z.string().optional(),
+  notes: z.string().optional(),
+});
+
+const nfSchema = baseUploadSchema.extend({
+  documentType: z.literal("EMITIR_NF"),
+  amount: z.string().min(1, "Valor é obrigatório"),
+  serviceCode: z.string().min(1, "Código de serviço é obrigatório"),
+  serviceDescription: z.string().min(1, "Descrição do serviço é obrigatória"),
+  payerDocument: z.string().min(1, "CNPJ/CPF do tomador é obrigatório"),
+  payerName: z.string().min(1, "Nome do tomador é obrigatório"),
+  payerAddress: z.string().min(1, "Endereço é obrigatório"),
+  payerEmail: z.string().email("Email inválido").min(1, "Email é obrigatório"),
+  notes: z.string().optional(),
+});
+
+const uploadSchema = z.discriminatedUnion("documentType", [
+  pagoSchema,
+  agendadoSchema, 
+  boletoSchema,
+  nfSchema,
+]);
 
 type UploadFormData = z.infer<typeof uploadSchema>;
 
 export function Upload() {
   const [selectedFile, setSelectedFile] = useState<File | null>(null);
   const [isDragOver, setIsDragOver] = useState(false);
+  const [selectedDocumentType, setSelectedDocumentType] = useState<"PAGO" | "AGENDADO" | "EMITIR_BOLETO" | "EMITIR_NF">("PAGO");
   const { toast } = useToast();
   const queryClient = useQueryClient();
 
@@ -39,15 +89,22 @@ export function Upload() {
     resolver: zodResolver(uploadSchema),
     defaultValues: {
       clientId: "",
-      bankId: "",
-      categoryId: "",
-      costCenterId: "",
       documentType: "PAGO",
-      amount: "",
-      dueDate: "",
-      notes: "",
     },
   });
+
+  // Reset form when document type changes - FASE 2 IMPLEMENTAÇÃO
+  const watchedDocumentType = form.watch("documentType");
+  React.useEffect(() => {
+    if (watchedDocumentType !== selectedDocumentType) {
+      setSelectedDocumentType(watchedDocumentType);
+      // Reset form with only base fields
+      const currentClientId = form.getValues("clientId");
+      form.reset();
+      form.setValue("clientId", currentClientId);
+      form.setValue("documentType", watchedDocumentType);
+    }
+  }, [watchedDocumentType, selectedDocumentType, form]);
 
   // Fetch dropdown options
   const { data: clients } = useQuery({ queryKey: ["/api/clients"] });
@@ -277,87 +334,8 @@ export function Upload() {
                   )}
                 </div>
 
-                {/* Bank */}
-                <div className="space-y-2">
-                  <Label htmlFor="bankId">Banco</Label>
-                  <Select 
-                    onValueChange={(value) => form.setValue("bankId", value)}
-                    value={form.watch("bankId")}
-                  >
-                    <SelectTrigger data-testid="select-bank">
-                      <SelectValue placeholder="Selecione o banco" />
-                    </SelectTrigger>
-                    <SelectContent>
-                      {bankList.map((bank: any) => (
-                        <SelectItem key={bank.id} value={bank.id}>
-                          {bank.name}
-                        </SelectItem>
-                      ))}
-                    </SelectContent>
-                  </Select>
-                </div>
-
-                {/* Category */}
-                <div className="space-y-2">
-                  <Label htmlFor="categoryId">Categoria</Label>
-                  <Select 
-                    onValueChange={(value) => form.setValue("categoryId", value)}
-                    value={form.watch("categoryId")}
-                  >
-                    <SelectTrigger data-testid="select-category">
-                      <SelectValue placeholder="Selecione a categoria" />
-                    </SelectTrigger>
-                    <SelectContent>
-                      {categoryList.map((category: any) => (
-                        <SelectItem key={category.id} value={category.id}>
-                          {category.name}
-                        </SelectItem>
-                      ))}
-                    </SelectContent>
-                  </Select>
-                </div>
-
-                {/* Cost Center */}
-                <div className="space-y-2">
-                  <Label htmlFor="costCenterId">Centro de Custo</Label>
-                  <Select 
-                    onValueChange={(value) => form.setValue("costCenterId", value)}
-                    value={form.watch("costCenterId")}
-                  >
-                    <SelectTrigger data-testid="select-cost-center">
-                      <SelectValue placeholder="Selecione o centro de custo" />
-                    </SelectTrigger>
-                    <SelectContent>
-                      {costCenterList.map((costCenter: any) => (
-                        <SelectItem key={costCenter.id} value={costCenter.id}>
-                          {costCenter.name}
-                        </SelectItem>
-                      ))}
-                    </SelectContent>
-                  </Select>
-                </div>
-
-                {/* Amount */}
-                <div className="space-y-2">
-                  <Label htmlFor="amount">Valor (opcional)</Label>
-                  <Input
-                    id="amount"
-                    placeholder="1234.56"
-                    {...form.register("amount")}
-                    data-testid="input-amount"
-                  />
-                </div>
-
-                {/* Due Date */}
-                <div className="space-y-2">
-                  <Label htmlFor="dueDate">Data de Vencimento (opcional)</Label>
-                  <Input
-                    id="dueDate"
-                    type="date"
-                    {...form.register("dueDate")}
-                    data-testid="input-due-date"
-                  />
-                </div>
+                {/* FASE 2: Formulários dinâmicos baseados no tipo de documento */}
+                {renderDynamicFields()}
               </div>
 
               {/* Document Type */}
@@ -421,7 +399,7 @@ export function Upload() {
             <Button
               type="submit"
               className="bg-gquicks-primary hover:bg-gquicks-primary/90"
-              disabled={uploadMutation.isPending}
+              disabled={!selectedFile || uploadMutation.isPending}
               data-testid="button-process"
             >
               {uploadMutation.isPending ? (
@@ -441,4 +419,482 @@ export function Upload() {
       </div>
     </div>
   );
+
+  // FASE 2: Renderização dinâmica de campos baseada no tipo de documento
+  function renderDynamicFields() {
+    const documentType = form.watch("documentType");
+
+    switch (documentType) {
+      case "PAGO":
+        return (
+          <>
+            {/* Banco - obrigatório para PAGO */}
+            <div className="space-y-2">
+              <Label htmlFor="bankId">Banco *</Label>
+              <Select 
+                onValueChange={(value) => form.setValue("bankId", value)}
+                value={form.watch("bankId")}
+              >
+                <SelectTrigger data-testid="select-bank">
+                  <SelectValue placeholder="Selecione o banco" />
+                </SelectTrigger>
+                <SelectContent>
+                  {bankList.map((bank: any) => (
+                    <SelectItem key={bank.id} value={bank.id}>
+                      {bank.name}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+              {form.formState.errors.bankId && (
+                <p className="text-destructive text-sm">{form.formState.errors.bankId.message}</p>
+              )}
+            </div>
+
+            {/* Categoria - obrigatória para PAGO */}
+            <div className="space-y-2">
+              <Label htmlFor="categoryId">Categoria *</Label>
+              <Select 
+                onValueChange={(value) => form.setValue("categoryId", value)}
+                value={form.watch("categoryId")}
+              >
+                <SelectTrigger data-testid="select-category">
+                  <SelectValue placeholder="Selecione a categoria" />
+                </SelectTrigger>
+                <SelectContent>
+                  {categoryList.map((category: any) => (
+                    <SelectItem key={category.id} value={category.id}>
+                      {category.name}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+              {form.formState.errors.categoryId && (
+                <p className="text-destructive text-sm">{form.formState.errors.categoryId.message}</p>
+              )}
+            </div>
+
+            {/* Valor - obrigatório */}
+            <div className="space-y-2">
+              <Label htmlFor="amount">Valor *</Label>
+              <Input
+                id="amount"
+                placeholder="Ex: 1500.00"
+                {...form.register("amount")}
+                data-testid="input-amount"
+              />
+              {form.formState.errors.amount && (
+                <p className="text-destructive text-sm">{form.formState.errors.amount.message}</p>
+              )}
+            </div>
+
+            {/* Data de Pagamento - obrigatória */}
+            <div className="space-y-2">
+              <Label htmlFor="paymentDate">Data de Pagamento *</Label>
+              <Input
+                id="paymentDate"
+                type="date"
+                {...form.register("paymentDate")}
+                data-testid="input-payment-date"
+              />
+              {form.formState.errors.paymentDate && (
+                <p className="text-destructive text-sm">{form.formState.errors.paymentDate.message}</p>
+              )}
+            </div>
+
+            {/* Fornecedor/Descrição - obrigatório */}
+            <div className="space-y-2">
+              <Label htmlFor="supplier">Fornecedor/Descrição *</Label>
+              <Input
+                id="supplier"
+                placeholder="Nome do fornecedor ou descrição do pagamento"
+                {...form.register("supplier")}
+                data-testid="input-supplier"
+              />
+              {form.formState.errors.supplier && (
+                <p className="text-destructive text-sm">{form.formState.errors.supplier.message}</p>
+              )}
+            </div>
+
+            {/* Centro de Custo - opcional */}
+            <div className="space-y-2">
+              <Label htmlFor="costCenterId">Centro de Custo</Label>
+              <Select 
+                onValueChange={(value) => form.setValue("costCenterId", value)}
+                value={form.watch("costCenterId")}
+              >
+                <SelectTrigger data-testid="select-cost-center">
+                  <SelectValue placeholder="Selecione o centro de custo" />
+                </SelectTrigger>
+                <SelectContent>
+                  {costCenterList.map((costCenter: any) => (
+                    <SelectItem key={costCenter.id} value={costCenter.id}>
+                      {costCenter.name}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            </div>
+
+            {/* Observações - opcional */}
+            <div className="md:col-span-2 space-y-2">
+              <Label htmlFor="notes">Observações</Label>
+              <Textarea
+                id="notes"
+                placeholder="Observações adicionais..."
+                rows={3}
+                {...form.register("notes")}
+                data-testid="textarea-notes"
+              />
+            </div>
+          </>
+        );
+
+      case "AGENDADO":
+        return (
+          <>
+            {/* Banco - obrigatório */}
+            <div className="space-y-2">
+              <Label htmlFor="bankId">Banco *</Label>
+              <Select 
+                onValueChange={(value) => form.setValue("bankId", value)}
+                value={form.watch("bankId")}
+              >
+                <SelectTrigger data-testid="select-bank">
+                  <SelectValue placeholder="Selecione o banco" />
+                </SelectTrigger>
+                <SelectContent>
+                  {bankList.map((bank: any) => (
+                    <SelectItem key={bank.id} value={bank.id}>
+                      {bank.name}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+              {form.formState.errors.bankId && (
+                <p className="text-destructive text-sm">{form.formState.errors.bankId.message}</p>
+              )}
+            </div>
+
+            {/* Valor - obrigatório */}
+            <div className="space-y-2">
+              <Label htmlFor="amount">Valor *</Label>
+              <Input
+                id="amount"
+                placeholder="Ex: 1500.00"
+                {...form.register("amount")}
+                data-testid="input-amount"
+              />
+              {form.formState.errors.amount && (
+                <p className="text-destructive text-sm">{form.formState.errors.amount.message}</p>
+              )}
+            </div>
+
+            {/* Data de Vencimento - obrigatória */}
+            <div className="space-y-2">
+              <Label htmlFor="dueDate">Data de Vencimento *</Label>
+              <Input
+                id="dueDate"
+                type="date"
+                {...form.register("dueDate")}
+                data-testid="input-due-date"
+              />
+              {form.formState.errors.dueDate && (
+                <p className="text-destructive text-sm">{form.formState.errors.dueDate.message}</p>
+              )}
+            </div>
+
+            {/* Favorecido - obrigatório */}
+            <div className="space-y-2">
+              <Label htmlFor="beneficiary">Favorecido *</Label>
+              <Input
+                id="beneficiary"
+                placeholder="Nome do favorecido"
+                {...form.register("beneficiary")}
+                data-testid="input-beneficiary"
+              />
+              {form.formState.errors.beneficiary && (
+                <p className="text-destructive text-sm">{form.formState.errors.beneficiary.message}</p>
+              )}
+            </div>
+
+            {/* Linha Digitável/Código - opcional */}
+            <div className="space-y-2">
+              <Label htmlFor="bankCode">Linha Digitável/Código</Label>
+              <Input
+                id="bankCode"
+                placeholder="Código de barras ou linha digitável"
+                {...form.register("bankCode")}
+                data-testid="input-bank-code"
+              />
+            </div>
+
+            {/* Centro de Custo - opcional */}
+            <div className="space-y-2">
+              <Label htmlFor="costCenterId">Centro de Custo</Label>
+              <Select 
+                onValueChange={(value) => form.setValue("costCenterId", value)}
+                value={form.watch("costCenterId")}
+              >
+                <SelectTrigger data-testid="select-cost-center">
+                  <SelectValue placeholder="Selecione o centro de custo" />
+                </SelectTrigger>
+                <SelectContent>
+                  {costCenterList.map((costCenter: any) => (
+                    <SelectItem key={costCenter.id} value={costCenter.id}>
+                      {costCenter.name}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            </div>
+
+            {/* Observações - opcional */}
+            <div className="md:col-span-2 space-y-2">
+              <Label htmlFor="notes">Observações</Label>
+              <Textarea
+                id="notes"
+                placeholder="Observações adicionais..."
+                rows={3}
+                {...form.register("notes")}
+                data-testid="textarea-notes"
+              />
+            </div>
+          </>
+        );
+
+      case "EMITIR_BOLETO":
+        return (
+          <>
+            {/* Valor - obrigatório */}
+            <div className="space-y-2">
+              <Label htmlFor="amount">Valor *</Label>
+              <Input
+                id="amount"
+                placeholder="Ex: 1500.00"
+                {...form.register("amount")}
+                data-testid="input-amount"
+              />
+              {form.formState.errors.amount && (
+                <p className="text-destructive text-sm">{form.formState.errors.amount.message}</p>
+              )}
+            </div>
+
+            {/* Data de Vencimento - obrigatória */}
+            <div className="space-y-2">
+              <Label htmlFor="dueDate">Data de Vencimento *</Label>
+              <Input
+                id="dueDate"
+                type="date"
+                {...form.register("dueDate")}
+                data-testid="input-due-date"
+              />
+              {form.formState.errors.dueDate && (
+                <p className="text-destructive text-sm">{form.formState.errors.dueDate.message}</p>
+              )}
+            </div>
+
+            {/* CNPJ/CPF do Tomador - obrigatório */}
+            <div className="space-y-2">
+              <Label htmlFor="payerDocument">CNPJ/CPF do Tomador *</Label>
+              <Input
+                id="payerDocument"
+                placeholder="00.000.000/0000-00 ou 000.000.000-00"
+                {...form.register("payerDocument")}
+                data-testid="input-payer-document"
+              />
+              {form.formState.errors.payerDocument && (
+                <p className="text-destructive text-sm">{form.formState.errors.payerDocument.message}</p>
+              )}
+            </div>
+
+            {/* Nome do Tomador - obrigatório */}
+            <div className="space-y-2">
+              <Label htmlFor="payerName">Nome do Tomador *</Label>
+              <Input
+                id="payerName"
+                placeholder="Nome completo ou razão social"
+                {...form.register("payerName")}
+                data-testid="input-payer-name"
+              />
+              {form.formState.errors.payerName && (
+                <p className="text-destructive text-sm">{form.formState.errors.payerName.message}</p>
+              )}
+            </div>
+
+            {/* Endereço - obrigatório */}
+            <div className="md:col-span-2 space-y-2">
+              <Label htmlFor="payerAddress">Endereço Completo *</Label>
+              <Input
+                id="payerAddress"
+                placeholder="Rua, número, bairro, cidade, estado, CEP"
+                {...form.register("payerAddress")}
+                data-testid="input-payer-address"
+              />
+              {form.formState.errors.payerAddress && (
+                <p className="text-destructive text-sm">{form.formState.errors.payerAddress.message}</p>
+              )}
+            </div>
+
+            {/* Email - obrigatório */}
+            <div className="space-y-2">
+              <Label htmlFor="payerEmail">Email *</Label>
+              <Input
+                id="payerEmail"
+                type="email"
+                placeholder="email@exemplo.com"
+                {...form.register("payerEmail")}
+                data-testid="input-payer-email"
+              />
+              {form.formState.errors.payerEmail && (
+                <p className="text-destructive text-sm">{form.formState.errors.payerEmail.message}</p>
+              )}
+            </div>
+
+            {/* Observações - opcional */}
+            <div className="md:col-span-2 space-y-2">
+              <Label htmlFor="notes">Observações</Label>
+              <Textarea
+                id="notes"
+                placeholder="Observações internas..."
+                rows={3}
+                {...form.register("notes")}
+                data-testid="textarea-notes"
+              />
+            </div>
+          </>
+        );
+
+      case "EMITIR_NF":
+        return (
+          <>
+            {/* Valor - obrigatório */}
+            <div className="space-y-2">
+              <Label htmlFor="amount">Valor *</Label>
+              <Input
+                id="amount"
+                placeholder="Ex: 1500.00"
+                {...form.register("amount")}
+                data-testid="input-amount"
+              />
+              {form.formState.errors.amount && (
+                <p className="text-destructive text-sm">{form.formState.errors.amount.message}</p>
+              )}
+            </div>
+
+            {/* Código de Serviço - obrigatório */}
+            <div className="space-y-2">
+              <Label htmlFor="serviceCode">Código de Serviço *</Label>
+              <Input
+                id="serviceCode"
+                placeholder="Ex: 14.01, 25.02"
+                {...form.register("serviceCode")}
+                data-testid="input-service-code"
+              />
+              {form.formState.errors.serviceCode && (
+                <p className="text-destructive text-sm">{form.formState.errors.serviceCode.message}</p>
+              )}
+            </div>
+
+            {/* Descrição do Serviço - obrigatória */}
+            <div className="md:col-span-2 space-y-2">
+              <Label htmlFor="serviceDescription">Descrição do Serviço/Itens *</Label>
+              <Textarea
+                id="serviceDescription"
+                placeholder="Descrição detalhada dos serviços ou itens..."
+                rows={3}
+                {...form.register("serviceDescription")}
+                data-testid="textarea-service-description"
+              />
+              {form.formState.errors.serviceDescription && (
+                <p className="text-destructive text-sm">{form.formState.errors.serviceDescription.message}</p>
+              )}
+            </div>
+
+            {/* CNPJ/CPF do Tomador - obrigatório */}
+            <div className="space-y-2">
+              <Label htmlFor="payerDocument">CNPJ/CPF do Tomador *</Label>
+              <Input
+                id="payerDocument"
+                placeholder="00.000.000/0000-00 ou 000.000.000-00"
+                {...form.register("payerDocument")}
+                data-testid="input-payer-document"
+              />
+              {form.formState.errors.payerDocument && (
+                <p className="text-destructive text-sm">{form.formState.errors.payerDocument.message}</p>
+              )}
+            </div>
+
+            {/* Nome do Tomador - obrigatório */}
+            <div className="space-y-2">
+              <Label htmlFor="payerName">Nome do Tomador *</Label>
+              <Input
+                id="payerName"
+                placeholder="Nome completo ou razão social"
+                {...form.register("payerName")}
+                data-testid="input-payer-name"
+              />
+              {form.formState.errors.payerName && (
+                <p className="text-destructive text-sm">{form.formState.errors.payerName.message}</p>
+              )}
+            </div>
+
+            {/* Endereço - obrigatório */}
+            <div className="md:col-span-2 space-y-2">
+              <Label htmlFor="payerAddress">Endereço Completo *</Label>
+              <Input
+                id="payerAddress"
+                placeholder="Rua, número, bairro, cidade, estado, CEP"
+                {...form.register("payerAddress")}
+                data-testid="input-payer-address"
+              />
+              {form.formState.errors.payerAddress && (
+                <p className="text-destructive text-sm">{form.formState.errors.payerAddress.message}</p>
+              )}
+            </div>
+
+            {/* Email - obrigatório */}
+            <div className="space-y-2">
+              <Label htmlFor="payerEmail">Email *</Label>
+              <Input
+                id="payerEmail"
+                type="email"
+                placeholder="email@exemplo.com"
+                {...form.register("payerEmail")}
+                data-testid="input-payer-email"
+              />
+              {form.formState.errors.payerEmail && (
+                <p className="text-destructive text-sm">{form.formState.errors.payerEmail.message}</p>
+              )}
+            </div>
+
+            {/* Observações - opcional */}
+            <div className="md:col-span-2 space-y-2">
+              <Label htmlFor="notes">Observações</Label>
+              <Textarea
+                id="notes"
+                placeholder="Observações internas..."
+                rows={3}
+                {...form.register("notes")}
+                data-testid="textarea-notes"
+              />
+            </div>
+          </>
+        );
+
+      default:
+        return (
+          <div className="md:col-span-2 space-y-2">
+            <Label htmlFor="notes">Observações</Label>
+            <Textarea
+              id="notes"
+              placeholder="Observações adicionais..."
+              rows={3}
+              {...form.register("notes")}
+              data-testid="textarea-notes"
+            />
+          </div>
+        );
+    }
+  }
 }

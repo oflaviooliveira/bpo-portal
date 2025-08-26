@@ -536,11 +536,12 @@ export async function registerRoutes(app: Express): Promise<Server> {
   // Async document processing function using comprehensive processor
   async function processDocumentAsync(documentId: string, tenantId: string) {
     try {
+      const { DocumentProcessor } = await import("./document-processor");
       const documentProcessor = new DocumentProcessor();
       const result = await documentProcessor.processDocument(documentId, tenantId);
-      console.log(`Document ${documentId} processing completed:`, result.status);
+      console.log(`✅ Document ${documentId} processing completed:`, result.status);
     } catch (error) {
-      console.error(`Document ${documentId} processing failed:`, error);
+      console.error(`❌ Document ${documentId} processing failed:`, error);
     }
   }
 

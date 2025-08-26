@@ -178,11 +178,12 @@ export class DocumentProcessor {
     try {
       const worker = await createWorker('por');
       
-      if (!fs.existsSync(filePath)) {
-        throw new Error(`Arquivo não encontrado: ${filePath}`);
+      const fullPath = path.resolve(filePath);
+      if (!fs.existsSync(fullPath)) {
+        throw new Error(`Arquivo não encontrado: ${fullPath}`);
       }
 
-      const { data } = await worker.recognize(filePath);
+      const { data } = await worker.recognize(fullPath);
       await worker.terminate();
 
       return {
