@@ -217,7 +217,6 @@ Seja preciso e conservador na extração. Se não tiver certeza, marque como nul
           { role: "user", content: prompt }
         ],
         response_format: { type: "json_object" },
-        temperature: 0.1,
       });
 
       const extractedData = JSON.parse(response.choices[0].message.content);

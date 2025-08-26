@@ -25,7 +25,7 @@ export function Inbox() {
   const [filter, setFilter] = useState<string>("");
 
   const { data: documents, isLoading, refetch } = useQuery({
-    queryKey: ["/api/documents/inbox"],
+    queryKey: ["/api/documents"],
   });
 
   const handleRefresh = () => {
