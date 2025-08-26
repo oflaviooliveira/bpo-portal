@@ -11,13 +11,14 @@ import {
   TableHeader, 
   TableRow 
 } from "@/components/ui/table";
-import { Filter, RefreshCw, FileText, Eye, Edit, AlertTriangle, Calendar, CheckCircle2, CreditCard, Receipt } from "lucide-react";
+import { Filter, RefreshCw, FileText, Eye, Edit, AlertTriangle, Calendar, CheckCircle2, CreditCard, Receipt, Download } from "lucide-react";
 import { apiRequest, queryClient } from "@/lib/queryClient";
 import { useToast } from "@/hooks/use-toast";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
+import { AdvancedSearch } from "@/components/advanced-search";
 
 const statusConfig = {
   RECEBIDO: { label: "Recebido", className: "bg-blue-100 text-blue-800" },
@@ -37,14 +38,30 @@ export function Inbox() {
   const [selectedDoc, setSelectedDoc] = useState<any>(null);
   const [showActionDialog, setShowActionDialog] = useState(false);
   const [actionType, setActionType] = useState<"approve" | "schedule" | "revise" | null>(null);
+  const [searchResults, setSearchResults] = useState<any[]>([]);
+  const [isShowingSearchResults, setIsShowingSearchResults] = useState(false);
   const { toast } = useToast();
 
   const { data: documents, isLoading, refetch } = useQuery({
     queryKey: ["/api/documents"],
   });
 
+  const displayDocuments = isShowingSearchResults ? searchResults : documents || [];
+
   const handleRefresh = () => {
     refetch();
+    setIsShowingSearchResults(false);
+    setSearchResults([]);
+  };
+
+  const handleSearchResults = (results: any[]) => {
+    setSearchResults(results);
+    setIsShowingSearchResults(true);
+  };
+
+  const handleClearSearch = () => {
+    setIsShowingSearchResults(false);
+    setSearchResults([]);
   };
 
   // Mutation para ações operacionais

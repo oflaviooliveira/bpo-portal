@@ -132,8 +132,40 @@ export async function registerRoutes(app: Express): Promise<Server> {
         return res.status(400).json({ error: "Nenhum arquivo foi enviado" });
       }
 
+      // FASE 3: Validação avançada do nome do arquivo
+      const { parseFileName, documentValidationSchemas, validateBusinessRules } = await import("./validation");
+      const fileNameValidation = parseFileName(file.originalname);
+      
+      if (!fileNameValidation.isValid && fileNameValidation.errors) {
+        console.log(`⚠️ Avisos no nome do arquivo: ${fileNameValidation.errors.join(', ')}`);
+      }
+
       // Validate request body
       const validatedData = uploadDocumentSchema.parse(req.body);
+
+      // FASE 3: Validação específica por tipo de documento
+      const documentType = validatedData.documentType;
+      if (documentValidationSchemas[documentType]) {
+        try {
+          documentValidationSchemas[documentType].parse(validatedData);
+        } catch (validationError) {
+          if (validationError instanceof z.ZodError) {
+            return res.status(400).json({ 
+              error: "Dados inválidos para o tipo de documento selecionado", 
+              details: validationError.errors 
+            });
+          }
+        }
+      }
+
+      // FASE 3: Validação de regras de negócio
+      const businessValidation = validateBusinessRules(documentType, validatedData);
+      if (!businessValidation.isValid) {
+        return res.status(400).json({ 
+          error: "Regras de negócio violadas", 
+          details: businessValidation.errors 
+        });
+      }
 
       // Create document record
       const document = await storage.createDocument({
@@ -152,6 +184,11 @@ export async function registerRoutes(app: Express): Promise<Server> {
         dueDate: validatedData.dueDate ? new Date(validatedData.dueDate) : null,
         notes: validatedData.notes,
         createdBy: user.id,
+        // FASE 3: Incluir dados de validação
+        validationData: JSON.stringify({
+          fileNameValidation: fileNameValidation.parsed,
+          businessWarnings: businessValidation.warnings,
+        }),
       });
 
       // Log document creation
@@ -173,6 +210,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
       res.json({ 
         message: "Documento enviado com sucesso. Processamento OCR + IA iniciado automaticamente.",
         documentId: document.id,
+        warnings: businessValidation.warnings.length > 0 ? businessValidation.warnings : undefined,
       });
     } catch (error) {
       console.error("Document upload error:", error);
@@ -604,6 +642,143 @@ export async function registerRoutes(app: Express): Promise<Server> {
     } catch (error) {
       console.error("Document action error:", error);
       res.status(500).json({ error: "Erro ao processar ação" });
+    }
+  });
+
+  // FASE 3: Endpoints de ações operacionais avançadas
+  
+  // Ação em lote para documentos
+  app.post("/api/documents/batch-action", isAuthenticated, async (req, res) => {
+    try {
+      const user = req.user!;
+      const { documentIds, action, actionData } = req.body;
+      
+      if (!Array.isArray(documentIds) || documentIds.length === 0) {
+        return res.status(400).json({ error: "Lista de documentos é obrigatória" });
+      }
+      
+      const results = [];
+      
+      for (const documentId of documentIds) {
+        try {
+          const document = await storage.getDocument(documentId, user.tenantId);
+          if (!document) continue;
+          
+          let updates = {};
+          let logAction = action.toUpperCase();
+          
+          switch (action) {
+            case "approve":
+              updates = { status: "CLASSIFICADO", reviewedBy: user.id, reviewedAt: new Date() };
+              break;
+            case "reject":
+              updates = { status: "PENDENTE_REVISAO", notes: actionData?.reason || "Rejeitado" };
+              break;
+            case "archive":
+              updates = { status: "ARQUIVADO", archivedBy: user.id, archivedAt: new Date() };
+              break;
+            case "reassign":
+              updates = { assignedTo: actionData?.assignedTo };
+              logAction = "REASSIGN";
+              break;
+          }
+          
+          await storage.updateDocument(documentId, user.tenantId, updates);
+          
+          await storage.createDocumentLog({
+            documentId,
+            action: logAction,
+            status: "SUCCESS",
+            details: { action, actionData },
+            userId: user.id,
+          });
+          
+          results.push({ documentId, success: true });
+        } catch (error) {
+          results.push({ documentId, success: false, error: error.message });
+        }
+      }
+      
+      res.json({ results });
+    } catch (error) {
+      console.error("Batch action error:", error);
+      res.status(500).json({ error: "Erro ao executar ação em lote" });
+    }
+  });
+
+  // Filtros avançados para documentos
+  app.post("/api/documents/advanced-search", isAuthenticated, async (req, res) => {
+    try {
+      const user = req.user!;
+      const { 
+        dateRange, 
+        amountRange, 
+        statuses, 
+        types, 
+        clientIds, 
+        bankIds,
+        hasConflicts,
+        text
+      } = req.body;
+      
+      let documents = await storage.getDocuments(user.tenantId, {});
+      
+      // Aplicar filtros
+      if (dateRange?.start || dateRange?.end) {
+        documents = documents.filter(doc => {
+          const docDate = new Date(doc.createdAt);
+          if (dateRange.start && docDate < new Date(dateRange.start)) return false;
+          if (dateRange.end && docDate > new Date(dateRange.end)) return false;
+          return true;
+        });
+      }
+      
+      if (amountRange?.min || amountRange?.max) {
+        documents = documents.filter(doc => {
+          if (!doc.amount) return false;
+          const amount = parseFloat(doc.amount);
+          if (amountRange.min && amount < amountRange.min) return false;
+          if (amountRange.max && amount > amountRange.max) return false;
+          return true;
+        });
+      }
+      
+      if (statuses && statuses.length > 0) {
+        documents = documents.filter(doc => statuses.includes(doc.status));
+      }
+      
+      if (types && types.length > 0) {
+        documents = documents.filter(doc => types.includes(doc.documentType));
+      }
+      
+      if (clientIds && clientIds.length > 0) {
+        documents = documents.filter(doc => clientIds.includes(doc.clientId));
+      }
+      
+      if (bankIds && bankIds.length > 0) {
+        documents = documents.filter(doc => bankIds.includes(doc.bankId));
+      }
+      
+      if (hasConflicts === true) {
+        documents = documents.filter(doc => 
+          doc.validationData && 
+          JSON.parse(doc.validationData).validationConflicts
+        );
+      }
+      
+      if (text) {
+        const searchText = text.toLowerCase();
+        documents = documents.filter(doc => 
+          doc.originalName.toLowerCase().includes(searchText) ||
+          (doc.notes && doc.notes.toLowerCase().includes(searchText)) ||
+          (doc.extractedText && doc.extractedText.toLowerCase().includes(searchText))
+        );
+      }
+      
+      res.json(documents);
+    } catch (error) {
+      console.error("Advanced search error:", error);
+      res.status(500).json({ error: "Erro na busca avançada" });
     }
   });
 

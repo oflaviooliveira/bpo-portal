@@ -1,0 +1,413 @@
+// FASE 3: Sistema de validações avançadas conforme PRD
+import { z } from "zod";
+
+// Validação de data brasileira DD/MM/AAAA
+export const dateRegex = /^(\d{2})\/(\d{2})\/(\d{4})$/;
+
+export function validateBrazilianDate(dateString: string): boolean {
+  const match = dateString.match(dateRegex);
+  if (!match) return false;
+  
+  const [, day, month, year] = match;
+  const date = new Date(parseInt(year), parseInt(month) - 1, parseInt(day));
+  
+  return date.getDate() == parseInt(day) &&
+         date.getMonth() == parseInt(month) - 1 &&
+         date.getFullYear() == parseInt(year);
+}
+
+// Validação de valores monetários R$ X,XX
+export const currencyRegex = /^R\$?\s?(\d{1,3}(?:\.\d{3})*),(\d{2})$/;
+
+export function validateCurrency(valueString: string): { isValid: boolean; value?: number } {
+  const match = valueString.match(currencyRegex);
+  if (!match) return { isValid: false };
+  
+  const [, integerPart, decimalPart] = match;
+  const cleanInteger = integerPart.replace(/\./g, '');
+  const value = parseFloat(`${cleanInteger}.${decimalPart}`);
+  
+  return { isValid: true, value };
+}
+
+// Validação de CNPJ/CPF
+export function validateDocument(doc: string): { isValid: boolean; type?: 'CPF' | 'CNPJ' } {
+  const cleanDoc = doc.replace(/\D/g, '');
+  
+  if (cleanDoc.length === 11) {
+    return { isValid: validateCPF(cleanDoc), type: 'CPF' };
+  } else if (cleanDoc.length === 14) {
+    return { isValid: validateCNPJ(cleanDoc), type: 'CNPJ' };
+  }
+  
+  return { isValid: false };
+}
+
+function validateCPF(cpf: string): boolean {
+  if (cpf.length !== 11 || /^(\d)\1{10}$/.test(cpf)) return false;
+  
+  let sum = 0;
+  for (let i = 0; i < 9; i++) {
+    sum += parseInt(cpf[i]) * (10 - i);
+  }
+  let remainder = (sum * 10) % 11;
+  if (remainder === 10 || remainder === 11) remainder = 0;
+  if (remainder !== parseInt(cpf[9])) return false;
+  
+  sum = 0;
+  for (let i = 0; i < 10; i++) {
+    sum += parseInt(cpf[i]) * (11 - i);
+  }
+  remainder = (sum * 10) % 11;
+  if (remainder === 10 || remainder === 11) remainder = 0;
+  
+  return remainder === parseInt(cpf[10]);
+}
+
+function validateCNPJ(cnpj: string): boolean {
+  if (cnpj.length !== 14 || /^(\d)\1{13}$/.test(cnpj)) return false;
+  
+  const weights1 = [5, 4, 3, 2, 9, 8, 7, 6, 5, 4, 3, 2];
+  const weights2 = [6, 5, 4, 3, 2, 9, 8, 7, 6, 5, 4, 3, 2];
+  
+  let sum = 0;
+  for (let i = 0; i < 12; i++) {
+    sum += parseInt(cnpj[i]) * weights1[i];
+  }
+  let remainder = sum % 11;
+  const digit1 = remainder < 2 ? 0 : 11 - remainder;
+  if (digit1 !== parseInt(cnpj[12])) return false;
+  
+  sum = 0;
+  for (let i = 0; i < 13; i++) {
+    sum += parseInt(cnpj[i]) * weights2[i];
+  }
+  remainder = sum % 11;
+  const digit2 = remainder < 2 ? 0 : 11 - remainder;
+  
+  return digit2 === parseInt(cnpj[13]);
+}
+
+// Validação de email
+export function validateEmail(email: string): boolean {
+  const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+  return emailRegex.test(email);
+}
+
+// Validação de nome de arquivo conforme PRD
+export function parseFileName(fileName: string): { 
+  isValid: boolean; 
+  parsed?: {
+    date?: string;
+    type?: string;
+    description?: string;
+    category?: string;
+    costCenter?: string;
+    value?: string;
+  };
+  errors?: string[];
+} {
+  const errors: string[] = [];
+  const parsed: any = {};
+  
+  // Remove extensão
+  const nameWithoutExt = fileName.replace(/\.[^/.]+$/, "");
+  
+  // Tenta diferentes formatos de nome de arquivo
+  // Formato pipe: DD.MM.AAAA|TIPO|DESCRIÇÃO|CATEGORIA|CENTRO_CUSTO|VALOR
+  if (nameWithoutExt.includes('|')) {
+    const parts = nameWithoutExt.split('|');
+    
+    if (parts.length >= 3) {
+      const [datePart, typePart, descriptionPart, categoryPart, costCenterPart, valuePart] = parts;
+      
+      // Validar data
+      if (validateBrazilianDate(datePart)) {
+        parsed.date = datePart;
+      } else {
+        errors.push(`Data inválida no nome do arquivo: ${datePart}`);
+      }
+      
+      // Validar tipo
+      const validTypes = ['PAGO', 'AGENDADO', 'EMITIR_BOLETO', 'EMITIR_NF', 'PG', 'AG', 'BL', 'NF'];
+      if (validTypes.includes(typePart.toUpperCase())) {
+        parsed.type = typePart.toUpperCase();
+      } else {
+        errors.push(`Tipo inválido no nome do arquivo: ${typePart}`);
+      }
+      
+      parsed.description = descriptionPart;
+      if (categoryPart) parsed.category = categoryPart;
+      if (costCenterPart) parsed.costCenter = costCenterPart;
+      
+      // Validar valor se presente
+      if (valuePart) {
+        const valueValidation = validateCurrency(valuePart);
+        if (valueValidation.isValid) {
+          parsed.value = valueValidation.value;
+        } else {
+          errors.push(`Valor inválido no nome do arquivo: ${valuePart}`);
+        }
+      }
+    } else {
+      errors.push('Formato de nome de arquivo inválido. Use: DD.MM.AAAA|TIPO|DESCRIÇÃO');
+    }
+  }
+  // Formato underscore: DD_MM_AAAA_TIPO_DESCRIÇÃO
+  else if (nameWithoutExt.includes('_')) {
+    const parts = nameWithoutExt.split('_');
+    
+    if (parts.length >= 3) {
+      const datePart = `${parts[0]}.${parts[1]}.${parts[2]}`;
+      
+      if (validateBrazilianDate(datePart)) {
+        parsed.date = datePart;
+      } else {
+        errors.push(`Data inválida no nome do arquivo: ${datePart}`);
+      }
+      
+      if (parts[3]) {
+        const validTypes = ['PAGO', 'AGENDADO', 'EMITIR_BOLETO', 'EMITIR_NF', 'PG', 'AG', 'BL', 'NF'];
+        if (validTypes.includes(parts[3].toUpperCase())) {
+          parsed.type = parts[3].toUpperCase();
+        } else {
+          errors.push(`Tipo inválido no nome do arquivo: ${parts[3]}`);
+        }
+      }
+      
+      if (parts.slice(4).length > 0) {
+        parsed.description = parts.slice(4).join('_');
+      }
+    } else {
+      errors.push('Formato de nome de arquivo inválido. Use: DD_MM_AAAA_TIPO_DESCRIÇÃO');
+    }
+  }
+  
+  return {
+    isValid: errors.length === 0,
+    parsed: Object.keys(parsed).length > 0 ? parsed : undefined,
+    errors: errors.length > 0 ? errors : undefined
+  };
+}
+
+// Validação cruzada conforme PRD: Nome do arquivo > OCR > escolha do usuário
+export function performCrossValidation(
+  fileNameData: any,
+  ocrData: any,
+  userMetadata: any
+): {
+  isValid: boolean;
+  conflicts: string[];
+  finalData: any;
+  validationLevel: 'HIGH' | 'MEDIUM' | 'LOW';
+} {
+  const conflicts: string[] = [];
+  const finalData: any = { ...userMetadata };
+  
+  // Prioridade 1: Nome do arquivo
+  if (fileNameData?.date && userMetadata.dueDate) {
+    // Converter formato para comparação
+    const fileDate = fileNameData.date.split('.').reverse().join('-');
+    if (fileDate !== userMetadata.dueDate) {
+      conflicts.push(`Data divergente: arquivo indica ${fileNameData.date}, usuário informou ${userMetadata.dueDate}`);
+    }
+    finalData.dueDate = fileDate; // Nome do arquivo tem prioridade
+  }
+  
+  if (fileNameData?.type && userMetadata.documentType) {
+    const typeMapping: { [key: string]: string } = {
+      'PG': 'PAGO',
+      'AG': 'AGENDADO', 
+      'BL': 'EMITIR_BOLETO',
+      'NF': 'EMITIR_NF'
+    };
+    
+    const fileType = typeMapping[fileNameData.type] || fileNameData.type;
+    if (fileType !== userMetadata.documentType) {
+      conflicts.push(`Tipo divergente: arquivo indica ${fileType}, usuário selecionou ${userMetadata.documentType}`);
+    }
+    finalData.documentType = fileType; // Nome do arquivo tem prioridade
+  }
+  
+  if (fileNameData?.value && userMetadata.amount) {
+    const userAmount = parseFloat(userMetadata.amount);
+    if (Math.abs(fileNameData.value - userAmount) > 0.01) {
+      conflicts.push(`Valor divergente: arquivo indica R$ ${fileNameData.value.toFixed(2)}, usuário informou R$ ${userAmount.toFixed(2)}`);
+    }
+    finalData.amount = fileNameData.value.toString(); // Nome do arquivo tem prioridade
+  }
+  
+  // Prioridade 2: Validação com OCR
+  if (ocrData?.extractedAmount && finalData.amount) {
+    const extractedAmount = parseFloat(ocrData.extractedAmount);
+    const finalAmount = parseFloat(finalData.amount);
+    
+    if (Math.abs(extractedAmount - finalAmount) > 0.01) {
+      conflicts.push(`OCR detectou valor R$ ${extractedAmount.toFixed(2)}, mas dados finais indicam R$ ${finalAmount.toFixed(2)}`);
+    }
+  }
+  
+  if (ocrData?.extractedDate && finalData.dueDate) {
+    // Comparar datas extraídas pelo OCR
+    if (ocrData.extractedDate !== finalData.dueDate) {
+      conflicts.push(`OCR detectou data ${ocrData.extractedDate}, mas dados finais indicam ${finalData.dueDate}`);
+    }
+  }
+  
+  // Determinar nível de validação
+  let validationLevel: 'HIGH' | 'MEDIUM' | 'LOW' = 'HIGH';
+  
+  if (conflicts.length === 0) {
+    validationLevel = 'HIGH';
+  } else if (conflicts.length <= 2 && !conflicts.some(c => c.includes('Valor divergente'))) {
+    validationLevel = 'MEDIUM';
+  } else {
+    validationLevel = 'LOW';
+  }
+  
+  return {
+    isValid: conflicts.length === 0,
+    conflicts,
+    finalData,
+    validationLevel
+  };
+}
+
+// Schema de validação para diferentes tipos de documento - FASE 3
+export const documentValidationSchemas = {
+  PAGO: z.object({
+    clientId: z.string().uuid(),
+    bankId: z.string().uuid(),
+    categoryId: z.string().uuid(),
+    amount: z.string().refine(val => {
+      const parsed = parseFloat(val);
+      return !isNaN(parsed) && parsed > 0;
+    }, "Valor deve ser um número positivo"),
+    paymentDate: z.string().refine(val => {
+      const date = new Date(val);
+      return !isNaN(date.getTime());
+    }, "Data de pagamento inválida"),
+    supplier: z.string().min(1, "Fornecedor é obrigatório"),
+    costCenterId: z.string().uuid().optional(),
+    notes: z.string().optional(),
+  }),
+  
+  AGENDADO: z.object({
+    clientId: z.string().uuid(),
+    bankId: z.string().uuid(),
+    amount: z.string().refine(val => {
+      const parsed = parseFloat(val);
+      return !isNaN(parsed) && parsed > 0;
+    }, "Valor deve ser um número positivo"),
+    dueDate: z.string().refine(val => {
+      const date = new Date(val);
+      return !isNaN(date.getTime()) && date >= new Date();
+    }, "Data de vencimento deve ser futura"),
+    beneficiary: z.string().min(1, "Favorecido é obrigatório"),
+    bankCode: z.string().optional(),
+    instructions: z.string().optional(),
+    costCenterId: z.string().uuid().optional(),
+    notes: z.string().optional(),
+  }),
+  
+  EMITIR_BOLETO: z.object({
+    clientId: z.string().uuid(),
+    amount: z.string().refine(val => {
+      const parsed = parseFloat(val);
+      return !isNaN(parsed) && parsed > 0;
+    }, "Valor deve ser um número positivo"),
+    dueDate: z.string().refine(val => {
+      const date = new Date(val);
+      return !isNaN(date.getTime()) && date >= new Date();
+    }, "Data de vencimento deve ser futura"),
+    payerDocument: z.string().refine(val => {
+      return validateDocument(val).isValid;
+    }, "CNPJ/CPF inválido"),
+    payerName: z.string().min(1, "Nome do tomador é obrigatório"),
+    payerAddress: z.string().min(10, "Endereço deve ser completo"),
+    payerEmail: z.string().email("Email inválido"),
+    instructions: z.string().optional(),
+    notes: z.string().optional(),
+  }),
+  
+  EMITIR_NF: z.object({
+    clientId: z.string().uuid(),
+    amount: z.string().refine(val => {
+      const parsed = parseFloat(val);
+      return !isNaN(parsed) && parsed > 0;
+    }, "Valor deve ser um número positivo"),
+    serviceCode: z.string().min(1, "Código de serviço é obrigatório"),
+    serviceDescription: z.string().min(10, "Descrição do serviço deve ser detalhada"),
+    payerDocument: z.string().refine(val => {
+      return validateDocument(val).isValid;
+    }, "CNPJ/CPF inválido"),
+    payerName: z.string().min(1, "Nome do tomador é obrigatório"),
+    payerAddress: z.string().min(10, "Endereço deve ser completo"),
+    payerEmail: z.string().email("Email inválido"),
+    notes: z.string().optional(),
+  }),
+};
+
+// Validação de negócio conforme PRD
+export function validateBusinessRules(documentType: string, data: any, existingData?: any): {
+  isValid: boolean;
+  errors: string[];
+  warnings: string[];
+} {
+  const errors: string[] = [];
+  const warnings: string[] = [];
+  
+  // Regra: Valores devem ser consistentes
+  if (data.amount) {
+    const amount = parseFloat(data.amount);
+    if (amount <= 0) {
+      errors.push("Valor deve ser maior que zero");
+    }
+    if (amount > 1000000) {
+      warnings.push("Valor muito alto, confirme se está correto");
+    }
+  }
+  
+  // Regra: Datas não podem ser muito antigas (exceto para pagamentos já realizados)
+  if (data.dueDate && documentType !== 'PAGO') {
+    const dueDate = new Date(data.dueDate);
+    const today = new Date();
+    const diffDays = (dueDate.getTime() - today.getTime()) / (1000 * 3600 * 24);
+    
+    if (diffDays < -30) {
+      errors.push("Data de vencimento não pode ser anterior a 30 dias");
+    }
+    if (diffDays > 365) {
+      warnings.push("Data de vencimento muito distante");
+    }
+  }
+  
+  // Regra: Para pagamentos, data não pode ser futura
+  if (data.paymentDate && documentType === 'PAGO') {
+    const paymentDate = new Date(data.paymentDate);
+    const today = new Date();
+    
+    if (paymentDate > today) {
+      errors.push("Data de pagamento não pode ser futura");
+    }
+  }
+  
+  // Regra: Documentos duplicados
+  if (existingData && existingData.length > 0) {
+    const duplicates = existingData.filter((doc: any) => 
+      doc.amount === data.amount && 
+      doc.documentType === documentType &&
+      doc.status !== 'ARQUIVADO'
+    );
+    
+    if (duplicates.length > 0) {
+      warnings.push(`Possível documento duplicado encontrado`);
+    }
+  }
+  
+  return {
+    isValid: errors.length === 0,
+    errors,
+    warnings
+  };
+}
