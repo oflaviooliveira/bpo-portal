@@ -183,7 +183,15 @@ export async function registerRoutes(app: Express): Promise<Server> {
   app.get("/api/documents/:id", isAuthenticated, async (req, res) => {
     try {
       const user = req.user!;
-      const document = await storage.getDocument(req.params.id, user.tenantId);
+      const documentId = req.params.id;
+      
+      // Validate UUID format
+      const uuidRegex = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
+      if (!uuidRegex.test(documentId)) {
+        return res.status(400).json({ error: "ID de documento inválido" });
+      }
+      
+      const document = await storage.getDocument(documentId, user.tenantId);
       
       if (!document) {
         return res.status(404).json({ error: "Documento não encontrado" });
