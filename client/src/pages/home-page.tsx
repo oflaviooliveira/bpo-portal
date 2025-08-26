@@ -6,6 +6,8 @@ import { Inbox } from "@/components/documents/inbox";
 import { Upload } from "@/components/documents/upload";
 import { Scheduled } from "@/components/documents/scheduled";
 import { Reconciliation } from "@/components/documents/reconciliation";
+import { Emission } from "@/components/documents/emission";
+import { Archived } from "@/components/documents/archived";
 
 type Section = 'dashboard' | 'inbox' | 'upload' | 'scheduled' | 'reconciliation' | 'emission' | 'archived' | 'clients' | 'users';
 
@@ -25,19 +27,9 @@ export default function HomePage() {
       case 'reconciliation':
         return <Reconciliation />;
       case 'emission':
-        return (
-          <div className="p-6">
-            <h2 className="font-gilroy font-bold text-2xl text-foreground mb-4">Emissão</h2>
-            <p className="text-muted-foreground">Funcionalidade em desenvolvimento</p>
-          </div>
-        );
+        return <Emission />;
       case 'archived':
-        return (
-          <div className="p-6">
-            <h2 className="font-gilroy font-bold text-2xl text-foreground mb-4">Arquivados</h2>
-            <p className="text-muted-foreground">Funcionalidade em desenvolvimento</p>
-          </div>
-        );
+        return <Archived />;
       case 'clients':
         return (
           <div className="p-6">

@@ -86,11 +86,15 @@ export const documents = pgTable("documents", {
   mimeType: varchar("mime_type", { length: 100 }).notNull(),
   filePath: text("file_path").notNull(),
   
-  // Business data
-  documentType: varchar("document_type", { length: 50 }).notNull(), // PAGO, AGENDADO, BOLETO, NF
+  // Business data - Tipos conforme PRD
+  documentType: varchar("document_type", { length: 50 }).notNull(), // PAGO, AGENDADO, EMITIR_BOLETO, EMITIR_NF
   amount: decimal("amount", { precision: 15, scale: 2 }),
   dueDate: timestamp("due_date"),
   paidDate: timestamp("paid_date"),
+  
+  // Campos específicos para emissão de boletos/NF
+  issuerData: jsonb("issuer_data"), // Dados do tomador para boletos/NF
+  instructions: text("instructions"), // Instruções específicas
   
   // Processing status - Estados conforme PRD  
   status: varchar("status", { length: 50 }).notNull().default("RECEBIDO"), // RECEBIDO, VALIDANDO, PENDENTE_REVISAO, CLASSIFICADO, PAGO_A_CONCILIAR, AGENDADO, A_PAGAR_HOJE, AGUARDANDO_RECEBIMENTO, EM_CONCILIACAO, ARQUIVADO

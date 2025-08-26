@@ -378,11 +378,11 @@ export function Upload() {
                     <Label htmlFor="agendado" className="cursor-pointer">Agendado</Label>
                   </div>
                   <div className="flex items-center space-x-2">
-                    <RadioGroupItem value="BOLETO" id="boleto" />
+                    <RadioGroupItem value="EMITIR_BOLETO" id="boleto" />
                     <Label htmlFor="boleto" className="cursor-pointer">Emitir Boleto</Label>
                   </div>
                   <div className="flex items-center space-x-2">
-                    <RadioGroupItem value="NF" id="nf" />
+                    <RadioGroupItem value="EMITIR_NF" id="nf" />
                     <Label htmlFor="nf" className="cursor-pointer">Emitir NF</Label>
                   </div>
                 </RadioGroup>

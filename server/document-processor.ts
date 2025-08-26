@@ -383,9 +383,9 @@ Seja preciso e conservador na extração. Se não tiver certeza, marque como nul
         return "PAGO_A_CONCILIAR";
       case "AGENDADO":
         return "AGENDADO";
-      case "BOLETO":
+      case "EMITIR_BOLETO":
         return "AGUARDANDO_RECEBIMENTO"; // Boleto aguarda pagamento
-      case "NF":
+      case "EMITIR_NF":
         return "AGUARDANDO_RECEBIMENTO"; // NF aguarda recebimento
       default:
         return "CLASSIFICADO";

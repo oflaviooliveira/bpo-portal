@@ -498,6 +498,35 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
+  // Emission documents endpoints
+  app.get("/api/documents/emission/boletos", isAuthenticated, async (req, res) => {
+    try {
+      const user = req.user!;
+      const documents = await storage.getDocuments(user.tenantId, { 
+        documentType: "EMITIR_BOLETO",
+        status: ["AGUARDANDO_RECEBIMENTO", "EM_CONCILIACAO"]
+      });
+      res.json(documents);
+    } catch (error) {
+      console.error("Boletos emission error:", error);
+      res.status(500).json({ error: "Erro ao carregar boletos para emissão" });
+    }
+  });
+
+  app.get("/api/documents/emission/nf", isAuthenticated, async (req, res) => {
+    try {
+      const user = req.user!;
+      const documents = await storage.getDocuments(user.tenantId, { 
+        documentType: "EMITIR_NF",
+        status: ["AGUARDANDO_RECEBIMENTO", "EM_CONCILIACAO"]
+      });
+      res.json(documents);
+    } catch (error) {
+      console.error("NF emission error:", error);
+      res.status(500).json({ error: "Erro ao carregar NFs para emissão" });
+    }
+  });
+
   // Async document processing function using comprehensive processor
   async function processDocumentAsync(documentId: string, tenantId: string) {
     try {
