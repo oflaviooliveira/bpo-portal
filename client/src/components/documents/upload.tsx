@@ -55,6 +55,12 @@ export function Upload() {
   const { data: categories } = useQuery({ queryKey: ["/api/categories"] });
   const { data: costCenters } = useQuery({ queryKey: ["/api/cost-centers"] });
 
+  // Default to empty arrays if data is undefined
+  const clientList = Array.isArray(clients) ? clients : [];
+  const bankList = Array.isArray(banks) ? banks : [];
+  const categoryList = Array.isArray(categories) ? categories : [];
+  const costCenterList = Array.isArray(costCenters) ? costCenters : [];
+
   const uploadMutation = useMutation({
     mutationFn: async (data: UploadFormData & { file: File }) => {
       const formData = new FormData();
@@ -259,7 +265,7 @@ export function Upload() {
                       <SelectValue placeholder="Selecione o cliente" />
                     </SelectTrigger>
                     <SelectContent>
-                      {clients?.map((client: any) => (
+                      {clientList.map((client: any) => (
                         <SelectItem key={client.id} value={client.id}>
                           {client.name}
                         </SelectItem>
@@ -282,7 +288,7 @@ export function Upload() {
                       <SelectValue placeholder="Selecione o banco" />
                     </SelectTrigger>
                     <SelectContent>
-                      {banks?.map((bank: any) => (
+                      {bankList.map((bank: any) => (
                         <SelectItem key={bank.id} value={bank.id}>
                           {bank.name}
                         </SelectItem>
@@ -302,7 +308,7 @@ export function Upload() {
                       <SelectValue placeholder="Selecione a categoria" />
                     </SelectTrigger>
                     <SelectContent>
-                      {categories?.map((category: any) => (
+                      {categoryList.map((category: any) => (
                         <SelectItem key={category.id} value={category.id}>
                           {category.name}
                         </SelectItem>
@@ -322,7 +328,7 @@ export function Upload() {
                       <SelectValue placeholder="Selecione o centro de custo" />
                     </SelectTrigger>
                     <SelectContent>
-                      {costCenters?.map((costCenter: any) => (
+                      {costCenterList.map((costCenter: any) => (
                         <SelectItem key={costCenter.id} value={costCenter.id}>
                           {costCenter.name}
                         </SelectItem>

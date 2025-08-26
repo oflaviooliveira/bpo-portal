@@ -222,6 +222,217 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
+  // Categories routes
+  app.get("/api/categories", isAuthenticated, async (req, res) => {
+    try {
+      const user = req.user!;
+      const categories = await storage.getCategories(user.tenantId);
+      res.json(categories);
+    } catch (error) {
+      console.error("Get categories error:", error);
+      res.status(500).json({ error: "Erro ao carregar categorias" });
+    }
+  });
+
+  app.post("/api/categories", isAuthenticated, async (req, res) => {
+    try {
+      const user = req.user!;
+      const categoryData = { ...req.body, tenantId: user.tenantId };
+      const category = await storage.createCategory(categoryData);
+      res.status(201).json(category);
+    } catch (error) {
+      console.error("Create category error:", error);
+      res.status(500).json({ error: "Erro ao criar categoria" });
+    }
+  });
+
+  app.patch("/api/categories/:id", isAuthenticated, async (req, res) => {
+    try {
+      const user = req.user!;
+      const category = await storage.updateCategory(req.params.id, user.tenantId, req.body);
+      res.json(category);
+    } catch (error) {
+      console.error("Update category error:", error);
+      res.status(500).json({ error: "Erro ao atualizar categoria" });
+    }
+  });
+
+  app.delete("/api/categories/:id", isAuthenticated, async (req, res) => {
+    try {
+      const user = req.user!;
+      await storage.deleteCategory(req.params.id, user.tenantId);
+      res.status(204).send();
+    } catch (error) {
+      console.error("Delete category error:", error);
+      res.status(500).json({ error: "Erro ao excluir categoria" });
+    }
+  });
+
+  // Cost Centers routes
+  app.get("/api/cost-centers", isAuthenticated, async (req, res) => {
+    try {
+      const user = req.user!;
+      const costCenters = await storage.getCostCenters(user.tenantId);
+      res.json(costCenters);
+    } catch (error) {
+      console.error("Get cost centers error:", error);
+      res.status(500).json({ error: "Erro ao carregar centros de custo" });
+    }
+  });
+
+  app.post("/api/cost-centers", isAuthenticated, async (req, res) => {
+    try {
+      const user = req.user!;
+      const costCenterData = { ...req.body, tenantId: user.tenantId };
+      const costCenter = await storage.createCostCenter(costCenterData);
+      res.status(201).json(costCenter);
+    } catch (error) {
+      console.error("Create cost center error:", error);
+      res.status(500).json({ error: "Erro ao criar centro de custo" });
+    }
+  });
+
+  app.patch("/api/cost-centers/:id", isAuthenticated, async (req, res) => {
+    try {
+      const user = req.user!;
+      const costCenter = await storage.updateCostCenter(req.params.id, user.tenantId, req.body);
+      res.json(costCenter);
+    } catch (error) {
+      console.error("Update cost center error:", error);
+      res.status(500).json({ error: "Erro ao atualizar centro de custo" });
+    }
+  });
+
+  app.delete("/api/cost-centers/:id", isAuthenticated, async (req, res) => {
+    try {
+      const user = req.user!;
+      await storage.deleteCostCenter(req.params.id, user.tenantId);
+      res.status(204).send();
+    } catch (error) {
+      console.error("Delete cost center error:", error);
+      res.status(500).json({ error: "Erro ao excluir centro de custo" });
+    }
+  });
+
+  // Export routes - Exportação em lote conforme PRD
+  app.get("/api/documents/export", isAuthenticated, async (req, res) => {
+    try {
+      const user = req.user!;
+      const { format = "csv", status, clientId, bankId, startDate, endDate } = req.query;
+
+      const filters: any = {};
+      if (status) filters.status = status;
+      if (clientId) filters.clientId = clientId;
+      if (bankId) filters.bankId = bankId;
+
+      const documents = await storage.getDocuments(user.tenantId, filters);
+
+      if (format === "csv") {
+        // Generate CSV export
+        const csvData = documents.map(doc => ({
+          id: doc.id,
+          fileName: doc.originalName,
+          status: doc.status,
+          documentType: doc.documentType,
+          amount: doc.amount || "0",
+          dueDate: doc.dueDate || "",
+          createdAt: doc.createdAt,
+          ocrConfidence: doc.ocrConfidence || "0",
+          aiProvider: doc.aiProvider || "",
+        }));
+
+        res.setHeader("Content-Type", "text/csv");
+        res.setHeader("Content-Disposition", `attachment; filename="documentos-${Date.now()}.csv"`);
+        
+        const csvHeader = "ID,Nome do Arquivo,Status,Tipo,Valor,Vencimento,Data de Criação,Confiança OCR,Provider IA\n";
+        const csvRows = csvData.map(row => 
+          Object.values(row).map(val => `"${val}"`).join(",")
+        ).join("\n");
+        
+        res.send(csvHeader + csvRows);
+      } else {
+        // Return JSON for ZIP processing on client
+        res.json({ documents, count: documents.length });
+      }
+
+    } catch (error) {
+      console.error("Export error:", error);
+      res.status(500).json({ error: "Erro na exportação" });
+    }
+  });
+
+  // Document filters for operational panels
+  app.get("/api/documents/inbox", isAuthenticated, async (req, res) => {
+    try {
+      const user = req.user!;
+      const documents = await storage.getDocuments(user.tenantId, { 
+        status: ["RECEBIDO", "VALIDANDO", "PENDENTE_REVISAO"] 
+      });
+      res.json(documents);
+    } catch (error) {
+      console.error("Inbox error:", error);
+      res.status(500).json({ error: "Erro ao carregar inbox" });
+    }
+  });
+
+  app.get("/api/documents/scheduled", isAuthenticated, async (req, res) => {
+    try {
+      const user = req.user!;
+      const { filter = "all" } = req.query;
+      
+      let statusFilter = ["AGENDADO", "A_PAGAR_HOJE"];
+      const documents = await storage.getDocuments(user.tenantId, { status: statusFilter });
+      
+      // Filter by date
+      const today = new Date();
+      const filtered = documents.filter(doc => {
+        if (!doc.dueDate) return false;
+        const dueDate = new Date(doc.dueDate);
+        
+        switch (filter) {
+          case "today":
+            return dueDate.toDateString() === today.toDateString();
+          case "week":
+            const weekFromNow = new Date(today.getTime() + 7 * 24 * 60 * 60 * 1000);
+            return dueDate >= today && dueDate <= weekFromNow;
+          case "overdue":
+            return dueDate < today;
+          default:
+            return true;
+        }
+      });
+
+      res.json(filtered);
+    } catch (error) {
+      console.error("Scheduled error:", error);
+      res.status(500).json({ error: "Erro ao carregar agendados" });
+    }
+  });
+
+  app.get("/api/documents/reconciliation", isAuthenticated, async (req, res) => {
+    try {
+      const user = req.user!;
+      const documents = await storage.getDocuments(user.tenantId, { 
+        status: ["PAGO_A_CONCILIAR", "EM_CONCILIACAO"] 
+      });
+      res.json(documents);
+    } catch (error) {
+      console.error("Reconciliation error:", error);
+      res.status(500).json({ error: "Erro ao carregar conciliação" });
+    }
+  });
+
+  app.get("/api/documents/archived", isAuthenticated, async (req, res) => {
+    try {
+      const user = req.user!;
+      const documents = await storage.getDocuments(user.tenantId, { status: "ARQUIVADO" });
+      res.json(documents);
+    } catch (error) {
+      console.error("Archived error:", error);
+      res.status(500).json({ error: "Erro ao carregar arquivados" });
+    }
+  });
+
   // Async document processing function
   async function processDocumentAsync(documentId: string, tenantId: string) {
     try {

@@ -70,7 +70,7 @@ export const costCenters = pgTable("cost_centers", {
   createdAt: timestamp("created_at").defaultNow(),
 });
 
-// Documents table - main entity
+// Documents table - main entity  
 export const documents = pgTable("documents", {
   id: uuid("id").primaryKey().default(sql`gen_random_uuid()`),
   tenantId: uuid("tenant_id").notNull(),
@@ -92,8 +92,8 @@ export const documents = pgTable("documents", {
   dueDate: timestamp("due_date"),
   paidDate: timestamp("paid_date"),
   
-  // Processing status
-  status: varchar("status", { length: 50 }).notNull().default("RECEBIDO"), // RECEBIDO, VALIDANDO, PENDENTE_REVISAO, CLASSIFICADO, ARQUIVADO
+  // Processing status - Estados conforme PRD
+  status: varchar("status", { length: 50 }).notNull().default("RECEBIDO"), // RECEBIDO, VALIDANDO, PENDENTE_REVISAO, PAGO_A_CONCILIAR, AGENDADO, A_PAGAR_HOJE, EM_CONCILIACAO, ARQUIVADO
   
   // OCR and AI results
   ocrText: text("ocr_text"),
@@ -221,6 +221,18 @@ export const insertClientSchema = createInsertSchema(clients).pick({
   phone: true,
 });
 
+export const insertCategorySchema = createInsertSchema(categories).pick({
+  tenantId: true,
+  name: true,
+  description: true,
+});
+
+export const insertCostCenterSchema = createInsertSchema(costCenters).pick({
+  tenantId: true,
+  name: true,
+  description: true,
+});
+
 export const insertDocumentSchema = createInsertSchema(documents).pick({
   tenantId: true,
   clientId: true,
@@ -239,6 +251,14 @@ export const insertDocumentSchema = createInsertSchema(documents).pick({
   createdBy: true,
 });
 
+export const insertDocumentLogSchema = createInsertSchema(documentLogs).pick({
+  documentId: true,
+  action: true,
+  status: true,
+  details: true,
+  userId: true,
+});
+
 // Types
 export type InsertUser = z.infer<typeof insertUserSchema>;
 export type User = typeof users.$inferSelect;
@@ -249,8 +269,13 @@ export type Tenant = typeof tenants.$inferSelect;
 export type InsertClient = z.infer<typeof insertClientSchema>;
 export type Client = typeof clients.$inferSelect;
 
+export type InsertCategory = z.infer<typeof insertCategorySchema>;
+export type InsertCostCenter = z.infer<typeof insertCostCenterSchema>;
+
 export type InsertDocument = z.infer<typeof insertDocumentSchema>;
 export type Document = typeof documents.$inferSelect;
+
+export type InsertDocumentLog = z.infer<typeof insertDocumentLogSchema>;
 
 export type Bank = typeof banks.$inferSelect;
 export type Category = typeof categories.$inferSelect;

@@ -2,7 +2,8 @@ import {
   users, clients, tenants, banks, categories, costCenters, documents, documentLogs,
   type User, type InsertUser, type Tenant, type InsertTenant, 
   type Client, type InsertClient, type Document, type InsertDocument,
-  type Bank, type Category, type CostCenter, type DocumentLog 
+  type Bank, type Category, type CostCenter, type DocumentLog,
+  type InsertCategory, type InsertCostCenter
 } from "@shared/schema";
 import { db } from "./db";
 import { eq, and, desc, count, sum, avg } from "drizzle-orm";
@@ -37,10 +38,16 @@ export interface IStorage {
   // Categories
   getCategories(tenantId: string): Promise<Category[]>;
   getCategory(id: string, tenantId: string): Promise<Category | undefined>;
+  createCategory(category: InsertCategory): Promise<Category>;
+  updateCategory(id: string, tenantId: string, updates: Partial<Category>): Promise<Category>;
+  deleteCategory(id: string, tenantId: string): Promise<void>;
   
   // Cost Centers
   getCostCenters(tenantId: string): Promise<CostCenter[]>;
   getCostCenter(id: string, tenantId: string): Promise<CostCenter | undefined>;
+  createCostCenter(costCenter: InsertCostCenter): Promise<CostCenter>;
+  updateCostCenter(id: string, tenantId: string, updates: Partial<CostCenter>): Promise<CostCenter>;
+  deleteCostCenter(id: string, tenantId: string): Promise<void>;
   
   // Documents
   getDocuments(tenantId: string, filters?: any): Promise<Document[]>;
@@ -180,6 +187,44 @@ export class DatabaseStorage implements IStorage {
       .from(costCenters)
       .where(and(eq(costCenters.id, id), eq(costCenters.tenantId, tenantId)));
     return costCenter || undefined;
+  }
+
+  async createCategory(category: InsertCategory): Promise<Category> {
+    const [newCategory] = await db.insert(categories).values(category).returning();
+    return newCategory;
+  }
+
+  async updateCategory(id: string, tenantId: string, updates: Partial<Category>): Promise<Category> {
+    const [updated] = await db.update(categories)
+      .set(updates)
+      .where(and(eq(categories.id, id), eq(categories.tenantId, tenantId)))
+      .returning();
+    return updated;
+  }
+
+  async deleteCategory(id: string, tenantId: string): Promise<void> {
+    await db.update(categories)
+      .set({ isActive: false })
+      .where(and(eq(categories.id, id), eq(categories.tenantId, tenantId)));
+  }
+
+  async createCostCenter(costCenter: InsertCostCenter): Promise<CostCenter> {
+    const [newCostCenter] = await db.insert(costCenters).values(costCenter).returning();
+    return newCostCenter;
+  }
+
+  async updateCostCenter(id: string, tenantId: string, updates: Partial<CostCenter>): Promise<CostCenter> {
+    const [updated] = await db.update(costCenters)
+      .set(updates)
+      .where(and(eq(costCenters.id, id), eq(costCenters.tenantId, tenantId)))
+      .returning();
+    return updated;
+  }
+
+  async deleteCostCenter(id: string, tenantId: string): Promise<void> {
+    await db.update(costCenters)
+      .set({ isActive: false })
+      .where(and(eq(costCenters.id, id), eq(costCenters.tenantId, tenantId)));
   }
 
   async getDocuments(tenantId: string, filters: any = {}): Promise<Document[]> {
