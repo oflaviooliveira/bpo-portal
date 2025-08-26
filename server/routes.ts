@@ -163,11 +163,15 @@ export async function registerRoutes(app: Express): Promise<Server> {
         userId: user.id,
       });
 
-      // Process document asynchronously using new processor
-      processDocumentAsync(document.id, user.tenantId);
+      console.log(`🚀 Iniciando processamento automático para ${document.originalName}`);
+
+      // Process document asynchronously using new processor - FASE 1 IMPLEMENTADA
+      processDocumentAsync(document.id, user.tenantId).catch(error => {
+        console.error(`Erro no processamento do documento ${document.id}:`, error);
+      });
 
       res.json({ 
-        message: "Documento enviado com sucesso",
+        message: "Documento enviado com sucesso. Processamento OCR + IA iniciado automaticamente.",
         documentId: document.id,
       });
     } catch (error) {
@@ -532,6 +536,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
   // Async document processing function using comprehensive processor
   async function processDocumentAsync(documentId: string, tenantId: string) {
     try {
+      const documentProcessor = new DocumentProcessor();
       const result = await documentProcessor.processDocument(documentId, tenantId);
       console.log(`Document ${documentId} processing completed:`, result.status);
     } catch (error) {
@@ -546,7 +551,9 @@ export async function registerRoutes(app: Express): Promise<Server> {
       const { action, dueDate, notes } = req.body;
       const user = req.user!;
 
-      if (!isValidUUID(id)) {
+      // Validate UUID format
+      const uuidRegex = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
+      if (!uuidRegex.test(id)) {
         return res.status(400).json({ error: "ID de documento inválido" });
       }
 

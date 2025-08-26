@@ -72,6 +72,18 @@ export interface IStorage {
     details?: any;
     userId?: string;
   }): Promise<DocumentLog>;
+  
+  // Tasks
+  createTask(taskData: {
+    documentId: string;
+    tenantId: string;
+    type: string;
+    status: string;
+    priority: string;
+    title: string;
+    description: string;
+    payload?: any;
+  }): Promise<void>;
 }
 
 export class DatabaseStorage implements IStorage {
@@ -347,9 +359,31 @@ export class DatabaseStorage implements IStorage {
   }): Promise<DocumentLog> {
     const [documentLog] = await db
       .insert(documentLogs)
-      .values(log)
+      .values({
+        ...log,
+        details: log.details ? JSON.stringify(log.details) : null,
+      })
       .returning();
     return documentLog;
+  }
+
+  async createTask(taskData: {
+    documentId: string;
+    tenantId: string;
+    type: string;
+    status: string;
+    priority: string;
+    title: string;
+    description: string;
+    payload?: any;
+  }): Promise<void> {
+    // For now, just log the task creation since tasks table needs to be imported
+    console.log(`📋 Criando tarefa: ${taskData.type} para documento ${taskData.documentId}`);
+    console.log(`   Título: ${taskData.title}`);
+    console.log(`   Prioridade: ${taskData.priority}`);
+    
+    // TODO: Implementar inserção real na tabela tasks quando schema for atualizado
+    return Promise.resolve();
   }
 }
 
