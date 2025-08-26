@@ -11,8 +11,37 @@ import { Textarea } from "@/components/ui/textarea";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
 import { useToast } from "@/hooks/use-toast";
-import { CloudUpload, X, Upload as UploadIcon } from "lucide-react";
+import { CloudUpload, X, Upload as UploadIcon, AlertTriangle } from "lucide-react";
 import { apiRequest } from "@/lib/queryClient";
+import { Alert, AlertDescription } from "@/components/ui/alert";
+
+// Validações conforme PRD - formatos DD/MM/AAAA e R$ X,XX
+const dateRegex = /^(0[1-9]|[12][0-9]|3[01])\/(0[1-9]|1[0-2])\/\d{4}$/;
+const moneyRegex = /^R\$\s?\d{1,3}(?:\.\d{3})*,\d{2}$/;
+
+// Helper para validar datas no formato DD/MM/AAAA
+const validateDate = (dateStr: string) => {
+  if (!dateRegex.test(dateStr)) return false;
+  const [day, month, year] = dateStr.split('/').map(Number);
+  const date = new Date(year, month - 1, day);
+  return date.getDate() === day && date.getMonth() === month - 1 && date.getFullYear() === year;
+};
+
+// Helper para formatar valores em R$ X,XX
+const formatCurrency = (value: string) => {
+  const numbers = value.replace(/\D/g, '');
+  if (!numbers) return '';
+  const amount = parseInt(numbers) / 100;
+  return `R$ ${amount.toLocaleString('pt-BR', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`;
+};
+
+// Helper para formatar data DD/MM/AAAA
+const formatDate = (value: string) => {
+  const numbers = value.replace(/\D/g, '');
+  if (numbers.length <= 2) return numbers;
+  if (numbers.length <= 4) return `${numbers.slice(0, 2)}/${numbers.slice(2)}`;
+  return `${numbers.slice(0, 2)}/${numbers.slice(2, 4)}/${numbers.slice(4, 8)}`;
+};
 
 // FASE 2: Formulários dinâmicos por tipo de documento conforme PRD
 const baseUploadSchema = z.object({
@@ -26,8 +55,12 @@ const pagoSchema = baseUploadSchema.extend({
   documentType: z.literal("PAGO"),
   bankId: z.string().min(1, "Banco é obrigatório para pagamentos"),
   categoryId: z.string().min(1, "Categoria é obrigatória"),
-  amount: z.string().min(1, "Valor é obrigatório"),
-  paymentDate: z.string().min(1, "Data de pagamento é obrigatória"),
+  amount: z.string()
+    .min(1, "Valor é obrigatório")
+    .refine((val) => moneyRegex.test(val), "Valor deve estar no formato R$ X,XX"),
+  paymentDate: z.string()
+    .min(1, "Data de pagamento é obrigatória")
+    .refine((val) => validateDate(val), "Data deve estar no formato DD/MM/AAAA"),
   supplier: z.string().min(1, "Fornecedor/Descrição é obrigatório"),
   costCenterId: z.string().optional(),
   notes: z.string().optional(),
@@ -36,8 +69,12 @@ const pagoSchema = baseUploadSchema.extend({
 const agendadoSchema = baseUploadSchema.extend({
   documentType: z.literal("AGENDADO"),
   bankId: z.string().min(1, "Banco é obrigatório para agendamentos"),
-  amount: z.string().min(1, "Valor é obrigatório"),
-  dueDate: z.string().min(1, "Data de vencimento é obrigatória"),
+  amount: z.string()
+    .min(1, "Valor é obrigatório")
+    .refine((val) => moneyRegex.test(val), "Valor deve estar no formato R$ X,XX"),
+  dueDate: z.string()
+    .min(1, "Data de vencimento é obrigatória")
+    .refine((val) => validateDate(val), "Data deve estar no formato DD/MM/AAAA"),
   beneficiary: z.string().min(1, "Favorecido é obrigatório"),
   bankCode: z.string().optional(),
   instructions: z.string().optional(),
@@ -47,8 +84,12 @@ const agendadoSchema = baseUploadSchema.extend({
 
 const boletoSchema = baseUploadSchema.extend({
   documentType: z.literal("EMITIR_BOLETO"),
-  amount: z.string().min(1, "Valor é obrigatório"),
-  dueDate: z.string().min(1, "Data de vencimento é obrigatória"),
+  amount: z.string()
+    .min(1, "Valor é obrigatório")
+    .refine((val) => moneyRegex.test(val), "Valor deve estar no formato R$ X,XX"),
+  dueDate: z.string()
+    .min(1, "Data de vencimento é obrigatória")
+    .refine((val) => validateDate(val), "Data deve estar no formato DD/MM/AAAA"),
   payerDocument: z.string().min(1, "CNPJ/CPF do tomador é obrigatório"),
   payerName: z.string().min(1, "Nome do tomador é obrigatório"),
   payerAddress: z.string().min(1, "Endereço é obrigatório"),
@@ -59,7 +100,9 @@ const boletoSchema = baseUploadSchema.extend({
 
 const nfSchema = baseUploadSchema.extend({
   documentType: z.literal("EMITIR_NF"),
-  amount: z.string().min(1, "Valor é obrigatório"),
+  amount: z.string()
+    .min(1, "Valor é obrigatório")
+    .refine((val) => moneyRegex.test(val), "Valor deve estar no formato R$ X,XX"),
   serviceCode: z.string().min(1, "Código de serviço é obrigatório"),
   serviceDescription: z.string().min(1, "Descrição do serviço é obrigatória"),
   payerDocument: z.string().min(1, "CNPJ/CPF do tomador é obrigatório"),
@@ -78,10 +121,26 @@ const uploadSchema = z.discriminatedUnion("documentType", [
 
 type UploadFormData = z.infer<typeof uploadSchema>;
 
+// Função para validar nome do arquivo conforme PRD (pipe, underscore, híbrido)
+const validateFileName = (fileName: string) => {
+  // Remove extensão para análise
+  const nameWithoutExt = fileName.replace(/\.(pdf|jpg|jpeg|png)$/i, '');
+  
+  // Formatos aceitos: pipe (|), underscore (_), híbrido
+  const pipeFormat = /.*\|.*\|.*\|.*/;
+  const underscoreFormat = /.*_.*_.*_.*/;
+  const hybridFormat = /.*[|_].*[|_].*[|_].*/;
+  
+  return pipeFormat.test(nameWithoutExt) || 
+         underscoreFormat.test(nameWithoutExt) || 
+         hybridFormat.test(nameWithoutExt);
+};
+
 export function Upload() {
   const [selectedFile, setSelectedFile] = useState<File | null>(null);
   const [isDragOver, setIsDragOver] = useState(false);
   const [selectedDocumentType, setSelectedDocumentType] = useState<"PAGO" | "AGENDADO" | "EMITIR_BOLETO" | "EMITIR_NF">("PAGO");
+  const [fileNameWarning, setFileNameWarning] = useState<string | null>(null);
   const { toast } = useToast();
   const queryClient = useQueryClient();
 
@@ -171,7 +230,7 @@ export function Upload() {
     if (!allowedTypes.includes(file.type)) {
       toast({
         title: "Tipo de arquivo não permitido",
-        description: "Use apenas PDF, JPG ou PNG",
+        description: "Use apenas PDF, JPG ou PNG conforme especificação do PRD",
         variant: "destructive",
       });
       return;
@@ -180,10 +239,19 @@ export function Upload() {
     if (file.size > maxSize) {
       toast({
         title: "Arquivo muito grande",
-        description: "O arquivo deve ter no máximo 10MB",
+        description: "O arquivo deve ter no máximo 10MB conforme PRD",
         variant: "destructive",
       });
       return;
+    }
+
+    // Validação do nome do arquivo conforme PRD
+    if (!validateFileName(file.name)) {
+      setFileNameWarning(
+        "⚠️ Nome do arquivo não segue o padrão recomendado. Use formatos com pipe (|), underscore (_) ou híbrido para melhor processamento OCR."
+      );
+    } else {
+      setFileNameWarning(null);
     }
 
     setSelectedFile(file);
@@ -205,7 +273,7 @@ export function Upload() {
     if (!selectedFile) {
       toast({
         title: "Arquivo obrigatório",
-        description: "Selecione um arquivo para upload",
+        description: "Selecione um arquivo para upload conforme PRD",
         variant: "destructive",
       });
       return;
@@ -222,11 +290,31 @@ export function Upload() {
             Upload de Documentos
           </h2>
           <p className="text-muted-foreground">
-            Faça upload de PDF, JPG ou PNG até 10MB. Preencha os metadados obrigatórios.
+            Faça upload de PDF, JPG ou PNG até 10MB. Preencha os metadados obrigatórios conforme PRD.
           </p>
+          <div className="mt-4 p-4 bg-blue-50 border border-blue-200 rounded-lg">
+            <h3 className="font-medium text-blue-800 mb-2">📋 Requisitos do PRD:</h3>
+            <ul className="text-sm text-blue-700 space-y-1">
+              <li>• <strong>Formatos:</strong> PDF, JPG, PNG (até 10MB)</li>
+              <li>• <strong>Datas:</strong> DD/MM/AAAA</li>
+              <li>• <strong>Valores:</strong> R$ X,XX</li>
+              <li>• <strong>Nome do arquivo:</strong> Use pipe (|), underscore (_) ou híbrido para melhor OCR</li>
+              <li>• <strong>Prioridade de validação:</strong> Nome do arquivo &gt; OCR &gt; escolha do usuário</li>
+            </ul>
+          </div>
         </div>
 
         <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-8">
+          {/* Aviso de nome de arquivo */}
+          {fileNameWarning && (
+            <Alert className="border-yellow-200 bg-yellow-50">
+              <AlertTriangle className="h-4 w-4 text-yellow-600" />
+              <AlertDescription className="text-yellow-800">
+                {fileNameWarning}
+              </AlertDescription>
+            </Alert>
+          )}
+
           {/* Upload Zone */}
           <div
             className={`
@@ -432,8 +520,8 @@ export function Upload() {
             <div className="space-y-2">
               <Label htmlFor="bankId">Banco *</Label>
               <Select 
-                onValueChange={(value) => form.setValue("bankId", value)}
-                value={form.watch("bankId")}
+                onValueChange={(value) => form.setValue("bankId" as any, value)}
+                value={form.watch("bankId" as any)}
               >
                 <SelectTrigger data-testid="select-bank">
                   <SelectValue placeholder="Selecione o banco" />
@@ -455,8 +543,8 @@ export function Upload() {
             <div className="space-y-2">
               <Label htmlFor="categoryId">Categoria *</Label>
               <Select 
-                onValueChange={(value) => form.setValue("categoryId", value)}
-                value={form.watch("categoryId")}
+                onValueChange={(value) => form.setValue("categoryId" as any, value)}
+                value={form.watch("categoryId" as any)}
               >
                 <SelectTrigger data-testid="select-category">
                   <SelectValue placeholder="Selecione a categoria" />
@@ -474,13 +562,17 @@ export function Upload() {
               )}
             </div>
 
-            {/* Valor - obrigatório */}
+            {/* Valor - obrigatório com formatação R$ X,XX */}
             <div className="space-y-2">
-              <Label htmlFor="amount">Valor *</Label>
+              <Label htmlFor="amount">Valor * (formato: R$ X,XX)</Label>
               <Input
                 id="amount"
-                placeholder="Ex: 1500.00"
-                {...form.register("amount")}
+                placeholder="R$ 1.500,00"
+                value={form.watch("amount" as any) || ''}
+                onChange={(e) => {
+                  const formatted = formatCurrency(e.target.value);
+                  form.setValue("amount" as any, formatted);
+                }}
                 data-testid="input-amount"
               />
               {form.formState.errors.amount && (
@@ -488,13 +580,17 @@ export function Upload() {
               )}
             </div>
 
-            {/* Data de Pagamento - obrigatória */}
+            {/* Data de Pagamento - obrigatória no formato DD/MM/AAAA */}
             <div className="space-y-2">
-              <Label htmlFor="paymentDate">Data de Pagamento *</Label>
+              <Label htmlFor="paymentDate">Data de Pagamento * (DD/MM/AAAA)</Label>
               <Input
                 id="paymentDate"
-                type="date"
-                {...form.register("paymentDate")}
+                placeholder="DD/MM/AAAA"
+                value={form.watch("paymentDate" as any) || ''}
+                onChange={(e) => {
+                  const formatted = formatDate(e.target.value);
+                  form.setValue("paymentDate" as any, formatted);
+                }}
                 data-testid="input-payment-date"
               />
               {form.formState.errors.paymentDate && (
