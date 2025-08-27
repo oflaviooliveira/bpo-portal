@@ -9,18 +9,23 @@ interface OCRResult {
 }
 
 export async function processDocumentWithOCR(filePath: string): Promise<OCRResult> {
-  const fileExtension = path.extname(filePath).toLowerCase();
-  
   try {
+    // Check if file exists
+    await fs.access(filePath);
+    
+    const fileExtension = path.extname(filePath).toLowerCase();
+    console.log(`🔍 Detectado formato: ${fileExtension} para arquivo: ${filePath}`);
+    
     if (fileExtension === '.pdf') {
       return await processPDFWithOCR(filePath);
     } else if (['.jpg', '.jpeg', '.png'].includes(fileExtension)) {
       return await processImageWithOCR(filePath);
     } else {
-      throw new Error(`Formato de arquivo não suportado: ${fileExtension}`);
+      console.warn(`⚠️ Formato não reconhecido: ${fileExtension}, tentando como imagem...`);
+      return await processImageWithOCR(filePath);
     }
   } catch (error) {
-    console.error('OCR processing error:', error);
+    console.error('❌ OCR processing error:', error);
     return {
       text: '',
       confidence: 0,

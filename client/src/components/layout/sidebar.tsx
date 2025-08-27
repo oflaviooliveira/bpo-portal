@@ -11,7 +11,8 @@ import {
   Building, 
   Users, 
   Settings, 
-  LogOut 
+  LogOut,
+  Cpu
 } from "lucide-react";
 
 interface SidebarProps {
@@ -82,6 +83,12 @@ export function Sidebar({ activeSection, onSectionChange }: SidebarProps) {
       section: 'users',
       label: 'Usuários',
       icon: Users,
+      category: 'ADMINISTRAÇÃO',
+    },
+    {
+      section: 'ai-control',
+      label: 'Controle de IA',
+      icon: Cpu,
       category: 'ADMINISTRAÇÃO',
     },
   ];

@@ -805,6 +805,30 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   }
 
+  // AI Provider control endpoints - Based on other portal documentation
+  app.get("/api/ai-control", isAuthenticated, async (req, res) => {
+    try {
+      const { aiMultiProvider } = await import("./ai-multi-provider");
+      const providers = aiMultiProvider.getProviders();
+      res.json({ providers });
+    } catch (error) {
+      console.error("AI control error:", error);
+      res.status(500).json({ error: "Erro ao obter status dos provedores" });
+    }
+  });
+
+  app.post("/api/ai-control/toggle-provider", isAuthenticated, async (req, res) => {
+    try {
+      const { providerName } = req.body;
+      const { aiMultiProvider } = await import("./ai-multi-provider");
+      const enabled = aiMultiProvider.toggleProvider(providerName);
+      res.json({ success: true, providerName, enabled });
+    } catch (error) {
+      console.error("AI toggle error:", error);
+      res.status(500).json({ error: "Erro ao alternar provedor" });
+    }
+  });
+
   // Document actions endpoint
   app.patch("/api/documents/:id/action", isAuthenticated, async (req, res) => {
     try {

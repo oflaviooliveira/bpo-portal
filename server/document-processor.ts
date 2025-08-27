@@ -1,11 +1,10 @@
 import { processDocumentWithOCR } from "./ocr";
+import { aiMultiProvider } from "./ai-multi-provider";
 import { storage } from "./storage";
 
 export class DocumentProcessor {
-  private openaiApiKey: string;
-
-  constructor(openaiApiKey: string) {
-    this.openaiApiKey = openaiApiKey;
+  constructor() {
+    // No need for API key - using multi-provider system
   }
 
   async processDocument(documentId: string, tenantId: string) {
@@ -43,15 +42,20 @@ export class DocumentProcessor {
         details: { confidence: ocrResult.confidence, textLength: ocrResult.text.length },
       });
 
-      // 4. Análise com IA
-      console.log("🤖 Iniciando análise IA...");
+      // 4. Análise com IA Multi-Provider
+      console.log("🤖 Iniciando análise IA multi-provider...");
       const aiResult = await this.performAIAnalysis(ocrResult.text, document);
       
       await storage.createDocumentLog({
         documentId,
         action: "AI_ANALYSIS_COMPLETE",
         status: "SUCCESS",
-        details: { provider: aiResult.provider, extractedFields: Object.keys(aiResult.extractedData || {}) },
+        details: { 
+          provider: aiResult.provider, 
+          extractedFields: Object.keys(aiResult.extractedData || {}),
+          processingCost: aiResult.processingCost,
+          confidence: aiResult.confidence
+        },
       });
 
       // 5. Validação cruzada OCR ↔ IA ↔ Metadados
@@ -168,73 +172,10 @@ export class DocumentProcessor {
   }
 
   private async performAIAnalysis(ocrText: string, document: any) {
-    const prompt = `
-Você é um assistente especializado em análise de documentos financeiros brasileiros.
-
-DOCUMENTO A ANALISAR:
-Nome do arquivo: ${document.originalName}
-Texto extraído por OCR: "${ocrText}"
-
-INSTRUÇÕES:
-1. Extraia as seguintes informações do documento:
-   - valor (formato brasileiro com R$, vírgulas e pontos)
-   - data_pagamento ou data_vencimento (formato DD/MM/AAAA)
-   - fornecedor ou descrição
-   - categoria (ex: transporte, alimentação, tecnologia, etc.)
-   - observações relevantes
-
-2. IMPORTANTE: Responda APENAS em formato JSON válido, sem explicações adicionais.
-
-3. Se alguma informação não estiver clara, use "não_identificado".
-
-FORMATO DE RESPOSTA:
-{
-  "valor": "R$ X,XX",
-  "data_pagamento": "DD/MM/AAAA",
-  "data_vencimento": "DD/MM/AAAA", 
-  "fornecedor": "nome do fornecedor",
-  "descricao": "descrição do serviço/produto",
-  "categoria": "categoria identificada",
-  "observacoes": "informações adicionais relevantes"
-}`;
-
     try {
-      const response = await fetch('https://api.openai.com/v1/chat/completions', {
-        method: 'POST',
-        headers: {
-          'Authorization': `Bearer ${this.openaiApiKey}`,
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({
-          model: 'gpt-4o-mini',
-          messages: [{ role: 'user', content: prompt }],
-          temperature: 0.3,
-          max_tokens: 1000,
-        }),
-      });
-
-      if (!response.ok) {
-        throw new Error(`OpenAI API error: ${response.status}`);
-      }
-
-      const data = await response.json();
-      const aiResponse = data.choices[0].message.content;
-      
-      console.log("🤖 Resposta da IA:", aiResponse);
-
-      try {
-        const extractedData = JSON.parse(aiResponse);
-        return {
-          provider: "openai-gpt4o-mini",
-          extractedData,
-          rawResponse: aiResponse,
-        };
-      } catch (parseError) {
-        console.warn("⚠️ Erro ao parsear resposta da IA, usando fallback");
-        return await this.fallbackAIAnalysis(ocrText, document);
-      }
+      return await aiMultiProvider.analyzeDocument(ocrText, document.originalName);
     } catch (error) {
-      console.warn("⚠️ Erro na API OpenAI, usando fallback:", error);
+      console.warn("⚠️ Todos os provedores de IA falharam, usando fallback:", error);
       return await this.fallbackAIAnalysis(ocrText, document);
     }
   }
@@ -274,6 +215,8 @@ FORMATO DE RESPOSTA:
       provider: "fallback-regex",
       extractedData: extracted,
       rawResponse: "Análise por regex devido a erro na IA",
+      confidence: 30,
+      processingCost: 0
     };
   }
 
