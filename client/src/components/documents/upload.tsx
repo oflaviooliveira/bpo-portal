@@ -222,9 +222,10 @@ export function Upload() {
         }
       });
 
-      const response = await apiRequest("/api/documents/upload", {
+      const response = await fetch("/api/documents/upload", {
         method: "POST",
         body: formData,
+        credentials: 'include'
       });
 
       if (!response.ok) {
