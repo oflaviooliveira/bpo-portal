@@ -15,7 +15,7 @@ import { Filter, RefreshCw, FileText, Eye, Edit, AlertTriangle, Calendar, CheckC
 import { Checkbox } from "@/components/ui/checkbox";
 import { apiRequest, queryClient } from "@/lib/queryClient";
 import { useToast } from "@/hooks/use-toast";
-import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger, DialogDescription } from "@/components/ui/dialog";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
@@ -150,6 +150,9 @@ export function Inbox() {
       
       return apiRequest(`/api/documents/${document.id}`, {
         method: 'PATCH',
+        headers: {
+          'Content-Type': 'application/json'
+        },
         body: JSON.stringify(updates)
       });
     },
@@ -211,6 +214,9 @@ export function Inbox() {
     mutationFn: async (documentIds: string[]) => {
       return apiRequest(`/api/documents/bulk-delete`, {
         method: 'DELETE',
+        headers: {
+          'Content-Type': 'application/json'
+        },
         body: JSON.stringify({ documentIds })
       });
     },
@@ -350,7 +356,7 @@ export function Inbox() {
                 <TableHead className="w-12">
                   <Checkbox
                     checked={isAllSelected}
-                    indeterminate={isSomeSelected}
+                    {...(isSomeSelected ? { "data-indeterminate": true } : {})}
                     onCheckedChange={(checked) => handleSelectAll(!!checked)}
                     data-testid="checkbox-select-all"
                   />
@@ -792,6 +798,9 @@ export function Inbox() {
         <DialogContent>
           <DialogHeader>
             <DialogTitle>Confirmar Exclusão</DialogTitle>
+            <DialogDescription>
+              Confirme a exclusão dos documentos selecionados
+            </DialogDescription>
           </DialogHeader>
           <div className="py-4">
             <p className="text-sm text-muted-foreground">
