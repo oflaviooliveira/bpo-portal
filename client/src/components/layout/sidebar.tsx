@@ -12,7 +12,8 @@ import {
   Users, 
   Settings, 
   LogOut,
-  Cpu
+  Cpu,
+  BarChart3
 } from "lucide-react";
 
 interface SidebarProps {
@@ -89,6 +90,12 @@ export function Sidebar({ activeSection, onSectionChange }: SidebarProps) {
       section: 'ai-control',
       label: 'Controle de IA',
       icon: Cpu,
+      category: 'ADMINISTRAÇÃO',
+    },
+    {
+      href: '/ai-analytics',
+      label: 'Analytics de IA',
+      icon: BarChart3,
       category: 'ADMINISTRAÇÃO',
     },
   ];

@@ -475,6 +475,41 @@ export class DatabaseStorage implements IStorage {
     return await db.select().from(aiRuns).where(eq(aiRuns.documentId, documentId));
   }
 
+  async getAiRuns(tenantId: string, filters?: {
+    provider?: string;
+    status?: string;
+    dateFrom?: Date;
+    dateTo?: Date;
+    limit?: number;
+  }): Promise<AiRun[]> {
+    let query = db.select()
+      .from(aiRuns)
+      .innerJoin(documents, eq(aiRuns.documentId, documents.id))
+      .where(eq(documents.tenantId, tenantId));
+
+    if (filters?.provider) {
+      query = query.where(eq(aiRuns.provider, filters.provider));
+    }
+    
+    if (filters?.status) {
+      query = query.where(eq(aiRuns.status, filters.status));
+    }
+    
+    if (filters?.dateFrom) {
+      query = query.where(gte(aiRuns.createdAt, filters.dateFrom));
+    }
+    
+    if (filters?.dateTo) {
+      query = query.where(lte(aiRuns.createdAt, filters.dateTo));
+    }
+
+    const results = await query
+      .orderBy(desc(aiRuns.createdAt))
+      .limit(filters?.limit || 1000);
+
+    return results.map(row => row.ai_runs);
+  }
+
   // Document Inconsistencies methods
   async createDocumentInconsistency(inconsistencyData: {
     documentId: string;

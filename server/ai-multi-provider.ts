@@ -376,6 +376,32 @@ TEMPLATE:
       provider.status = status;
     }
   }
+
+  updateProviderConfig(providerName: string, config: { priority?: number; costPer1000?: number }): boolean {
+    const provider = this.providers.find(p => p.name === providerName);
+    if (provider) {
+      if (config.priority !== undefined) {
+        provider.priority = config.priority;
+      }
+      if (config.costPer1000 !== undefined) {
+        provider.costPer1000 = config.costPer1000;
+      }
+      return true;
+    }
+    return false;
+  }
+
+  getProviderMetrics(): Record<string, any> {
+    return this.providers.reduce((acc, provider) => {
+      acc[provider.name] = {
+        enabled: provider.enabled,
+        status: provider.status,
+        priority: provider.priority,
+        costPer1000: provider.costPer1000
+      };
+      return acc;
+    }, {} as Record<string, any>);
+  }
 }
 
 export const aiMultiProvider = new AIMultiProvider();

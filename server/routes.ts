@@ -1002,19 +1002,76 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   }
 
-  // AI Provider control endpoints - Based on other portal documentation
-  app.get("/api/ai-control", isAuthenticated, async (req, res) => {
+  // AI Provider control endpoints - Enhanced monitoring system
+  app.get("/api/ai-control", ...authorize(["ADMIN", "GERENTE"]), async (req, res) => {
     try {
+      const user = req.user!;
       const { aiMultiProvider } = await import("./ai-multi-provider");
       const providers = aiMultiProvider.getProviders();
-      res.json({ providers });
+      
+      // Get AI usage metrics for the tenant
+      const last30Days = new Date();
+      last30Days.setDate(last30Days.getDate() - 30);
+      
+      const aiRuns = await storage.getAiRuns(user.tenantId, {
+        dateFrom: last30Days,
+        limit: 10000
+      });
+      
+      const recentRuns = aiRuns;
+      
+      // Calculate metrics by provider
+      const metrics = providers.map(provider => {
+        const providerRuns = recentRuns.filter(run => run.provider === provider.name);
+        const totalCost = providerRuns.reduce((sum, run) => sum + (run.cost || 0), 0);
+        const totalTokens = providerRuns.reduce((sum, run) => sum + (run.tokensIn || 0) + (run.tokensOut || 0), 0);
+        const avgResponseTime = providerRuns.length > 0 
+          ? providerRuns.reduce((sum, run) => sum + (run.responseTime || 0), 0) / providerRuns.length 
+          : 0;
+        const successRate = providerRuns.length > 0 
+          ? (providerRuns.filter(run => run.status === 'SUCCESS').length / providerRuns.length) * 100 
+          : 0;
+        
+        return {
+          ...provider,
+          last30Days: {
+            totalRequests: providerRuns.length,
+            totalCost: parseFloat(totalCost.toFixed(4)),
+            totalTokens,
+            avgResponseTime: Math.round(avgResponseTime),
+            successRate: parseFloat(successRate.toFixed(1)),
+            failureReasons: providerRuns
+              .filter(run => run.status === 'ERROR')
+              .map(run => run.errorDetails || 'Unknown error')
+              .reduce((acc, reason) => {
+                acc[reason] = (acc[reason] || 0) + 1;
+                return acc;
+              }, {} as Record<string, number>)
+          }
+        };
+      });
+
+      res.json({ 
+        providers: metrics,
+        summary: {
+          totalRequests: recentRuns.length,
+          totalCost: parseFloat(recentRuns.reduce((sum, run) => sum + (run.cost || 0), 0).toFixed(4)),
+          avgDailyRequests: Math.round(recentRuns.length / 30),
+          mostUsedProvider: recentRuns.length > 0 
+            ? recentRuns.reduce((acc, run) => {
+                acc[run.provider] = (acc[run.provider] || 0) + 1;
+                return acc;
+              }, {} as Record<string, number>)
+            : {}
+        }
+      });
     } catch (error) {
       console.error("AI control error:", error);
       res.status(500).json({ error: "Erro ao obter status dos provedores" });
     }
   });
 
-  app.post("/api/ai-control/toggle-provider", isAuthenticated, async (req, res) => {
+  app.post("/api/ai-control/toggle-provider", ...authorize(["ADMIN", "GERENTE"]), async (req, res) => {
     try {
       const { providerName } = req.body;
       const { aiMultiProvider } = await import("./ai-multi-provider");
@@ -1023,6 +1080,119 @@ export async function registerRoutes(app: Express): Promise<Server> {
     } catch (error) {
       console.error("AI toggle error:", error);
       res.status(500).json({ error: "Erro ao alternar provedor" });
+    }
+  });
+
+  // AI usage analytics endpoint
+  app.get("/api/ai-control/analytics", ...authorize(["ADMIN", "GERENTE"]), async (req, res) => {
+    try {
+      const user = req.user!;
+      const { period = '30', provider } = req.query;
+      
+      const daysBack = parseInt(period as string);
+      const dateFrom = new Date();
+      dateFrom.setDate(dateFrom.getDate() - daysBack);
+      
+      let aiRuns = await storage.getAiRuns(user.tenantId, {
+        dateFrom,
+        limit: 50000
+      });
+      
+      if (provider) {
+        aiRuns = aiRuns.filter(run => run.provider === provider);
+      }
+      
+      // Group by day for timeline chart
+      const timeline = [];
+      for (let i = daysBack - 1; i >= 0; i--) {
+        const date = new Date();
+        date.setDate(date.getDate() - i);
+        const dayStart = new Date(date.getFullYear(), date.getMonth(), date.getDate());
+        const dayEnd = new Date(dayStart.getTime() + 24 * 60 * 60 * 1000);
+        
+        const dayRuns = aiRuns.filter(run => {
+          const runDate = new Date(run.createdAt);
+          return runDate >= dayStart && runDate < dayEnd;
+        });
+        
+        timeline.push({
+          date: dayStart.toISOString().split('T')[0],
+          requests: dayRuns.length,
+          cost: parseFloat(dayRuns.reduce((sum, run) => sum + (run.cost || 0), 0).toFixed(4)),
+          avgResponseTime: dayRuns.length > 0 
+            ? Math.round(dayRuns.reduce((sum, run) => sum + (run.responseTime || 0), 0) / dayRuns.length)
+            : 0,
+          successCount: dayRuns.filter(run => run.status === 'SUCCESS').length,
+          errorCount: dayRuns.filter(run => run.status === 'ERROR').length
+        });
+      }
+      
+      // Provider comparison
+      const providerStats = Object.entries(
+        aiRuns.reduce((acc, run) => {
+          if (!acc[run.provider]) {
+            acc[run.provider] = {
+              requests: 0,
+              cost: 0,
+              avgResponseTime: 0,
+              successRate: 0,
+              totalResponseTime: 0,
+              successCount: 0
+            };
+          }
+          acc[run.provider].requests++;
+          acc[run.provider].cost += run.cost || 0;
+          acc[run.provider].totalResponseTime += run.responseTime || 0;
+          if (run.status === 'SUCCESS') {
+            acc[run.provider].successCount++;
+          }
+          return acc;
+        }, {} as Record<string, any>)
+      ).map(([provider, stats]) => ({
+        provider,
+        requests: stats.requests,
+        cost: parseFloat(stats.cost.toFixed(4)),
+        avgResponseTime: Math.round(stats.totalResponseTime / stats.requests),
+        successRate: parseFloat(((stats.successCount / stats.requests) * 100).toFixed(1))
+      }));
+      
+      res.json({
+        timeline,
+        providerStats,
+        summary: {
+          totalRequests: aiRuns.length,
+          totalCost: parseFloat(aiRuns.reduce((sum, run) => sum + (run.cost || 0), 0).toFixed(4)),
+          avgResponseTime: aiRuns.length > 0 
+            ? Math.round(aiRuns.reduce((sum, run) => sum + (run.responseTime || 0), 0) / aiRuns.length)
+            : 0,
+          overallSuccessRate: aiRuns.length > 0 
+            ? parseFloat(((aiRuns.filter(run => run.status === 'SUCCESS').length / aiRuns.length) * 100).toFixed(1))
+            : 0
+        }
+      });
+    } catch (error) {
+      console.error("AI analytics error:", error);
+      res.status(500).json({ error: "Erro ao obter analytics de IA" });
+    }
+  });
+
+  // AI provider configuration endpoint
+  app.patch("/api/ai-control/provider/:name", ...authorize(["ADMIN"]), async (req, res) => {
+    try {
+      const { name } = req.params;
+      const { priority, costPer1000 } = req.body;
+      
+      const { aiMultiProvider } = await import("./ai-multi-provider");
+      const success = aiMultiProvider.updateProviderConfig(name, { priority, costPer1000 });
+      
+      if (success) {
+        res.json({ success: true, message: "Configuração atualizada" });
+      } else {
+        res.status(404).json({ error: "Provider não encontrado" });
+      }
+    } catch (error) {
+      console.error("Update provider config error:", error);
+      res.status(500).json({ error: "Erro ao atualizar configuração" });
     }
   });
 
