@@ -1022,7 +1022,9 @@ export async function registerRoutes(app: Express): Promise<Server> {
       
       // Calculate metrics by provider
       const metrics = providers.map(provider => {
-        const providerRuns = recentRuns.filter(run => run.providerUsed === provider.name);
+        // Mapear variações do nome do provider
+        const providerVariants = provider.name === 'glm' ? ['glm', 'glm-4-plus'] : [provider.name];
+        const providerRuns = recentRuns.filter(run => providerVariants.includes(run.providerUsed));
         const totalCost = providerRuns.reduce((sum, run) => sum + (run.costUsd || 0), 0);
         const totalTokens = providerRuns.reduce((sum, run) => sum + (run.tokensIn || 0) + (run.tokensOut || 0), 0);
         const avgResponseTime = providerRuns.length > 0 
