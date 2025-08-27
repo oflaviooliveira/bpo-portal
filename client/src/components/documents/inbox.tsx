@@ -469,6 +469,17 @@ export function Inbox() {
           
           {selectedDoc && (
             <div className="grid gap-6 py-4">
+              {/* Debug Info - Temporarily visible */}
+              <div className="bg-gray-50 p-3 rounded text-xs">
+                <p><strong>Debug Info:</strong></p>
+                <p>extractedData type: {typeof selectedDoc.extractedData}</p>
+                <p>extractedData content: {selectedDoc.extractedData ? String(selectedDoc.extractedData).substring(0, 200) : 'null'}</p>
+                <p>tasks: {selectedDoc.tasks ? JSON.stringify(selectedDoc.tasks).substring(0, 200) : 'null'}</p>
+                <p>amount: {selectedDoc.amount}</p>
+                <p>ocrConfidence: {selectedDoc.ocrConfidence}</p>
+                <p>aiProvider: {selectedDoc.aiProvider}</p>
+              </div>
+
               {/* Basic Info */}
               <div className="grid gap-3">
                 <h3 className="font-semibold text-foreground">Informações Básicas</h3>
