@@ -100,11 +100,19 @@ class AIMultiProvider {
       }
 
       const data = await response.json();
-      const aiResponse = data.choices[0].message.content;
+      let aiResponse = data.choices[0].message.content;
       
       console.log("🤖 GLM Response:", aiResponse);
 
-      const extractedData = JSON.parse(aiResponse);
+      // Clean markdown formatting from GLM response
+      if (aiResponse.includes('```json')) {
+        aiResponse = aiResponse.replace(/```json\s*/, '').replace(/```\s*$/, '');
+      }
+      if (aiResponse.includes('```')) {
+        aiResponse = aiResponse.replace(/```\s*/, '').replace(/```\s*$/, '');
+      }
+      
+      const extractedData = JSON.parse(aiResponse.trim());
       const tokenCount = this.estimateTokenCount(prompt + aiResponse);
       
       return {

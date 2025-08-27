@@ -277,9 +277,11 @@ export async function registerRoutes(app: Express): Promise<Server> {
       console.log(`🚀 Iniciando processamento automático para ${document.originalName}`);
 
       // Process document asynchronously using new processor - FASE 1 IMPLEMENTADA
-      processDocumentAsync(document.id, user.tenantId).catch(error => {
-        console.error(`Erro no processamento do documento ${document.id}:`, error);
-      });
+      setTimeout(() => {
+        processDocumentAsync(document.id, user.tenantId).catch(error => {
+          console.error(`Erro no processamento do documento ${document.id}:`, error);
+        });
+      }, 1000); // Add small delay to ensure database transaction is complete
 
       res.json({ 
         message: "Documento enviado com sucesso. Processamento OCR + IA iniciado automaticamente.",

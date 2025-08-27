@@ -13,7 +13,25 @@ export async function processDocumentWithOCR(filePath: string): Promise<OCRResul
     // Check if file exists
     await fs.access(filePath);
     
-    const fileExtension = path.extname(filePath).toLowerCase();
+    // Read first few bytes to detect actual file type
+    const fileBuffer = await fs.readFile(filePath);
+    const fileHeader = fileBuffer.subarray(0, 10);
+    
+    let fileExtension = path.extname(filePath).toLowerCase();
+    
+    // Detect PDF by magic number
+    if (fileHeader[0] === 0x25 && fileHeader[1] === 0x50 && fileHeader[2] === 0x44 && fileHeader[3] === 0x46) {
+      fileExtension = '.pdf';
+    }
+    // Detect PNG by magic number
+    else if (fileHeader[0] === 0x89 && fileHeader[1] === 0x50 && fileHeader[2] === 0x4E && fileHeader[3] === 0x47) {
+      fileExtension = '.png';
+    }
+    // Detect JPEG by magic number
+    else if (fileHeader[0] === 0xFF && fileHeader[1] === 0xD8 && fileHeader[2] === 0xFF) {
+      fileExtension = '.jpg';
+    }
+    
     console.log(`🔍 Detectado formato: ${fileExtension} para arquivo: ${filePath}`);
     
     if (fileExtension === '.pdf') {
