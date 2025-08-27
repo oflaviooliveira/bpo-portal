@@ -1,4 +1,4 @@
-import Tesseract from "tesseract.js";
+import { processDocumentWithOCR } from "./ocr";
 import { storage } from "./storage";
 
 export class DocumentProcessor {
@@ -152,20 +152,14 @@ export class DocumentProcessor {
     try {
       console.log(`🔍 Iniciando OCR para: ${filePath}`);
       
-      const result = await Tesseract.recognize(filePath, 'por', {
-        logger: (m) => {
-          if (m.status === 'recognizing text') {
-            console.log(`OCR progresso: ${Math.round(m.progress * 100)}%`);
-          }
-        }
-      });
+      const result = await processDocumentWithOCR(filePath);
 
-      console.log(`✅ OCR concluído. Confiança: ${Math.round(result.data.confidence)}%`);
+      console.log(`✅ OCR concluído. Confiança: ${Math.round(result.confidence * 100)}%`);
       
       return {
-        text: result.data.text,
-        confidence: result.data.confidence / 100,
-        words: result.data.words || [],
+        text: result.text,
+        confidence: result.confidence,
+        words: [],
       };
     } catch (error) {
       console.error("❌ Erro no OCR:", error);
@@ -253,14 +247,14 @@ FORMATO DE RESPOSTA:
     
     // Extrair valor monetário
     const moneyPattern = /R\$?\s?(\d{1,3}(?:[.,]\d{3})*(?:[.,]\d{2})?)/g;
-    const moneyMatches = [...ocrText.matchAll(moneyPattern)];
+    const moneyMatches = Array.from(ocrText.matchAll(moneyPattern));
     if (moneyMatches.length > 0) {
       extracted.valor = `R$ ${moneyMatches[0][1]}`;
     }
 
     // Extrair datas
     const datePattern = /(\d{2})[\/\-](\d{2})[\/\-](\d{4})/g;
-    const dateMatches = [...ocrText.matchAll(datePattern)];
+    const dateMatches = Array.from(ocrText.matchAll(datePattern));
     if (dateMatches.length > 0) {
       extracted.data_pagamento = `${dateMatches[0][1]}/${dateMatches[0][2]}/${dateMatches[0][3]}`;
     }

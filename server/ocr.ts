@@ -39,7 +39,7 @@ async function processPDFWithOCR(pdfPath: string): Promise<OCRResult> {
     height: 2000,
   });
 
-  const results = await convert(1, { responseType: "buffer" }); // Convert only first page
+  const results = await convert(1, { responseType: "image" }); // Convert only first page
   if (!results || !results.path) {
     throw new Error('Falha na conversão do PDF para imagem');
   }
@@ -64,7 +64,6 @@ async function processImageWithOCR(imagePath: string): Promise<OCRResult> {
   try {
     await worker.setParameters({
       tessedit_char_whitelist: '0123456789ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyzÀÁÂÃÇÈÉÊÍÓÔÕÚàáâãçèéêíóôõú.,/()-: ',
-      tessedit_pageseg_mode: 1, // Automatic page segmentation with OSD
     });
 
     const { data } = await worker.recognize(imagePath);
