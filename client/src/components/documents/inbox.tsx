@@ -41,6 +41,8 @@ export function Inbox() {
   const [actionType, setActionType] = useState<"approve" | "schedule" | "revise" | null>(null);
   const [searchResults, setSearchResults] = useState<any[]>([]);
   const [isShowingSearchResults, setIsShowingSearchResults] = useState(false);
+  const [expandedDoc, setExpandedDoc] = useState<string | null>(null);
+  const [showDetailsDialog, setShowDetailsDialog] = useState(false);
   const { toast } = useToast();
 
   const { data: documents, isLoading, refetch } = useQuery({
@@ -264,16 +266,51 @@ export function Inbox() {
                       )}
                     </TableCell>
                     <TableCell className="font-medium text-foreground">
-                      {formatCurrency(doc.amount)}
+                      {(() => {
+                        try {
+                          if (doc.extractedData) {
+                            const data = typeof doc.extractedData === 'string' 
+                              ? JSON.parse(doc.extractedData) 
+                              : doc.extractedData;
+                            return data.valor || formatCurrency(doc.amount) || "-";
+                          }
+                          return formatCurrency(doc.amount) || "-";
+                        } catch (e) {
+                          return formatCurrency(doc.amount) || "-";
+                        }
+                      })()}
                     </TableCell>
                     <TableCell className="text-muted-foreground">
-                      {formatDate(doc.createdAt)}
+                      {(() => {
+                        try {
+                          if (doc.extractedData) {
+                            const data = typeof doc.extractedData === 'string' 
+                              ? JSON.parse(doc.extractedData) 
+                              : doc.extractedData;
+                            const date = data.data_vencimento || data.data_pagamento || doc.paymentDate || doc.dueDate;
+                            if (date) {
+                              // Convert DD/MM/YYYY to a readable format
+                              const [day, month, year] = date.split('/');
+                              if (day && month && year) {
+                                return `${day}/${month}/${year}`;
+                              }
+                            }
+                          }
+                          return formatDate(doc.createdAt);
+                        } catch (e) {
+                          return formatDate(doc.createdAt);
+                        }
+                      })()}
                     </TableCell>
                     <TableCell>
                       <div className="flex space-x-2">
                         <Button 
                           variant="ghost" 
                           size="sm"
+                          onClick={() => {
+                            setSelectedDoc(doc);
+                            setShowDetailsDialog(true);
+                          }}
                           data-testid={`button-view-${doc.id}`}
                         >
                           <Eye className="w-4 h-4 text-blue-600" />
@@ -417,6 +454,162 @@ export function Inbox() {
               </Button>
             </div>
           </div>
+        </DialogContent>
+      </Dialog>
+
+      {/* Document Details Dialog */}
+      <Dialog open={showDetailsDialog} onOpenChange={setShowDetailsDialog}>
+        <DialogContent className="max-w-2xl max-h-[80vh] overflow-y-auto">
+          <DialogHeader>
+            <DialogTitle className="flex items-center space-x-2">
+              <FileText className="w-5 h-5" />
+              <span>Detalhes do Documento</span>
+            </DialogTitle>
+          </DialogHeader>
+          
+          {selectedDoc && (
+            <div className="grid gap-6 py-4">
+              {/* Basic Info */}
+              <div className="grid gap-3">
+                <h3 className="font-semibold text-foreground">Informações Básicas</h3>
+                <div className="grid grid-cols-2 gap-4 text-sm">
+                  <div>
+                    <Label className="text-muted-foreground">Nome do Arquivo</Label>
+                    <p className="font-medium">{selectedDoc.originalName}</p>
+                  </div>
+                  <div>
+                    <Label className="text-muted-foreground">Status</Label>
+                    <Badge className={statusConfig[selectedDoc.status as keyof typeof statusConfig]?.className || "bg-gray-100 text-gray-800"}>
+                      {statusConfig[selectedDoc.status as keyof typeof statusConfig]?.label || selectedDoc.status}
+                    </Badge>
+                  </div>
+                  <div>
+                    <Label className="text-muted-foreground">Tamanho</Label>
+                    <p>{(selectedDoc.fileSize / 1024 / 1024).toFixed(1)} MB</p>
+                  </div>
+                  <div>
+                    <Label className="text-muted-foreground">Data de Upload</Label>
+                    <p>{formatDate(selectedDoc.createdAt)}</p>
+                  </div>
+                </div>
+              </div>
+
+              {/* Extracted Data */}
+              {selectedDoc.extractedData && (
+                <div className="grid gap-3">
+                  <h3 className="font-semibold text-foreground">Dados Extraídos pela IA</h3>
+                  <div className="bg-muted/20 p-4 rounded-lg">
+                    {(() => {
+                      try {
+                        const data = typeof selectedDoc.extractedData === 'string' 
+                          ? JSON.parse(selectedDoc.extractedData) 
+                          : selectedDoc.extractedData;
+                        return (
+                          <div className="grid grid-cols-2 gap-4 text-sm">
+                            {data.valor && (
+                              <div>
+                                <Label className="text-muted-foreground">Valor</Label>
+                                <p className="font-medium text-lg text-green-600">{data.valor}</p>
+                              </div>
+                            )}
+                            {data.fornecedor && (
+                              <div>
+                                <Label className="text-muted-foreground">Fornecedor</Label>
+                                <p className="font-medium">{data.fornecedor}</p>
+                              </div>
+                            )}
+                            {data.data_vencimento && (
+                              <div>
+                                <Label className="text-muted-foreground">Data de Vencimento</Label>
+                                <p className="font-medium">{data.data_vencimento}</p>
+                              </div>
+                            )}
+                            {data.data_pagamento && (
+                              <div>
+                                <Label className="text-muted-foreground">Data de Pagamento</Label>
+                                <p className="font-medium">{data.data_pagamento}</p>
+                              </div>
+                            )}
+                            {data.descricao && (
+                              <div className="col-span-2">
+                                <Label className="text-muted-foreground">Descrição</Label>
+                                <p className="font-medium">{data.descricao}</p>
+                              </div>
+                            )}
+                            {data.categoria && (
+                              <div>
+                                <Label className="text-muted-foreground">Categoria</Label>
+                                <p className="font-medium">{data.categoria}</p>
+                              </div>
+                            )}
+                            {data.centro_custo && (
+                              <div>
+                                <Label className="text-muted-foreground">Centro de Custo</Label>
+                                <p className="font-medium">{data.centro_custo}</p>
+                              </div>
+                            )}
+                            {data.confidence && (
+                              <div>
+                                <Label className="text-muted-foreground">Confiança da IA</Label>
+                                <p className="font-medium">{data.confidence}%</p>
+                              </div>
+                            )}
+                          </div>
+                        );
+                      } catch (e) {
+                        return <p className="text-muted-foreground">Erro ao processar dados extraídos</p>;
+                      }
+                    })()}
+                  </div>
+                </div>
+              )}
+
+              {/* Inconsistencies/Tasks */}
+              {selectedDoc.tasks && selectedDoc.tasks.length > 0 && (
+                <div className="grid gap-3">
+                  <h3 className="font-semibold text-foreground flex items-center space-x-2">
+                    <AlertTriangle className="w-4 h-4 text-orange-500" />
+                    <span>Inconsistências Detectadas</span>
+                  </h3>
+                  <div className="space-y-2">
+                    {selectedDoc.tasks.map((task: any, index: number) => (
+                      <div key={index} className="bg-orange-50 border border-orange-200 p-3 rounded-lg">
+                        <div className="flex items-center space-x-2 mb-2">
+                          <AlertTriangle className="w-4 h-4 text-orange-600" />
+                          <span className="font-medium text-orange-800">
+                            {task.type === 'INCONSISTENCIA_AMOUNT' && 'Inconsistência no Valor'}
+                            {task.type === 'INCONSISTENCIA_DATE' && 'Inconsistência na Data'}
+                            {task.type === 'INCONSISTENCIA_SUPPLIER' && 'Inconsistência no Fornecedor'}
+                            {task.type === 'MISSING_FIELD' && 'Campo Obrigatório Ausente'}
+                          </span>
+                        </div>
+                        <p className="text-sm text-orange-700">{task.message}</p>
+                      </div>
+                    ))}
+                  </div>
+                </div>
+              )}
+
+              {/* OCR Info */}
+              {selectedDoc.ocrConfidence && (
+                <div className="grid gap-3">
+                  <h3 className="font-semibold text-foreground">Informações do OCR</h3>
+                  <div className="grid grid-cols-2 gap-4 text-sm">
+                    <div>
+                      <Label className="text-muted-foreground">Confiança do OCR</Label>
+                      <p className="font-medium">{selectedDoc.ocrConfidence}%</p>
+                    </div>
+                    {selectedDoc.aiProvider && (
+                      <div>
+                        <Label className="text-muted-foreground">Provider IA</Label>
+                        <p className="font-medium">{selectedDoc.aiProvider}</p>
+                      </div>
+                    )}
+                  </div>
+                </div>
+              )}
+            </div>
+          )}
         </DialogContent>
       </Dialog>
     </div>
