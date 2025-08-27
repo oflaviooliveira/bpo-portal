@@ -74,7 +74,10 @@ export function Inbox() {
   // Mutation para ações operacionais
   const actionMutation = useMutation({
     mutationFn: async ({ documentId, action, data }: { documentId: string, action: string, data?: any }) => {
-      const response = await apiRequest("PATCH", `/api/documents/${documentId}/action`, { action, ...data });
+      const response = await apiRequest(`/api/documents/${documentId}/action`, {
+        method: "PATCH",
+        body: JSON.stringify({ action, ...data })
+      });
       return response.json();
     },
     onSuccess: () => {
@@ -123,13 +126,55 @@ export function Inbox() {
     });
   };
 
-  const formatCurrency = (value: string | number | null) => {
-    if (!value) return "-";
-    const num = typeof value === "string" ? parseFloat(value) : value;
-    return new Intl.NumberFormat('pt-BR', {
-      style: 'currency',
-      currency: 'BRL',
-    }).format(num);
+  // Mutation para aprovar documento com dados da IA
+  const approveAIMutation = useMutation({
+    mutationFn: async (document: any) => {
+      const aiData = document.extractedData;
+      const updates = {
+        status: 'CLASSIFICADO',
+        amount: aiData?.valor?.replace(/[^\d,]/g, '').replace(',', '.'),
+        supplier: aiData?.fornecedor,
+        dueDate: aiData?.data_vencimento,
+        paidDate: aiData?.data_pagamento,
+        description: aiData?.descricao,
+        category: aiData?.categoria,
+        costCenter: aiData?.centro_custo,
+        isValidated: true
+      };
+      
+      return apiRequest(`/api/documents/${document.id}`, {
+        method: 'PATCH',
+        body: JSON.stringify(updates)
+      });
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['/api/documents'] });
+      setShowDetailsDialog(false);
+      setSelectedDoc(null);
+      toast({
+        title: "Documento aprovado",
+        description: "Os dados da IA foram aplicados com sucesso.",
+      });
+    },
+    onError: (error: any) => {
+      toast({
+        title: "Erro ao aprovar",
+        description: error.message || "Erro ao aprovar documento com dados da IA",
+        variant: "destructive",
+      });
+    }
+  });
+
+  const handleApproveAI = (document: any) => {
+    approveAIMutation.mutate(document);
+  };
+
+  const handleManualReview = (document: any) => {
+    // Redirecionar para página de edição/upload com o documento pré-carregado
+    setSelectedDoc(document);
+    setActionType("revise");
+    setShowActionDialog(true);
+    setShowDetailsDialog(false);
   };
 
   const formatDate = (date: string | null) => {
@@ -141,6 +186,15 @@ export function Inbox() {
       hour: '2-digit',
       minute: '2-digit',
     }).format(new Date(date));
+  };
+
+  const formatCurrency = (value: string | number | null) => {
+    if (!value) return "-";
+    const num = typeof value === "string" ? parseFloat(value) : value;
+    return new Intl.NumberFormat('pt-BR', {
+      style: 'currency',
+      currency: 'BRL',
+    }).format(num);
   };
 
   const getFileIcon = (mimeType: string) => {
@@ -619,10 +673,7 @@ export function Inbox() {
                   <div className="flex gap-3">
                     <Button 
                       className="flex-1 bg-green-600 hover:bg-green-700 text-white"
-                      onClick={() => {
-                        // TODO: Implementar aprovação automática usando dados da IA
-                        console.log('Aprovar com dados da IA:', selectedDoc.extractedData);
-                      }}
+                      onClick={() => handleApproveAI(selectedDoc)}
                     >
                       <CheckCircle2 className="w-4 h-4 mr-2" />
                       Aprovar Dados da IA
@@ -630,10 +681,7 @@ export function Inbox() {
                     <Button 
                       variant="outline"
                       className="flex-1"
-                      onClick={() => {
-                        // TODO: Implementar redirecionamento para edição manual
-                        console.log('Revisar manualmente:', selectedDoc.id);
-                      }}
+                      onClick={() => handleManualReview(selectedDoc)}
                     >
                       <Edit className="w-4 h-4 mr-2" />
                       Revisar Manualmente
