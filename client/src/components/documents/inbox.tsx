@@ -469,17 +469,6 @@ export function Inbox() {
           
           {selectedDoc && (
             <div className="grid gap-6 py-4">
-              {/* Debug Info - Temporarily visible */}
-              <div className="bg-gray-50 p-3 rounded text-xs">
-                <p><strong>Debug Info:</strong></p>
-                <p>extractedData type: {typeof selectedDoc.extractedData}</p>
-                <p>extractedData content: {selectedDoc.extractedData ? String(selectedDoc.extractedData).substring(0, 200) : 'null'}</p>
-                <p>tasks: {selectedDoc.tasks ? JSON.stringify(selectedDoc.tasks).substring(0, 200) : 'null'}</p>
-                <p>amount: {selectedDoc.amount}</p>
-                <p>ocrConfidence: {selectedDoc.ocrConfidence}</p>
-                <p>aiProvider: {selectedDoc.aiProvider}</p>
-              </div>
-
               {/* Basic Info */}
               <div className="grid gap-3">
                 <h3 className="font-semibold text-foreground">Informações Básicas</h3>
@@ -505,75 +494,66 @@ export function Inbox() {
                 </div>
               </div>
 
-              {/* Extracted Data */}
+              {/* AI Analysis Results */}
               {selectedDoc.extractedData && (
                 <div className="grid gap-3">
                   <h3 className="font-semibold text-foreground">Dados Extraídos pela IA</h3>
-                  <div className="bg-muted/20 p-4 rounded-lg">
-                    {(() => {
-                      try {
-                        const data = typeof selectedDoc.extractedData === 'string' 
-                          ? JSON.parse(selectedDoc.extractedData) 
-                          : selectedDoc.extractedData;
-                        return (
-                          <div className="grid grid-cols-2 gap-4 text-sm">
-                            {data.valor && (
-                              <div>
-                                <Label className="text-muted-foreground">Valor</Label>
-                                <p className="font-medium text-lg text-green-600">{data.valor}</p>
-                              </div>
-                            )}
-                            {data.fornecedor && (
-                              <div>
-                                <Label className="text-muted-foreground">Fornecedor</Label>
-                                <p className="font-medium">{data.fornecedor}</p>
-                              </div>
-                            )}
-                            {data.data_vencimento && (
-                              <div>
-                                <Label className="text-muted-foreground">Data de Vencimento</Label>
-                                <p className="font-medium">{data.data_vencimento}</p>
-                              </div>
-                            )}
-                            {data.data_pagamento && (
-                              <div>
-                                <Label className="text-muted-foreground">Data de Pagamento</Label>
-                                <p className="font-medium">{data.data_pagamento}</p>
-                              </div>
-                            )}
-                            {data.descricao && (
-                              <div className="col-span-2">
-                                <Label className="text-muted-foreground">Descrição</Label>
-                                <p className="font-medium">{data.descricao}</p>
-                              </div>
-                            )}
-                            {data.categoria && (
-                              <div>
-                                <Label className="text-muted-foreground">Categoria</Label>
-                                <p className="font-medium">{data.categoria}</p>
-                              </div>
-                            )}
-                            {data.centro_custo && (
-                              <div>
-                                <Label className="text-muted-foreground">Centro de Custo</Label>
-                                <p className="font-medium">{data.centro_custo}</p>
-                              </div>
-                            )}
-                            {data.confidence && (
-                              <div>
-                                <Label className="text-muted-foreground">Confiança da IA</Label>
-                                <p className="font-medium">{data.confidence}%</p>
-                              </div>
-                            )}
-                          </div>
-                        );
-                      } catch (e) {
-                        return <p className="text-muted-foreground">Erro ao processar dados extraídos</p>;
-                      }
-                    })()}
+                  <div className="bg-green-50 border border-green-200 rounded-lg p-4">
+                    <div className="grid grid-cols-2 gap-4 text-sm">
+                      {selectedDoc.extractedData.valor && (
+                        <div>
+                          <Label className="text-green-700 font-medium">Valor</Label>
+                          <p className="text-green-900">{selectedDoc.extractedData.valor}</p>
+                        </div>
+                      )}
+                      {selectedDoc.extractedData.fornecedor && (
+                        <div>
+                          <Label className="text-green-700 font-medium">Fornecedor</Label>
+                          <p className="text-green-900">{selectedDoc.extractedData.fornecedor}</p>
+                        </div>
+                      )}
+                      {selectedDoc.extractedData.data_pagamento && (
+                        <div>
+                          <Label className="text-green-700 font-medium">Data de Pagamento</Label>
+                          <p className="text-green-900">{selectedDoc.extractedData.data_pagamento}</p>
+                        </div>
+                      )}
+                      {selectedDoc.extractedData.data_vencimento && (
+                        <div>
+                          <Label className="text-green-700 font-medium">Data de Vencimento</Label>
+                          <p className="text-green-900">{selectedDoc.extractedData.data_vencimento}</p>
+                        </div>
+                      )}
+                      {selectedDoc.extractedData.descricao && (
+                        <div className="col-span-2">
+                          <Label className="text-green-700 font-medium">Descrição</Label>
+                          <p className="text-green-900">{selectedDoc.extractedData.descricao}</p>
+                        </div>
+                      )}
+                      {selectedDoc.extractedData.categoria && (
+                        <div>
+                          <Label className="text-green-700 font-medium">Categoria</Label>
+                          <p className="text-green-900">{selectedDoc.extractedData.categoria}</p>
+                        </div>
+                      )}
+                      {selectedDoc.extractedData.centro_custo && (
+                        <div>
+                          <Label className="text-green-700 font-medium">Centro de Custo</Label>
+                          <p className="text-green-900">{selectedDoc.extractedData.centro_custo}</p>
+                        </div>
+                      )}
+                    </div>
+                    <div className="mt-3 pt-3 border-t border-green-200">
+                      <div className="flex items-center justify-between text-xs text-green-600">
+                        <span>Provider: {selectedDoc.aiProvider}</span>
+                        <span>Confiança: {selectedDoc.extractedData.confidence || 'N/A'}%</span>
+                      </div>
+                    </div>
                   </div>
                 </div>
               )}
+
+
 
               {/* Inconsistencies/Tasks */}
               {selectedDoc.tasks && selectedDoc.tasks.length > 0 && (
@@ -582,10 +562,10 @@ export function Inbox() {
                     <AlertTriangle className="w-4 h-4 text-orange-500" />
                     <span>Inconsistências Detectadas</span>
                   </h3>
-                  <div className="space-y-2">
+                  <div className="space-y-4">
                     {selectedDoc.tasks.map((task: any, index: number) => (
-                      <div key={index} className="bg-orange-50 border border-orange-200 p-3 rounded-lg">
-                        <div className="flex items-center space-x-2 mb-2">
+                      <div key={index} className="bg-orange-50 border border-orange-200 rounded-lg p-4">
+                        <div className="flex items-center space-x-2 mb-3">
                           <AlertTriangle className="w-4 h-4 text-orange-600" />
                           <span className="font-medium text-orange-800">
                             {task.type === 'INCONSISTENCIA_AMOUNT' && 'Inconsistência no Valor'}
@@ -594,28 +574,70 @@ export function Inbox() {
                             {task.type === 'MISSING_FIELD' && 'Campo Obrigatório Ausente'}
                           </span>
                         </div>
-                        <p className="text-sm text-orange-700">{task.message}</p>
+                        
+                        {/* Comparison Table */}
+                        <div className="bg-white rounded border border-orange-200 overflow-hidden mb-3">
+                          <div className="grid grid-cols-3 divide-x divide-orange-200">
+                            <div className="p-3 bg-red-50">
+                              <div className="text-xs font-medium text-red-700 mb-1">OCR (Baixa Qualidade)</div>
+                              <div className="text-sm text-red-900 break-words">
+                                {task.message.includes('OCR=') ? 
+                                  task.message.match(/OCR="([^"]*)"/) ?.[1] || 'N/A' : 'N/A'}
+                              </div>
+                            </div>
+                            <div className="p-3 bg-green-50">
+                              <div className="text-xs font-medium text-green-700 mb-1">IA (Confiável)</div>
+                              <div className="text-sm text-green-900 font-medium break-words">
+                                {task.message.includes('IA=') ? 
+                                  task.message.match(/IA="([^"]*)"/) ?.[1] || 'N/A' : 'N/A'}
+                              </div>
+                            </div>
+                            <div className="p-3 bg-blue-50">
+                              <div className="text-xs font-medium text-blue-700 mb-1">Filename (Metadados)</div>
+                              <div className="text-sm text-blue-900 break-words">
+                                {task.field === 'amount' ? 
+                                  selectedDoc.originalName.match(/R\$\s*([\d.,]+)/) ?.[0] || 'N/A' : 
+                                  task.field === 'supplier' ? 'Detectado no nome' : 'N/A'}
+                              </div>
+                            </div>
+                          </div>
+                        </div>
+                        
+                        <div className="p-2 bg-green-100 rounded text-xs text-green-800">
+                          <strong>Sistema Recomenda:</strong> Usar valor da IA (verde) pois passou na validação cruzada com metadados do filename.
+                        </div>
                       </div>
                     ))}
                   </div>
                 </div>
               )}
 
-              {/* OCR Info */}
-              {selectedDoc.ocrConfidence && (
-                <div className="grid gap-3">
-                  <h3 className="font-semibold text-foreground">Informações do OCR</h3>
-                  <div className="grid grid-cols-2 gap-4 text-sm">
-                    <div>
-                      <Label className="text-muted-foreground">Confiança do OCR</Label>
-                      <p className="font-medium">{selectedDoc.ocrConfidence}%</p>
-                    </div>
-                    {selectedDoc.aiProvider && (
-                      <div>
-                        <Label className="text-muted-foreground">Provider IA</Label>
-                        <p className="font-medium">{selectedDoc.aiProvider}</p>
-                      </div>
-                    )}
+              {/* Action Buttons */}
+              {selectedDoc?.status === 'PENDENTE_REVISAO' && (
+                <div className="grid gap-3 pt-4 border-t">
+                  <h3 className="font-semibold text-foreground">Ações do Operador</h3>
+                  <div className="flex gap-3">
+                    <Button 
+                      className="flex-1 bg-green-600 hover:bg-green-700 text-white"
+                      onClick={() => {
+                        // TODO: Implementar aprovação automática usando dados da IA
+                        console.log('Aprovar com dados da IA:', selectedDoc.extractedData);
+                      }}
+                    >
+                      <CheckCircle2 className="w-4 h-4 mr-2" />
+                      Aprovar Dados da IA
+                    </Button>
+                    <Button 
+                      variant="outline"
+                      className="flex-1"
+                      onClick={() => {
+                        // TODO: Implementar redirecionamento para edição manual
+                        console.log('Revisar manualmente:', selectedDoc.id);
+                      }}
+                    >
+                      <Edit className="w-4 h-4 mr-2" />
+                      Revisar Manualmente
+                    </Button>
                   </div>
                 </div>
               )}
