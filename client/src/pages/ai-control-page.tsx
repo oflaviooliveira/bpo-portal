@@ -16,12 +16,14 @@ interface AIProvider {
 }
 
 export default function AIControlPage() {
-  const { data: providersData, isLoading } = useQuery({
+  const { data: providersData, isLoading, error } = useQuery({
     queryKey: ["/api/ai-control"],
   });
 
   const providers = providersData?.providers || [];
   const summary = providersData?.summary || {};
+
+  console.log("AI Control - Data:", providersData, "Error:", error);
 
   const toggleMutation = useMutation({
     mutationFn: (providerName: string) =>
@@ -42,6 +44,19 @@ export default function AIControlPage() {
     );
   }
 
+  if (error) {
+    return (
+      <div className="flex items-center justify-center h-96">
+        <div className="text-center">
+          <h2 className="text-xl font-semibold mb-2">Erro ao carregar dados</h2>
+          <p className="text-muted-foreground">
+            {error.message || "Verifique se você tem permissão para acessar este recurso"}
+          </p>
+        </div>
+      </div>
+    );
+  }
+
 
 
   return (
@@ -53,7 +68,7 @@ export default function AIControlPage() {
             Configure e monitore os provedores de IA para análise de documentos
           </p>
         </div>
-        <Button variant="outline" onClick={() => window.location.href = '/ai-analytics'}>
+        <Button variant="outline" onClick={() => window.open('/ai-analytics', '_blank')}>
           Ver Analytics
         </Button>
       </div>

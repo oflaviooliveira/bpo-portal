@@ -1022,14 +1022,14 @@ export async function registerRoutes(app: Express): Promise<Server> {
       
       // Calculate metrics by provider
       const metrics = providers.map(provider => {
-        const providerRuns = recentRuns.filter(run => run.provider === provider.name);
-        const totalCost = providerRuns.reduce((sum, run) => sum + (run.cost || 0), 0);
+        const providerRuns = recentRuns.filter(run => run.providerUsed === provider.name);
+        const totalCost = providerRuns.reduce((sum, run) => sum + (run.costUsd || 0), 0);
         const totalTokens = providerRuns.reduce((sum, run) => sum + (run.tokensIn || 0) + (run.tokensOut || 0), 0);
         const avgResponseTime = providerRuns.length > 0 
-          ? providerRuns.reduce((sum, run) => sum + (run.responseTime || 0), 0) / providerRuns.length 
+          ? providerRuns.reduce((sum, run) => sum + (run.processingTimeMs || 0), 0) / providerRuns.length 
           : 0;
         const successRate = providerRuns.length > 0 
-          ? (providerRuns.filter(run => run.status === 'SUCCESS').length / providerRuns.length) * 100 
+          ? (providerRuns.filter(run => (run.confidence || 0) > 80).length / providerRuns.length) * 100 
           : 0;
         
         return {
@@ -1041,8 +1041,8 @@ export async function registerRoutes(app: Express): Promise<Server> {
             avgResponseTime: Math.round(avgResponseTime),
             successRate: parseFloat(successRate.toFixed(1)),
             failureReasons: providerRuns
-              .filter(run => run.status === 'ERROR')
-              .map(run => run.errorDetails || 'Unknown error')
+              .filter(run => (run.confidence || 0) <= 80)
+              .map(run => run.fallbackReason || 'Low confidence')
               .reduce((acc, reason) => {
                 acc[reason] = (acc[reason] || 0) + 1;
                 return acc;
@@ -1055,11 +1055,11 @@ export async function registerRoutes(app: Express): Promise<Server> {
         providers: metrics,
         summary: {
           totalRequests: recentRuns.length,
-          totalCost: parseFloat(recentRuns.reduce((sum, run) => sum + (run.cost || 0), 0).toFixed(4)),
+          totalCost: parseFloat(recentRuns.reduce((sum, run) => sum + (run.costUsd || 0), 0).toFixed(4)),
           avgDailyRequests: Math.round(recentRuns.length / 30),
           mostUsedProvider: recentRuns.length > 0 
             ? recentRuns.reduce((acc, run) => {
-                acc[run.provider] = (acc[run.provider] || 0) + 1;
+                acc[run.providerUsed] = (acc[run.providerUsed] || 0) + 1;
                 return acc;
               }, {} as Record<string, number>)
             : {}
@@ -1099,7 +1099,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
       });
       
       if (provider) {
-        aiRuns = aiRuns.filter(run => run.provider === provider);
+        aiRuns = aiRuns.filter(run => run.providerUsed === provider);
       }
       
       // Group by day for timeline chart
@@ -1118,20 +1118,20 @@ export async function registerRoutes(app: Express): Promise<Server> {
         timeline.push({
           date: dayStart.toISOString().split('T')[0],
           requests: dayRuns.length,
-          cost: parseFloat(dayRuns.reduce((sum, run) => sum + (run.cost || 0), 0).toFixed(4)),
+          cost: parseFloat(dayRuns.reduce((sum, run) => sum + (run.costUsd || 0), 0).toFixed(4)),
           avgResponseTime: dayRuns.length > 0 
-            ? Math.round(dayRuns.reduce((sum, run) => sum + (run.responseTime || 0), 0) / dayRuns.length)
+            ? Math.round(dayRuns.reduce((sum, run) => sum + (run.processingTimeMs || 0), 0) / dayRuns.length)
             : 0,
-          successCount: dayRuns.filter(run => run.status === 'SUCCESS').length,
-          errorCount: dayRuns.filter(run => run.status === 'ERROR').length
+          successCount: dayRuns.filter(run => (run.confidence || 0) > 80).length,
+          errorCount: dayRuns.filter(run => (run.confidence || 0) <= 80).length
         });
       }
       
       // Provider comparison
       const providerStats = Object.entries(
         aiRuns.reduce((acc, run) => {
-          if (!acc[run.provider]) {
-            acc[run.provider] = {
+          if (!acc[run.providerUsed]) {
+            acc[run.providerUsed] = {
               requests: 0,
               cost: 0,
               avgResponseTime: 0,
@@ -1140,11 +1140,11 @@ export async function registerRoutes(app: Express): Promise<Server> {
               successCount: 0
             };
           }
-          acc[run.provider].requests++;
-          acc[run.provider].cost += run.cost || 0;
-          acc[run.provider].totalResponseTime += run.responseTime || 0;
-          if (run.status === 'SUCCESS') {
-            acc[run.provider].successCount++;
+          acc[run.providerUsed].requests++;
+          acc[run.providerUsed].cost += run.costUsd || 0;
+          acc[run.providerUsed].totalResponseTime += run.processingTimeMs || 0;
+          if ((run.confidence || 0) > 80) {
+            acc[run.providerUsed].successCount++;
           }
           return acc;
         }, {} as Record<string, any>)
@@ -1161,12 +1161,12 @@ export async function registerRoutes(app: Express): Promise<Server> {
         providerStats,
         summary: {
           totalRequests: aiRuns.length,
-          totalCost: parseFloat(aiRuns.reduce((sum, run) => sum + (run.cost || 0), 0).toFixed(4)),
+          totalCost: parseFloat(aiRuns.reduce((sum, run) => sum + (run.costUsd || 0), 0).toFixed(4)),
           avgResponseTime: aiRuns.length > 0 
-            ? Math.round(aiRuns.reduce((sum, run) => sum + (run.responseTime || 0), 0) / aiRuns.length)
+            ? Math.round(aiRuns.reduce((sum, run) => sum + (run.processingTimeMs || 0), 0) / aiRuns.length)
             : 0,
           overallSuccessRate: aiRuns.length > 0 
-            ? parseFloat(((aiRuns.filter(run => run.status === 'SUCCESS').length / aiRuns.length) * 100).toFixed(1))
+            ? parseFloat(((aiRuns.filter(run => (run.confidence || 0) > 80).length / aiRuns.length) * 100).toFixed(1))
             : 0
         }
       });

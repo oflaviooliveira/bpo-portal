@@ -44,9 +44,11 @@ export default function AIAnalyticsPage() {
   const [period, setPeriod] = useState("30");
   const [selectedProvider, setSelectedProvider] = useState<string>("all");
 
-  const { data: analyticsData, isLoading } = useQuery({
+  const { data: analyticsData, isLoading, error } = useQuery({
     queryKey: ["/api/ai-control/analytics", { period, provider: selectedProvider === "all" ? undefined : selectedProvider }],
   });
+
+  console.log("AI Analytics - Data:", analyticsData, "Error:", error);
 
   if (isLoading) {
     return (
