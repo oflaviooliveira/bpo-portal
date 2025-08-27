@@ -55,7 +55,7 @@
   --spacing: 0.25rem;
 
   /* Gquicks Brand Colors */
-  --gquicks-primary: hsl(338, 89%, 44%);
+  --gquicks-primary: hsl(338, 100%, 50%); /* #FF0066 Rosa conforme ajustes_upload.md */
   --gquicks-secondary: hsl(222, 84%, 11%);
   --gquicks-accent: hsl(0, 0%, 100%);
 }

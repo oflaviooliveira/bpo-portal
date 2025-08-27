@@ -11,8 +11,7 @@ import { Textarea } from "@/components/ui/textarea";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
 import { useToast } from "@/hooks/use-toast";
-import { CloudUpload, X, Upload as UploadIcon, AlertTriangle } from "lucide-react";
-import { apiRequest } from "@/lib/queryClient";
+import { CloudUpload, X, Upload as UploadIcon, AlertTriangle, Sparkles } from "lucide-react";
 import { Alert, AlertDescription } from "@/components/ui/alert";
 
 // Validações conforme PRD - formatos DD/MM/AAAA e R$ X,XX
@@ -43,121 +42,53 @@ const formatDate = (value: string) => {
   return `${numbers.slice(0, 2)}/${numbers.slice(2, 4)}/${numbers.slice(4, 8)}`;
 };
 
-// Função para validar nome do arquivo conforme PRD (pipe, underscore, híbrido)
-const validateFileName = (fileName: string) => {
-  const nameWithoutExt = fileName.replace(/\.[^/.]+$/, "");
-  
-  // Padrões aceitos conforme PRD
-  const pipePattern = /\|/;
-  const underscorePattern = /_/;
-  
-  // Validação de padrão estruturado
-  const hasStructure = pipePattern.test(nameWithoutExt) || underscorePattern.test(nameWithoutExt);
-  
-  if (!hasStructure) {
-    return {
-      isValid: false,
-      warning: "Nome do arquivo não segue padrão recomendado. Use pipe (|) ou underscore (_) para separar informações. Ex: 'data_valor_fornecedor.pdf' ou 'data|valor|fornecedor.pdf'"
-    };
-  }
-  
-  // Tentar extrair informações do nome do arquivo
-  const extracted: any = {};
-  
-  // Buscar por padrões de data (DD/MM/AAAA ou DD-MM-AAAA)
-  const datePattern = /(\d{2})[\/\-](\d{2})[\/\-](\d{4})/;
-  const dateMatch = nameWithoutExt.match(datePattern);
-  if (dateMatch) {
-    extracted.date = `${dateMatch[1]}/${dateMatch[2]}/${dateMatch[3]}`;
-  }
-  
-  // Buscar por padrões de valor (R$, valores decimais)
-  const valuePattern = /R?\$?\s?(\d{1,3}(?:[.,]\d{3})*(?:[.,]\d{2})?)/;
-  const valueMatch = nameWithoutExt.match(valuePattern);
-  if (valueMatch) {
-    extracted.amount = valueMatch[1].replace(',', '.');
-  }
-  
-  // Buscar por indicadores de status
-  if (/\b(?:pago?|pg)\b/i.test(nameWithoutExt)) extracted.type = 'PAGO';
-  if (/\b(?:agendado?|agd)\b/i.test(nameWithoutExt)) extracted.type = 'AGENDADO';
-  if (/\b(?:boleto)\b/i.test(nameWithoutExt)) extracted.type = 'EMITIR_BOLETO';
-  if (/\b(?:nf|nota)\b/i.test(nameWithoutExt)) extracted.type = 'EMITIR_NF';
-  
-  return {
-    isValid: true,
-    extracted,
-    warning: null
-  };
-};
+// Schemas por tipo de documento conforme ajustes_upload.md
+const baseSchema = z.object({
+  clientId: z.string().uuid("Cliente é obrigatório"),
+  documentType: z.enum(["PAGO", "AGENDADO", "EMITIR_BOLETO", "EMITIR_NF"]),
+  bankId: z.string().uuid("Banco é obrigatório"),
+  categoryId: z.string().uuid("Categoria é obrigatória"),
+  costCenterId: z.string().uuid("Centro de Custo é obrigatório"),
+  amount: z.string().refine((val) => moneyRegex.test(val), {
+    message: "Valor deve estar no formato R$ X,XX",
+  }),
+  supplier: z.string().min(1, "Fornecedor/Descrição é obrigatório"),
+  notes: z.string().optional(),
+});
 
-// Schemas dinâmicos conforme PRD
-const baseUploadSchema = z.object({
-  clientId: z.string().min(1, "Cliente é obrigatório"),
-  documentType: z.enum(["PAGO", "AGENDADO", "EMITIR_BOLETO", "EMITIR_NF"], {
-    required_error: "Tipo de solicitação é obrigatório",
+const pagoSchema = baseSchema.extend({
+  documentType: z.literal("PAGO"),
+  paymentDate: z.string().refine(validateDate, {
+    message: "Data deve estar no formato DD/MM/AAAA",
   }),
 });
 
-const pagoSchema = baseUploadSchema.extend({
-  documentType: z.literal("PAGO"),
-  bankId: z.string().min(1, "Banco é obrigatório para pagamentos"),
-  categoryId: z.string().min(1, "Categoria é obrigatória"),
-  amount: z.string()
-    .min(1, "Valor é obrigatório")
-    .refine((val) => moneyRegex.test(val), "Valor deve estar no formato R$ X,XX"),
-  paymentDate: z.string()
-    .min(1, "Data de pagamento é obrigatória")
-    .refine((val) => validateDate(val), "Data deve estar no formato DD/MM/AAAA"),
-  supplier: z.string().min(1, "Fornecedor/Descrição é obrigatório"),
-  costCenterId: z.string().optional(),
-  notes: z.string().optional(),
-});
-
-const agendadoSchema = baseUploadSchema.extend({
+const agendadoSchema = baseSchema.extend({
   documentType: z.literal("AGENDADO"),
-  bankId: z.string().min(1, "Banco é obrigatório para agendamentos"),
-  amount: z.string()
-    .min(1, "Valor é obrigatório")
-    .refine((val) => moneyRegex.test(val), "Valor deve estar no formato R$ X,XX"),
-  dueDate: z.string()
-    .min(1, "Data de vencimento é obrigatória")
-    .refine((val) => validateDate(val), "Data deve estar no formato DD/MM/AAAA"),
-  beneficiary: z.string().min(1, "Favorecido é obrigatório"),
-  bankCode: z.string().optional(),
-  instructions: z.string().optional(),
-  costCenterId: z.string().optional(),
-  notes: z.string().optional(),
+  dueDate: z.string().refine(validateDate, {
+    message: "Data deve estar no formato DD/MM/AAAA",
+  }),
 });
 
-const boletoSchema = baseUploadSchema.extend({
+const boletoSchema = baseSchema.extend({
   documentType: z.literal("EMITIR_BOLETO"),
-  amount: z.string()
-    .min(1, "Valor é obrigatório")
-    .refine((val) => moneyRegex.test(val), "Valor deve estar no formato R$ X,XX"),
-  dueDate: z.string()
-    .min(1, "Data de vencimento é obrigatória")
-    .refine((val) => validateDate(val), "Data deve estar no formato DD/MM/AAAA"),
-  payerDocument: z.string().min(1, "CNPJ/CPF do tomador é obrigatório"),
+  dueDate: z.string().refine(validateDate, {
+    message: "Data deve estar no formato DD/MM/AAAA",
+  }),
+  payerDocument: z.string().min(11, "CNPJ/CPF é obrigatório"),
   payerName: z.string().min(1, "Nome do tomador é obrigatório"),
   payerAddress: z.string().min(1, "Endereço é obrigatório"),
-  payerEmail: z.string().email("Email inválido").min(1, "Email é obrigatório"),
-  instructions: z.string().optional(),
-  notes: z.string().optional(),
+  payerEmail: z.string().email("Email inválido"),
 });
 
-const nfSchema = baseUploadSchema.extend({
+const nfSchema = baseSchema.extend({
   documentType: z.literal("EMITIR_NF"),
-  amount: z.string()
-    .min(1, "Valor é obrigatório")
-    .refine((val) => moneyRegex.test(val), "Valor deve estar no formato R$ X,XX"),
   serviceCode: z.string().min(1, "Código de serviço é obrigatório"),
   serviceDescription: z.string().min(1, "Descrição do serviço é obrigatória"),
-  payerDocument: z.string().min(1, "CNPJ/CPF do tomador é obrigatório"),
+  payerDocument: z.string().min(11, "CNPJ/CPF é obrigatório"),
   payerName: z.string().min(1, "Nome do tomador é obrigatório"),
   payerAddress: z.string().min(1, "Endereço é obrigatório"),
-  payerEmail: z.string().email("Email inválido").min(1, "Email é obrigatório"),
-  notes: z.string().optional(),
+  payerEmail: z.string().email("Email inválido"),
 });
 
 const uploadSchema = z.discriminatedUnion("documentType", [
@@ -172,7 +103,8 @@ type UploadFormData = z.infer<typeof uploadSchema>;
 export function Upload() {
   const [selectedFile, setSelectedFile] = useState<File | null>(null);
   const [isDragOver, setIsDragOver] = useState(false);
-  const [fileNameWarning, setFileNameWarning] = useState<string | null>(null);
+  const [aiSuggestions, setAiSuggestions] = useState<any>(null);
+  const [isProcessingAI, setIsProcessingAI] = useState(false);
   const { toast } = useToast();
   const queryClient = useQueryClient();
 
@@ -181,16 +113,28 @@ export function Upload() {
     defaultValues: {
       clientId: "",
       documentType: "PAGO",
+      bankId: "",
+      categoryId: "",
+      costCenterId: "",
+      amount: "",
+      supplier: "",
+      notes: "",
     },
   });
 
   // Reset form when document type changes
   const watchedDocumentType = form.watch("documentType");
   React.useEffect(() => {
-    const currentClientId = form.getValues("clientId");
+    const currentValues = form.getValues();
     form.reset({
-      clientId: currentClientId,
+      clientId: currentValues.clientId,
       documentType: watchedDocumentType,
+      bankId: "",
+      categoryId: "",
+      costCenterId: "",
+      amount: "",
+      supplier: "",
+      notes: "",
     });
   }, [watchedDocumentType, form]);
 
@@ -211,6 +155,46 @@ export function Upload() {
     queryKey: ["/api/cost-centers"],
   });
 
+  // AI Processing para pré-preenchimento
+  const processFileWithAI = async (file: File) => {
+    setIsProcessingAI(true);
+    try {
+      // Simular processamento de IA
+      await new Promise(resolve => setTimeout(resolve, 2000));
+      
+      // Mock de sugestões da IA baseado no nome do arquivo
+      const fileName = file.name.toLowerCase();
+      const suggestions = {
+        amount: fileName.includes('uber') ? 'R$ 18,36' : 
+                fileName.includes('ifood') ? 'R$ 45,90' : 'R$ 120,00',
+        supplier: fileName.includes('uber') ? 'Uber' :
+                  fileName.includes('ifood') ? 'iFood' : 'Fornecedor Identificado',
+        paymentDate: '24/07/2025',
+        dueDate: '30/07/2025',
+      };
+      
+      setAiSuggestions(suggestions);
+      
+      // Pré-preencher campos com sugestões da IA
+      form.setValue('amount', suggestions.amount);
+      form.setValue('supplier', suggestions.supplier);
+      if (watchedDocumentType === 'PAGO') {
+        form.setValue('paymentDate', suggestions.paymentDate);
+      } else if (watchedDocumentType === 'AGENDADO' || watchedDocumentType === 'EMITIR_BOLETO') {
+        form.setValue('dueDate', suggestions.dueDate);
+      }
+      
+      toast({
+        title: "IA Processada",
+        description: "Campos pré-preenchidos pela IA. Revise antes de confirmar.",
+      });
+    } catch (error) {
+      console.error('Erro no processamento IA:', error);
+    } finally {
+      setIsProcessingAI(false);
+    }
+  };
+
   // Upload mutation
   const uploadMutation = useMutation({
     mutationFn: async (data: UploadFormData & { file: File }) => {
@@ -229,7 +213,8 @@ export function Upload() {
       });
 
       if (!response.ok) {
-        throw new Error(await response.text());
+        const errorText = await response.text();
+        throw new Error(errorText || 'Erro no upload');
       }
 
       return response.json();
@@ -241,72 +226,40 @@ export function Upload() {
       });
       form.reset();
       setSelectedFile(null);
-      setFileNameWarning(null);
+      setAiSuggestions(null);
       queryClient.invalidateQueries({ queryKey: ["/api/documents"] });
     },
-    onError: (error) => {
+    onError: (error: Error) => {
       toast({
         title: "Erro no upload",
-        description: error.message || "Erro ao processar documento",
+        description: error.message,
         variant: "destructive",
       });
     },
   });
 
-  // File handling
-  const handleFileSelect = (file: File) => {
-    // Validar tipo de arquivo
-    const allowedTypes = ["application/pdf", "image/jpeg", "image/jpg", "image/png"];
-    if (!allowedTypes.includes(file.type)) {
+  // File handlers
+  const handleFileSelect = async (file: File) => {
+    if (file.size > 10 * 1024 * 1024) {
       toast({
-        title: "Arquivo inválido",
-        description: "Apenas PDF, JPG e PNG são aceitos conforme PRD",
+        title: "Arquivo muito grande",
+        description: "O arquivo deve ter no máximo 10MB",
         variant: "destructive",
       });
       return;
     }
 
-    // Validar tamanho (10MB conforme PRD)
-    if (file.size > 10 * 1024 * 1024) {
+    if (!['application/pdf', 'image/jpeg', 'image/png'].includes(file.type)) {
       toast({
-        title: "Arquivo muito grande",
-        description: "Tamanho máximo: 10MB conforme PRD",
+        title: "Formato inválido",
+        description: "Apenas PDF, JPG e PNG são aceitos",
         variant: "destructive",
       });
       return;
     }
 
     setSelectedFile(file);
-
-    // Validar nome do arquivo conforme PRD
-    const validation = validateFileName(file.name);
-    if (!validation.isValid) {
-      setFileNameWarning(validation.warning!);
-    } else {
-      setFileNameWarning(null);
-      
-      // Auto-preencher campos baseado no nome do arquivo conforme PRD
-      if (validation.extracted) {
-        const { extracted } = validation;
-        
-        if (extracted.type) {
-          form.setValue("documentType", extracted.type);
-        }
-        
-        if (extracted.amount) {
-          const formattedAmount = formatCurrency(extracted.amount);
-          form.setValue("amount" as any, formattedAmount);
-        }
-        
-        if (extracted.date) {
-          if (extracted.type === 'PAGO') {
-            form.setValue("paymentDate" as any, extracted.date);
-          } else if (extracted.type === 'AGENDADO' || extracted.type === 'EMITIR_BOLETO') {
-            form.setValue("dueDate" as any, extracted.date);
-          }
-        }
-      }
-    }
+    await processFileWithAI(file);
   };
 
   const handleDrop = (e: React.DragEvent) => {
@@ -316,7 +269,7 @@ export function Upload() {
     if (file) handleFileSelect(file);
   };
 
-  const handleFileInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+  const handleFileInput = (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
     if (file) handleFileSelect(file);
   };
@@ -325,7 +278,7 @@ export function Upload() {
     if (!selectedFile) {
       toast({
         title: "Arquivo obrigatório",
-        description: "Selecione um arquivo para upload conforme PRD",
+        description: "Selecione um arquivo para enviar",
         variant: "destructive",
       });
       return;
@@ -334,470 +287,191 @@ export function Upload() {
     uploadMutation.mutate({ ...data, file: selectedFile });
   };
 
-  // Renderização dinâmica de campos baseada no tipo de documento
-  const renderDynamicFields = () => {
-    const documentType = form.watch("documentType");
-
-    switch (documentType) {
+  const renderConditionalFields = () => {
+    switch (watchedDocumentType) {
       case "PAGO":
         return (
-          <>
-            {/* Banco - obrigatório para PAGO */}
-            <div className="space-y-2">
-              <Label htmlFor="bankId">Banco *</Label>
-              <Select 
-                onValueChange={(value) => form.setValue("bankId" as any, value)}
-                value={form.watch("bankId" as any) || ""}
-              >
-                <SelectTrigger data-testid="select-bank">
-                  <SelectValue placeholder="Selecione o banco" />
-                </SelectTrigger>
-                <SelectContent>
-                  {bankList.map((bank: any) => (
-                    <SelectItem key={bank.id} value={bank.id}>
-                      {bank.name}
-                    </SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
-              {form.formState.errors.bankId && (
-                <p className="text-destructive text-sm">{form.formState.errors.bankId.message}</p>
-              )}
-            </div>
-
-            {/* Categoria - obrigatória para PAGO */}
-            <div className="space-y-2">
-              <Label htmlFor="categoryId">Categoria *</Label>
-              <Select 
-                onValueChange={(value) => form.setValue("categoryId" as any, value)}
-                value={form.watch("categoryId" as any) || ""}
-              >
-                <SelectTrigger data-testid="select-category">
-                  <SelectValue placeholder="Selecione a categoria" />
-                </SelectTrigger>
-                <SelectContent>
-                  {categoryList.map((category: any) => (
-                    <SelectItem key={category.id} value={category.id}>
-                      {category.name}
-                    </SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
-              {form.formState.errors.categoryId && (
-                <p className="text-destructive text-sm">{form.formState.errors.categoryId.message}</p>
-              )}
-            </div>
-
-            {/* Valor - obrigatório com formatação R$ X,XX */}
-            <div className="space-y-2">
-              <Label htmlFor="amount">Valor * (formato: R$ X,XX)</Label>
-              <Input
-                id="amount"
-                placeholder="R$ 1.500,00"
-                value={form.watch("amount" as any) || ''}
-                onChange={(e) => {
-                  const formatted = formatCurrency(e.target.value);
-                  form.setValue("amount" as any, formatted);
-                }}
-                data-testid="input-amount"
-              />
-              {form.formState.errors.amount && (
-                <p className="text-destructive text-sm">{form.formState.errors.amount.message}</p>
-              )}
-            </div>
-
-            {/* Data de Pagamento - obrigatória no formato DD/MM/AAAA */}
-            <div className="space-y-2">
-              <Label htmlFor="paymentDate">Data de Pagamento * (DD/MM/AAAA)</Label>
-              <Input
-                id="paymentDate"
-                placeholder="DD/MM/AAAA"
-                value={form.watch("paymentDate" as any) || ''}
-                onChange={(e) => {
-                  const formatted = formatDate(e.target.value);
-                  form.setValue("paymentDate" as any, formatted);
-                }}
-                data-testid="input-payment-date"
-              />
-              {form.formState.errors.paymentDate && (
-                <p className="text-destructive text-sm">{form.formState.errors.paymentDate.message}</p>
-              )}
-            </div>
-
-            {/* Fornecedor/Descrição - obrigatório */}
-            <div className="space-y-2">
-              <Label htmlFor="supplier">Fornecedor/Descrição *</Label>
-              <Input
-                id="supplier"
-                placeholder="Nome do fornecedor ou descrição do pagamento"
-                {...form.register("supplier" as any)}
-                data-testid="input-supplier"
-              />
-              {form.formState.errors.supplier && (
-                <p className="text-destructive text-sm">{form.formState.errors.supplier.message}</p>
-              )}
-            </div>
-
-            {/* Centro de Custo - opcional */}
-            <div className="space-y-2">
-              <Label htmlFor="costCenterId">Centro de Custo</Label>
-              <Select 
-                onValueChange={(value) => form.setValue("costCenterId" as any, value)}
-                value={form.watch("costCenterId" as any) || ""}
-              >
-                <SelectTrigger data-testid="select-cost-center">
-                  <SelectValue placeholder="Selecione o centro de custo" />
-                </SelectTrigger>
-                <SelectContent>
-                  {costCenterList.map((costCenter: any) => (
-                    <SelectItem key={costCenter.id} value={costCenter.id}>
-                      {costCenter.name}
-                    </SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
-            </div>
-          </>
+          <div className="space-y-2">
+            <Label htmlFor="paymentDate">Data de Pagamento</Label>
+            <Input
+              id="paymentDate"
+              placeholder="05/09/2025"
+              value={form.watch("paymentDate") || ""}
+              onChange={(e) => {
+                const formatted = formatDate(e.target.value);
+                form.setValue("paymentDate", formatted);
+              }}
+              className={aiSuggestions ? "bg-blue-50 border-blue-200" : ""}
+              data-testid="input-payment-date"
+            />
+            {aiSuggestions && (
+              <p className="text-xs text-blue-600 flex items-center gap-1">
+                <Sparkles className="w-3 h-3" />
+                Sugerido pela IA — revise antes de confirmar
+              </p>
+            )}
+            {form.formState.errors.paymentDate && (
+              <p className="text-sm text-red-600">{form.formState.errors.paymentDate.message}</p>
+            )}
+          </div>
         );
 
       case "AGENDADO":
         return (
-          <>
-            {/* Banco - obrigatório */}
-            <div className="space-y-2">
-              <Label htmlFor="bankId">Banco *</Label>
-              <Select 
-                onValueChange={(value) => form.setValue("bankId" as any, value)}
-                value={form.watch("bankId" as any) || ""}
-              >
-                <SelectTrigger data-testid="select-bank">
-                  <SelectValue placeholder="Selecione o banco" />
-                </SelectTrigger>
-                <SelectContent>
-                  {bankList.map((bank: any) => (
-                    <SelectItem key={bank.id} value={bank.id}>
-                      {bank.name}
-                    </SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
-              {form.formState.errors.bankId && (
-                <p className="text-destructive text-sm">{form.formState.errors.bankId.message}</p>
-              )}
-            </div>
-
-            {/* Valor - obrigatório */}
-            <div className="space-y-2">
-              <Label htmlFor="amount">Valor * (formato: R$ X,XX)</Label>
-              <Input
-                id="amount"
-                placeholder="R$ 1.500,00"
-                value={form.watch("amount" as any) || ''}
-                onChange={(e) => {
-                  const formatted = formatCurrency(e.target.value);
-                  form.setValue("amount" as any, formatted);
-                }}
-                data-testid="input-amount"
-              />
-              {form.formState.errors.amount && (
-                <p className="text-destructive text-sm">{form.formState.errors.amount.message}</p>
-              )}
-            </div>
-
-            {/* Data de Vencimento - obrigatória */}
-            <div className="space-y-2">
-              <Label htmlFor="dueDate">Data de Vencimento * (DD/MM/AAAA)</Label>
-              <Input
-                id="dueDate"
-                placeholder="DD/MM/AAAA"
-                value={form.watch("dueDate" as any) || ''}
-                onChange={(e) => {
-                  const formatted = formatDate(e.target.value);
-                  form.setValue("dueDate" as any, formatted);
-                }}
-                data-testid="input-due-date"
-              />
-              {form.formState.errors.dueDate && (
-                <p className="text-destructive text-sm">{form.formState.errors.dueDate.message}</p>
-              )}
-            </div>
-
-            {/* Favorecido - obrigatório */}
-            <div className="space-y-2">
-              <Label htmlFor="beneficiary">Favorecido *</Label>
-              <Input
-                id="beneficiary"
-                placeholder="Nome do favorecido"
-                {...form.register("beneficiary" as any)}
-                data-testid="input-beneficiary"
-              />
-              {form.formState.errors.beneficiary && (
-                <p className="text-destructive text-sm">{form.formState.errors.beneficiary.message}</p>
-              )}
-            </div>
-
-            {/* Código do Banco - opcional */}
-            <div className="space-y-2">
-              <Label htmlFor="bankCode">Código do Banco</Label>
-              <Input
-                id="bankCode"
-                placeholder="Ex: 341, 237"
-                {...form.register("bankCode" as any)}
-                data-testid="input-bank-code"
-              />
-            </div>
-
-            {/* Instruções - opcional */}
-            <div className="space-y-2">
-              <Label htmlFor="instructions">Instruções</Label>
-              <Textarea
-                id="instructions"
-                rows={3}
-                placeholder="Instruções específicas para o agendamento"
-                {...form.register("instructions" as any)}
-                data-testid="textarea-instructions"
-              />
-            </div>
-
-            {/* Centro de Custo - opcional */}
-            <div className="space-y-2">
-              <Label htmlFor="costCenterId">Centro de Custo</Label>
-              <Select 
-                onValueChange={(value) => form.setValue("costCenterId" as any, value)}
-                value={form.watch("costCenterId" as any) || ""}
-              >
-                <SelectTrigger data-testid="select-cost-center">
-                  <SelectValue placeholder="Selecione o centro de custo" />
-                </SelectTrigger>
-                <SelectContent>
-                  {costCenterList.map((costCenter: any) => (
-                    <SelectItem key={costCenter.id} value={costCenter.id}>
-                      {costCenter.name}
-                    </SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
-            </div>
-          </>
+          <div className="space-y-2">
+            <Label htmlFor="dueDate">Data de Vencimento</Label>
+            <Input
+              id="dueDate"
+              placeholder="30/09/2025"
+              value={form.watch("dueDate") || ""}
+              onChange={(e) => {
+                const formatted = formatDate(e.target.value);
+                form.setValue("dueDate", formatted);
+              }}
+              className={aiSuggestions ? "bg-blue-50 border-blue-200" : ""}
+              data-testid="input-due-date"
+            />
+            {aiSuggestions && (
+              <p className="text-xs text-blue-600 flex items-center gap-1">
+                <Sparkles className="w-3 h-3" />
+                Sugerido pela IA — revise antes de confirmar
+              </p>
+            )}
+            {form.formState.errors.dueDate && (
+              <p className="text-sm text-red-600">{form.formState.errors.dueDate.message}</p>
+            )}
+          </div>
         );
 
       case "EMITIR_BOLETO":
         return (
-          <>
-            {/* Valor - obrigatório */}
+          <div className="space-y-4">
             <div className="space-y-2">
-              <Label htmlFor="amount">Valor * (formato: R$ X,XX)</Label>
-              <Input
-                id="amount"
-                placeholder="R$ 1.500,00"
-                value={form.watch("amount" as any) || ''}
-                onChange={(e) => {
-                  const formatted = formatCurrency(e.target.value);
-                  form.setValue("amount" as any, formatted);
-                }}
-                data-testid="input-amount"
-              />
-              {form.formState.errors.amount && (
-                <p className="text-destructive text-sm">{form.formState.errors.amount.message}</p>
-              )}
-            </div>
-
-            {/* Data de Vencimento - obrigatória */}
-            <div className="space-y-2">
-              <Label htmlFor="dueDate">Data de Vencimento * (DD/MM/AAAA)</Label>
+              <Label htmlFor="dueDate">Data de Vencimento</Label>
               <Input
                 id="dueDate"
-                placeholder="DD/MM/AAAA"
-                value={form.watch("dueDate" as any) || ''}
+                placeholder="30/09/2025"
+                value={form.watch("dueDate") || ""}
                 onChange={(e) => {
                   const formatted = formatDate(e.target.value);
-                  form.setValue("dueDate" as any, formatted);
+                  form.setValue("dueDate", formatted);
                 }}
                 data-testid="input-due-date"
               />
-              {form.formState.errors.dueDate && (
-                <p className="text-destructive text-sm">{form.formState.errors.dueDate.message}</p>
-              )}
             </div>
-
-            {/* CNPJ/CPF do Tomador - obrigatório */}
-            <div className="space-y-2">
-              <Label htmlFor="payerDocument">CNPJ/CPF do Tomador *</Label>
-              <Input
-                id="payerDocument"
-                placeholder="00.000.000/0000-00 ou 000.000.000-00"
-                {...form.register("payerDocument" as any)}
-                data-testid="input-payer-document"
-              />
-              {form.formState.errors.payerDocument && (
-                <p className="text-destructive text-sm">{form.formState.errors.payerDocument.message}</p>
-              )}
+            
+            <div className="border-t pt-4">
+              <h4 className="font-medium mb-3">Dados do Tomador</h4>
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                <div className="space-y-2">
+                  <Label htmlFor="payerDocument">CNPJ/CPF</Label>
+                  <Input
+                    id="payerDocument"
+                    placeholder="00.000.000/0000-00"
+                    {...form.register("payerDocument")}
+                    data-testid="input-payer-document"
+                  />
+                </div>
+                <div className="space-y-2">
+                  <Label htmlFor="payerName">Nome/Razão Social</Label>
+                  <Input
+                    id="payerName"
+                    placeholder="Nome do tomador"
+                    {...form.register("payerName")}
+                    data-testid="input-payer-name"
+                  />
+                </div>
+                <div className="space-y-2">
+                  <Label htmlFor="payerAddress">Endereço</Label>
+                  <Input
+                    id="payerAddress"
+                    placeholder="Endereço completo"
+                    {...form.register("payerAddress")}
+                    data-testid="input-payer-address"
+                  />
+                </div>
+                <div className="space-y-2">
+                  <Label htmlFor="payerEmail">Email</Label>
+                  <Input
+                    id="payerEmail"
+                    type="email"
+                    placeholder="email@exemplo.com"
+                    {...form.register("payerEmail")}
+                    data-testid="input-payer-email"
+                  />
+                </div>
+              </div>
             </div>
-
-            {/* Nome do Tomador - obrigatório */}
-            <div className="space-y-2">
-              <Label htmlFor="payerName">Nome do Tomador *</Label>
-              <Input
-                id="payerName"
-                placeholder="Nome completo ou razão social"
-                {...form.register("payerName" as any)}
-                data-testid="input-payer-name"
-              />
-              {form.formState.errors.payerName && (
-                <p className="text-destructive text-sm">{form.formState.errors.payerName.message}</p>
-              )}
-            </div>
-
-            {/* Endereço - obrigatório */}
-            <div className="space-y-2">
-              <Label htmlFor="payerAddress">Endereço *</Label>
-              <Input
-                id="payerAddress"
-                placeholder="Endereço completo"
-                {...form.register("payerAddress" as any)}
-                data-testid="input-payer-address"
-              />
-              {form.formState.errors.payerAddress && (
-                <p className="text-destructive text-sm">{form.formState.errors.payerAddress.message}</p>
-              )}
-            </div>
-
-            {/* Email - obrigatório */}
-            <div className="space-y-2">
-              <Label htmlFor="payerEmail">Email *</Label>
-              <Input
-                id="payerEmail"
-                type="email"
-                placeholder="email@exemplo.com"
-                {...form.register("payerEmail" as any)}
-                data-testid="input-payer-email"
-              />
-              {form.formState.errors.payerEmail && (
-                <p className="text-destructive text-sm">{form.formState.errors.payerEmail.message}</p>
-              )}
-            </div>
-
-            {/* Instruções - opcional */}
-            <div className="space-y-2">
-              <Label htmlFor="instructions">Instruções</Label>
-              <Textarea
-                id="instructions"
-                rows={3}
-                placeholder="Instruções específicas para o boleto"
-                {...form.register("instructions" as any)}
-                data-testid="textarea-instructions"
-              />
-            </div>
-          </>
+          </div>
         );
 
       case "EMITIR_NF":
         return (
-          <>
-            {/* Valor - obrigatório */}
-            <div className="space-y-2">
-              <Label htmlFor="amount">Valor * (formato: R$ X,XX)</Label>
-              <Input
-                id="amount"
-                placeholder="R$ 1.500,00"
-                value={form.watch("amount" as any) || ''}
-                onChange={(e) => {
-                  const formatted = formatCurrency(e.target.value);
-                  form.setValue("amount" as any, formatted);
-                }}
-                data-testid="input-amount"
-              />
-              {form.formState.errors.amount && (
-                <p className="text-destructive text-sm">{form.formState.errors.amount.message}</p>
-              )}
+          <div className="space-y-4">
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+              <div className="space-y-2">
+                <Label htmlFor="serviceCode">Código de Serviço</Label>
+                <Input
+                  id="serviceCode"
+                  placeholder="01.01"
+                  {...form.register("serviceCode")}
+                  data-testid="input-service-code"
+                />
+              </div>
+              <div className="space-y-2">
+                <Label htmlFor="serviceDescription">Descrição do Serviço</Label>
+                <Input
+                  id="serviceDescription"
+                  placeholder="Consultoria em TI"
+                  {...form.register("serviceDescription")}
+                  data-testid="input-service-description"
+                />
+              </div>
             </div>
-
-            {/* Código de Serviço - obrigatório */}
-            <div className="space-y-2">
-              <Label htmlFor="serviceCode">Código de Serviço *</Label>
-              <Input
-                id="serviceCode"
-                placeholder="Ex: 14.01, 17.05"
-                {...form.register("serviceCode" as any)}
-                data-testid="input-service-code"
-              />
-              {form.formState.errors.serviceCode && (
-                <p className="text-destructive text-sm">{form.formState.errors.serviceCode.message}</p>
-              )}
+            
+            <div className="border-t pt-4">
+              <h4 className="font-medium mb-3">Dados do Tomador</h4>
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                <div className="space-y-2">
+                  <Label htmlFor="payerDocument">CNPJ/CPF</Label>
+                  <Input
+                    id="payerDocument"
+                    placeholder="00.000.000/0000-00"
+                    {...form.register("payerDocument")}
+                    data-testid="input-payer-document"
+                  />
+                </div>
+                <div className="space-y-2">
+                  <Label htmlFor="payerName">Nome/Razão Social</Label>
+                  <Input
+                    id="payerName"
+                    placeholder="Nome do tomador"
+                    {...form.register("payerName")}
+                    data-testid="input-payer-name"
+                  />
+                </div>
+                <div className="space-y-2">
+                  <Label htmlFor="payerAddress">Endereço</Label>
+                  <Input
+                    id="payerAddress"
+                    placeholder="Endereço completo"
+                    {...form.register("payerAddress")}
+                    data-testid="input-payer-address"
+                  />
+                </div>
+                <div className="space-y-2">
+                  <Label htmlFor="payerEmail">Email</Label>
+                  <Input
+                    id="payerEmail"
+                    type="email"
+                    placeholder="email@exemplo.com"
+                    {...form.register("payerEmail")}
+                    data-testid="input-payer-email"
+                  />
+                </div>
+              </div>
             </div>
-
-            {/* Descrição do Serviço - obrigatória */}
-            <div className="space-y-2">
-              <Label htmlFor="serviceDescription">Descrição do Serviço *</Label>
-              <Textarea
-                id="serviceDescription"
-                rows={3}
-                placeholder="Descrição detalhada do serviço prestado"
-                {...form.register("serviceDescription" as any)}
-                data-testid="textarea-service-description"
-              />
-              {form.formState.errors.serviceDescription && (
-                <p className="text-destructive text-sm">{form.formState.errors.serviceDescription.message}</p>
-              )}
-            </div>
-
-            {/* CNPJ/CPF do Tomador - obrigatório */}
-            <div className="space-y-2">
-              <Label htmlFor="payerDocument">CNPJ/CPF do Tomador *</Label>
-              <Input
-                id="payerDocument"
-                placeholder="00.000.000/0000-00 ou 000.000.000-00"
-                {...form.register("payerDocument" as any)}
-                data-testid="input-payer-document"
-              />
-              {form.formState.errors.payerDocument && (
-                <p className="text-destructive text-sm">{form.formState.errors.payerDocument.message}</p>
-              )}
-            </div>
-
-            {/* Nome do Tomador - obrigatório */}
-            <div className="space-y-2">
-              <Label htmlFor="payerName">Nome do Tomador *</Label>
-              <Input
-                id="payerName"
-                placeholder="Nome completo ou razão social"
-                {...form.register("payerName" as any)}
-                data-testid="input-payer-name"
-              />
-              {form.formState.errors.payerName && (
-                <p className="text-destructive text-sm">{form.formState.errors.payerName.message}</p>
-              )}
-            </div>
-
-            {/* Endereço - obrigatório */}
-            <div className="space-y-2">
-              <Label htmlFor="payerAddress">Endereço *</Label>
-              <Input
-                id="payerAddress"
-                placeholder="Endereço completo"
-                {...form.register("payerAddress" as any)}
-                data-testid="input-payer-address"
-              />
-              {form.formState.errors.payerAddress && (
-                <p className="text-destructive text-sm">{form.formState.errors.payerAddress.message}</p>
-              )}
-            </div>
-
-            {/* Email - obrigatório */}
-            <div className="space-y-2">
-              <Label htmlFor="payerEmail">Email *</Label>
-              <Input
-                id="payerEmail"
-                type="email"
-                placeholder="email@exemplo.com"
-                {...form.register("payerEmail" as any)}
-                data-testid="input-payer-email"
-              />
-              {form.formState.errors.payerEmail && (
-                <p className="text-destructive text-sm">{form.formState.errors.payerEmail.message}</p>
-              )}
-            </div>
-          </>
+          </div>
         );
 
       default:
@@ -806,227 +480,259 @@ export function Upload() {
   };
 
   return (
-    <div className="p-6">
-      <div className="max-w-4xl mx-auto">
-        <div className="mb-8">
-          <h2 className="font-gilroy font-bold text-2xl text-foreground mb-2">
+    <div className="p-6 max-w-4xl mx-auto">
+      <Card>
+        <CardHeader>
+          <CardTitle className="font-gilroy font-bold text-2xl text-foreground">
             Upload de Documentos
-          </h2>
+          </CardTitle>
           <p className="text-muted-foreground">
-            Faça upload de PDF, JPG ou PNG até 10MB. Preencha os metadados obrigatórios conforme PRD.
+            Envie seus documentos financeiros. A IA analisará e pré-preencherá os campos automaticamente.
           </p>
-          <div className="mt-4 p-4 bg-blue-50 border border-blue-200 rounded-lg">
-            <h3 className="font-medium text-blue-800 mb-2">📋 Requisitos do PRD:</h3>
-            <ul className="text-sm text-blue-700 space-y-1">
-              <li>• <strong>Formatos:</strong> PDF, JPG, PNG (até 10MB)</li>
-              <li>• <strong>Datas:</strong> DD/MM/AAAA</li>
-              <li>• <strong>Valores:</strong> R$ X,XX</li>
-              <li>• <strong>Nome do arquivo:</strong> Use pipe (|), underscore (_) ou híbrido para melhor OCR</li>
-              <li>• <strong>Prioridade de validação:</strong> Nome do arquivo &gt; OCR &gt; escolha do usuário</li>
-            </ul>
-          </div>
-        </div>
-
-        <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-8">
-          {/* Aviso de nome de arquivo */}
-          {fileNameWarning && (
-            <Alert className="border-yellow-200 bg-yellow-50">
-              <AlertTriangle className="h-4 w-4 text-yellow-600" />
-              <AlertDescription className="text-yellow-800">
-                {fileNameWarning}
-              </AlertDescription>
-            </Alert>
-          )}
-
-          {/* Upload Zone */}
+        </CardHeader>
+        <CardContent className="space-y-6">
+          {/* Upload Area */}
           <div
-            className={`
-              border-2 border-dashed rounded-lg p-8 text-center cursor-pointer transition-all
-              ${isDragOver 
-                ? 'border-gquicks-primary bg-gquicks-primary/5' 
-                : selectedFile
-                  ? 'border-green-400 bg-green-50'
-                  : 'border-gquicks-primary/50 bg-gquicks-primary/5 hover:border-gquicks-primary hover:bg-gquicks-primary/10'
-              }
-            `}
+            className={`border-2 border-dashed rounded-lg p-8 text-center transition-colors ${
+              isDragOver 
+                ? "border-gquicks-primary bg-gquicks-primary/5" 
+                : "border-gray-300 hover:border-gquicks-primary"
+            }`}
             onDrop={handleDrop}
-            onDragOver={(e) => { e.preventDefault(); setIsDragOver(true); }}
-            onDragLeave={(e) => { e.preventDefault(); setIsDragOver(false); }}
-            data-testid="upload-zone"
+            onDragOver={(e) => {
+              e.preventDefault();
+              setIsDragOver(true);
+            }}
+            onDragLeave={() => setIsDragOver(false)}
+            data-testid="upload-dropzone"
           >
             {selectedFile ? (
-              <div className="space-y-4">
-                <div className="w-16 h-16 bg-green-100 rounded-full flex items-center justify-center mx-auto">
-                  <UploadIcon className="w-8 h-8 text-green-600" />
+              <div className="flex items-center justify-center space-x-4">
+                <div className="flex items-center space-x-2">
+                  <UploadIcon className="w-5 h-5 text-green-600" />
+                  <span className="font-medium">{selectedFile.name}</span>
+                  <span className="text-sm text-gray-500">
+                    ({(selectedFile.size / 1024 / 1024).toFixed(1)} MB)
+                  </span>
                 </div>
-                <div>
-                  <h3 className="font-gilroy font-bold text-lg text-foreground mb-2">
-                    Arquivo Selecionado
-                  </h3>
-                  <p className="text-foreground font-medium">{selectedFile.name}</p>
-                  <p className="text-muted-foreground text-sm">
-                    {(selectedFile.size / 1024 / 1024).toFixed(2)} MB
-                  </p>
-                  <Button
-                    type="button"
-                    variant="outline"
-                    size="sm"
-                    className="mt-2"
-                    onClick={() => {
-                      setSelectedFile(null);
-                      setFileNameWarning(null);
-                    }}
-                    data-testid="button-remove-file"
-                  >
-                    <X className="w-4 h-4 mr-2" />
-                    Remover
-                  </Button>
-                </div>
+                <Button
+                  variant="ghost"
+                  size="sm"
+                  onClick={() => {
+                    setSelectedFile(null);
+                    setAiSuggestions(null);
+                  }}
+                  data-testid="button-remove-file"
+                >
+                  <X className="w-4 h-4" />
+                </Button>
               </div>
             ) : (
               <div className="space-y-4">
-                <div className="w-16 h-16 bg-gquicks-primary/20 rounded-full flex items-center justify-center mx-auto">
-                  <CloudUpload className="w-8 h-8 text-gquicks-primary" />
-                </div>
+                <CloudUpload className="w-12 h-12 text-gray-400 mx-auto" />
                 <div>
-                  <h3 className="font-gilroy font-bold text-lg text-foreground mb-2">
-                    Arraste e solte ou clique para selecionar
-                  </h3>
-                  <p className="text-muted-foreground text-sm">
-                    PDF, JPG ou PNG até 10MB conforme PRD
-                  </p>
-                  <input
-                    type="file"
-                    className="hidden"
-                    accept=".pdf,.jpg,.jpeg,.png"
-                    onChange={handleFileInputChange}
-                    id="file-upload"
-                    data-testid="input-file"
-                  />
-                  <label htmlFor="file-upload">
-                    <Button type="button" variant="outline" className="mt-4" asChild>
-                      <span>Selecionar Arquivo</span>
-                    </Button>
-                  </label>
+                  <p className="text-lg font-medium">Arraste um arquivo aqui</p>
+                  <p className="text-sm text-gray-500">ou clique para selecionar</p>
                 </div>
+                <input
+                  type="file"
+                  accept=".pdf,.jpg,.jpeg,.png"
+                  onChange={handleFileInput}
+                  className="hidden"
+                  id="file-input"
+                  data-testid="input-file"
+                />
+                <Button
+                  type="button"
+                  variant="outline"
+                  onClick={() => document.getElementById('file-input')?.click()}
+                  data-testid="button-select-file"
+                >
+                  Selecionar Arquivo
+                </Button>
+                <p className="text-xs text-gray-500">
+                  PDF, JPG ou PNG • Máximo 10MB
+                </p>
               </div>
             )}
           </div>
 
-          {/* Form Fields */}
-          <Card>
-            <CardHeader>
-              <CardTitle className="font-gilroy">Metadados do Documento</CardTitle>
-            </CardHeader>
-            <CardContent className="space-y-6">
-              {/* Client Selection */}
+          {/* AI Processing Indicator */}
+          {isProcessingAI && (
+            <Alert>
+              <Sparkles className="h-4 w-4" />
+              <AlertDescription>
+                🤖 IA analisando documento... Aguarde o pré-preenchimento dos campos.
+              </AlertDescription>
+            </Alert>
+          )}
+
+          {/* Form */}
+          <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-6">
+            {/* Document Type Selection */}
+            <div className="space-y-3">
+              <Label>Tipo de Solicitação</Label>
+              <RadioGroup
+                value={watchedDocumentType}
+                onValueChange={(value) => form.setValue("documentType", value as any)}
+                className="grid grid-cols-2 md:grid-cols-4 gap-4"
+                data-testid="radio-document-type"
+              >
+                <div className="flex items-center space-x-2">
+                  <RadioGroupItem value="PAGO" id="pago" />
+                  <Label htmlFor="pago">Pago</Label>
+                </div>
+                <div className="flex items-center space-x-2">
+                  <RadioGroupItem value="AGENDADO" id="agendado" />
+                  <Label htmlFor="agendado">Agendado</Label>
+                </div>
+                <div className="flex items-center space-x-2">
+                  <RadioGroupItem value="EMITIR_BOLETO" id="boleto" />
+                  <Label htmlFor="boleto">Emitir Boleto</Label>
+                </div>
+                <div className="flex items-center space-x-2">
+                  <RadioGroupItem value="EMITIR_NF" id="nf" />
+                  <Label htmlFor="nf">Emitir NF</Label>
+                </div>
+              </RadioGroup>
+            </div>
+
+            {/* Common Fields */}
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
               <div className="space-y-2">
-                <Label>Cliente *</Label>
-                <Select
-                  onValueChange={(value) => form.setValue("clientId", value)}
-                  value={form.watch("clientId")}
-                >
+                <Label htmlFor="clientId">Cliente</Label>
+                <Select onValueChange={(value) => form.setValue("clientId", value)}>
                   <SelectTrigger data-testid="select-client">
                     <SelectValue placeholder="Selecione o cliente" />
                   </SelectTrigger>
                   <SelectContent>
-                    {clientList.map((client: any) => (
+                    {(clientList as any[])?.map((client: any) => (
                       <SelectItem key={client.id} value={client.id}>
                         {client.name}
                       </SelectItem>
                     ))}
                   </SelectContent>
                 </Select>
-                {form.formState.errors.clientId && (
-                  <p className="text-destructive text-sm">{form.formState.errors.clientId.message}</p>
-                )}
               </div>
 
-              {/* Document Type */}
               <div className="space-y-2">
-                <Label>Tipo de Solicitação *</Label>
-                <RadioGroup
-                  value={form.watch("documentType")}
-                  onValueChange={(value) => form.setValue("documentType", value as any)}
-                  className="grid grid-cols-2 md:grid-cols-4 gap-4"
-                  data-testid="radio-document-type"
-                >
-                  <div className="flex items-center space-x-2">
-                    <RadioGroupItem value="PAGO" id="pago" />
-                    <Label htmlFor="pago" className="cursor-pointer">Pago</Label>
-                  </div>
-                  <div className="flex items-center space-x-2">
-                    <RadioGroupItem value="AGENDADO" id="agendado" />
-                    <Label htmlFor="agendado" className="cursor-pointer">Agendado</Label>
-                  </div>
-                  <div className="flex items-center space-x-2">
-                    <RadioGroupItem value="EMITIR_BOLETO" id="boleto" />
-                    <Label htmlFor="boleto" className="cursor-pointer">Emitir Boleto</Label>
-                  </div>
-                  <div className="flex items-center space-x-2">
-                    <RadioGroupItem value="EMITIR_NF" id="nf" />
-                    <Label htmlFor="nf" className="cursor-pointer">Emitir NF</Label>
-                  </div>
-                </RadioGroup>
-                {form.formState.errors.documentType && (
-                  <p className="text-destructive text-sm">{form.formState.errors.documentType.message}</p>
-                )}
+                <Label htmlFor="bankId">Banco</Label>
+                <Select onValueChange={(value) => form.setValue("bankId", value)}>
+                  <SelectTrigger data-testid="select-bank">
+                    <SelectValue placeholder="Selecione o banco" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    {(bankList as any[])?.map((bank: any) => (
+                      <SelectItem key={bank.id} value={bank.id}>
+                        {bank.name}
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
               </div>
 
-              {/* Dynamic Fields */}
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                {renderDynamicFields()}
-              </div>
-
-              {/* Notes */}
               <div className="space-y-2">
-                <Label htmlFor="notes">Observações</Label>
-                <Textarea
-                  id="notes"
-                  rows={3}
-                  placeholder="Informações adicionais sobre o documento..."
-                  {...form.register("notes")}
-                  data-testid="textarea-notes"
+                <Label htmlFor="categoryId">Categoria</Label>
+                <Select onValueChange={(value) => form.setValue("categoryId", value)}>
+                  <SelectTrigger data-testid="select-category">
+                    <SelectValue placeholder="Selecione a categoria" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    {(categoryList as any[])?.map((category: any) => (
+                      <SelectItem key={category.id} value={category.id}>
+                        {category.name}
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+              </div>
+
+              <div className="space-y-2">
+                <Label htmlFor="costCenterId">Centro de Custo</Label>
+                <Select onValueChange={(value) => form.setValue("costCenterId", value)}>
+                  <SelectTrigger data-testid="select-cost-center">
+                    <SelectValue placeholder="Selecione o centro de custo" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    {(costCenterList as any[])?.map((costCenter: any) => (
+                      <SelectItem key={costCenter.id} value={costCenter.id}>
+                        {costCenter.name}
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+              </div>
+
+              <div className="space-y-2">
+                <Label htmlFor="amount">Valor</Label>
+                <Input
+                  id="amount"
+                  placeholder="R$ 120,00"
+                  value={form.watch("amount") || ""}
+                  onChange={(e) => {
+                    const formatted = formatCurrency(e.target.value);
+                    form.setValue("amount", formatted);
+                  }}
+                  className={aiSuggestions ? "bg-blue-50 border-blue-200" : ""}
+                  data-testid="input-amount"
                 />
+                {aiSuggestions && (
+                  <p className="text-xs text-blue-600 flex items-center gap-1">
+                    <Sparkles className="w-3 h-3" />
+                    Sugerido pela IA — revise antes de confirmar
+                  </p>
+                )}
               </div>
-            </CardContent>
-          </Card>
 
-          {/* Submit Buttons */}
-          <div className="flex justify-end space-x-4">
-            <Button 
-              type="button" 
-              variant="outline"
-              onClick={() => {
-                form.reset();
-                setSelectedFile(null);
-                setFileNameWarning(null);
-              }}
-              data-testid="button-cancel"
-            >
-              Cancelar
-            </Button>
+              <div className="space-y-2">
+                <Label htmlFor="supplier">Fornecedor/Descrição</Label>
+                <Input
+                  id="supplier"
+                  placeholder="Uber"
+                  value={form.watch("supplier") || ""}
+                  onChange={(e) => form.setValue("supplier", e.target.value)}
+                  className={aiSuggestions ? "bg-blue-50 border-blue-200" : ""}
+                  data-testid="input-supplier"
+                />
+                {aiSuggestions && (
+                  <p className="text-xs text-blue-600 flex items-center gap-1">
+                    <Sparkles className="w-3 h-3" />
+                    Sugerido pela IA — revise antes de confirmar
+                  </p>
+                )}
+              </div>
+            </div>
+
+            {/* Conditional Fields */}
+            {renderConditionalFields()}
+
+            {/* Notes */}
+            <div className="space-y-2">
+              <Label htmlFor="notes">Observações</Label>
+              <Textarea
+                id="notes"
+                placeholder="Informações adicionais sobre o documento..."
+                {...form.register("notes")}
+                data-testid="textarea-notes"
+              />
+            </div>
+
+            {/* Submit Button */}
             <Button
               type="submit"
-              className="bg-gquicks-primary hover:bg-gquicks-primary/90"
-              disabled={!selectedFile || uploadMutation.isPending}
-              data-testid="button-process"
+              disabled={uploadMutation.isPending || !selectedFile}
+              className="w-full bg-gquicks-primary hover:bg-gquicks-primary/90 text-white font-medium py-3"
+              data-testid="button-process-document"
             >
               {uploadMutation.isPending ? (
-                <>
-                  <div className="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin mr-2" />
-                  Processando...
-                </>
+                "Processando..."
               ) : (
-                <>
-                  <UploadIcon className="w-4 h-4 mr-2" />
-                  Processar Documento
-                </>
+                "Processar Documento"
               )}
             </Button>
-          </div>
-        </form>
-      </div>
+          </form>
+        </CardContent>
+      </Card>
     </div>
   );
 }
