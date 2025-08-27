@@ -3,7 +3,7 @@ import { Sidebar } from "@/components/layout/sidebar";
 import { Header } from "@/components/layout/header";
 import { Dashboard } from "@/components/dashboard/dashboard";
 import { Inbox } from "@/components/documents/inbox";
-import { Upload } from "@/components/documents/upload";
+import { UploadDocument } from "@/components/documents/upload-simple";
 import { Scheduled } from "@/components/documents/scheduled";
 import { Reconciliation } from "@/components/documents/reconciliation";
 import { Emission } from "@/components/documents/emission";
@@ -22,7 +22,11 @@ export default function HomePage() {
       case 'inbox':
         return <Inbox />;
       case 'upload':
-        return <Upload />;
+        return (
+          <div className="p-6">
+            <UploadDocument />
+          </div>
+        );
       case 'scheduled':
         return <Scheduled />;
       case 'reconciliation':

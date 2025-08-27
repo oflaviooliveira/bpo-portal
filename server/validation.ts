@@ -175,11 +175,36 @@ export function parseFileName(fileName: string): {
         }
       }
       
-      if (parts.slice(4).length > 0) {
-        parsed.description = parts.slice(4).join('_');
+      // Resto das partes (descrição, categoria, centro de custo, valor)
+      if (parts[4]) parsed.description = parts[4];
+      if (parts[5]) parsed.category = parts[5];
+      if (parts[6]) parsed.costCenter = parts[6];
+      
+      // Último item pode ser valor
+      const lastPart = parts[parts.length - 1];
+      if (lastPart && lastPart.includes(',')) {
+        const valueValidation = validateCurrency(lastPart);
+        if (valueValidation.isValid) {
+          parsed.value = valueValidation.value;
+        } else {
+          errors.push(`Valor inválido no nome do arquivo: ${lastPart}`);
+        }
       }
     } else {
       errors.push('Formato de nome de arquivo inválido. Use: DD_MM_AAAA_TIPO_DESCRIÇÃO');
+    }
+  }
+  // Tentar detectar informações básicas se não seguir formato específico
+  else {
+    errors.push('Nome do arquivo não segue padrão recomendado (pipe | ou underscore _)');
+    
+    // Tentar extrair valor pelo menos
+    const possibleValue = nameWithoutExt.match(/\d+[,\.]\d{2}/);
+    if (possibleValue) {
+      const valueValidation = validateCurrency(possibleValue[0]);
+      if (valueValidation.isValid) {
+        parsed.value = valueValidation.value;
+      }
     }
   }
   
@@ -190,22 +215,212 @@ export function parseFileName(fileName: string): {
   };
 }
 
-// Validação cruzada conforme PRD: Nome do arquivo > OCR > escolha do usuário
+// Validação cruzada: OCR ↔ Nome do arquivo ↔ Metadados
 export function performCrossValidation(
-  fileNameData: any,
   ocrData: any,
-  userMetadata: any
+  filenameData: any,
+  formData: any
 ): {
   isValid: boolean;
-  conflicts: string[];
-  finalData: any;
-  validationLevel: 'HIGH' | 'MEDIUM' | 'LOW';
+  confidence: number;
+  errors: string[];
+  warnings: string[];
+  inconsistencies: Array<{
+    field: string;
+    ocrValue: string | null;
+    filenameValue: string | null;
+    formValue: string | null;
+    severity: 'high' | 'medium' | 'low';
+  }>;
 } {
-  const conflicts: string[] = [];
-  const finalData: any = { ...userMetadata };
+  const errors: string[] = [];
+  const warnings: string[] = [];
+  const inconsistencies: Array<{
+    field: string;
+    ocrValue: string | null;
+    filenameValue: string | null;
+    formValue: string | null;
+    severity: 'high' | 'medium' | 'low';
+  }> = [];
   
-  // Prioridade 1: Nome do arquivo
-  if (fileNameData?.date && userMetadata.dueDate) {
+  // Validar valor monetário
+  if (ocrData.valor && filenameData.value && formData.amount) {
+    const ocrValue = parseFloat(ocrData.valor.toString().replace(',', '.'));
+    const filenameValue = parseFloat(filenameData.value.toString());
+    const formValue = parseFloat(formData.amount.replace('R$', '').replace(',', '.').replace(/\s/g, ''));
+    
+    const tolerance = 0.01; // 1 centavo de tolerância
+    
+    if (Math.abs(ocrValue - formValue) > tolerance) {
+      inconsistencies.push({
+        field: 'valor',
+        ocrValue: ocrData.valor,
+        filenameValue: filenameData.value?.toString() || null,
+        formValue: formData.amount,
+        severity: 'high'
+      });
+      errors.push(`Divergência de valor: OCR=${ocrValue} vs Form=${formValue}`);
+    }
+    
+    if (Math.abs(filenameValue - formValue) > tolerance) {
+      inconsistencies.push({
+        field: 'valor_filename',
+        ocrValue: null,
+        filenameValue: filenameData.value?.toString() || null,
+        formValue: formData.amount,
+        severity: 'medium'
+      });
+      warnings.push(`Valor no nome do arquivo difere do formulário: ${filenameValue} vs ${formValue}`);
+    }
+  }
+  
+  // Validar tipo de documento
+  if (filenameData.type && formData.documentType) {
+    const typeMap: { [key: string]: string } = {
+      'PG': 'PAGO',
+      'AG': 'AGENDADO', 
+      'BL': 'EMITIR_BOLETO',
+      'NF': 'EMITIR_NF'
+    };
+    
+    const normalizedFilenameType = typeMap[filenameData.type] || filenameData.type;
+    
+    if (normalizedFilenameType !== formData.documentType) {
+      inconsistencies.push({
+        field: 'tipo_documento',
+        ocrValue: null,
+        filenameValue: filenameData.type,
+        formValue: formData.documentType,
+        severity: 'high'
+      });
+      errors.push(`Tipo no arquivo (${filenameData.type}) difere do selecionado (${formData.documentType})`);
+    }
+  }
+  
+  // Validar data de vencimento/pagamento
+  if (ocrData.data_vencimento && formData.dueDate) {
+    if (ocrData.data_vencimento !== formData.dueDate) {
+      inconsistencies.push({
+        field: 'data_vencimento',
+        ocrValue: ocrData.data_vencimento,
+        filenameValue: filenameData.date || null,
+        formValue: formData.dueDate,
+        severity: 'medium'
+      });
+      warnings.push(`Data de vencimento OCR (${ocrData.data_vencimento}) difere do formulário (${formData.dueDate})`);
+    }
+  }
+  
+  if (ocrData.data_pagamento && formData.paymentDate) {
+    if (ocrData.data_pagamento !== formData.paymentDate) {
+      inconsistencies.push({
+        field: 'data_pagamento',
+        ocrValue: ocrData.data_pagamento,
+        filenameValue: filenameData.date || null,
+        formValue: formData.paymentDate,
+        severity: 'medium'
+      });
+      warnings.push(`Data de pagamento OCR (${ocrData.data_pagamento}) difere do formulário (${formData.paymentDate})`);
+    }
+  }
+  
+  // Calcular confiança baseado no número de inconsistências
+  const totalChecks = inconsistencies.length + (inconsistencies.length === 0 ? 1 : 0);
+  const highSeverityCount = inconsistencies.filter(i => i.severity === 'high').length;
+  const confidence = Math.max(0, 100 - (highSeverityCount * 30) - (inconsistencies.length * 10));
+  
+  return {
+    isValid: errors.length === 0,
+    confidence,
+    errors,
+    warnings,
+    inconsistencies
+  };
+}
+
+// Schemas para validação específica por tipo de documento
+export const documentValidationSchemas = {
+  PAGO: {
+    required: ['clientId', 'bankId', 'categoryId', 'costCenterId', 'amount', 'paymentDate'],
+    optional: ['supplier', 'notes']
+  },
+  AGENDADO: {
+    required: ['clientId', 'bankId', 'categoryId', 'costCenterId', 'amount', 'dueDate'],
+    optional: ['supplier', 'notes']
+  },
+  EMITIR_BOLETO: {
+    required: ['clientId', 'bankId', 'categoryId', 'costCenterId', 'amount', 'dueDate', 'payerDocument', 'payerName', 'payerAddress', 'payerEmail'],
+    optional: ['supplier', 'notes', 'instructions']
+  },
+  EMITIR_NF: {
+    required: ['clientId', 'categoryId', 'costCenterId', 'amount', 'serviceCode', 'serviceDescription', 'payerDocument', 'payerName', 'payerAddress', 'payerEmail'],
+    optional: ['supplier', 'notes', 'instructions']
+  }
+};
+
+// Validação de regras de negócio
+export function validateBusinessRules(
+  documentType: string,
+  formData: any
+): { isValid: boolean; errors: string[]; warnings: string[] } {
+  const errors: string[] = [];
+  const warnings: string[] = [];
+  
+  const schema = documentValidationSchemas[documentType as keyof typeof documentValidationSchemas];
+  if (!schema) {
+    errors.push(`Tipo de documento desconhecido: ${documentType}`);
+    return { isValid: false, errors, warnings };
+  }
+  
+  // Verificar campos obrigatórios
+  for (const field of schema.required) {
+    if (!formData[field] || formData[field] === '') {
+      errors.push(`Campo obrigatório ausente: ${field}`);
+    }
+  }
+  
+  // Validações específicas por tipo
+  if (documentType === 'PAGO' && formData.paymentDate) {
+    const paymentDate = new Date(formData.paymentDate);
+    const today = new Date();
+    today.setHours(0, 0, 0, 0);
+    
+    if (paymentDate > today) {
+      warnings.push('Data de pagamento está no futuro');
+    }
+  }
+  
+  if (['AGENDADO', 'EMITIR_BOLETO'].includes(documentType) && formData.dueDate) {
+    const dueDate = new Date(formData.dueDate);
+    const today = new Date();
+    today.setHours(0, 0, 0, 0);
+    
+    if (dueDate < today) {
+      warnings.push('Data de vencimento está no passado');
+    }
+  }
+  
+  if (['EMITIR_BOLETO', 'EMITIR_NF'].includes(documentType)) {
+    if (formData.payerDocument) {
+      const docValidation = validateDocument(formData.payerDocument);
+      if (!docValidation.isValid) {
+        errors.push('CNPJ/CPF do tomador é inválido');
+      }
+    }
+    
+    if (formData.payerEmail) {
+      if (!validateEmail(formData.payerEmail)) {
+        errors.push('Email do tomador é inválido');
+      }
+    }
+  }
+  
+  return {
+    isValid: errors.length === 0,
+    errors,
+    warnings
+  };
+}
     // Converter formato para comparação
     const fileDate = fileNameData.date.split('.').reverse().join('-');
     if (fileDate !== userMetadata.dueDate) {

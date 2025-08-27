@@ -400,3 +400,8 @@ export class DocumentProcessor {
 }
 
 export const documentProcessor = new DocumentProcessor();
+
+// Função para processamento síncrono
+export async function processDocumentSync(documentId: string, tenantId: string) {
+  return await documentProcessor.processDocument(documentId, tenantId);
+}

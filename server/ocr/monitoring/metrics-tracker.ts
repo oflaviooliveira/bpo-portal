@@ -76,7 +76,7 @@ export class OcrMetricsTracker {
         const successCount = strategyMetrics.filter(m => m.success).length;
         const successRate = totalAttempts > 0 ? (successCount / totalAttempts) * 100 : 0;
         
-        const avgProcessingTime = strategyMetrics.reduce((sum, m) => sum + m.processingTimeMs, 0) / totalAttempts;
+        const avgProcessingTime = strategyMetrics.reduce((sum, m) => sum + (m.processingTime || 0), 0) / totalAttempts;
         const avgConfidence = strategyMetrics.reduce((sum, m) => sum + m.confidence, 0) / totalAttempts;
         const avgCharacterCount = strategyMetrics.reduce((sum, m) => sum + m.characterCount, 0) / totalAttempts;
         

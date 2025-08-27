@@ -140,7 +140,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
-  // Upload and process document - Wave 1 RBAC
+  // Upload and process document - Wave 1 RBAC  
   app.post("/api/documents/upload", ...authorize(["ADMIN", "GERENTE", "OPERADOR", "CLIENTE"], true), upload.single('file'), async (req, res) => {
     try {
       const user = req.user!;
@@ -150,150 +150,26 @@ export async function registerRoutes(app: Express): Promise<Server> {
         return res.status(400).json({ error: "Nenhum arquivo foi enviado" });
       }
 
-      // FASE 3: Validação avançada do nome do arquivo
-      const { parseFileName, documentValidationSchemas, validateBusinessRules } = await import("./validation");
-      const fileNameValidation = parseFileName(file.originalname);
+      // Usar o handler de upload estruturado
+      const { uploadHandler } = await import("./upload-handler");
+      const result = await uploadHandler.processUpload(file, req.body, user);
       
-      if (!fileNameValidation.isValid && fileNameValidation.errors) {
-        console.log(`⚠️ Avisos no nome do arquivo: ${fileNameValidation.errors.join(', ')}`);
-      }
-
-      // Validate request body
-      const validatedData = uploadDocumentSchema.parse(req.body);
-
-      // FASE 3: Validação específica por tipo de documento
-      const documentType = validatedData.documentType;
-      const validationSchemas = {
-        'PAGO': z.object({
-          clientId: z.string().uuid(),
-          bankId: z.string().uuid(),
-          categoryId: z.string().uuid(),
-          amount: z.string(),
-          documentType: z.literal('PAGO'),
-          notes: z.string().optional(),
-        }),
-        'AGENDADO': z.object({
-          clientId: z.string().uuid(),
-          bankId: z.string().uuid(),
-          categoryId: z.string().uuid(),
-          amount: z.string(),
-          dueDate: z.string(),
-          documentType: z.literal('AGENDADO'),
-          notes: z.string().optional(),
-        }),
-        'EMITIR_BOLETO': z.object({
-          clientId: z.string().uuid(),
-          bankId: z.string().uuid(),
-          categoryId: z.string().uuid(),
-          amount: z.string(),
-          dueDate: z.string(),
-          documentType: z.literal('EMITIR_BOLETO'),
-          notes: z.string().optional(),
-        }),
-        'EMITIR_NF': z.object({
-          clientId: z.string().uuid(),
-          categoryId: z.string().uuid(),
-          amount: z.string(),
-          documentType: z.literal('EMITIR_NF'),
-          notes: z.string().optional(),
-        })
-      };
-      
-      if (validationSchemas[documentType]) {
-        try {
-          validationSchemas[documentType].parse(validatedData);
-        } catch (validationError) {
-          if (validationError instanceof z.ZodError) {
-            return res.status(400).json({ 
-              error: "Dados inválidos para o tipo de documento selecionado", 
-              details: validationError.errors 
-            });
-          }
-        }
-      }
-
-      // FASE 3: Validação de regras de negócio
-      const businessValidation = { isValid: true, errors: [], warnings: [] };
-      // Validação será implementada posteriormente na FASE 3
-
-      // Helper function to parse monetary values
-      const parseMoneyValue = (value: string): number | null => {
-        if (!value) return null;
-        // Remove R$, espaços e converter vírgula para ponto
-        const cleaned = value.replace(/[R$\s]/g, '').replace(',', '.');
-        const parsed = parseFloat(cleaned);
-        return isNaN(parsed) ? null : parsed;
-      };
-
-      // Helper function to parse dates in DD/MM/YYYY format
-      const parseDate = (dateStr: string): Date | null => {
-        if (!dateStr) return null;
-        
-        // Se já está no formato ISO, usar direto
-        if (dateStr.includes('-')) {
-          return new Date(dateStr);
-        }
-        
-        // Se está no formato DD/MM/YYYY, converter
-        const dateRegex = /^(\d{2})\/(\d{2})\/(\d{4})$/;
-        const match = dateStr.match(dateRegex);
-        if (match) {
-          const [, day, month, year] = match;
-          return new Date(`${year}-${month}-${day}`);
-        }
-        
-        return null;
-      };
-
-      // Create document record
-      const document = await storage.createDocument({
-        tenantId: user.tenantId,
-        clientId: validatedData.clientId,
-        bankId: validatedData.bankId,
-        categoryId: validatedData.categoryId,
-        costCenterId: validatedData.costCenterId,
-        fileName: file.filename,
-        originalName: file.originalname,
-        fileSize: file.size,
-        mimeType: file.mimetype,
-        filePath: file.path,
-        documentType: validatedData.documentType,
-        amount: validatedData.amount ? parseMoneyValue(validatedData.amount)?.toString() || null : null,
-        dueDate: validatedData.dueDate ? parseDate(validatedData.dueDate) : null,
-        notes: validatedData.notes,
-        createdBy: user.id,
-        // FASE 3: Incluir dados de validação (removido temporariamente até implementar no schema)
-      });
-
-      // Log document creation
-      await storage.createDocumentLog({
-        documentId: document.id,
-        action: "UPLOAD",
-        status: "SUCCESS",
-        details: { fileName: file.originalname, fileSize: file.size },
-        userId: user.id,
-      });
-
-      console.log(`🚀 Iniciando processamento automático para ${document.originalName}`);
-
-      // Process document asynchronously using new processor - FASE 1 IMPLEMENTADA
-      setTimeout(() => {
-        processDocumentAsync(document.id, user.tenantId).catch(error => {
-          console.error(`Erro no processamento do documento ${document.id}:`, error);
+      if (result.success) {
+        res.json({
+          message: result.message,
+          documentId: result.documentId,
+          warnings: result.warnings || []
         });
-      }, 1000); // Add small delay to ensure database transaction is complete
-
-      res.json({ 
-        message: "Documento enviado com sucesso. Processamento OCR + IA iniciado automaticamente.",
-        documentId: document.id,
-        warnings: businessValidation.warnings.length > 0 ? businessValidation.warnings : undefined,
-      });
-    } catch (error) {
-      console.error("Document upload error:", error);
-      if (error instanceof z.ZodError) {
-        return res.status(400).json({ error: "Dados inválidos", details: error.errors });
+      } else {
+        res.status(400).json({
+          error: result.message,
+          details: result.errors || [],
+          warnings: result.warnings || []
+        });
       }
-      res.status(500).json({ error: "Erro ao processar documento" });
+    } catch (error) {
+      console.error("❌ Erro no upload:", error);
+      res.status(500).json({ error: "Erro interno do servidor" });
     }
   });
 
