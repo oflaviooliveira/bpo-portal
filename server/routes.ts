@@ -586,6 +586,36 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
+  // Reprocess document with improved AI - Endpoint para testar a IA melhorada
+  app.post("/api/documents/:id/reprocess", isAuthenticated, async (req, res) => {
+    try {
+      const user = req.user!;
+      const documentId = req.params.id;
+      
+      // Verificar se documento pertence ao tenant
+      const document = await storage.getDocument(documentId, user.tenantId);
+      if (!document) {
+        return res.status(404).json({ error: "Documento não encontrado" });
+      }
+
+      console.log(`🔄 Reprocessando documento: ${document.originalName}`);
+      
+      const result = await documentProcessor.processDocument(documentId, user.tenantId);
+      
+      res.json({
+        success: result.success,
+        status: result.status,
+        message: result.success ? "Documento reprocessado com sucesso" : "Erro no reprocessamento",
+        updates: result.updates,
+        errors: result.errors
+      });
+
+    } catch (error) {
+      console.error("Reprocess error:", error);
+      res.status(500).json({ error: "Erro ao reprocessar documento" });
+    }
+  });
+
   // AI metrics dashboard endpoint
   app.get("/api/ai-metrics", isAuthenticated, async (req, res) => {
     try {

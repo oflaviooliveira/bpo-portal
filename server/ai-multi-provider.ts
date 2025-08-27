@@ -144,7 +144,7 @@ class AIMultiProvider {
     }
   }
 
-  private async analyzeWithGLM(ocrText: string, fileName: string): Promise<AIAnalysisResult> {
+  async analyzeWithGLM(ocrText: string, fileName: string): Promise<AIAnalysisResult> {
     const apiKey = process.env.GLM_API_KEY;
     if (!apiKey) {
       throw new Error('GLM API key not configured');
@@ -212,7 +212,7 @@ class AIMultiProvider {
     }
   }
 
-  private async analyzeWithOpenAI(ocrText: string, fileName: string): Promise<AIAnalysisResult> {
+  async analyzeWithOpenAI(ocrText: string, fileName: string): Promise<AIAnalysisResult> {
     const prompt = this.buildAnalysisPrompt(ocrText, fileName);
     
     try {
@@ -261,42 +261,45 @@ class AIMultiProvider {
 
   private buildAnalysisPrompt(ocrText: string, fileName: string): string {
     return `
-Você é um assistente especializado em análise de documentos financeiros brasileiros.
+Você é um especialista em análise de documentos fiscais brasileiros (notas fiscais, recibos, boletos).
 
-DOCUMENTO A ANALISAR:
+DOCUMENTO PARA ANÁLISE:
 Nome do arquivo: ${fileName}
-Texto extraído por OCR: "${ocrText}"
+Texto OCR: "${ocrText}"
 
-INSTRUÇÕES:
-1. Extraia as seguintes informações do documento:
-   - valor (formato brasileiro com R$, vírgulas e pontos)
-   - data_pagamento ou data_vencimento (formato DD/MM/AAAA)
-   - fornecedor ou descrição
-   - categoria (ex: transporte, alimentação, tecnologia, etc.)
-   - centro_custo (se identificado no nome do arquivo)
-   - documento (CNPJ, CPF se identificado)
-   - cliente_fornecedor (nome da empresa/pessoa)
-   - observações relevantes
+INSTRUÇÕES CRÍTICAS:
+1. Analise CUIDADOSAMENTE o texto OCR buscando:
+   - VALORES MONETÁRIOS: procure por "R$", valores com vírgulas/pontos (ex: 1.450,00)
+   - DATAS: formatos DD/MM/AAAA ou DD/MM/AA 
+   - EMPRESAS: nomes em maiúsculas, CNPJs
+   - PRODUTOS/SERVIÇOS: descrições detalhadas
 
-2. Use o NOME DO ARQUIVO como contexto adicional para melhorar a extração.
+2. Para NOTAS FISCAIS, identifique:
+   - Emissor (quem vendeu)
+   - Destinatário (quem comprou) 
+   - Valor total da nota
+   - Data de emissão
 
-3. IMPORTANTE: Responda APENAS em formato JSON válido, sem explicações adicionais.
+3. Use o NOME DO ARQUIVO como validação cruzada dos dados extraídos.
 
-4. Se alguma informação não estiver clara, use "não_identificado".
+4. ATENÇÃO: Se encontrar múltiplos valores, use o VALOR TOTAL DA NOTA/DOCUMENTO.
 
-FORMATO DE RESPOSTA:
+5. Responda SOMENTE em JSON válido, sem markdown ou explicações.
+
+EXEMPLO para Nota Fiscal:
+Se o texto contém "ROBSON PNEUS" como emissor, "1.450,00" como valor, "19/07/2025" como data:
 {
-  "valor": "R$ X,XX",
-  "data_pagamento": "DD/MM/AAAA",
-  "data_vencimento": "DD/MM/AAAA", 
-  "fornecedor": "nome do fornecedor",
-  "descricao": "descrição do serviço/produto",
-  "categoria": "categoria identificada",
-  "centro_custo": "centro de custo",
-  "documento": "CNPJ/CPF se identificado",
-  "cliente_fornecedor": "nome da empresa/cliente",
-  "observacoes": "informações adicionais relevantes",
-  "confidence": 85
+  "valor": "R$ 1.450,00",
+  "data_pagamento": "19/07/2025",
+  "data_vencimento": "não_identificado",
+  "fornecedor": "ROBSON PNEUS E AUTOPECAS LTDA",
+  "descricao": "COMPRA DE 2 PNEUS",
+  "categoria": "Manutenção de Veículos", 
+  "centro_custo": "SRJ1",
+  "documento": "58.950.018/0001-34",
+  "cliente_fornecedor": "ECO EXPRESS SERVICOS SUSTENTAVEIS LTDA",
+  "observacoes": "Nota Fiscal Eletrônica - 2 pneus WANLI 225/75R16LT",
+  "confidence": 95
 }`;
   }
 
