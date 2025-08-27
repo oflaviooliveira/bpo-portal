@@ -99,3 +99,75 @@ export function isAuthenticated(req: any, res: any, next: any) {
   }
   return res.status(401).json({ error: "Authentication required" });
 }
+
+// RBAC Middleware - Wave 1 Implementation
+export function requireRole(...allowedRoles: string[]) {
+  return (req: any, res: any, next: any) => {
+    if (!req.isAuthenticated()) {
+      return res.status(401).json({ error: "Authentication required" });
+    }
+
+    const user = req.user!;
+    if (!allowedRoles.includes(user.role)) {
+      return res.status(403).json({ 
+        error: "Acesso negado. Permissão insuficiente.",
+        required: allowedRoles,
+        current: user.role 
+      });
+    }
+
+    next();
+  };
+}
+
+// Middleware para scoping por operador - Wave 1
+export function requireClientAccess(req: any, res: any, next: any) {
+  if (!req.isAuthenticated()) {
+    return res.status(401).json({ error: "Authentication required" });
+  }
+
+  const user = req.user!;
+  
+  // Admins e Gerentes veem todos os clientes do tenant
+  if (user.role === 'ADMIN' || user.role === 'GERENTE') {
+    return next();
+  }
+
+  // Operadores só veem clientes designados (implementar tabela user_clients)
+  if (user.role === 'OPERADOR') {
+    // Por enquanto, operador vê todos os clientes (será refinado)
+    return next();
+  }
+
+  // Clientes só veem seus próprios documentos
+  if (user.role === 'CLIENTE') {
+    // Verificar se o clientId do request corresponde ao user
+    const requestedClientId = req.params.clientId || req.query.clientId || req.body.clientId;
+    
+    // Se não especificou cliente, assumir que é o próprio
+    if (!requestedClientId) {
+      req.query.clientId = user.id; // Cliente só acessa seus dados
+      return next();
+    }
+    
+    // Verificar se cliente está tentando acessar dados de outro cliente
+    if (requestedClientId !== user.id) {
+      return res.status(403).json({ 
+        error: "Acesso negado. Cliente só pode acessar seus próprios dados." 
+      });
+    }
+  }
+
+  next();
+}
+
+// Middleware combinado para autenticação + autorização
+export function authorize(roles: string[], requireClientScope = false) {
+  const middlewares = [isAuthenticated, requireRole(...roles)];
+  
+  if (requireClientScope) {
+    middlewares.push(requireClientAccess);
+  }
+
+  return middlewares;
+}

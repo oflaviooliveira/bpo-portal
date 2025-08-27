@@ -1,8 +1,9 @@
 import type { Express } from "express";
 import { createServer, type Server } from "http";
-import { setupAuth, isAuthenticated } from "./auth";
+import { setupAuth, isAuthenticated, requireRole, authorize } from "./auth";
 import { storage } from "./storage";
 import { documentProcessor } from "./document-processor";
+import { StatusTransitionService, setupStatusTransitions } from "./status-transitions";
 import multer from "multer";
 import path from "path";
 import fs from "fs/promises";
@@ -38,9 +39,12 @@ const uploadDocumentSchema = z.object({
 export async function registerRoutes(app: Express): Promise<Server> {
   // Setup authentication
   await setupAuth(app);
+  
+  // Setup status transitions - Wave 1
+  setupStatusTransitions();
 
-  // Dashboard stats
-  app.get("/api/dashboard/stats", isAuthenticated, async (req, res) => {
+  // Dashboard stats - Wave 1 RBAC
+  app.get("/api/dashboard/stats", ...authorize(["ADMIN", "GERENTE", "OPERADOR"]), async (req, res) => {
     try {
       const user = req.user!;
       const stats = await storage.getDashboardStats(user.tenantId);
@@ -51,10 +55,19 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
-  // Get clients
-  app.get("/api/clients", isAuthenticated, async (req, res) => {
+  // Get clients - Wave 1 RBAC
+  app.get("/api/clients", ...authorize(["ADMIN", "GERENTE", "OPERADOR", "CLIENTE"]), async (req, res) => {
     try {
       const user = req.user!;
+      
+      // Cliente só vê seus próprios dados
+      if (user.role === 'CLIENTE') {
+        const client = await storage.getClient(user.id, user.tenantId);
+        res.json(client ? [client] : []);
+        return;
+      }
+      
+      // TODO: Operador só vê clientes designados (implementar user_clients)
       const clients = await storage.getClients(user.tenantId);
       res.json(clients);
     } catch (error) {
@@ -98,8 +111,8 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
-  // Get documents with filters
-  app.get("/api/documents", isAuthenticated, async (req, res) => {
+  // Get documents with filters - Wave 1 RBAC + Scoping
+  app.get("/api/documents", ...authorize(["ADMIN", "GERENTE", "OPERADOR", "CLIENTE"], true), async (req, res) => {
     try {
       const user = req.user!;
       const filters = {
@@ -107,6 +120,11 @@ export async function registerRoutes(app: Express): Promise<Server> {
         documentType: req.query.documentType as string,
         clientId: req.query.clientId as string,
       };
+      
+      // Cliente só vê seus documentos (já filtrado no middleware)
+      if (user.role === 'CLIENTE') {
+        filters.clientId = user.id;
+      }
       
       // Remove undefined filters
       Object.keys(filters).forEach(key => 
@@ -122,8 +140,8 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
-  // Upload and process document
-  app.post("/api/documents/upload", isAuthenticated, upload.single('file'), async (req, res) => {
+  // Upload and process document - Wave 1 RBAC
+  app.post("/api/documents/upload", ...authorize(["ADMIN", "GERENTE", "OPERADOR", "CLIENTE"], true), upload.single('file'), async (req, res) => {
     try {
       const user = req.user!;
       const file = req.file;
@@ -273,8 +291,8 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
-  // Update document
-  app.patch("/api/documents/:id", isAuthenticated, async (req, res) => {
+  // Update document - Wave 1 RBAC
+  app.patch("/api/documents/:id", ...authorize(["ADMIN", "GERENTE", "OPERADOR"], true), async (req, res) => {
     try {
       const user = req.user!;
       const documentId = req.params.id;
@@ -298,8 +316,69 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
-  // Categories routes
-  app.get("/api/categories", isAuthenticated, async (req, res) => {
+  // Status transition endpoint - Wave 1 Business Logic
+  app.post("/api/documents/:id/transition", ...authorize(["ADMIN", "GERENTE", "OPERADOR"]), async (req, res) => {
+    try {
+      const user = req.user!;
+      const documentId = req.params.id;
+      const { newStatus, reason } = req.body;
+
+      const success = await StatusTransitionService.transitionDocument(
+        documentId,
+        user.tenantId,
+        newStatus,
+        user.id,
+        reason
+      );
+
+      if (success) {
+        const document = await storage.getDocument(documentId, user.tenantId);
+        res.json({ 
+          success: true, 
+          document,
+          message: `Status alterado para ${newStatus}` 
+        });
+      } else {
+        res.status(400).json({ 
+          error: "Transição de status inválida",
+          success: false 
+        });
+      }
+    } catch (error) {
+      console.error("Status transition error:", error);
+      res.status(500).json({ error: "Erro ao alterar status" });
+    }
+  });
+
+  // Get valid next states for document - Wave 1
+  app.get("/api/documents/:id/next-states", ...authorize(["ADMIN", "GERENTE", "OPERADOR"]), async (req, res) => {
+    try {
+      const user = req.user!;
+      const documentId = req.params.id;
+      
+      const document = await storage.getDocument(documentId, user.tenantId);
+      if (!document) {
+        return res.status(404).json({ error: "Documento não encontrado" });
+      }
+
+      const nextStates = StatusTransitionService.getValidNextStates(
+        document.documentType as any,
+        document.status as any
+      );
+
+      res.json({ 
+        currentStatus: document.status,
+        documentType: document.documentType,
+        validNextStates: nextStates 
+      });
+    } catch (error) {
+      console.error("Get next states error:", error);
+      res.status(500).json({ error: "Erro ao carregar próximos estados" });
+    }
+  });
+
+  // Categories routes - Wave 1 RBAC
+  app.get("/api/categories", ...authorize(["ADMIN", "GERENTE", "OPERADOR", "CLIENTE"]), async (req, res) => {
     try {
       const user = req.user!;
       const categories = await storage.getCategories(user.tenantId);
@@ -310,7 +389,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
-  app.post("/api/categories", isAuthenticated, async (req, res) => {
+  app.post("/api/categories", ...authorize(["ADMIN", "GERENTE"]), async (req, res) => {
     try {
       const user = req.user!;
       const categoryData = { ...req.body, tenantId: user.tenantId };
@@ -322,7 +401,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
-  app.patch("/api/categories/:id", isAuthenticated, async (req, res) => {
+  app.patch("/api/categories/:id", ...authorize(["ADMIN", "GERENTE"]), async (req, res) => {
     try {
       const user = req.user!;
       const category = await storage.updateCategory(req.params.id, user.tenantId, req.body);
@@ -333,7 +412,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
-  app.delete("/api/categories/:id", isAuthenticated, async (req, res) => {
+  app.delete("/api/categories/:id", ...authorize(["ADMIN"]), async (req, res) => {
     try {
       const user = req.user!;
       await storage.deleteCategory(req.params.id, user.tenantId);
@@ -437,74 +516,161 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
-  // Document filters for operational panels
-  app.get("/api/documents/inbox", isAuthenticated, async (req, res) => {
+  // Operational Panel: Inbox - Wave 1 Enhanced
+  app.get("/api/documents/inbox", ...authorize(["ADMIN", "GERENTE", "OPERADOR"]), async (req, res) => {
     try {
       const user = req.user!;
-      const documents = await storage.getDocuments(user.tenantId, { 
-        status: ["RECEBIDO", "VALIDANDO", "PENDENTE_REVISAO"] 
-      });
-      res.json(documents);
+      const { priority, sortBy = 'createdAt', sortOrder = 'desc' } = req.query;
+      
+      let statusFilter = ["RECEBIDO", "VALIDANDO", "PENDENTE_REVISAO"];
+      
+      // Filtro de prioridade baseado em data de vencimento
+      const filters: any = { status: statusFilter };
+      
+      if (priority === 'urgent') {
+        const tomorrow = new Date();
+        tomorrow.setDate(tomorrow.getDate() + 1);
+        filters.dueDateTo = tomorrow;
+      }
+
+      const documents = await storage.getDocuments(user.tenantId, filters);
+      
+      // Contadores para dashboard
+      const stats = {
+        total: documents.length,
+        recebidos: documents.filter(d => d.status === 'RECEBIDO').length,
+        validando: documents.filter(d => d.status === 'VALIDANDO').length,
+        pendentesRevisao: documents.filter(d => d.status === 'PENDENTE_REVISAO').length,
+        urgentes: documents.filter(d => d.dueDate && d.dueDate <= new Date()).length
+      };
+
+      res.json({ documents, stats });
     } catch (error) {
       console.error("Inbox error:", error);
       res.status(500).json({ error: "Erro ao carregar inbox" });
     }
   });
 
-  app.get("/api/documents/scheduled", isAuthenticated, async (req, res) => {
+  // Operational Panel: Scheduled - Wave 1 Enhanced  
+  app.get("/api/documents/scheduled", ...authorize(["ADMIN", "GERENTE", "OPERADOR"]), async (req, res) => {
     try {
       const user = req.user!;
       const { filter = "all" } = req.query;
       
-      let statusFilter = ["AGENDADO", "A_PAGAR_HOJE"];
+      let statusFilter = ["AGENDADO", "A_PAGAR_HOJE", "AGUARDANDO_RECEBIMENTO"];
       const documents = await storage.getDocuments(user.tenantId, { status: statusFilter });
       
-      // Filter by date
+      // Enhanced filtering with stats
       const today = new Date();
+      today.setHours(0, 0, 0, 0);
+      
       const filtered = documents.filter(doc => {
-        if (!doc.dueDate) return false;
+        if (!doc.dueDate) return filter === "all";
+        
         const dueDate = new Date(doc.dueDate);
+        dueDate.setHours(0, 0, 0, 0);
         
         switch (filter) {
           case "today":
-            return dueDate.toDateString() === today.toDateString();
-          case "week":
-            const weekFromNow = new Date(today.getTime() + 7 * 24 * 60 * 60 * 1000);
-            return dueDate >= today && dueDate <= weekFromNow;
+            return dueDate.getTime() === today.getTime();
           case "overdue":
             return dueDate < today;
+          case "next7days":
+            const next7Days = new Date(today);
+            next7Days.setDate(next7Days.getDate() + 7);
+            return dueDate >= today && dueDate <= next7Days;
           default:
             return true;
         }
       });
 
-      res.json(filtered);
+      // Enhanced stats for operational panels
+      const stats = {
+        total: documents.length,
+        agendado: documents.filter(d => d.status === 'AGENDADO').length,
+        aPagarHoje: documents.filter(d => d.status === 'A_PAGAR_HOJE').length,
+        aguardandoRecebimento: documents.filter(d => d.status === 'AGUARDANDO_RECEBIMENTO').length,
+        today: documents.filter(d => {
+          if (!d.dueDate) return false;
+          const dueDate = new Date(d.dueDate);
+          dueDate.setHours(0, 0, 0, 0);
+          return dueDate.getTime() === today.getTime();
+        }).length,
+        overdue: documents.filter(d => {
+          if (!d.dueDate) return false;
+          return new Date(d.dueDate) < today;
+        }).length
+      };
+
+      res.json({ documents: filtered, stats });
     } catch (error) {
       console.error("Scheduled error:", error);
       res.status(500).json({ error: "Erro ao carregar agendados" });
     }
   });
 
-  app.get("/api/documents/reconciliation", isAuthenticated, async (req, res) => {
+  // Operational Panel: Reconciliation - Wave 1 Enhanced
+  app.get("/api/documents/reconciliation", ...authorize(["ADMIN", "GERENTE", "OPERADOR"]), async (req, res) => {
     try {
       const user = req.user!;
-      const documents = await storage.getDocuments(user.tenantId, { 
-        status: ["PAGO_A_CONCILIAR", "EM_CONCILIACAO"] 
-      });
-      res.json(documents);
+      const { bankId, clientId } = req.query;
+      
+      const filters: any = { status: ["PAGO_A_CONCILIAR", "EM_CONCILIACAO"] };
+      if (bankId) filters.bankId = bankId;
+      if (clientId) filters.clientId = clientId;
+      
+      const documents = await storage.getDocuments(user.tenantId, filters);
+      
+      // Stats for reconciliation panel
+      const stats = {
+        total: documents.length,
+        pagoConciliar: documents.filter(d => d.status === 'PAGO_A_CONCILIAR').length,
+        emConciliacao: documents.filter(d => d.status === 'EM_CONCILIACAO').length,
+        totalAmount: documents.reduce((sum, d) => sum + (parseFloat(d.amount || '0')), 0)
+      };
+
+      res.json({ documents, stats });
     } catch (error) {
       console.error("Reconciliation error:", error);
       res.status(500).json({ error: "Erro ao carregar conciliação" });
     }
   });
 
-  app.get("/api/documents/archived", isAuthenticated, async (req, res) => {
+  // Operational Panel: Archived - Wave 1 Enhanced
+  app.get("/api/documents/archived", ...authorize(["ADMIN", "GERENTE", "OPERADOR"]), async (req, res) => {
     try {
       const user = req.user!;
-      const documents = await storage.getDocuments(user.tenantId, { 
-        status: ["ARQUIVADO"] 
-      });
-      res.json(documents);
+      const { search, clientId, bankId, dateFrom, dateTo } = req.query;
+      
+      const filters: any = { status: ["ARQUIVADO"] };
+      if (clientId) filters.clientId = clientId;
+      if (bankId) filters.bankId = bankId;
+      if (dateFrom) filters.dateFrom = new Date(dateFrom as string);
+      if (dateTo) filters.dateTo = new Date(dateTo as string);
+      
+      let documents = await storage.getDocuments(user.tenantId, filters);
+      
+      // Advanced search by filename or notes
+      if (search) {
+        const searchTerm = (search as string).toLowerCase();
+        documents = documents.filter(d => 
+          d.originalName.toLowerCase().includes(searchTerm) ||
+          (d.notes && d.notes.toLowerCase().includes(searchTerm))
+        );
+      }
+
+      const stats = {
+        total: documents.length,
+        totalAmount: documents.reduce((sum, d) => sum + (parseFloat(d.amount || '0')), 0),
+        byType: {
+          pago: documents.filter(d => d.documentType === 'PAGO').length,
+          agendado: documents.filter(d => d.documentType === 'AGENDADO').length,
+          boleto: documents.filter(d => d.documentType === 'EMITIR_BOLETO').length,
+          nf: documents.filter(d => d.documentType === 'EMITIR_NF').length
+        }
+      };
+
+      res.json({ documents, stats });
     } catch (error) {
       console.error("Archived error:", error);
       res.status(500).json({ error: "Erro ao carregar arquivados" });

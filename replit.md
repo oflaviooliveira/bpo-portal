@@ -55,7 +55,7 @@ Portal de BPO Financeiro com OCR/IA multi-provider para processamento automátic
 ## Status Atual
 **FASE 1 COMPLETA**: Pipeline automático OCR + IA funcionando
 **FASE 2 COMPLETA**: Formulários dinâmicos implementados
-**EM PROGRESSO**: Melhorias operacionais e validações avançadas
+**WAVE 1 EM PROGRESSO**: Core funcional com RBAC e painéis operacionais
 
 ## Implementações Completadas
 ✅ **FASE 1 - Pipeline Automático**: 
@@ -71,9 +71,23 @@ Portal de BPO Financeiro com OCR/IA multi-provider para processamento automátic
 - Campos obrigatórios e opcionais conforme PRD
 - Reset automático ao trocar tipo de documento
 
-## Próximos Passos (FASE 3)
-1. Implementar validações avançadas de negócio
-2. Melhorar interface de painéis operacionais  
-3. Adicionar notificações e alertas
-4. Integração com APIs externas (ERP, WhatsApp)
-5. Sistema de relatórios e exportação
+🔄 **WAVE 1 - Core Funcional (EM PROGRESSO)**:
+- ✅ RBAC implementado: Admin, Gerente, Operador, Cliente
+- ✅ Middleware de autorização por papel e recurso
+- ✅ Estados faltantes adicionados: A_PAGAR_HOJE, EM_CONCILIACAO, AGUARDANDO_RECEBIMENTO
+- ✅ Service de transições automáticas de status criado
+- ✅ Painéis operacionais aprimorados com stats:
+  - Inbox com filtros de prioridade
+  - Agendados (Hoje, 7 dias, Atrasados) 
+  - Conciliação (por banco/cliente)
+  - Arquivados (busca avançada)
+- ✅ Endpoints de transição de status manual
+- ⏳ Scoping por operador (designação cliente-operador)
+- ⏳ Transições automáticas por data funcionais
+- ⏳ Interface frontend atualizada para novos endpoints
+
+## Próximos Passos (Finalizar Wave 1)
+1. Completar scoping operador-cliente
+2. Ativar transições automáticas
+3. Atualizar frontend para novos painéis e RBAC
+4. Testar fluxos completos conforme PRD
