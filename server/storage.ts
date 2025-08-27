@@ -1,5 +1,5 @@
 import { 
-  users, clients, tenants, banks, categories, costCenters, documents, documentLogs, aiRuns, documentInconsistencies,
+  users, clients, tenants, banks, categories, costCenters, documents, documentLogs, aiRuns, documentInconsistencies, ocrMetrics,
   type User, type InsertUser, type Tenant, type InsertTenant, 
   type Client, type InsertClient, type Document, type InsertDocument,
   type Bank, type Category, type CostCenter, type DocumentLog,
@@ -91,6 +91,27 @@ export interface IStorage {
     dateFrom?: Date;
     limit?: number;
   }): Promise<AiRun[]>;
+
+  // OCR Metrics
+  createOcrMetrics(metrics: {
+    documentId: string;
+    tenantId: string;
+    strategyUsed: string;
+    success: boolean;
+    processingTimeMs: number;
+    characterCount: number;
+    confidence: number;
+    fallbackLevel: number;
+    metadata?: any;
+  }): Promise<void>;
+  
+  getOcrMetrics(tenantId: string, filters?: {
+    dateFrom?: Date;
+    dateTo?: Date;
+    limit?: number;
+  }): Promise<any[]>;
+  
+  getOcrMetricsByDocument(documentId: string): Promise<any[]>;
 }
 
 export class DatabaseStorage implements IStorage {
@@ -552,7 +573,49 @@ export class DatabaseStorage implements IStorage {
     console.log(`   Prioridade: ${taskData.priority}`);
     
     // TODO: Implementar inserção real na tabela tasks quando schema for atualizado
-    return Promise.resolve();
+  }
+
+  // OCR Metrics methods
+  async createOcrMetrics(metrics: {
+    documentId: string;
+    tenantId: string;
+    strategyUsed: string;
+    success: boolean;
+    processingTimeMs: number;
+    characterCount: number;
+    confidence: number;
+    fallbackLevel: number;
+    metadata?: any;
+  }): Promise<void> {
+    await db.insert(ocrMetrics).values({
+      ...metrics,
+      metadata: metrics.metadata ? JSON.stringify(metrics.metadata) : null
+    });
+  }
+
+  async getOcrMetrics(tenantId: string, filters?: {
+    dateFrom?: Date;
+    dateTo?: Date;
+    limit?: number;
+  }): Promise<any[]> {
+    let query = db.select().from(ocrMetrics).where(eq(ocrMetrics.tenantId, tenantId));
+
+    if (filters?.dateFrom) {
+      query = query.where(gte(ocrMetrics.createdAt, filters.dateFrom));
+    }
+    
+    if (filters?.dateTo) {
+      query = query.where(lte(ocrMetrics.createdAt, filters.dateTo));
+    }
+
+    return await query
+      .orderBy(desc(ocrMetrics.createdAt))
+      .limit(filters?.limit || 1000);
+  }
+
+  async getOcrMetricsByDocument(documentId: string): Promise<any[]> {
+    return await db.select().from(ocrMetrics).where(eq(ocrMetrics.documentId, documentId))
+      .orderBy(desc(ocrMetrics.createdAt));
   }
 }
 

@@ -2,10 +2,14 @@ import { processDocumentWithOCR } from "./ocr";
 import { aiMultiProvider } from "./ai-multi-provider";
 import { storage } from "./storage";
 import { inconsistencyDetector } from "./inconsistency-detector";
+import { AdvancedOcrProcessor } from "./ocr-processor-advanced";
 
 export class DocumentProcessor {
+  private advancedOcrProcessor: AdvancedOcrProcessor;
+
   constructor() {
     // No need for API key - using multi-provider system
+    this.advancedOcrProcessor = new AdvancedOcrProcessor(storage);
   }
 
   async processDocument(documentId: string, tenantId: string) {
@@ -32,15 +36,21 @@ export class DocumentProcessor {
 
       console.log(`📄 Processando: ${document.originalName}`);
 
-      // 3. Processamento OCR
-      console.log("🔍 Iniciando OCR...");
-      const ocrResult = await this.performOCR(document.filePath);
+      // 3. Processamento OCR Avançado
+      console.log("🔍 Iniciando OCR avançado com fallbacks...");
+      const ocrResult = await this.performAdvancedOCR(document.filePath, documentId, tenantId);
       
       await storage.createDocumentLog({
         documentId,
         action: "OCR_COMPLETE",
         status: "SUCCESS",
-        details: { confidence: ocrResult.confidence, textLength: ocrResult.text.length },
+        details: { 
+          strategy: ocrResult.strategy,
+          confidence: ocrResult.confidence, 
+          textLength: ocrResult.text.length,
+          strategiesAttempted: ocrResult.strategiesAttempted,
+          processingTime: ocrResult.processingTime
+        },
       });
 
       // 4. Análise com IA Multi-Provider
@@ -165,6 +175,29 @@ export class DocumentProcessor {
         text: result.text,
         confidence: result.confidence,
         words: [],
+      };
+    } catch (error) {
+      console.error("❌ Erro no OCR:", error);
+      throw new Error(`Falha no OCR: ${error instanceof Error ? error.message : String(error)}`);
+    }
+  }
+
+  // Novo método OCR avançado
+  private async performAdvancedOCR(filePath: string, documentId: string, tenantId: string) {
+    try {
+      console.log(`🚀 Iniciando OCR avançado com fallbacks para: ${filePath}`);
+      
+      const result = await this.advancedOcrProcessor.processDocument(filePath, documentId, tenantId);
+
+      console.log(`✅ OCR avançado concluído. Estratégia: ${result.strategy}, Confiança: ${result.confidence}%`);
+      
+      return {
+        text: result.text,
+        confidence: result.confidence / 100, // Normalizar para 0-1
+        strategy: result.strategy,
+        strategiesAttempted: result.strategiesAttempted,
+        processingTime: result.processingTime,
+        metadata: result.metadata
       };
     } catch (error) {
       console.error("❌ Erro no OCR:", error);

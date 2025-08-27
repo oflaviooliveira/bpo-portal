@@ -990,6 +990,43 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
+  // OCR Metrics - Wave 1: Advanced OCR with metrics
+  app.get("/api/ocr/metrics/:documentId", ...authorize(["ADMIN", "GERENTE", "OPERADOR"]), async (req, res) => {
+    try {
+      const { documentId } = req.params;
+      const user = req.user!;
+      
+      // Verificar se documento pertence ao tenant do usuário
+      const document = await storage.getDocument(documentId, user.tenantId);
+      if (!document) {
+        return res.status(404).json({ error: "Documento não encontrado" });
+      }
+      
+      const metrics = await storage.getOcrMetricsByDocument(documentId);
+      res.json(metrics);
+    } catch (error) {
+      console.error("OCR metrics error:", error);
+      res.status(500).json({ error: "Erro ao carregar métricas OCR" });
+    }
+  });
+
+  // OCR Performance Stats - Wave 1: Analytics dashboard  
+  app.get("/api/ocr/performance", ...authorize(["ADMIN", "GERENTE"]), async (req, res) => {
+    try {
+      const user = req.user!;
+      const daysBack = parseInt(req.query.days as string) || 30;
+      
+      const { AdvancedOcrProcessor } = await import("./ocr-processor-advanced");
+      const advancedProcessor = new AdvancedOcrProcessor(storage);
+      const stats = await advancedProcessor.getProcessingStats(user.tenantId, daysBack);
+      
+      res.json(stats);
+    } catch (error) {
+      console.error("OCR performance error:", error);
+      res.status(500).json({ error: "Erro ao carregar performance OCR" });
+    }
+  });
+
   // Async document processing function using comprehensive processor
   async function processDocumentAsync(documentId: string, tenantId: string) {
     try {

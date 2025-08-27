@@ -145,6 +145,21 @@ export const aiRuns = pgTable("ai_runs", {
   createdAt: timestamp("created_at").defaultNow(),
 });
 
+// OCR Metrics table - Nova tabela para rastreabilidade detalhada do OCR
+export const ocrMetrics = pgTable("ocr_metrics", {
+  id: uuid("id").primaryKey().default(sql`gen_random_uuid()`),
+  documentId: uuid("document_id").notNull(),
+  tenantId: uuid("tenant_id").notNull(),
+  strategyUsed: varchar("strategy_used", { length: 50 }).notNull(), // 'PDF_DIRECT_TEXT', 'PDFTOTEXT_COMMAND', etc.
+  success: boolean("success").notNull(),
+  processingTimeMs: integer("processing_time_ms").notNull(),
+  characterCount: integer("character_count").notNull(),
+  confidence: integer("confidence").notNull(), // 0-100
+  fallbackLevel: integer("fallback_level").notNull().default(0), // 0 = primeira tentativa, 1+ = fallbacks
+  metadata: jsonb("metadata"), // dados específicos da estratégia
+  createdAt: timestamp("created_at").defaultNow(),
+});
+
 // Document Inconsistencies table - Nova tabela para divergências
 export const documentInconsistencies = pgTable("document_inconsistencies", {
   id: uuid("id").primaryKey().default(sql`gen_random_uuid()`),
