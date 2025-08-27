@@ -1038,7 +1038,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
           ...provider,
           last30Days: {
             totalRequests: providerRuns.length,
-            totalCost: parseFloat(totalCost.toFixed(4)),
+            totalCost: parseFloat((totalCost || 0).toFixed(4)),
             totalTokens,
             avgResponseTime: Math.round(avgResponseTime),
             successRate: parseFloat(successRate.toFixed(1)),
@@ -1120,7 +1120,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
         timeline.push({
           date: dayStart.toISOString().split('T')[0],
           requests: dayRuns.length,
-          cost: parseFloat(dayRuns.reduce((sum, run) => sum + (run.costUsd || 0), 0).toFixed(4)),
+          cost: parseFloat((dayRuns.reduce((sum, run) => sum + (run.costUsd || 0), 0) || 0).toFixed(4)),
           avgResponseTime: dayRuns.length > 0 
             ? Math.round(dayRuns.reduce((sum, run) => sum + (run.processingTimeMs || 0), 0) / dayRuns.length)
             : 0,
