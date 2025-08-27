@@ -2,6 +2,7 @@ import { createWorker } from 'tesseract.js';
 import pdf2pic from 'pdf2pic';
 import fs from 'fs/promises';
 import path from 'path';
+import { advancedOCR } from './advanced-ocr';
 
 interface OCRResult {
   text: string;
@@ -9,6 +10,28 @@ interface OCRResult {
 }
 
 export async function processDocumentWithOCR(filePath: string): Promise<OCRResult> {
+  try {
+    // Usar o sistema avançado de OCR como principal
+    console.log(`🚀 Iniciando OCR avançado com fallback em cascata`);
+    
+    const advancedResult = await advancedOCR.processDocument(filePath);
+    
+    // Converter formato do resultado avançado para o formato esperado
+    return {
+      text: advancedResult.text,
+      confidence: advancedResult.confidence
+    };
+    
+  } catch (error) {
+    console.error(`❌ OCR avançado falhou, usando fallback básico:`, error);
+    
+    // Fallback para o sistema original como última tentativa
+    return await processDocumentWithOCRBasic(filePath);
+  }
+}
+
+// Manter o sistema original como fallback
+async function processDocumentWithOCRBasic(filePath: string): Promise<OCRResult> {
   try {
     // Check if file exists
     await fs.access(filePath);
@@ -32,7 +55,7 @@ export async function processDocumentWithOCR(filePath: string): Promise<OCRResul
       fileExtension = '.jpg';
     }
     
-    console.log(`🔍 Detectado formato: ${fileExtension} para arquivo: ${filePath}`);
+    console.log(`🔍 OCR básico - Detectado formato: ${fileExtension} para arquivo: ${filePath}`);
     
     if (fileExtension === '.pdf') {
       return await processPDFWithOCR(filePath);

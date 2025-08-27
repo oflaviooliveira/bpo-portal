@@ -365,3 +365,5 @@ export class DocumentProcessor {
     return null;
   }
 }
+
+export const documentProcessor = new DocumentProcessor();
