@@ -268,17 +268,23 @@ export class DatabaseStorage implements IStorage {
       }
     }
 
-    if (filters.clientId) {
+    if (filters.clientId && filters.clientId !== '') {
       if (Array.isArray(filters.clientId)) {
-        conditions.push(inArray(documents.clientId, filters.clientId));
+        const validIds = filters.clientId.filter(id => id && id !== '');
+        if (validIds.length > 0) {
+          conditions.push(inArray(documents.clientId, validIds));
+        }
       } else {
         conditions.push(eq(documents.clientId, filters.clientId));
       }
     }
 
-    if (filters.bankId) {
+    if (filters.bankId && filters.bankId !== '') {
       if (Array.isArray(filters.bankId)) {
-        conditions.push(inArray(documents.bankId, filters.bankId));
+        const validIds = filters.bankId.filter(id => id && id !== '');
+        if (validIds.length > 0) {
+          conditions.push(inArray(documents.bankId, validIds));
+        }
       } else {
         conditions.push(eq(documents.bankId, filters.bankId));
       }

@@ -27,9 +27,18 @@ export function Archived() {
   const [dateFrom, setDateFrom] = useState("");
   const [dateTo, setDateTo] = useState("");
 
-  // Queries
-  const { data: archivedDocs, isLoading, refetch } = useQuery({
-    queryKey: ["/api/documents/archived"],
+  // Queries - Wave 1 Enhanced
+  const { data: archivedData, isLoading, refetch } = useQuery({
+    queryKey: ["/api/documents/archived", searchTerm, selectedClient, selectedBank, dateFrom, dateTo],
+    queryFn: () => {
+      const params = new URLSearchParams();
+      if (searchTerm) params.set("search", searchTerm);
+      if (selectedClient !== "all") params.set("clientId", selectedClient);
+      if (selectedBank !== "all") params.set("bankId", selectedBank);
+      if (dateFrom) params.set("dateFrom", dateFrom);
+      if (dateTo) params.set("dateTo", dateTo);
+      return fetch(`/api/documents/archived?${params}`).then(res => res.json());
+    }
   });
 
   const { data: clients } = useQuery({
@@ -43,6 +52,9 @@ export function Archived() {
   const { data: categories } = useQuery({
     queryKey: ["/api/categories"],
   });
+
+  const archivedDocs = archivedData?.documents || [];
+  const stats = archivedData?.stats || { total: 0, totalAmount: 0, byType: { pago: 0, agendado: 0, boleto: 0, nf: 0 } };
 
   const formatCurrency = (value: string | number | null) => {
     if (!value) return "-";
@@ -64,24 +76,9 @@ export function Archived() {
     }).format(new Date(date));
   };
 
-  // Filter documents based on search criteria
+  // Filter documents based on category (server already handles other filters)
   const filteredDocs = archivedDocs?.filter((doc: any) => {
-    if (searchTerm && !doc.originalName.toLowerCase().includes(searchTerm.toLowerCase())) {
-      return false;
-    }
-    if (selectedClient !== "all" && doc.clientId !== selectedClient) {
-      return false;
-    }
-    if (selectedBank !== "all" && doc.bankId !== selectedBank) {
-      return false;
-    }
     if (selectedCategory !== "all" && doc.categoryId !== selectedCategory) {
-      return false;
-    }
-    if (dateFrom && new Date(doc.createdAt) < new Date(dateFrom)) {
-      return false;
-    }
-    if (dateTo && new Date(doc.createdAt) > new Date(dateTo)) {
       return false;
     }
     return true;
@@ -187,7 +184,7 @@ export function Archived() {
                 </SelectTrigger>
                 <SelectContent>
                   <SelectItem value="all">Todos os clientes</SelectItem>
-                  {clients?.map((client: any) => (
+                  {(clients as any[])?.map((client: any) => (
                     <SelectItem key={client.id} value={client.id}>
                       {client.name}
                     </SelectItem>
@@ -204,7 +201,7 @@ export function Archived() {
                 </SelectTrigger>
                 <SelectContent>
                   <SelectItem value="all">Todos os bancos</SelectItem>
-                  {banks?.map((bank: any) => (
+                  {(banks as any[])?.map((bank: any) => (
                     <SelectItem key={bank.id} value={bank.id}>
                       {bank.name}
                     </SelectItem>
@@ -221,7 +218,7 @@ export function Archived() {
                 </SelectTrigger>
                 <SelectContent>
                   <SelectItem value="all">Todas as categorias</SelectItem>
-                  {categories?.map((category: any) => (
+                  {(categories as any[])?.map((category: any) => (
                     <SelectItem key={category.id} value={category.id}>
                       {category.name}
                     </SelectItem>

@@ -22,14 +22,24 @@ const statusConfig = {
 export function Reconciliation() {
   const [selectedBank, setSelectedBank] = useState<string>("all");
 
-  // Queries para conciliação
-  const { data: reconciliationDocs, isLoading, refetch } = useQuery({
-    queryKey: ["/api/documents/reconciliation"],
+  // Queries para conciliação - Wave 1 Enhanced
+  const { data: reconciliationData, isLoading, refetch } = useQuery({
+    queryKey: ["/api/documents/reconciliation", selectedBank],
+    queryFn: () => {
+      const params = new URLSearchParams();
+      if (selectedBank !== "all") {
+        params.set("bankId", selectedBank);
+      }
+      return fetch(`/api/documents/reconciliation?${params}`).then(res => res.json());
+    }
   });
 
   const { data: banks } = useQuery({
     queryKey: ["/api/banks"],
   });
+
+  const reconciliationDocs = reconciliationData?.documents || [];
+  const stats = reconciliationData?.stats || { total: 0, pagoConciliar: 0, emConciliacao: 0, totalAmount: 0 };
 
   const formatCurrency = (value: string | number | null) => {
     if (!value) return "-";
@@ -51,18 +61,29 @@ export function Reconciliation() {
     }).format(new Date(date));
   };
 
-  const filteredDocs = reconciliationDocs?.filter((doc: any) => {
-    if (selectedBank === "all") return true;
-    return doc.bankId === selectedBank;
-  }) || [];
-
   const handleConciliate = async (documentId: string) => {
-    // TODO: Implementar conciliação
-    console.log("Conciliando documento:", documentId);
+    try {
+      const response = await fetch(`/api/documents/${documentId}/transition`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ 
+          newStatus: 'EM_CONCILIACAO',
+          reason: 'Iniciada conciliação manual'
+        })
+      });
+      
+      if (response.ok) {
+        refetch();
+      } else {
+        console.error("Erro ao conciliar documento");
+      }
+    } catch (error) {
+      console.error("Erro na conciliação:", error);
+    }
   };
 
-  const totalToReconcile = filteredDocs.length;
-  const totalValue = filteredDocs.reduce((sum: number, doc: any) => sum + (parseFloat(doc.amount || 0)), 0);
+  const totalToReconcile = stats.total;
+  const totalValue = stats.totalAmount;
 
   if (isLoading) {
     return (
@@ -90,7 +111,7 @@ export function Reconciliation() {
             </SelectTrigger>
             <SelectContent>
               <SelectItem value="all">Todos os bancos</SelectItem>
-              {banks?.map((bank: any) => (
+              {(banks as any[])?.map((bank: any) => (
                 <SelectItem key={bank.id} value={bank.id}>
                   {bank.name}
                 </SelectItem>
@@ -147,7 +168,7 @@ export function Reconciliation() {
           </CardHeader>
           <CardContent>
             <div className="text-2xl font-bold text-blue-600">
-              {banks?.length || 0}
+              {(banks as any[])?.length || 0}
             </div>
             <p className="text-xs text-muted-foreground">
               Bancos configurados
@@ -172,7 +193,7 @@ export function Reconciliation() {
               </TableRow>
             </TableHeader>
             <TableBody>
-              {filteredDocs.length === 0 ? (
+              {reconciliationDocs.length === 0 ? (
                 <TableRow>
                   <TableCell colSpan={7} className="text-center py-8 text-muted-foreground">
                     <CheckCircle2 className="w-12 h-12 mx-auto mb-4 text-green-300" />
@@ -183,7 +204,7 @@ export function Reconciliation() {
                   </TableCell>
                 </TableRow>
               ) : (
-                filteredDocs.map((doc: any) => (
+                reconciliationDocs.map((doc: any) => (
                   <TableRow 
                     key={doc.id} 
                     className="hover:bg-muted/30"
