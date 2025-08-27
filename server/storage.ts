@@ -85,6 +85,12 @@ export interface IStorage {
     description: string;
     payload?: any;
   }): Promise<void>;
+
+  // AI Runs
+  getAiRuns(tenantId: string, filters?: {
+    dateFrom?: Date;
+    limit?: number;
+  }): Promise<AiRun[]>;
 }
 
 export class DatabaseStorage implements IStorage {

@@ -33,7 +33,24 @@ export default function AIControlUnified() {
   });
 
   const { data: analyticsData, isLoading: analyticsLoading, error: analyticsError } = useQuery({
-    queryKey: ["/api/ai-control/analytics", { period, provider: selectedProvider === "all" ? undefined : selectedProvider }],
+    queryKey: ["/api/ai-control/analytics", period, selectedProvider],
+    queryFn: async () => {
+      const params = new URLSearchParams();
+      params.append('period', period);
+      if (selectedProvider !== "all") {
+        params.append('provider', selectedProvider);
+      }
+      
+      const response = await fetch(`/api/ai-control/analytics?${params.toString()}`, {
+        credentials: 'include'
+      });
+      
+      if (!response.ok) {
+        throw new Error(`HTTP ${response.status}: ${response.statusText}`);
+      }
+      
+      return response.json();
+    },
   });
 
   const toggleProviderMutation = useMutation({
@@ -183,7 +200,7 @@ export default function AIControlUnified() {
                           </Badge>
                         </div>
                         <p className="text-sm text-muted-foreground">
-                          Prioridade: {provider.priority} | ${provider.costPer1000.toFixed(4)}/1k tokens
+                          Prioridade: {provider.priority} | ${(provider.costPer1000 || 0).toFixed(4)}/1k tokens
                         </p>
                       </div>
                     </div>
@@ -191,7 +208,7 @@ export default function AIControlUnified() {
                     <div className="flex items-center space-x-4">
                       <div className="text-right">
                         <p className="text-sm font-medium">{provider.totalRequests} requests</p>
-                        <p className="text-sm text-muted-foreground">${provider.totalCost.toFixed(4)} gasto</p>
+                        <p className="text-sm text-muted-foreground">${(provider.totalCost || 0).toFixed(4)} gasto</p>
                       </div>
                       
                       <div className="text-right">
