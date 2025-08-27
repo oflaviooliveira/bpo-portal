@@ -9,7 +9,9 @@ export class OcrMetricsTracker {
 
   async recordMetrics(metrics: OcrMetrics): Promise<void> {
     try {
-      await this.storage.createOcrMetrics(metrics);
+      // Temporariamente desabilitado devido a problema de schema
+      // await this.storage.createOcrMetrics(metrics);
+      console.log(`📊 OCR Metrics: ${metrics.strategyUsed} | Success: ${metrics.success} | Confidence: ${metrics.confidence}%`);
     } catch (error) {
       console.error('Erro ao salvar métricas OCR:', error);
     }

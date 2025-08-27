@@ -721,18 +721,33 @@ export async function registerRoutes(app: Express): Promise<Server> {
       const user = req.user!;
       const { dateFrom, dateTo } = req.query;
       
-      // Para uma implementação completa, precisaríamos de queries específicas
-      // Por enquanto, retornamos métricas básicas
+      // Buscar dados reais das tabelas de IA
+      const last30Days = new Date();
+      last30Days.setDate(last30Days.getDate() - 30);
+      
+      const aiRuns = await storage.getAiRuns(user.tenantId, {
+        dateFrom: last30Days
+      });
+      
       const stats = {
-        totalRuns: 0,
-        averageProcessingTime: 0,
-        averageCost: 0,
-        providerDistribution: {
-          'glm': 0,
-          'openai': 0
-        },
-        fallbackRate: 0,
-        averageConfidence: 0
+        totalRuns: aiRuns.length,
+        averageProcessingTime: aiRuns.length > 0 
+          ? Math.round(aiRuns.reduce((sum, run) => sum + (run.processingTimeMs || 0), 0) / aiRuns.length)
+          : 0,
+        averageCost: aiRuns.length > 0
+          ? parseFloat((aiRuns.reduce((sum, run) => sum + (parseFloat(run.costUsd?.toString() || '0')), 0) / aiRuns.length).toFixed(4))
+          : 0,
+        providerDistribution: aiRuns.reduce((acc, run) => {
+          const provider = run.providerUsed || 'unknown';
+          acc[provider] = (acc[provider] || 0) + 1;
+          return acc;
+        }, {} as Record<string, number>),
+        fallbackRate: aiRuns.length > 0
+          ? parseFloat(((aiRuns.filter(run => run.fallbackReason).length / aiRuns.length) * 100).toFixed(1))
+          : 0,
+        averageConfidence: aiRuns.length > 0
+          ? parseFloat((aiRuns.reduce((sum, run) => sum + (run.confidence || 0), 0) / aiRuns.length).toFixed(1))
+          : 0
       };
 
       res.json(stats);
@@ -746,12 +761,21 @@ export async function registerRoutes(app: Express): Promise<Server> {
   app.get("/api/documents/inbox", ...authorize(["ADMIN", "GERENTE", "OPERADOR"]), async (req, res) => {
     try {
       const user = req.user!;
-      const { priority, sortBy = 'createdAt', sortOrder = 'desc' } = req.query;
+      const { priority, sortBy = 'createdAt', sortOrder = 'desc', status, documentType } = req.query;
       
       let statusFilter = ["RECEBIDO", "VALIDANDO", "PENDENTE_REVISAO"];
       
-      // Filtro de prioridade baseado em data de vencimento
+      // Override status filter if specific status requested
+      if (status && status !== 'all') {
+        statusFilter = [status as string];
+      }
+      
+      // Build filters object
       const filters: any = { status: statusFilter };
+      
+      if (documentType && documentType !== 'all') {
+        filters.documentType = documentType as string;
+      }
       
       if (priority === 'urgent') {
         const tomorrow = new Date();
@@ -761,16 +785,34 @@ export async function registerRoutes(app: Express): Promise<Server> {
 
       const documents = await storage.getDocuments(user.tenantId, filters);
       
-      // Contadores para dashboard
+      // Sort documents
+      const sortedDocuments = documents.sort((a, b) => {
+        const aValue = sortBy === 'createdAt' ? a.createdAt : a.originalName;
+        const bValue = sortBy === 'createdAt' ? b.createdAt : b.originalName;
+        
+        if (sortOrder === 'desc') {
+          return aValue > bValue ? -1 : 1;
+        } else {
+          return aValue < bValue ? -1 : 1;
+        }
+      });
+      
+      // Enhanced stats for dashboard
       const stats = {
         total: documents.length,
         recebidos: documents.filter(d => d.status === 'RECEBIDO').length,
         validando: documents.filter(d => d.status === 'VALIDANDO').length,
         pendentesRevisao: documents.filter(d => d.status === 'PENDENTE_REVISAO').length,
-        urgentes: documents.filter(d => d.dueDate && d.dueDate <= new Date()).length
+        urgentes: documents.filter(d => d.dueDate && d.dueDate <= new Date()).length,
+        porTipo: {
+          pago: documents.filter(d => d.documentType === 'PAGO').length,
+          agendado: documents.filter(d => d.documentType === 'AGENDADO').length,
+          boleto: documents.filter(d => d.documentType === 'EMITIR_BOLETO').length,
+          nf: documents.filter(d => d.documentType === 'EMITIR_NF').length
+        }
       };
 
-      res.json({ documents, stats });
+      res.json({ documents: sortedDocuments, stats });
     } catch (error) {
       console.error("Inbox error:", error);
       res.status(500).json({ error: "Erro ao carregar inbox" });
@@ -1051,8 +1093,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
       last30Days.setDate(last30Days.getDate() - 30);
       
       const aiRuns = await storage.getAiRuns(user.tenantId, {
-        dateFrom: last30Days,
-        limit: 10000
+        dateFrom: last30Days
       });
       
       const recentRuns = aiRuns;
@@ -1062,7 +1103,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
         // Mapear variações do nome do provider
         const providerVariants = provider.name === 'glm' ? ['glm', 'glm-4-plus'] : [provider.name];
         const providerRuns = recentRuns.filter(run => providerVariants.includes(run.providerUsed));
-        const totalCost = providerRuns.reduce((sum, run) => sum + (run.costUsd || 0), 0);
+        const totalCost = providerRuns.reduce((sum, run) => sum + (parseFloat(run.costUsd?.toString() || '0')), 0);
         const totalTokens = providerRuns.reduce((sum, run) => sum + (run.tokensIn || 0) + (run.tokensOut || 0), 0);
         const avgResponseTime = providerRuns.length > 0 
           ? providerRuns.reduce((sum, run) => sum + (run.processingTimeMs || 0), 0) / providerRuns.length 
@@ -1075,7 +1116,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
           ...provider,
           last30Days: {
             totalRequests: providerRuns.length,
-            totalCost: parseFloat((totalCost || 0).toFixed(4)),
+            totalCost: parseFloat(totalCost.toFixed(4)),
             totalTokens,
             avgResponseTime: Math.round(avgResponseTime),
             successRate: parseFloat(successRate.toFixed(1)),
@@ -1094,7 +1135,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
         providers: metrics,
         summary: {
           totalRequests: recentRuns.length,
-          totalCost: parseFloat(recentRuns.reduce((sum, run) => sum + (run.costUsd || 0), 0).toFixed(4)),
+          totalCost: parseFloat(recentRuns.reduce((sum, run) => sum + (parseFloat(run.costUsd?.toString() || '0')), 0).toFixed(4)),
           avgDailyRequests: Math.round(recentRuns.length / 30),
           mostUsedProvider: recentRuns.length > 0 
             ? recentRuns.reduce((acc, run) => {
@@ -1150,14 +1191,14 @@ export async function registerRoutes(app: Express): Promise<Server> {
         const dayEnd = new Date(dayStart.getTime() + 24 * 60 * 60 * 1000);
         
         const dayRuns = aiRuns.filter(run => {
-          const runDate = new Date(run.createdAt);
+          const runDate = new Date(run.createdAt || new Date());
           return runDate >= dayStart && runDate < dayEnd;
         });
         
         timeline.push({
           date: dayStart.toISOString().split('T')[0],
           requests: dayRuns.length,
-          cost: parseFloat((dayRuns.reduce((sum, run) => sum + (run.costUsd || 0), 0) || 0).toFixed(4)),
+          cost: parseFloat((dayRuns.reduce((sum, run) => sum + (parseFloat(run.costUsd?.toString() || '0')), 0)).toFixed(4)),
           avgResponseTime: dayRuns.length > 0 
             ? Math.round(dayRuns.reduce((sum, run) => sum + (run.processingTimeMs || 0), 0) / dayRuns.length)
             : 0,
@@ -1180,7 +1221,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
             };
           }
           acc[run.providerUsed].requests++;
-          acc[run.providerUsed].cost += run.costUsd || 0;
+          acc[run.providerUsed].cost += parseFloat(run.costUsd?.toString() || '0');
           acc[run.providerUsed].totalResponseTime += run.processingTimeMs || 0;
           if ((run.confidence || 0) > 80) {
             acc[run.providerUsed].successCount++;
@@ -1200,7 +1241,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
         providerStats,
         summary: {
           totalRequests: aiRuns.length,
-          totalCost: parseFloat(aiRuns.reduce((sum, run) => sum + (run.costUsd || 0), 0).toFixed(4)),
+          totalCost: parseFloat(aiRuns.reduce((sum, run) => sum + (parseFloat(run.costUsd?.toString() || '0')), 0).toFixed(4)),
           avgResponseTime: aiRuns.length > 0 
             ? Math.round(aiRuns.reduce((sum, run) => sum + (run.processingTimeMs || 0), 0) / aiRuns.length)
             : 0,

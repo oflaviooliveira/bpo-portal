@@ -152,7 +152,7 @@ export const ocrMetrics = pgTable("ocr_metrics", {
   tenantId: uuid("tenant_id").notNull(),
   strategyUsed: varchar("strategy_used", { length: 50 }).notNull(), // 'PDF_DIRECT_TEXT', 'PDFTOTEXT_COMMAND', etc.
   success: boolean("success").notNull(),
-  processingTimeMs: integer("processing_time_ms").notNull(),
+  processingTimeMs: integer("processing_time_ms"), // Allow null for failed strategies
   characterCount: integer("character_count").notNull(),
   confidence: integer("confidence").notNull(), // 0-100
   fallbackLevel: integer("fallback_level").notNull().default(0), // 0 = primeira tentativa, 1+ = fallbacks

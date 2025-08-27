@@ -581,7 +581,7 @@ export class DatabaseStorage implements IStorage {
     tenantId: string;
     strategyUsed: string;
     success: boolean;
-    processingTimeMs: number;
+    processingTimeMs: number | null;
     characterCount: number;
     confidence: number;
     fallbackLevel: number;
@@ -589,6 +589,7 @@ export class DatabaseStorage implements IStorage {
   }): Promise<void> {
     await db.insert(ocrMetrics).values({
       ...metrics,
+      processingTimeMs: metrics.processingTimeMs || null,
       metadata: metrics.metadata ? JSON.stringify(metrics.metadata) : null
     });
   }
