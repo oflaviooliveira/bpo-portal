@@ -82,7 +82,7 @@ export function Inbox() {
     mutationFn: async ({ documentId, action, data }: { documentId: string, action: string, data?: any }) => {
       const response = await apiRequest(`/api/documents/${documentId}/action`, {
         method: "PATCH",
-        body: JSON.stringify({ action, ...data })
+        body: { action, ...data }
       });
       return response.json();
     },
@@ -150,10 +150,7 @@ export function Inbox() {
       
       return apiRequest(`/api/documents/${document.id}`, {
         method: 'PATCH',
-        headers: {
-          'Content-Type': 'application/json'
-        },
-        body: JSON.stringify(updates)
+        body: updates
       });
     },
     onSuccess: () => {
@@ -214,10 +211,7 @@ export function Inbox() {
     mutationFn: async (documentIds: string[]) => {
       return apiRequest(`/api/documents/bulk-delete`, {
         method: 'DELETE',
-        headers: {
-          'Content-Type': 'application/json'
-        },
-        body: JSON.stringify({ documentIds })
+        body: { documentIds }
       });
     },
     onSuccess: () => {
