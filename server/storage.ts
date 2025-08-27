@@ -239,7 +239,16 @@ export class DatabaseStorage implements IStorage {
       .where(and(eq(costCenters.id, id), eq(costCenters.tenantId, tenantId)));
   }
 
-  async getDocuments(tenantId: string, filters: any = {}): Promise<Document[]> {
+  async getDocuments(tenantId: string, filters: {
+    status?: string | string[];
+    clientId?: string | string[];
+    dateFrom?: Date;
+    dateTo?: Date;
+    dueDateFrom?: Date;
+    dueDateTo?: Date;
+    documentType?: string | string[];
+    bankId?: string | string[];
+  } = {}): Promise<Document[]> {
     const conditions = [eq(documents.tenantId, tenantId)];
 
     if (filters.status) {
@@ -251,7 +260,11 @@ export class DatabaseStorage implements IStorage {
     }
 
     if (filters.documentType) {
-      conditions.push(eq(documents.documentType, filters.documentType));
+      if (Array.isArray(filters.documentType)) {
+        conditions.push(inArray(documents.documentType, filters.documentType));
+      } else {
+        conditions.push(eq(documents.documentType, filters.documentType));
+      }
     }
 
     if (filters.clientId) {

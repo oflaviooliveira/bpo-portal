@@ -34,7 +34,8 @@ const statusConfig = {
 };
 
 export function Inbox() {
-  const [filter, setFilter] = useState<string>("");
+  const [statusFilter, setStatusFilter] = useState<string>("all");
+  const [typeFilter, setTypeFilter] = useState<string>("all");
   const [selectedDoc, setSelectedDoc] = useState<any>(null);
   const [showActionDialog, setShowActionDialog] = useState(false);
   const [actionType, setActionType] = useState<"approve" | "schedule" | "revise" | null>(null);
@@ -46,7 +47,11 @@ export function Inbox() {
     queryKey: ["/api/documents"],
   });
 
-  const displayDocuments = isShowingSearchResults ? searchResults : documents || [];
+  const filteredDocuments = (isShowingSearchResults ? searchResults : documents || []).filter((doc: any) => {
+    if (statusFilter !== "all" && doc.status !== statusFilter) return false;
+    if (typeFilter !== "all" && doc.documentType !== typeFilter) return false;
+    return true;
+  });
 
   const handleRefresh = () => {
     refetch();
@@ -163,14 +168,34 @@ export function Inbox() {
           <p className="text-muted-foreground">Documentos recebidos aguardando processamento</p>
         </div>
         <div className="flex space-x-3">
-          <Button 
-            variant="outline" 
-            onClick={() => {/* TODO: Implement filters */}}
-            data-testid="button-filters"
-          >
-            <Filter className="w-4 h-4 mr-2" />
-            Filtros
-          </Button>
+          <div className="flex items-center space-x-2">
+            <select
+              value={statusFilter}
+              onChange={(e) => setStatusFilter(e.target.value)}
+              className="px-3 py-2 border border-input rounded-md text-sm"
+              data-testid="select-status-filter"
+            >
+              <option value="all">Todos os Status</option>
+              <option value="RECEBIDO">Recebido</option>
+              <option value="VALIDANDO">Validando</option>
+              <option value="PENDENTE_REVISAO">Pendente Revisão</option>
+              <option value="PAGO_A_CONCILIAR">A Conciliar</option>
+              <option value="AGENDADO">Agendado</option>
+            </select>
+            
+            <select
+              value={typeFilter}
+              onChange={(e) => setTypeFilter(e.target.value)}
+              className="px-3 py-2 border border-input rounded-md text-sm"
+              data-testid="select-type-filter"
+            >
+              <option value="all">Todos os Tipos</option>
+              <option value="PAGO">Pago</option>
+              <option value="AGENDADO">Agendado</option>
+              <option value="EMITIR_BOLETO">Emitir Boleto</option>
+              <option value="EMITIR_NF">Emitir NF</option>
+            </select>
+          </div>
           <Button 
             onClick={handleRefresh}
             className="bg-gquicks-primary hover:bg-gquicks-primary/90"
@@ -197,14 +222,14 @@ export function Inbox() {
               </TableRow>
             </TableHeader>
             <TableBody>
-              {!Array.isArray(documents) || documents.length === 0 ? (
+              {!Array.isArray(filteredDocuments) || filteredDocuments.length === 0 ? (
                 <TableRow>
                   <TableCell colSpan={6} className="text-center py-8 text-muted-foreground">
                     Nenhum documento encontrado
                   </TableCell>
                 </TableRow>
               ) : (
-                documents?.map((doc: any) => (
+                filteredDocuments?.map((doc: any) => (
                   <TableRow 
                     key={doc.id} 
                     className="hover:bg-muted/30"
