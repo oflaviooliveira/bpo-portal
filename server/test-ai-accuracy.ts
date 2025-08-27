@@ -4,9 +4,11 @@ async function testAIAccuracy() {
   console.log("🧪 Teste de Precisão da IA com Documento Real");
   console.log("=" .repeat(60));
 
-  // Texto OCR simulado baseado no documento enviado pelo usuário
+  // Texto OCR simulado representando um documento de baixa qualidade
   const ocrText = `
-ROBSON PNEUS E AUTOPECAS LTDA DANFE
+DOCUMENTO FISCAL
+ALUGUEL DE VEICULOS
+DATA 07/2025
 Documento Auxiliar da Nota Fiscal Eletrônica
 AV MARIA DO CARMO, 1571
 POSTO LAVA TUCUNS 
@@ -41,19 +43,13 @@ PIX
 VALOR TOTAL DOS PRODUTOS
 1.450,00
 
-VALOR TOTAL DA NOTA
-1.450,00
-
-DADOS DOS PRODUTOS / SERVIÇOS
-CÓDIGO DESCRIÇÃO DOS PRODUTOS / SERVIÇOS NCM CST CFOP UN QTDE V. UNITÁRIO V. TOTAL
-0001010000007 PNEU WANLI 225/75R16LT 120/116S 225/75R16 40119090 060 6.403 UN 2 725,00 1.450,00
-
-RECEBEMOS DE ROBSON PNEUS E AUTOPECAS LTDA OS PRODUTOS CONSTANTES DA NOTA FISCAL
-ECO EXPRESS SERVICOS SUSTENTAVEIS LTDA
-Nº 645 Série 1
+VALOR: R$ 120,00
+VENCIMENTO: 24/07/2025
+FORNECEDOR: Empresa de Locação XYZ
 `;
 
-  const fileName = "22.07.2025_PG_19.07.2025_02.08.2025_COMPRA DE 2 PNEUS_Manutenção de Veiculos_SRJ1_R$1.450,00.pdf";
+  // Teste com o arquivo que teve problema
+  const fileName = "06.08.2025_PG_09.07.2025_26.07.2025_Locação De Veiculos_Aluguel De Veiculos_Srj1_R$ 455,79.pdf";
 
   console.log(`📄 Arquivo: ${fileName}`);
   console.log(`📝 Texto OCR (${ocrText.length} caracteres)`);
@@ -87,17 +83,22 @@ Nº 645 Série 1
     }
   }
 
-  console.log("\n📊 DADOS ESPERADOS (para comparação):");
+  console.log("\n📊 DADOS ESPERADOS (baseados no nome do arquivo):");
   console.log({
-    valor: "R$ 1.450,00",
-    data_pagamento: "19/07/2025",
-    fornecedor: "ROBSON PNEUS E AUTOPECAS LTDA",
-    descricao: "COMPRA DE 2 PNEUS",
-    categoria: "Manutenção de Veículos",
+    valor: "R$ 455,79", // Deve priorizar o valor do nome do arquivo
+    data_pagamento: "06/08/2025", // Primeira data do arquivo
+    data_vencimento: "09/07/2025", // Segunda data do arquivo
+    descricao: "Locação De Veiculos Aluguel De Veiculos", 
+    categoria: "Transporte",
     centro_custo: "SRJ1",
-    documento: "58.950.018/0001-34",
-    cliente_fornecedor: "ECO EXPRESS SERVICOS SUSTENTAVEIS LTDA"
+    tipo: "PAGO" // Por causa do "PG" no nome
   });
+
+  console.log("\n⚠️ TESTE DE VALIDAÇÃO CRUZADA:");
+  console.log("OCR sugere R$ 120,00 vs Arquivo tem R$ 455,79");
+  console.log("IA deve priorizar o valor do arquivo!");
+  console.log("OCR sugere 24/07/2025 vs Arquivo tem múltiplas datas");
+  console.log("IA deve usar as datas estruturadas do arquivo!");
 
   console.log("\n✅ Teste de precisão concluído!");
 }

@@ -260,47 +260,95 @@ class AIMultiProvider {
   }
 
   private buildAnalysisPrompt(ocrText: string, fileName: string): string {
+    // Extrair dados do nome do arquivo para validação cruzada
+    const fileData = this.extractFileMetadata(fileName);
+    
     return `
-Você é um especialista em análise de documentos fiscais brasileiros (notas fiscais, recibos, boletos).
+Você é um especialista em análise de documentos fiscais brasileiros com foco em PRECISÃO MÁXIMA.
 
-DOCUMENTO PARA ANÁLISE:
-Nome do arquivo: ${fileName}
-Texto OCR: "${ocrText}"
+ARQUIVO: ${fileName}
+TEXTO OCR: "${ocrText}"
 
-INSTRUÇÕES CRÍTICAS:
-1. Analise CUIDADOSAMENTE o texto OCR buscando:
-   - VALORES MONETÁRIOS: procure por "R$", valores com vírgulas/pontos (ex: 1.450,00)
-   - DATAS: formatos DD/MM/AAAA ou DD/MM/AA 
-   - EMPRESAS: nomes em maiúsculas, CNPJs
-   - PRODUTOS/SERVIÇOS: descrições detalhadas
+METADADOS DO ARQUIVO (para validação cruzada):
+${JSON.stringify(fileData, null, 2)}
 
-2. Para NOTAS FISCAIS, identifique:
-   - Emissor (quem vendeu)
-   - Destinatário (quem comprou) 
-   - Valor total da nota
-   - Data de emissão
+PRIORIDADES DE ANÁLISE:
+1. SEMPRE priorize dados claros do nome do arquivo quando o OCR for incompleto
+2. Use o texto OCR para extrair detalhes adicionais (fornecedor, descrição)
+3. Valide valores monetários: se OCR difere muito do arquivo, use o arquivo
+4. Para datas: priorize datas estruturadas do nome do arquivo
 
-3. Use o NOME DO ARQUIVO como validação cruzada dos dados extraídos.
+REGRAS DE EXTRAÇÃO:
+1. VALOR: Use formato "R$ X.XXX,XX" - priorize dados do arquivo se OCR for inconsistente
+2. DATAS: Formato "DD/MM/AAAA" - primeira data do arquivo = vencimento/processamento
+3. DESCRIÇÃO: Combine dados do arquivo + detalhes do OCR
+4. CATEGORIA: Mapeie baseado na descrição identificada
+5. CENTRO_CUSTO: Extraia códigos alfanuméricos do arquivo (ex: SRJ1, SP01)
 
-4. ATENÇÃO: Se encontrar múltiplos valores, use o VALOR TOTAL DA NOTA/DOCUMENTO.
+VALIDAÇÃO CRUZADA:
+- Se valor no arquivo = R$ 455,79 mas OCR sugere R$ 120,00 → use R$ 455,79
+- Se arquivo tem "Locação De Veículos" → categoria = "Transporte"
+- Se arquivo tem "PG" → status documento = "PAGO"
 
-5. Responda SOMENTE em JSON válido, sem markdown ou explicações.
+RESPOSTA: JSON puro, sem markdown, sem explicações.
 
-EXEMPLO para Nota Fiscal:
-Se o texto contém "ROBSON PNEUS" como emissor, "1.450,00" como valor, "19/07/2025" como data:
+TEMPLATE:
 {
-  "valor": "R$ 1.450,00",
-  "data_pagamento": "19/07/2025",
-  "data_vencimento": "não_identificado",
-  "fornecedor": "ROBSON PNEUS E AUTOPECAS LTDA",
-  "descricao": "COMPRA DE 2 PNEUS",
-  "categoria": "Manutenção de Veículos", 
-  "centro_custo": "SRJ1",
-  "documento": "58.950.018/0001-34",
-  "cliente_fornecedor": "ECO EXPRESS SERVICOS SUSTENTAVEIS LTDA",
-  "observacoes": "Nota Fiscal Eletrônica - 2 pneus WANLI 225/75R16LT",
-  "confidence": 95
+  "valor": "R$ [valor_do_arquivo_ou_ocr]",
+  "data_pagamento": "DD/MM/AAAA",
+  "data_vencimento": "DD/MM/AAAA",
+  "fornecedor": "[nome_completo_do_fornecedor]",
+  "descricao": "[descrição_arquivo + detalhes_ocr]",
+  "categoria": "[categoria_mapeada]",
+  "centro_custo": "[código_extraído]",
+  "documento": "[cnpj/cpf_se_encontrado]",
+  "cliente_fornecedor": "[destinatário_se_identificado]",
+  "observacoes": "[informações_relevantes]",
+  "confidence": [0-100]
 }`;
+  }
+
+  private extractFileMetadata(fileName: string): any {
+    const metadata: any = {};
+    
+    // Extrair datas
+    const dateMatches = fileName.match(/(\d{2})\.(\d{2})\.(\d{4})/g);
+    if (dateMatches) {
+      metadata.datas = dateMatches.map(date => {
+        const [day, month, year] = date.split('.');
+        return `${day}/${month}/${year}`;
+      });
+    }
+    
+    // Extrair valor
+    const valueMatch = fileName.match(/R\$\s*(\d{1,3}(?:[.,]\d{3})*(?:[.,]\d{2}))/);
+    if (valueMatch) {
+      metadata.valor = `R$ ${valueMatch[1]}`;
+    }
+    
+    // Extrair descrição
+    const parts = fileName.split('_').filter(part => 
+      !part.match(/^\d{2}\.\d{2}\.\d{4}$/) && 
+      !part.match(/^R\$/) && 
+      !part.includes('.pdf') &&
+      part.length > 1
+    );
+    
+    if (parts.length > 0) {
+      metadata.descricao = parts.join(' ').replace(/[_\-]/g, ' ');
+    }
+    
+    // Detectar tipo
+    if (fileName.includes('PG')) metadata.tipo = 'PAGO';
+    if (fileName.includes('AG')) metadata.tipo = 'AGENDADO';
+    
+    // Extrair centro de custo
+    const costCenterMatch = fileName.match(/([A-Z]{2,4}\d*)/i);
+    if (costCenterMatch) {
+      metadata.centro_custo = costCenterMatch[1].toUpperCase();
+    }
+    
+    return metadata;
   }
 
   private estimateTokenCount(text: string): number {

@@ -311,46 +311,110 @@ export class AdvancedOCRProcessor {
     const filename = path.basename(filePath, path.extname(filePath));
     
     let extractedInfo: string[] = [];
+    let structuredData: any = {};
+
+    console.log(`🔍 Analisando nome do arquivo: ${filename}`);
 
     // Extrair datas (DD.MM.AAAA, DD/MM/AAAA, DD-MM-AAAA)
     const dateRegex = /(\d{2})[.\/\-](\d{2})[.\/\-](\d{4})/g;
     const dates = Array.from(filename.matchAll(dateRegex));
-    dates.forEach(match => {
-      extractedInfo.push(`Data: ${match[1]}/${match[2]}/${match[3]}`);
-    });
-
-    // Extrair valores monetários (R$ X.XXX,XX)
-    const moneyRegex = /R\$?\s?(\d{1,3}(?:[.,]\d{3})*(?:[.,]\d{2})?)/g;
-    const amounts = Array.from(filename.matchAll(moneyRegex));
-    amounts.forEach(match => {
-      extractedInfo.push(`Valor: R$ ${match[1]}`);
-    });
-
-    // Extrair descrições (palavras relevantes)
-    const words = filename.split(/[_\-\s.]+/)
-      .filter(word => word.length > 3)
-      .filter(word => !/^\d+$/.test(word)) // Remover números puros
-      .filter(word => !word.match(/^R\$/)); // Remover símbolos monetários
-
-    if (words.length > 0) {
-      extractedInfo.push(`Descrição: ${words.join(' ')}`);
+    
+    if (dates.length > 0) {
+      // Primeira data geralmente é data de processamento/vencimento
+      const firstDate = dates[0];
+      const formattedDate = `${firstDate[1]}/${firstDate[2]}/${firstDate[3]}`;
+      extractedInfo.push(`Data de Vencimento: ${formattedDate}`);
+      structuredData.data_vencimento = formattedDate;
+      
+      // Se houver múltiplas datas, listar todas
+      if (dates.length > 1) {
+        dates.forEach((match, index) => {
+          const date = `${match[1]}/${match[2]}/${match[3]}`;
+          extractedInfo.push(`Data ${index + 1}: ${date}`);
+        });
+      }
     }
 
-    // Extrair possíveis códigos/centros de custo
-    const codeRegex = /[A-Z]{2,4}\d+/g;
-    const codes = Array.from(filename.matchAll(codeRegex));
-    codes.forEach(match => {
-      extractedInfo.push(`Código: ${match[0]}`);
+    // Extrair valores monetários (R$ X.XXX,XX) - mais preciso
+    const moneyRegex = /R\$\s*(\d{1,3}(?:[.,]\d{3})*(?:[.,]\d{2}))/g;
+    const amounts = Array.from(filename.matchAll(moneyRegex));
+    
+    if (amounts.length > 0) {
+      const amount = amounts[0][1];
+      extractedInfo.push(`Valor: R$ ${amount}`);
+      structuredData.valor = `R$ ${amount}`;
+    }
+
+    // Extrair descrições específicas
+    const parts = filename.split('_');
+    let descricaoParts: string[] = [];
+    let centroCusto = '';
+    
+    parts.forEach(part => {
+      // Pular datas e valores
+      if (part.match(/^\d{2}\.\d{2}\.\d{4}$/) || part.match(/^R\$/)) {
+        return;
+      }
+      
+      // Detectar centro de custo (formato SRJ1, etc)
+      if (part.match(/^[A-Z]{2,4}\d*$/i)) {
+        centroCusto = part.toUpperCase();
+        extractedInfo.push(`Centro de Custo: ${centroCusto}`);
+        structuredData.centro_custo = centroCusto;
+        return;
+      }
+      
+      // Detectar tipo de documento/categoria
+      const tipoMapping: { [key: string]: string } = {
+        'PG': 'PAGO',
+        'AG': 'AGENDADO', 
+        'Locação': 'Transporte',
+        'Aluguel': 'Transporte',
+        'Combustivel': 'Combustível',
+        'Alimentação': 'Alimentação',
+        'Tecnologia': 'Tecnologia',
+        'Manutenção': 'Manutenção',
+        'Veiculos': 'Veículos'
+      };
+      
+      if (tipoMapping[part]) {
+        if (part === 'PG') {
+          structuredData.status = 'PAGO';
+        } else {
+          extractedInfo.push(`Categoria: ${tipoMapping[part]}`);
+          structuredData.categoria = tipoMapping[part];
+        }
+      } else if (part.length > 2) {
+        descricaoParts.push(part.replace(/[_\-]/g, ' '));
+      }
     });
 
-    const extractedText = extractedInfo.join('\n');
+    if (descricaoParts.length > 0) {
+      const descricao = descricaoParts.join(' ');
+      extractedInfo.push(`Descrição: ${descricao}`);
+      structuredData.descricao = descricao;
+    }
+
+    // Criar texto estruturado para a IA
+    const extractedText = [
+      `DOCUMENTO: ${filename}`,
+      '',
+      'DADOS EXTRAÍDOS DO NOME DO ARQUIVO:',
+      ...extractedInfo,
+      '',
+      'DADOS ESTRUTURADOS PARA IA:',
+      JSON.stringify(structuredData, null, 2)
+    ].join('\n');
+
+    console.log(`✅ Filename analysis extracted: ${extractedInfo.length} campos`);
+    console.log(`📊 Structured data:`, structuredData);
 
     return {
-      text: extractedText || `Arquivo: ${filename}`,
-      confidence: extractedInfo.length > 2 ? 0.6 : 0.3,
+      text: extractedText,
+      confidence: extractedInfo.length >= 3 ? 0.8 : 0.5, // Maior confiança se extraiu dados principais
       strategy: 'FILENAME_ANALYSIS',
       processingTime: 0,
-      charCount: extractedText.length || filename.length
+      charCount: extractedText.length
     };
   }
 }

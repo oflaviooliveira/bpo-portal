@@ -616,6 +616,58 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
+  // Debug endpoint para verificar último documento processado
+  app.get("/api/debug/last-document", isAuthenticated, async (req, res) => {
+    try {
+      const user = req.user!;
+      
+      // Buscar último documento do tenant
+      const documents = await storage.getDocuments(user.tenantId, { limit: 1 });
+      const lastDoc = documents[0];
+      
+      if (!lastDoc) {
+        return res.json({ message: "Nenhum documento encontrado" });
+      }
+      
+      // Buscar análises IA do documento
+      const aiRuns = await storage.getDocumentAIRuns(lastDoc.id);
+      
+      // Buscar inconsistências 
+      const inconsistencies = await storage.getDocumentInconsistencies(lastDoc.id);
+      
+      res.json({
+        document: {
+          id: lastDoc.id,
+          originalName: lastDoc.originalName,
+          status: lastDoc.status,
+          extractedData: lastDoc.extractedData,
+          ocrText: lastDoc.ocrText?.substring(0, 500), // Primeiros 500 chars
+          aiProvider: lastDoc.aiProvider,
+          ocrConfidence: lastDoc.ocrConfidence
+        },
+        aiRuns: aiRuns.map(run => ({
+          provider: run.provider,
+          confidence: run.confidence,
+          tokensUsed: run.tokensUsed,
+          cost: run.processingCost,
+          extractedData: run.extractedData,
+          createdAt: run.createdAt
+        })),
+        inconsistencies: inconsistencies.map(inc => ({
+          field: inc.field,
+          ocrValue: inc.ocrValue,
+          aiValue: inc.aiValue,
+          metadataValue: inc.metadataValue,
+          severity: inc.severity
+        }))
+      });
+      
+    } catch (error) {
+      console.error("Debug last document error:", error);
+      res.status(500).json({ error: "Erro ao buscar dados de debug" });
+    }
+  });
+
   // AI metrics dashboard endpoint
   app.get("/api/ai-metrics", isAuthenticated, async (req, res) => {
     try {
