@@ -347,6 +347,53 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
+  // Bulk delete documents - Wave 1 RBAC
+  app.delete("/api/documents/bulk-delete", ...authorize(["ADMIN", "GERENTE", "OPERADOR"], true), async (req, res) => {
+    try {
+      const user = req.user!;
+      const { documentIds } = req.body;
+
+      if (!documentIds || !Array.isArray(documentIds) || documentIds.length === 0) {
+        return res.status(400).json({ error: "Lista de IDs de documentos é obrigatória" });
+      }
+
+      // Validar que todos os documentos pertencem ao tenant do usuário
+      const documents = await Promise.all(
+        documentIds.map(id => storage.getDocument(id, user.tenantId))
+      );
+
+      const notFound = documents.some(doc => !doc);
+      if (notFound) {
+        return res.status(404).json({ error: "Um ou mais documentos não foram encontrados" });
+      }
+
+      // Deletar documentos em lote
+      await storage.deleteDocuments(documentIds, user.tenantId);
+
+      // Log da exclusão em lote
+      await Promise.all(
+        documentIds.map(documentId =>
+          storage.createDocumentLog({
+            documentId,
+            action: "BULK_DELETE",
+            status: "SUCCESS",
+            details: { deletedBy: user.id, deletedAt: new Date() },
+            userId: user.id,
+          })
+        )
+      );
+
+      res.json({ 
+        success: true, 
+        message: `${documentIds.length} documento(s) excluído(s) com sucesso`,
+        deletedCount: documentIds.length 
+      });
+    } catch (error) {
+      console.error("Bulk delete documents error:", error);
+      res.status(500).json({ error: "Erro ao excluir documentos" });
+    }
+  });
+
   // Status transition endpoint - Wave 1 Business Logic
   app.post("/api/documents/:id/transition", ...authorize(["ADMIN", "GERENTE", "OPERADOR"]), async (req, res) => {
     try {

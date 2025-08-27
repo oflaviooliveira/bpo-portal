@@ -54,6 +54,7 @@ export interface IStorage {
   getDocument(id: string, tenantId: string): Promise<Document | undefined>;
   createDocument(document: InsertDocument): Promise<Document>;
   updateDocument(id: string, tenantId: string, updates: Partial<Document>): Promise<Document>;
+  deleteDocuments(ids: string[], tenantId: string): Promise<void>;
   
   // Dashboard stats
   getDashboardStats(tenantId: string): Promise<{
@@ -370,6 +371,27 @@ export class DatabaseStorage implements IStorage {
       .where(and(eq(documents.id, id), eq(documents.tenantId, tenantId)))
       .returning();
     return document;
+  }
+
+  async deleteDocuments(ids: string[], tenantId: string): Promise<void> {
+    // Primeiro, remove inconsistências relacionadas
+    await db.delete(documentInconsistencies)
+      .where(inArray(documentInconsistencies.documentId, ids));
+    
+    // Remove logs relacionados
+    await db.delete(documentLogs)
+      .where(inArray(documentLogs.documentId, ids));
+    
+    // Remove runs de IA relacionados
+    await db.delete(aiRuns)
+      .where(inArray(aiRuns.documentId, ids));
+    
+    // Por fim, remove os documentos
+    await db.delete(documents)
+      .where(and(
+        inArray(documents.id, ids),
+        eq(documents.tenantId, tenantId)
+      ));
   }
 
   async getDashboardStats(tenantId: string): Promise<{

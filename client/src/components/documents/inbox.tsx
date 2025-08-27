@@ -11,7 +11,8 @@ import {
   TableHeader, 
   TableRow 
 } from "@/components/ui/table";
-import { Filter, RefreshCw, FileText, Eye, Edit, AlertTriangle, Calendar, CheckCircle2, CreditCard, Receipt, Download } from "lucide-react";
+import { Filter, RefreshCw, FileText, Eye, Edit, AlertTriangle, Calendar, CheckCircle2, CreditCard, Receipt, Download, Trash2 } from "lucide-react";
+import { Checkbox } from "@/components/ui/checkbox";
 import { apiRequest, queryClient } from "@/lib/queryClient";
 import { useToast } from "@/hooks/use-toast";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
@@ -43,6 +44,11 @@ export function Inbox() {
   const [isShowingSearchResults, setIsShowingSearchResults] = useState(false);
   const [expandedDoc, setExpandedDoc] = useState<string | null>(null);
   const [showDetailsDialog, setShowDetailsDialog] = useState(false);
+  
+  // Estados para seleção múltipla
+  const [selectedDocuments, setSelectedDocuments] = useState<Set<string>>(new Set());
+  const [showBulkDeleteDialog, setShowBulkDeleteDialog] = useState(false);
+  
   const { toast } = useToast();
 
   const { data: documents, isLoading, refetch } = useQuery({
@@ -177,6 +183,60 @@ export function Inbox() {
     setShowDetailsDialog(false);
   };
 
+  // Funções para seleção múltipla
+  const handleSelectDocument = (documentId: string, checked: boolean) => {
+    const newSelected = new Set(selectedDocuments);
+    if (checked) {
+      newSelected.add(documentId);
+    } else {
+      newSelected.delete(documentId);
+    }
+    setSelectedDocuments(newSelected);
+  };
+
+  const handleSelectAll = (checked: boolean) => {
+    if (checked) {
+      const allIds = new Set(filteredDocuments.map((doc: any) => doc.id));
+      setSelectedDocuments(allIds);
+    } else {
+      setSelectedDocuments(new Set());
+    }
+  };
+
+  const isAllSelected = filteredDocuments.length > 0 && selectedDocuments.size === filteredDocuments.length;
+  const isSomeSelected = selectedDocuments.size > 0 && selectedDocuments.size < filteredDocuments.length;
+
+  // Mutation para exclusão em lote
+  const bulkDeleteMutation = useMutation({
+    mutationFn: async (documentIds: string[]) => {
+      return apiRequest(`/api/documents/bulk-delete`, {
+        method: 'DELETE',
+        body: JSON.stringify({ documentIds })
+      });
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['/api/documents'] });
+      setSelectedDocuments(new Set());
+      setShowBulkDeleteDialog(false);
+      toast({
+        title: "Documentos excluídos",
+        description: `${selectedDocuments.size} documento(s) foram excluídos com sucesso.`,
+      });
+    },
+    onError: (error: any) => {
+      toast({
+        title: "Erro ao excluir",
+        description: error.message || "Erro ao excluir documentos",
+        variant: "destructive",
+      });
+    }
+  });
+
+  const handleBulkDelete = () => {
+    const documentIds = Array.from(selectedDocuments);
+    bulkDeleteMutation.mutate(documentIds);
+  };
+
   const formatDate = (date: string | null) => {
     if (!date) return "-";
     return new Intl.DateTimeFormat('pt-BR', {
@@ -263,12 +323,38 @@ export function Inbox() {
         </div>
       </div>
 
+      {/* Botão de exclusão em lote */}
+      {selectedDocuments.size > 0 && (
+        <div className="mb-4 p-3 bg-blue-50 border border-blue-200 rounded-lg flex items-center justify-between">
+          <span className="text-sm text-blue-800">
+            {selectedDocuments.size} documento(s) selecionado(s)
+          </span>
+          <Button
+            onClick={() => setShowBulkDeleteDialog(true)}
+            variant="destructive"
+            size="sm"
+            data-testid="button-bulk-delete"
+          >
+            <Trash2 className="w-4 h-4 mr-2" />
+            Excluir Selecionados
+          </Button>
+        </div>
+      )}
+
       {/* Document Table */}
       <Card>
         <CardContent className="p-0">
           <Table>
             <TableHeader>
               <TableRow className="bg-muted/50">
+                <TableHead className="w-12">
+                  <Checkbox
+                    checked={isAllSelected}
+                    indeterminate={isSomeSelected}
+                    onCheckedChange={(checked) => handleSelectAll(!!checked)}
+                    data-testid="checkbox-select-all"
+                  />
+                </TableHead>
                 <TableHead className="font-medium text-foreground">Documento</TableHead>
                 <TableHead className="font-medium text-foreground">Cliente</TableHead>
                 <TableHead className="font-medium text-foreground">Status</TableHead>
@@ -280,7 +366,7 @@ export function Inbox() {
             <TableBody>
               {!Array.isArray(filteredDocuments) || filteredDocuments.length === 0 ? (
                 <TableRow>
-                  <TableCell colSpan={6} className="text-center py-8 text-muted-foreground">
+                  <TableCell colSpan={7} className="text-center py-8 text-muted-foreground">
                     Nenhum documento encontrado
                   </TableCell>
                 </TableRow>
@@ -291,6 +377,13 @@ export function Inbox() {
                     className="hover:bg-muted/30"
                     data-testid={`document-row-${doc.id}`}
                   >
+                    <TableCell>
+                      <Checkbox
+                        checked={selectedDocuments.has(doc.id)}
+                        onCheckedChange={(checked) => handleSelectDocument(doc.id, !!checked)}
+                        data-testid={`checkbox-select-${doc.id}`}
+                      />
+                    </TableCell>
                     <TableCell>
                       <div className="flex items-center space-x-3">
                         <div className="w-10 h-10 bg-muted rounded-lg flex items-center justify-center">
@@ -691,6 +784,38 @@ export function Inbox() {
               )}
             </div>
           )}
+        </DialogContent>
+      </Dialog>
+
+      {/* Dialog de confirmação de exclusão em lote */}
+      <Dialog open={showBulkDeleteDialog} onOpenChange={setShowBulkDeleteDialog}>
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle>Confirmar Exclusão</DialogTitle>
+          </DialogHeader>
+          <div className="py-4">
+            <p className="text-sm text-muted-foreground">
+              Tem certeza que deseja excluir {selectedDocuments.size} documento(s) selecionado(s)?
+            </p>
+            <p className="text-sm text-red-600 mt-2">
+              Esta ação não pode ser desfeita.
+            </p>
+          </div>
+          <div className="flex justify-end gap-3">
+            <Button
+              variant="outline"
+              onClick={() => setShowBulkDeleteDialog(false)}
+            >
+              Cancelar
+            </Button>
+            <Button
+              variant="destructive"
+              onClick={handleBulkDelete}
+              disabled={bulkDeleteMutation.isPending}
+            >
+              {bulkDeleteMutation.isPending ? "Excluindo..." : "Excluir"}
+            </Button>
+          </div>
         </DialogContent>
       </Dialog>
     </div>
