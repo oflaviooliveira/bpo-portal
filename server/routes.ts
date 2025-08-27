@@ -522,8 +522,8 @@ export async function registerRoutes(app: Express): Promise<Server> {
       
       const documents = await storage.getDocuments(user.tenantId, { 
         status: ["AGENDADO", "A_PAGAR_HOJE"],
-        dueDateFrom: today.toISOString(),
-        dueDateTo: tomorrow.toISOString()
+        dueDateFrom: today,
+        dueDateTo: tomorrow
       });
       res.json(documents);
     } catch (error) {
@@ -541,8 +541,8 @@ export async function registerRoutes(app: Express): Promise<Server> {
       
       const documents = await storage.getDocuments(user.tenantId, { 
         status: ["AGENDADO"],
-        dueDateFrom: today.toISOString(),
-        dueDateTo: next7Days.toISOString()
+        dueDateFrom: today,
+        dueDateTo: next7Days
       });
       res.json(documents);
     } catch (error) {
@@ -559,7 +559,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
       
       const documents = await storage.getDocuments(user.tenantId, { 
         status: ["AGENDADO", "A_PAGAR_HOJE"],
-        dueDateTo: today.toISOString(),
+        dueDateTo: today,
         overdue: true
       });
       res.json(documents);

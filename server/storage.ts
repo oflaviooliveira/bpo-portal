@@ -14,7 +14,7 @@ import { pool } from "./db";
 const PostgresSessionStore = connectPg(session);
 
 export interface IStorage {
-  sessionStore: session.SessionStore;
+  sessionStore: session.Store;
   
   // Users
   getUser(id: string): Promise<User | undefined>;
@@ -87,7 +87,7 @@ export interface IStorage {
 }
 
 export class DatabaseStorage implements IStorage {
-  sessionStore: session.SessionStore;
+  sessionStore: session.Store;
 
   constructor() {
     this.sessionStore = new PostgresSessionStore({ 
@@ -248,6 +248,7 @@ export class DatabaseStorage implements IStorage {
     dueDateTo?: Date;
     documentType?: string | string[];
     bankId?: string | string[];
+    overdue?: boolean;
   } = {}): Promise<Document[]> {
     const conditions = [eq(documents.tenantId, tenantId)];
 
@@ -268,11 +269,19 @@ export class DatabaseStorage implements IStorage {
     }
 
     if (filters.clientId) {
-      conditions.push(eq(documents.clientId, filters.clientId));
+      if (Array.isArray(filters.clientId)) {
+        conditions.push(inArray(documents.clientId, filters.clientId));
+      } else {
+        conditions.push(eq(documents.clientId, filters.clientId));
+      }
     }
 
     if (filters.bankId) {
-      conditions.push(eq(documents.bankId, filters.bankId));
+      if (Array.isArray(filters.bankId)) {
+        conditions.push(inArray(documents.bankId, filters.bankId));
+      } else {
+        conditions.push(eq(documents.bankId, filters.bankId));
+      }
     }
 
     // Date filters for scheduled documents
