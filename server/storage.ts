@@ -6,7 +6,7 @@ import {
   type InsertCategory, type InsertCostCenter, type AiRun, type DocumentInconsistency
 } from "@shared/schema";
 import { db } from "./db";
-import { eq, and, desc, count, sum, avg, inArray, gte, lte, lt } from "drizzle-orm";
+import { eq, and, desc, count, sum, avg, inArray, gte, lte, lt, sql } from "drizzle-orm";
 import session from "express-session";
 import connectPg from "connect-pg-simple";
 import { pool } from "./db";
@@ -303,11 +303,48 @@ export class DatabaseStorage implements IStorage {
       }
     }
 
-    return await db
-      .select()
+    // Buscar documentos com inconsistências
+    const docsWithInconsistencies = await db
+      .select({
+        ...documents,
+        inconsistencies: sql<any[]>`
+          COALESCE(
+            json_agg(
+              CASE 
+                WHEN ${documentInconsistencies.id} IS NOT NULL 
+                THEN json_build_object(
+                  'type', CASE 
+                    WHEN ${documentInconsistencies.field} = 'amount' THEN 'INCONSISTENCIA_AMOUNT'
+                    WHEN ${documentInconsistencies.field} = 'supplier' THEN 'INCONSISTENCIA_SUPPLIER'
+                    WHEN ${documentInconsistencies.field} = 'due_date' THEN 'INCONSISTENCIA_DATE'
+                    ELSE 'INCONSISTENCIA_GENERAL'
+                  END,
+                  'field', ${documentInconsistencies.field},
+                  'message', CONCAT(
+                    'Inconsistência detectada em ', ${documentInconsistencies.field}, 
+                    ': OCR="', COALESCE(${documentInconsistencies.ocrValue}, 'N/A'), 
+                    '", IA="', COALESCE(${documentInconsistencies.filenameValue}, 'N/A'), '"'
+                  )
+                )
+                ELSE NULL 
+              END
+            ) FILTER (WHERE ${documentInconsistencies.id} IS NOT NULL),
+            '[]'::json
+          )
+        `
+      })
       .from(documents)
+      .leftJoin(documentInconsistencies, eq(documents.id, documentInconsistencies.documentId))
       .where(and(...conditions))
+      .groupBy(documents.id)
       .orderBy(desc(documents.createdAt));
+
+    // Mapear os resultados para incluir extractedData corretamente
+    return docsWithInconsistencies.map(doc => ({
+      ...doc,
+      extractedData: doc.aiAnalysis, // aiAnalysis contém os dados extraídos
+      tasks: doc.inconsistencies || []
+    }));
   }
 
   async getDocument(id: string, tenantId: string): Promise<Document | undefined> {
