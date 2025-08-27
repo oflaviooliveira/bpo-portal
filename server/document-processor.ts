@@ -1,6 +1,7 @@
 import { processDocumentWithOCR } from "./ocr";
 import { aiMultiProvider } from "./ai-multi-provider";
 import { storage } from "./storage";
+import { inconsistencyDetector } from "./inconsistency-detector";
 
 export class DocumentProcessor {
   constructor() {
@@ -173,7 +174,7 @@ export class DocumentProcessor {
 
   private async performAIAnalysis(ocrText: string, document: any) {
     try {
-      return await aiMultiProvider.analyzeDocument(ocrText, document.originalName);
+      return await aiMultiProvider.analyzeDocument(ocrText, document.originalName, document.id, document.tenantId);
     } catch (error) {
       console.warn("⚠️ Todos os provedores de IA falharam, usando fallback:", error);
       return await this.fallbackAIAnalysis(ocrText, document);
@@ -225,31 +226,42 @@ export class DocumentProcessor {
     errors: Array<{ type: string; message: string; field?: string }>;
     confidence: number;
   }> {
-    const errors: Array<{ type: string; message: string; field?: string }> = [];
-    let confidence = 1.0;
+    // Usar o detector de inconsistências avançado
+    const validationResult = await inconsistencyDetector.detectInconsistencies(
+      document.id, 
+      ocrResult, 
+      aiResult, 
+      document
+    );
 
-    // Validar confiança mínima do OCR
+    // Converter formato de resposta para manter compatibilidade
+    const errors = validationResult.errors.map(error => ({
+      type: `INCONSISTENCIA_${error.field.toUpperCase()}`,
+      message: `Inconsistência detectada em ${error.field}: OCR="${error.ocrValue || 'N/A'}", IA="${error.formValue || 'N/A'}"`,
+      field: error.field
+    }));
+
+    // Adicionar validações adicionais
     if (ocrResult.confidence < 0.3) {
       errors.push({
         type: "OCR_BAIXA_CONFIANCA",
         message: `OCR com baixa confiança (${Math.round(ocrResult.confidence * 100)}%)`,
+        field: "ocr_confidence"
       });
-      confidence *= 0.6;
     }
 
-    // Validar se IA conseguiu extrair dados básicos
     if (!aiResult.extractedData?.descricao || aiResult.extractedData.descricao.length < 5) {
       errors.push({
         type: "DADOS_INSUFICIENTES",
         message: "IA não conseguiu extrair informações básicas do documento",
+        field: "description"
       });
-      confidence *= 0.4;
     }
 
     return {
-      isValid: errors.length === 0 && confidence > 0.5,
+      isValid: validationResult.isValid && errors.length === 0,
       errors,
-      confidence
+      confidence: Math.min(validationResult.confidence / 100, ocrResult.confidence)
     };
   }
 

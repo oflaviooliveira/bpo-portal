@@ -1,4 +1,6 @@
 import OpenAI from "openai";
+import { storage } from "./storage";
+import { aiAnalysisResponseSchema, autoCorrectJsonResponse, normalizeValue, normalizeDate, type AiAnalysisResponse } from "./ai-validation-schema";
 
 // Multi-provider AI system based on the other portal's documentation
 interface AIProvider {
@@ -11,10 +13,14 @@ interface AIProvider {
 
 interface AIAnalysisResult {
   provider: string;
-  extractedData: any;
+  extractedData: AiAnalysisResponse;
   rawResponse: string;
   confidence: number;
   processingCost: number;
+  tokensIn: number;
+  tokensOut: number;
+  processingTimeMs: number;
+  fallbackReason?: string;
 }
 
 class AIMultiProvider {
@@ -39,28 +45,103 @@ class AIMultiProvider {
     apiKey: process.env.OPENAI_API_KEY || ""
   });
 
-  async analyzeDocument(ocrText: string, fileName: string): Promise<AIAnalysisResult> {
+  async analyzeDocument(ocrText: string, fileName: string, documentId: string, tenantId: string): Promise<AIAnalysisResult> {
     const enabledProviders = this.providers
       .filter(p => p.enabled)
       .sort((a, b) => a.priority - b.priority);
 
-    for (const provider of enabledProviders) {
+    let lastError: any = null;
+    let fallbackReason: string | undefined = undefined;
+    
+    for (let i = 0; i < enabledProviders.length; i++) {
+      const provider = enabledProviders[i];
+      const isSecondaryProvider = i > 0;
+      
       try {
-        console.log(`🤖 Tentando análise com ${provider.name}...`);
+        console.log(`🤖 Tentando análise com ${provider.name}${isSecondaryProvider ? ' (fallback)' : ''}...`);
+        
+        let result: AIAnalysisResult;
+        const startTime = Date.now();
         
         if (provider.name === 'glm') {
-          return await this.analyzeWithGLM(ocrText, fileName);
+          result = await this.analyzeWithGLM(ocrText, fileName);
         } else if (provider.name === 'openai') {
-          return await this.analyzeWithOpenAI(ocrText, fileName);
+          result = await this.analyzeWithOpenAI(ocrText, fileName);
+        } else {
+          throw new Error(`Provider desconhecido: ${provider.name}`);
         }
-      } catch (error) {
+        
+        result.processingTimeMs = Date.now() - startTime;
+        if (isSecondaryProvider) {
+          result.fallbackReason = fallbackReason;
+        }
+        
+        // Validar a resposta com o schema stricto
+        try {
+          const validatedData = aiAnalysisResponseSchema.parse(result.extractedData);
+          result.extractedData = validatedData;
+          
+          // Normalizar valores
+          result.extractedData.valor = normalizeValue(result.extractedData.valor);
+          if (result.extractedData.data_pagamento) {
+            result.extractedData.data_pagamento = normalizeDate(result.extractedData.data_pagamento);
+          }
+          if (result.extractedData.data_vencimento) {
+            result.extractedData.data_vencimento = normalizeDate(result.extractedData.data_vencimento);
+          }
+          
+          provider.status = 'online';
+          
+          // Registrar no banco
+          await this.logAiRun(documentId, tenantId, result);
+          
+          return result;
+          
+        } catch (validationError) {
+          console.warn(`❌ Validação falhou para ${provider.name}:`, validationError);
+          fallbackReason = 'invalid_response_format';
+          lastError = validationError;
+          continue;
+        }
+        
+      } catch (error: any) {
         console.warn(`⚠️ Falha com ${provider.name}:`, error);
         provider.status = 'error';
+        
+        // Determinar o motivo do fallback
+        if (error.message?.includes('timeout') || error.code === 'ECONNRESET') {
+          fallbackReason = 'timeout';
+        } else if (error.message?.includes('JSON')) {
+          fallbackReason = 'invalid_json';
+        } else {
+          fallbackReason = 'provider_error';
+        }
+        
+        lastError = error;
         continue;
       }
     }
 
-    throw new Error('Todos os provedores de IA falharam');
+    throw new Error(`Todos os provedores de IA falharam. Último erro: ${lastError?.message || 'Erro desconhecido'}`);
+  }
+
+  private async logAiRun(documentId: string, tenantId: string, result: AIAnalysisResult): Promise<void> {
+    try {
+      await storage.createAiRun({
+        documentId,
+        tenantId,
+        providerUsed: result.provider,
+        fallbackReason: result.fallbackReason || null,
+        ocrStrategy: 'pdf', // Será parametrizado depois
+        processingTimeMs: result.processingTimeMs,
+        tokensIn: result.tokensIn,
+        tokensOut: result.tokensOut,
+        costUsd: result.processingCost.toString(),
+        confidence: result.confidence,
+      });
+    } catch (error) {
+      console.error('Erro ao registrar AI run:', error);
+    }
   }
 
   private async analyzeWithGLM(ocrText: string, fileName: string): Promise<AIAnalysisResult> {
@@ -120,7 +201,10 @@ class AIMultiProvider {
         extractedData,
         rawResponse: aiResponse,
         confidence: extractedData.confidence || 85,
-        processingCost: (tokenCount / 1000) * 0.0002
+        processingCost: (tokenCount / 1000) * 0.0002,
+        tokensIn: Math.floor(tokenCount * 0.7),
+        tokensOut: Math.floor(tokenCount * 0.3),
+        processingTimeMs: 0,
       };
     } catch (error) {
       console.error('GLM analysis error:', error);
@@ -164,7 +248,10 @@ class AIMultiProvider {
         extractedData,
         rawResponse: content,
         confidence: extractedData.confidence || 80,
-        processingCost: (tokenCount / 1000) * 0.03
+        processingCost: (tokenCount / 1000) * 0.03,
+        tokensIn: response.usage?.prompt_tokens || Math.floor(tokenCount * 0.7),
+        tokensOut: response.usage?.completion_tokens || Math.floor(tokenCount * 0.3),
+        processingTimeMs: 0,
       };
     } catch (error) {
       console.error('OpenAI analysis error:', error);

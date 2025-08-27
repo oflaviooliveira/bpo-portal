@@ -547,6 +547,72 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
+  // Document inconsistencies endpoints - AI metrics and validation
+  app.get("/api/documents/:id/inconsistencies", isAuthenticated, async (req, res) => {
+    try {
+      const user = req.user!;
+      const documentId = req.params.id;
+      
+      // Verificar se documento pertence ao tenant
+      const document = await storage.getDocument(documentId, user.tenantId);
+      if (!document) {
+        return res.status(404).json({ error: "Documento não encontrado" });
+      }
+
+      const inconsistencies = await storage.getDocumentInconsistencies(documentId);
+      res.json(inconsistencies);
+    } catch (error) {
+      console.error("Get inconsistencies error:", error);
+      res.status(500).json({ error: "Erro ao carregar inconsistências" });
+    }
+  });
+
+  app.get("/api/documents/:id/ai-runs", isAuthenticated, async (req, res) => {
+    try {
+      const user = req.user!;
+      const documentId = req.params.id;
+      
+      // Verificar se documento pertence ao tenant
+      const document = await storage.getDocument(documentId, user.tenantId);
+      if (!document) {
+        return res.status(404).json({ error: "Documento não encontrado" });
+      }
+
+      const aiRuns = await storage.getAiRunsByDocument(documentId);
+      res.json(aiRuns);
+    } catch (error) {
+      console.error("Get AI runs error:", error);
+      res.status(500).json({ error: "Erro ao carregar métricas de IA" });
+    }
+  });
+
+  // AI metrics dashboard endpoint
+  app.get("/api/ai-metrics", isAuthenticated, async (req, res) => {
+    try {
+      const user = req.user!;
+      const { dateFrom, dateTo } = req.query;
+      
+      // Para uma implementação completa, precisaríamos de queries específicas
+      // Por enquanto, retornamos métricas básicas
+      const stats = {
+        totalRuns: 0,
+        averageProcessingTime: 0,
+        averageCost: 0,
+        providerDistribution: {
+          'glm': 0,
+          'openai': 0
+        },
+        fallbackRate: 0,
+        averageConfidence: 0
+      };
+
+      res.json(stats);
+    } catch (error) {
+      console.error("AI metrics error:", error);
+      res.status(500).json({ error: "Erro ao carregar métricas de IA" });
+    }
+  });
+
   // Operational Panel: Inbox - Wave 1 Enhanced
   app.get("/api/documents/inbox", ...authorize(["ADMIN", "GERENTE", "OPERADOR"]), async (req, res) => {
     try {

@@ -129,6 +129,33 @@ export const documentLogs = pgTable("document_logs", {
   createdAt: timestamp("created_at").defaultNow(),
 });
 
+// AI Runs table - Nova tabela para rastreabilidade de IA
+export const aiRuns = pgTable("ai_runs", {
+  id: uuid("id").primaryKey().default(sql`gen_random_uuid()`),
+  documentId: uuid("document_id").notNull(),
+  tenantId: uuid("tenant_id").notNull(),
+  providerUsed: varchar("provider_used", { length: 50 }).notNull(), // 'glm', 'openai'
+  fallbackReason: varchar("fallback_reason", { length: 100 }), // 'timeout', 'invalid_json', 'error', 'low_confidence'
+  ocrStrategy: varchar("ocr_strategy", { length: 50 }).notNull(), // 'pdf', 'image', 'filename_fallback'
+  processingTimeMs: integer("processing_time_ms").notNull(),
+  tokensIn: integer("tokens_in").notNull(),
+  tokensOut: integer("tokens_out").notNull(),
+  costUsd: decimal("cost_usd", { precision: 10, scale: 6 }).notNull(),
+  confidence: integer("confidence").notNull(), // 0-100
+  createdAt: timestamp("created_at").defaultNow(),
+});
+
+// Document Inconsistencies table - Nova tabela para divergências
+export const documentInconsistencies = pgTable("document_inconsistencies", {
+  id: uuid("id").primaryKey().default(sql`gen_random_uuid()`),
+  documentId: uuid("document_id").notNull(),
+  field: varchar("field", { length: 50 }).notNull(), // 'valor', 'data_pagamento', 'competencia', 'categoria', 'centro_custo', 'fornecedor'
+  ocrValue: text("ocr_value"),
+  filenameValue: text("filename_value"),
+  formValue: text("form_value"),
+  createdAt: timestamp("created_at").defaultNow(),
+});
+
 // Relations
 export const usersRelations = relations(users, ({ one, many }) => ({
   tenant: one(tenants, {
@@ -201,6 +228,24 @@ export const documentLogsRelations = relations(documentLogs, ({ one }) => ({
   }),
 }));
 
+export const aiRunsRelations = relations(aiRuns, ({ one }) => ({
+  document: one(documents, {
+    fields: [aiRuns.documentId],
+    references: [documents.id],
+  }),
+  tenant: one(tenants, {
+    fields: [aiRuns.tenantId],
+    references: [tenants.id],
+  }),
+}));
+
+export const documentInconsistenciesRelations = relations(documentInconsistencies, ({ one }) => ({
+  document: one(documents, {
+    fields: [documentInconsistencies.documentId],
+    references: [documents.id],
+  }),
+}));
+
 // Zod schemas
 export const insertUserSchema = createInsertSchema(users).pick({
   username: true,
@@ -263,6 +308,27 @@ export const insertDocumentLogSchema = createInsertSchema(documentLogs).pick({
   userId: true,
 });
 
+export const insertAiRunSchema = createInsertSchema(aiRuns).pick({
+  documentId: true,
+  tenantId: true,
+  providerUsed: true,
+  fallbackReason: true,
+  ocrStrategy: true,
+  processingTimeMs: true,
+  tokensIn: true,
+  tokensOut: true,
+  costUsd: true,
+  confidence: true,
+});
+
+export const insertDocumentInconsistencySchema = createInsertSchema(documentInconsistencies).pick({
+  documentId: true,
+  field: true,
+  ocrValue: true,
+  filenameValue: true,
+  formValue: true,
+});
+
 // Types
 export type InsertUser = z.infer<typeof insertUserSchema>;
 export type User = typeof users.$inferSelect;
@@ -278,6 +344,12 @@ export type InsertCostCenter = z.infer<typeof insertCostCenterSchema>;
 
 export type InsertDocument = z.infer<typeof insertDocumentSchema>;
 export type Document = typeof documents.$inferSelect;
+
+export type InsertAiRun = z.infer<typeof insertAiRunSchema>;
+export type AiRun = typeof aiRuns.$inferSelect;
+
+export type InsertDocumentInconsistency = z.infer<typeof insertDocumentInconsistencySchema>;
+export type DocumentInconsistency = typeof documentInconsistencies.$inferSelect;
 
 export type InsertDocumentLog = z.infer<typeof insertDocumentLogSchema>;
 

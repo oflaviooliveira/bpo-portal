@@ -1,0 +1,207 @@
+Você é o programador full-stack responsável por finalizar o pipeline de IA/OCR do Portal BPO Gquicks e tornar o fluxo de envio robusto do começo ao fim.
+Siga todos os itens abaixo na ordem. Não pule etapas.
+
+1) Fallback IA Multi-provider (GLM → GPT-4o)
+
+Objetivo: garantir resposta válida sempre, com custo mínimo.
+
+ Tornar GLM o provedor primário e GPT-4o o fallback automático (timeout, erro, JSON inválido ou baixa confiança).
+
+ Implementar detecção de falha/timeout e re-try com GPT-4o.
+
+ Registrar no BD o provider usado e motivo de fallback.
+
+ Calcular e registrar custo estimado e tokens.
+
+Critérios de aceite
+
+ Se GLM falhar ou retornar JSON inválido, GPT-4o é chamado automaticamente sem intervenção.
+
+ ai_runs mostra provider_used, fallback_reason, cost_usd, tokens_in/out.
+
+ UI de admin exibe qual provedor foi usado no último processamento do documento.
+
+2) Padronização de Saída (JSON 100% válido)
+
+Objetivo: saída sempre previsível para o resto do sistema.
+
+ Validar estritamente a resposta da IA contra um schema Zod (backend).
+
+ Normalizar:
+
+Datas → DD/MM/AAAA
+
+Valor → "R$ X,XX" (converter/armazenar em centavos no BD)
+
+Categoria e Centro de Custo → devem existir para o tenant (caso contrário, sinalizar inconsistência)
+
+ Em caso de JSON inválido, tentar auto-correção (re-prompt curto pedindo apenas JSON) antes do fallback.
+
+Critérios de aceite
+
+ Nenhuma resposta de IA passa sem satisfazer o schema.
+
+ Valores inconsistentes/formatos errados são detectados e bloqueados.
+
+3) Validação Cruzada Robusta (OCR × Nome × Metadados)
+
+Objetivo: detectar divergências e criar pendência automaticamente.
+
+ Comparar três fontes:
+
+OCR/IA (conteúdo do documento)
+
+Nome do arquivo (data, valor, categoria, CC)
+
+Metadados do formulário (banco, tipo, categoria, CC, valor, datas)
+
+ Gerar lista de inconsistências (ex.: valor, data_pagamento, categoria, centro_custo).
+
+ Se houver qualquer divergência → setar documento como PENDENTE_REVISAO e criar task REVISAO com o detalhamento.
+
+Critérios de aceite
+
+ Divergências são listadas com chaves e mensagens claras (ex.: valor: "OCR=R$120,00 | filename=R$125,00 | form=R$120,00").
+
+ Documento não segue adiante enquanto não for revisado.
+
+4) Tabelas e Logs de IA/Métricas
+
+Objetivo: rastreabilidade completa e visibilidade operacional.
+
+ ai_runs (se não existir, criar/atualizar):
+
+document_id, tenant_id, provider_used, fallback_reason?, ocr_strategy,
+processing_time_ms, tokens_in, tokens_out, cost_usd, confidence, created_at.
+
+ document_inconsistencies (nova):
+
+document_id, field (enum: valor, data_pagamento, competencia, categoria, centro_custo, fornecedor), ocr_value, filename_value, form_value, created_at.
+
+ Popular essas tabelas no processamento.
+
+Critérios de aceite
+
+ Cada processamento cria 1 linha em ai_runs.
+
+ Quando houver divergência, linhas detalhadas em document_inconsistencies.
+
+5) Interface de Revisão na Inbox (Operador)
+
+Objetivo: permitir correção rápida e transparente.
+
+ Na Inbox, para status PENDENTE_REVISAO, exibir painel comparativo com 3 colunas:
+
+OCR/IA (valores extraídos)
+
+Arquivo (nome) (valores do filename)
+
+Formulário (o que o cliente enviou)
+
+ Destacar divergências:
+
+Vermelho: campos críticos (valor, datas)
+
+Âmbar: campos não críticos (descrição, fornecedor)
+
+ Ações:
+
+“Aplicar correção” (operador escolhe fonte correta por campo ou edita manualmente)
+
+“Devolver ao cliente” (gera pendência e comentário)
+
+“Confirmar e continuar” (resolve divergências → segue fluxo do tipo)
+
+Critérios de aceite
+
+ Operador consegue resolver todas as divergências sem sair da tela.
+
+ Ao resolver, documento muda para o próximo estado do fluxo (PG, AGD, Boleto, NF).
+
+6) KPIs & Dashboard (mínimo viável)
+
+Objetivo: visibilidade do processamento.
+
+ Exibir no dashboard (admin/gerente):
+
+Taxa de inconsistência (%) = documentos com pendência ÷ documentos processados
+
+Tempo médio de processamento (ms)
+
+% automação = processados sem intervenção ÷ total
+
+ Gráfico simples por período (últimos 7/30 dias).
+
+Critérios de aceite
+
+ KPIs atualizam após cada lote de processamento.
+
+ Filtros por tenant e por banco.
+
+7) Estados & Transições Automáticas (mínimo necessário agora)
+
+Objetivo: garantir fluxo correto pós-envio.
+
+ Implementar estados que faltam:
+
+AGUARDANDO_RECEBIMENTO
+
+EM_CONCILIACAO
+
+(opcional agora) A_PAGAR_HOJE se houver painel dedicado
+
+ Regras automáticas:
+
+AGENDADO → AGUARDANDO_RECEBIMENTO na data de vencimento
+
+BOLETO/NF emitidos → criar Contas a Receber (stub) e setar AGUARDANDO_RECEBIMENTO
+
+Recebimento confirmado → EM_CONCILIACAO → ARQUIVADO após validação
+
+Critérios de aceite
+
+ Transições disparam sem ação manual na virada de data (job/cron).
+
+ Logs de evento gravados em document_logs/events.
+
+8) Testes de Fim-a-Fim (use 8 amostras reais)
+
+Objetivo: garantir robustez antes de prosseguir.
+
+ PG correto (sem divergências) → vai direto para Conciliação.
+
+ PG com valor divergente (OCR≠filename) → vira Pendência de Revisão.
+
+ AGD com data futura → vira AGENDADO e muda para AGUARDANDO_RECEBIMENTO no vencimento.
+
+ Boleto emitido → cria “Contas a Receber (stub)”, fica AGUARDANDO_RECEBIMENTO, depois concilia.
+
+ NF com “recebido no ato” → pula para Conciliação imediata.
+
+ Arquivo quase vazio → cair na análise por nome do arquivo (fallback final).
+
+ Categoria inexistente no tenant → marcar divergência e bloquear.
+
+ GLM timeout → fallback automático para GPT-4o com log em ai_runs.
+
+Critérios de aceite
+
+ Todos os cenários acima passam e geram os registros em BD conforme esperado.
+
+ Não há respostas da IA fora do schema.
+
+9) Entregáveis
+
+ Código atualizado (pipeline IA/OCR, validação, UI de revisão, KPIs).
+
+ Migrações Drizzle (tabelas novas/alteradas).
+
+ README curto: como testar os 8 cenários de ponta a ponta.
+
+ GIFs curtos (ou gravação) mostrando a UI de revisão resolvendo divergências.
+
+Observações finais
+
+Não altere o que já funciona (OCR está robusto). Foque nas camadas de confiabilidade, validação e revisão.
+
+Deixe feature flags para integrações externas (ERP real, Evolution API) desativadas no MVP.

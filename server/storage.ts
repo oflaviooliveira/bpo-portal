@@ -1,9 +1,9 @@
 import { 
-  users, clients, tenants, banks, categories, costCenters, documents, documentLogs,
+  users, clients, tenants, banks, categories, costCenters, documents, documentLogs, aiRuns, documentInconsistencies,
   type User, type InsertUser, type Tenant, type InsertTenant, 
   type Client, type InsertClient, type Document, type InsertDocument,
   type Bank, type Category, type CostCenter, type DocumentLog,
-  type InsertCategory, type InsertCostCenter
+  type InsertCategory, type InsertCostCenter, type AiRun, type DocumentInconsistency
 } from "@shared/schema";
 import { db } from "./db";
 import { eq, and, desc, count, sum, avg, inArray, gte, lte, lt } from "drizzle-orm";
@@ -393,6 +393,47 @@ export class DatabaseStorage implements IStorage {
       })
       .returning();
     return documentLog;
+  }
+
+  // AI Runs methods
+  async createAiRun(aiRunData: {
+    documentId: string;
+    tenantId: string;
+    providerUsed: string;
+    fallbackReason?: string | null;
+    ocrStrategy: string;
+    processingTimeMs: number;
+    tokensIn: number;
+    tokensOut: number;
+    costUsd: string;
+    confidence: number;
+  }): Promise<AiRun> {
+    const [aiRun] = await db.insert(aiRuns).values(aiRunData).returning();
+    return aiRun;
+  }
+
+  async getAiRunsByDocument(documentId: string): Promise<AiRun[]> {
+    return await db.select().from(aiRuns).where(eq(aiRuns.documentId, documentId));
+  }
+
+  // Document Inconsistencies methods
+  async createDocumentInconsistency(inconsistencyData: {
+    documentId: string;
+    field: string;
+    ocrValue?: string;
+    filenameValue?: string;
+    formValue?: string;
+  }): Promise<DocumentInconsistency> {
+    const [inconsistency] = await db.insert(documentInconsistencies).values(inconsistencyData).returning();
+    return inconsistency;
+  }
+
+  async getDocumentInconsistencies(documentId: string): Promise<DocumentInconsistency[]> {
+    return await db.select().from(documentInconsistencies).where(eq(documentInconsistencies.documentId, documentId));
+  }
+
+  async deleteDocumentInconsistencies(documentId: string): Promise<void> {
+    await db.delete(documentInconsistencies).where(eq(documentInconsistencies.documentId, documentId));
   }
 
   async createTask(taskData: {
