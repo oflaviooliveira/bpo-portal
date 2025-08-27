@@ -97,7 +97,7 @@ export const documents = pgTable("documents", {
   instructions: text("instructions"), // Instruções específicas
   
   // Processing status - Estados conforme PRD  
-  status: varchar("status", { length: 50 }).notNull().default("RECEBIDO"), // RECEBIDO, VALIDANDO, PENDENTE_REVISAO, CLASSIFICADO, PAGO_A_CONCILIAR, AGENDADO, A_PAGAR_HOJE, AGUARDANDO_RECEBIMENTO, EM_CONCILIACAO, ARQUIVADO
+  status: varchar("status", { length: 50 }).notNull().default("RECEBIDO"), // RECEBIDO, VALIDANDO, PENDENTE_REVISAO, PAGO_A_CONCILIAR, AGENDADO, A_PAGAR_HOJE, AGUARDANDO_RECEBIMENTO, EM_CONCILIACAO, ARQUIVADO
   
   // OCR and AI results
   ocrText: text("ocr_text"),
