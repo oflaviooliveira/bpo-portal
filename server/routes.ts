@@ -216,6 +216,35 @@ export async function registerRoutes(app: Express): Promise<Server> {
       const businessValidation = { isValid: true, errors: [], warnings: [] };
       // Validação será implementada posteriormente na FASE 3
 
+      // Helper function to parse monetary values
+      const parseMoneyValue = (value: string): number | null => {
+        if (!value) return null;
+        // Remove R$, espaços e converter vírgula para ponto
+        const cleaned = value.replace(/[R$\s]/g, '').replace(',', '.');
+        const parsed = parseFloat(cleaned);
+        return isNaN(parsed) ? null : parsed;
+      };
+
+      // Helper function to parse dates in DD/MM/YYYY format
+      const parseDate = (dateStr: string): Date | null => {
+        if (!dateStr) return null;
+        
+        // Se já está no formato ISO, usar direto
+        if (dateStr.includes('-')) {
+          return new Date(dateStr);
+        }
+        
+        // Se está no formato DD/MM/YYYY, converter
+        const dateRegex = /^(\d{2})\/(\d{2})\/(\d{4})$/;
+        const match = dateStr.match(dateRegex);
+        if (match) {
+          const [, day, month, year] = match;
+          return new Date(`${year}-${month}-${day}`);
+        }
+        
+        return null;
+      };
+
       // Create document record
       const document = await storage.createDocument({
         tenantId: user.tenantId,
@@ -229,8 +258,8 @@ export async function registerRoutes(app: Express): Promise<Server> {
         mimeType: file.mimetype,
         filePath: file.path,
         documentType: validatedData.documentType,
-        amount: validatedData.amount ? validatedData.amount : null,
-        dueDate: validatedData.dueDate ? new Date(validatedData.dueDate) : null,
+        amount: validatedData.amount ? parseMoneyValue(validatedData.amount)?.toString() || null : null,
+        dueDate: validatedData.dueDate ? parseDate(validatedData.dueDate) : null,
         notes: validatedData.notes,
         createdBy: user.id,
         // FASE 3: Incluir dados de validação (removido temporariamente até implementar no schema)
