@@ -1,0 +1,35 @@
+[vite] connecting...
+[vite] connected.
+Warning: Each child in a list should have a unique &quot;key&quot; prop.
+
+Check the render method of `Sidebar`. See https://reactjs.org/link/warning-keys for more information.
+    at button
+    at Sidebar (https://25fd9d59-c143-431a-a29f-114646967772-00-3rktq1czjd3gu.riker.replit.dev/src/components/layout/sidebar.tsx:35:27)
+    at div
+    at HomePage (https://25fd9d59-c143-431a-a29f-114646967772-00-3rktq1czjd3gu.riker.replit.dev/src/pages/home-page.tsx:30:45)
+    at ProtectedRoute (https://25fd9d59-c143-431a-a29f-114646967772-00-3rktq1czjd3gu.riker.replit.dev/src/lib/protected-route.tsx:22:3)
+    at Switch (https://25fd9d59-c143-431a-a29f-114646967772-00-3rktq1czjd3gu.riker.replit.dev/@fs/home/runner/workspace/node_modules/.vite/deps/wouter.js?v=fafdd84b:379:17)
+    at Router
+    at Provider (https://25fd9d59-c143-431a-a29f-114646967772-00-3rktq1czjd3gu.riker.replit.dev/@fs/home/runner/workspace/node_modules/.vite/deps/chunk-MAE4WKEQ.js?v=fafdd84b:38:15)
+    at TooltipProvider (https://25fd9d59-c143-431a-a29f-114646967772-00-3rktq1czjd3gu.riker.replit.dev/@fs/home/runner/workspace/node_modules/.vite/deps/@radix-ui_react-tooltip.js?v=fafdd84b:59:5)
+    at AuthProvider (https://25fd9d59-c143-431a-a29f-114646967772-00-3rktq1czjd3gu.riker.replit.dev/src/hooks/use-auth.tsx:26:32)
+    at QueryClientProvider (https://25fd9d59-c143-431a-a29f-114646967772-00-3rktq1czjd3gu.riker.replit.dev/@fs/home/runner/workspace/node_modules/.vite/deps/@tanstack_react-query.js?v=fafdd84b:2805:3)
+    at App
+
+Check the render method of &#x60;Sidebar&#x60;. See https://reactjs.org/link/warning-keys for more information.
+at button
+at Sidebar (https://25fd9d59-c143-431a-a29f-114646967772-00-3rktq1czjd3gu.riker.replit.dev/src/components/layout/sidebar.tsx:35:27)
+at div
+at HomePage (https://25fd9d59-c143-431a-a29f-114646967772-00-3rktq1czjd3gu.riker.replit.dev/src/pages/home-page.tsx:30:45)
+at ProtectedRoute (https://25fd9d59-c143-431a-a29f-114646967772-00-3rktq1czjd3gu.riker.replit.dev/src/lib/protected-route.tsx:22:3)
+at Switch (https://25fd9d59-c143-431a-a29f-114646967772-00-3rktq1czjd3gu.riker.replit.dev/@fs/home/runner/workspace/node_modules/.vite/deps/wouter.js?v=fafdd84b:379:17)
+at Router
+at Provider (https://25fd9d59-c143-431a-a29f-114646967772-00-3rktq1czjd3gu.riker.replit.dev/@fs/home/runner/workspace/node_modules/.vite/deps/chunk-MAE4WKEQ.js?v=fafdd84b:38:15)
+at TooltipProvider (https://25fd9d59-c143-431a-a29f-114646967772-00-3rktq1czjd3gu.riker.replit.dev/@fs/home/runner/workspace/node_modules/.vite/deps/@radix-ui_react-tooltip.js?v=fafdd84b:59:5)
+at AuthProvider (https://25fd9d59-c143-431a-a29f-114646967772-00-3rktq1czjd3gu.riker.replit.dev/src/hooks/use-auth.tsx:26:32)
+at QueryClientProvider (https://25fd9d59-c143-431a-a29f-114646967772-00-3rktq1czjd3gu.riker.replit.dev/@fs/home/runner/workspace/node_modules/.vite/deps/@tanstack_react-query.js?v=fafdd84b:2805:3)
+at App
+at t.value (https://25fd9d59-c143-431a-a29f-114646967772-00-3rktq1czjd3gu.riker.replit.dev/__replco/static/devtools/eruda/3.2.3/eruda.js:2:17465)
+at new t (https://25fd9d59-c143-431a-a29f-114646967772-00-3rktq1czjd3gu.riker.replit.dev/__replco/static/devtools/eruda/3.2.3/eruda.js:2:12630)
+at t.value (https://25fd9d59-c143-431a-a29f-114646967772-00-3rktq1czjd3gu.riker.replit.dev/__replco/static/devtools/eruda/3.2.3/eruda.js:2:32766)
+at https://25fd9d59-c143-431a-a29f-114646967772-00-3rktq1czjd3gu.riker.replit.dev/__replco/static/devtools/eruda/3.2.3/eruda.js:2:34400

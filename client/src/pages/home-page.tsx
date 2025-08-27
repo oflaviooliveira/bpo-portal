@@ -8,8 +8,9 @@ import { Scheduled } from "@/components/documents/scheduled";
 import { Reconciliation } from "@/components/documents/reconciliation";
 import { Emission } from "@/components/documents/emission";
 import { Archived } from "@/components/documents/archived";
+import AIControlUnified from "@/pages/ai-control-unified";
 
-type Section = 'dashboard' | 'inbox' | 'upload' | 'scheduled' | 'reconciliation' | 'emission' | 'archived' | 'clients' | 'users';
+type Section = 'dashboard' | 'inbox' | 'upload' | 'scheduled' | 'reconciliation' | 'emission' | 'archived' | 'clients' | 'users' | 'ai-control';
 
 export default function HomePage() {
   const [activeSection, setActiveSection] = useState<Section>('dashboard');
@@ -42,6 +43,12 @@ export default function HomePage() {
           <div className="p-6">
             <h2 className="font-gilroy font-bold text-2xl text-foreground mb-4">Usuários</h2>
             <p className="text-muted-foreground">Funcionalidade em desenvolvimento</p>
+          </div>
+        );
+      case 'ai-control':
+        return (
+          <div className="p-6">
+            <AIControlUnified />
           </div>
         );
       default:

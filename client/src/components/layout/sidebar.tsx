@@ -92,12 +92,7 @@ export function Sidebar({ activeSection, onSectionChange }: SidebarProps) {
       icon: Cpu,
       category: 'ADMINISTRAÇÃO',
     },
-    {
-      href: '/ai-analytics',
-      label: 'Analytics de IA',
-      icon: BarChart3,
-      category: 'ADMINISTRAÇÃO',
-    },
+
   ];
 
   const categories = ['PRINCIPAL', 'OPERAÇÕES', 'ADMINISTRAÇÃO'];
@@ -130,7 +125,7 @@ export function Sidebar({ activeSection, onSectionChange }: SidebarProps) {
                 
                 return (
                   <button
-                    key={item.section}
+                    key={item.section || item.href}
                     onClick={() => onSectionChange(item.section)}
                     className={cn(
                       "w-full flex items-center space-x-3 px-4 py-3 rounded-lg text-left transition-all duration-200",

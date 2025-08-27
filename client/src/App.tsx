@@ -7,16 +7,14 @@ import { AuthProvider } from "@/hooks/use-auth";
 import { ProtectedRoute } from "@/lib/protected-route";
 import HomePage from "@/pages/home-page";
 import AuthPage from "@/pages/auth-page";
-import AIControlPage from "@/pages/ai-control-page";
-import AIAnalyticsPage from "@/pages/ai-analytics-page";
+import AIControlUnified from "@/pages/ai-control-unified";
 import NotFound from "@/pages/not-found";
 
 function Router() {
   return (
     <Switch>
       <ProtectedRoute path="/" component={HomePage} />
-      <ProtectedRoute path="/ai-control" component={AIControlPage} />
-      <ProtectedRoute path="/ai-analytics" component={AIAnalyticsPage} />
+      <ProtectedRoute path="/ai-control" component={AIControlUnified} />
       <Route path="/auth" component={AuthPage} />
       <Route component={NotFound} />
     </Switch>
