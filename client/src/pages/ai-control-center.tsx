@@ -276,6 +276,35 @@ export default function AIControlCenter() {
 
         {/* MONITORAMENTO TAB */}
         <TabsContent value="monitoring" className="space-y-6">
+          {/* Recent Activity Alert */}
+          {status.recentActivity && (
+            <Card className="bg-green-50 border-green-200">
+              <CardHeader className="pb-2">
+                <CardTitle className="flex items-center gap-2 text-green-800">
+                  <Activity className="h-4 w-4" />
+                  Atividade Recente Detectada
+                </CardTitle>
+              </CardHeader>
+              <CardContent>
+                <div className="flex items-center justify-between">
+                  <div>
+                    <div className="font-medium text-green-900">
+                      {status.recentActivity.provider.toUpperCase()} processou documento
+                    </div>
+                    <div className="text-sm text-green-700">
+                      {new Date(status.recentActivity.timestamp).toLocaleString('pt-BR')} • 
+                      {status.recentActivity.success ? '✅ Sucesso' : '❌ Falha'} • 
+                      {status.recentActivity.confidence}% confiança
+                    </div>
+                  </div>
+                  <Badge variant={status.recentActivity.success ? 'default' : 'destructive'}>
+                    {status.recentActivity.success ? 'Processado' : 'Erro'}
+                  </Badge>
+                </div>
+              </CardContent>
+            </Card>
+          )}
+
           {/* System Health */}
           {status.systemHealth && (
             <Card className="border-2">
@@ -309,7 +338,7 @@ export default function AIControlCenter() {
                           {getHealthScore(provider.healthScore || 0).label}
                         </div>
                         <div className="text-xs text-muted-foreground">
-                          {(provider.healthScore || 0).toFixed(1)}% sucesso
+                          {(provider.healthScore || 0).toFixed(1)}% • {provider.totalRequests || 0} docs
                         </div>
                       </div>
                     </div>

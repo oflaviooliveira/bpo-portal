@@ -169,7 +169,19 @@ class AIMultiProvider {
           provider.status = 'online';
           
           // Atualizar estatísticas em tempo real
-          this.updateProviderStats(provider, true, result.processingCost || 0, result.processingTimeMs || 0);
+          provider.last30Days.totalRequests += 1;
+          provider.last30Days.totalCost += result.processingCost || 0;
+          provider.last30Days.totalTokens += (result.tokensIn || 0) + (result.tokensOut || 0);
+          
+          // Calculate rolling average response time
+          const currentTotal = provider.last30Days.avgResponseTime * (provider.last30Days.totalRequests - 1);
+          provider.last30Days.avgResponseTime = (currentTotal + (result.processingTimeMs || 0)) / provider.last30Days.totalRequests;
+          
+          // Update success rate
+          const currentSuccessCount = Math.floor(provider.last30Days.successRate * (provider.last30Days.totalRequests - 1) / 100);
+          provider.last30Days.successRate = ((currentSuccessCount + 1) / provider.last30Days.totalRequests) * 100;
+          
+          console.log(`📊 Stats atualizadas para ${provider.name}: ${provider.last30Days.totalRequests} requests, ${provider.last30Days.successRate.toFixed(1)}% sucesso`);
           
           // Registrar no banco
           await this.logAiRun(documentId, tenantId, result);
@@ -472,6 +484,10 @@ TEMPLATE:
   // Provider control methods
   getProviders(): AIProvider[] {
     return this.providers;
+  }
+
+  getProviderByName(name: string): AIProvider | undefined {
+    return this.providers.find(p => p.name === name);
   }
 
   toggleProvider(providerName: string): boolean {

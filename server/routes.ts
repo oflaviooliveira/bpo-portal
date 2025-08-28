@@ -1738,12 +1738,19 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
-  // AI Control - Real-time status
+  // AI Control - Real-time status with recent activity
   app.get("/api/ai-control/status", ...authorize(["ADMIN", "GERENTE", "OPERADOR"]), async (req, res) => {
     try {
       const { aiMultiProvider } = await import("./ai-multi-provider");
       const providers = aiMultiProvider.getProviders();
+      const user = req.user!;
       const now = new Date();
+      
+      // Get recent AI activity (last 10 minutes)
+      const recentActivity = await storage.getAiRuns(user.tenantId, {
+        dateFrom: new Date(Date.now() - 10 * 60 * 1000),
+        limit: 1
+      });
       
       res.json({
         providers: providers.map(p => ({
@@ -1753,13 +1760,21 @@ export async function registerRoutes(app: Express): Promise<Server> {
           priority: p.priority,
           model: p.model,
           lastUpdate: now.toISOString(),
-          healthScore: p.last30Days.successRate
+          healthScore: p.last30Days.successRate,
+          totalRequests: p.last30Days.totalRequests,
+          totalCost: p.last30Days.totalCost
         })),
         systemHealth: {
           overall: providers.every(p => p.status === 'online') ? 'healthy' : 'degraded',
           primaryProvider: providers.find(p => p.priority === 1)?.name,
           lastCheck: now.toISOString()
-        }
+        },
+        recentActivity: recentActivity.length > 0 ? {
+          timestamp: recentActivity[0].createdAt,
+          provider: recentActivity[0].providerUsed,
+          confidence: recentActivity[0].confidence,
+          success: (recentActivity[0].confidence || 0) > 80
+        } : null
       });
     } catch (error) {
       console.error("❌ Erro ao buscar status:", error);
