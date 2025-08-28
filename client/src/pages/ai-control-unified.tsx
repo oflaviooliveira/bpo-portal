@@ -133,17 +133,7 @@ export default function AIControlUnified() {
   }
 
   return (
-    <div className="space-y-6">
-      <div className="flex justify-between items-center">
-        <div>
-          <h1 className="text-3xl font-bold tracking-tight">Controle de IA</h1>
-          <p className="text-muted-foreground">
-            Configure provedores de IA e monitore performance
-          </p>
-        </div>
-      </div>
-
-      <Tabs defaultValue="control" className="w-full">
+    <Tabs defaultValue="control" className="w-full">
         <TabsList className="grid w-full grid-cols-2">
           <TabsTrigger value="control">Controle</TabsTrigger>
           <TabsTrigger value="analytics">Analytics</TabsTrigger>
