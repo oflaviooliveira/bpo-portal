@@ -88,14 +88,8 @@ export function Sidebar({ activeSection, onSectionChange }: SidebarProps) {
     },
     {
       section: 'ai-control',
-      label: 'Controle de IA',
+      label: 'Centro de Controle IA',
       icon: Cpu,
-      category: 'ADMINISTRAÇÃO',
-    },
-    {
-      section: 'ai-dashboard',
-      label: 'AI Dashboard',
-      icon: BarChart3,
       category: 'ADMINISTRAÇÃO',
     },
 

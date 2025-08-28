@@ -55,7 +55,8 @@ Portal de BPO Financeiro com OCR/IA multi-provider para processamento automátic
 ## Status Atual
 **FASE 1 COMPLETA**: Pipeline automático OCR + IA funcionando
 **FASE 2 COMPLETA**: Formulários dinâmicos implementados
-**WAVE 1 EM PROGRESSO**: Core funcional com RBAC e painéis operacionais
+**WAVE 1 COMPLETA**: Core funcional com RBAC e painéis operacionais
+**CONTROLE IA UNIFICADO**: Centro de controle consolidado implementado
 
 ## Implementações Completadas
 ✅ **FASE 1 - Pipeline Automático**: 
@@ -85,6 +86,16 @@ Portal de BPO Financeiro com OCR/IA multi-provider para processamento automátic
 - ⏳ Scoping por operador (designação cliente-operador)
 - ⏳ Transições automáticas por data funcionais
 - ⏳ Interface frontend atualizada para novos endpoints
+
+**CENTRO DE CONTROLE IA UNIFICADO (28/08/2025)**:
+✅ **Unificação de Interfaces de IA**:
+- Centro de Controle único com 3 abas: Controles, Monitoramento, Analytics
+- Substituiu páginas duplicadas (ai-control-unified + ai-dashboard)
+- Interface consolidada com auto-refresh configurável (5-30s)
+- Controles centralizados: toggle providers, swap prioridades, configurações
+- Monitoramento em tempo real: status, health scores, métricas de performance
+- Analytics avançado: timeline, comparações GLM vs OpenAI, recomendações
+- UX simplificada: uma única fonte da verdade para gerenciamento de IA
 
 **MELHORIAS DE ALTA PRIORIDADE IMPLEMENTADAS (28/08/2025)**:
 ✅ **Sistema Inteligente de Gestão de Inconsistências**:
