@@ -34,7 +34,7 @@ class AIMultiProvider {
       priority: 1,
       costPer1000: 0.0002,
       status: 'online',
-      model: 'glm-4-flash',
+      model: 'glm-4',
       temperature: 0.1,
       maxTokens: 1500
     },
@@ -116,13 +116,21 @@ class AIMultiProvider {
         
       } catch (error: any) {
         console.warn(`⚠️ Falha com ${provider.name}:`, error);
-        provider.status = 'error';
+        
+        // Reset status for model code errors to allow retry with corrected model
+        if (error.message?.includes('Unknown Model')) {
+          provider.status = 'online';
+        } else {
+          provider.status = 'error';
+        }
         
         // Determinar o motivo do fallback
         if (error.message?.includes('timeout') || error.code === 'ECONNRESET') {
           fallbackReason = 'timeout';
         } else if (error.message?.includes('JSON')) {
           fallbackReason = 'invalid_json';
+        } else if (error.message?.includes('Unknown Model')) {
+          fallbackReason = 'invalid_model';
         } else {
           fallbackReason = 'provider_error';
         }
@@ -170,7 +178,7 @@ class AIMultiProvider {
           'Content-Type': 'application/json',
         },
         body: JSON.stringify({
-          model: 'glm-4-flash',
+          model: 'glm-4',
           messages: [
             {
               role: 'system',
@@ -210,7 +218,7 @@ class AIMultiProvider {
       const tokenCount = this.estimateTokenCount(prompt + aiResponse);
       
       return {
-        provider: 'glm-4-flash',
+        provider: 'glm-4',
         extractedData,
         rawResponse: aiResponse,
         confidence: extractedData.confidence || 85,
