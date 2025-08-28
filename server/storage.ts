@@ -410,7 +410,40 @@ export class DatabaseStorage implements IStorage {
     // Buscar documentos com inconsistências
     const docsWithInconsistencies = await db
       .select({
-        ...documents,
+        id: documents.id,
+        tenantId: documents.tenantId,
+        contraparteId: documents.contraparteId,
+        relationshipType: documents.relationshipType,
+        clientId: documents.clientId,
+        bankId: documents.bankId,
+        categoryId: documents.categoryId,
+        costCenterId: documents.costCenterId,
+        fileName: documents.fileName,
+        originalName: documents.originalName,
+        fileSize: documents.fileSize,
+        mimeType: documents.mimeType,
+        filePath: documents.filePath,
+        documentType: documents.documentType,
+        amount: documents.amount,
+        supplier: documents.supplier,
+        description: documents.description,
+        dueDate: documents.dueDate,
+        paidDate: documents.paidDate,
+        issuerData: documents.issuerData,
+        instructions: documents.instructions,
+        status: documents.status,
+        ocrText: documents.ocrText,
+        ocrConfidence: documents.ocrConfidence,
+        aiAnalysis: documents.aiAnalysis,
+        aiProvider: documents.aiProvider,
+        validationErrors: documents.validationErrors,
+        isValidated: documents.isValidated,
+        validatedBy: documents.validatedBy,
+        validatedAt: documents.validatedAt,
+        notes: documents.notes,
+        createdBy: documents.createdBy,
+        createdAt: documents.createdAt,
+        updatedAt: documents.updatedAt,
         inconsistencies: sql<any[]>`
           COALESCE(
             json_agg(
@@ -445,7 +478,40 @@ export class DatabaseStorage implements IStorage {
 
     // Mapear os resultados para incluir extractedData corretamente
     return docsWithInconsistencies.map(doc => ({
-      ...doc,
+      id: doc.id,
+      tenantId: doc.tenantId,
+      contraparteId: doc.contraparteId,
+      relationshipType: doc.relationshipType,
+      clientId: doc.clientId,
+      bankId: doc.bankId,
+      categoryId: doc.categoryId,
+      costCenterId: doc.costCenterId,
+      fileName: doc.fileName,
+      originalName: doc.originalName,
+      fileSize: doc.fileSize,
+      mimeType: doc.mimeType,
+      filePath: doc.filePath,
+      documentType: doc.documentType,
+      amount: doc.amount,
+      supplier: doc.supplier,
+      description: doc.description,
+      dueDate: doc.dueDate,
+      paidDate: doc.paidDate,
+      issuerData: doc.issuerData,
+      instructions: doc.instructions,
+      status: doc.status,
+      ocrText: doc.ocrText,
+      ocrConfidence: doc.ocrConfidence,
+      aiAnalysis: doc.aiAnalysis,
+      aiProvider: doc.aiProvider,
+      validationErrors: doc.validationErrors,
+      isValidated: doc.isValidated,
+      validatedBy: doc.validatedBy,
+      validatedAt: doc.validatedAt,
+      notes: doc.notes,
+      createdBy: doc.createdBy,
+      createdAt: doc.createdAt,
+      updatedAt: doc.updatedAt,
       extractedData: doc.aiAnalysis, // aiAnalysis contém os dados extraídos
       tasks: doc.inconsistencies || []
     }));
@@ -580,37 +646,45 @@ export class DatabaseStorage implements IStorage {
 
   async getAiRuns(tenantId: string, filters?: {
     provider?: string;
-    status?: string;
     dateFrom?: Date;
     dateTo?: Date;
     limit?: number;
   }): Promise<AiRun[]> {
-    let query = db.select()
-      .from(aiRuns)
-      .innerJoin(documents, eq(aiRuns.documentId, documents.id))
-      .where(eq(documents.tenantId, tenantId));
+    const conditions = [eq(documents.tenantId, tenantId)];
 
     if (filters?.provider) {
-      query = query.where(eq(aiRuns.provider, filters.provider));
-    }
-    
-    if (filters?.status) {
-      query = query.where(eq(aiRuns.status, filters.status));
+      conditions.push(eq(aiRuns.providerUsed, filters.provider));
     }
     
     if (filters?.dateFrom) {
-      query = query.where(gte(aiRuns.createdAt, filters.dateFrom));
+      conditions.push(gte(aiRuns.createdAt, filters.dateFrom));
     }
     
     if (filters?.dateTo) {
-      query = query.where(lte(aiRuns.createdAt, filters.dateTo));
+      conditions.push(lte(aiRuns.createdAt, filters.dateTo));
     }
 
-    const results = await query
+    const results = await db.select({
+      id: aiRuns.id,
+      documentId: aiRuns.documentId,
+      tenantId: aiRuns.tenantId,
+      providerUsed: aiRuns.providerUsed,
+      fallbackReason: aiRuns.fallbackReason,
+      ocrStrategy: aiRuns.ocrStrategy,
+      processingTimeMs: aiRuns.processingTimeMs,
+      tokensIn: aiRuns.tokensIn,
+      tokensOut: aiRuns.tokensOut,
+      costUsd: aiRuns.costUsd,
+      confidence: aiRuns.confidence,
+      createdAt: aiRuns.createdAt
+    })
+      .from(aiRuns)
+      .innerJoin(documents, eq(aiRuns.documentId, documents.id))
+      .where(and(...conditions))
       .orderBy(desc(aiRuns.createdAt))
       .limit(filters?.limit || 1000);
 
-    return results.map(row => row.ai_runs);
+    return results;
   }
 
   // Document Inconsistencies methods
@@ -675,17 +749,19 @@ export class DatabaseStorage implements IStorage {
     dateTo?: Date;
     limit?: number;
   }): Promise<any[]> {
-    let query = db.select().from(ocrMetrics).where(eq(ocrMetrics.tenantId, tenantId));
+    const conditions = [eq(ocrMetrics.tenantId, tenantId)];
 
     if (filters?.dateFrom) {
-      query = query.where(gte(ocrMetrics.createdAt, filters.dateFrom));
+      conditions.push(gte(ocrMetrics.createdAt, filters.dateFrom));
     }
     
     if (filters?.dateTo) {
-      query = query.where(lte(ocrMetrics.createdAt, filters.dateTo));
+      conditions.push(lte(ocrMetrics.createdAt, filters.dateTo));
     }
 
-    return await query
+    return await db.select()
+      .from(ocrMetrics)
+      .where(and(...conditions))
       .orderBy(desc(ocrMetrics.createdAt))
       .limit(filters?.limit || 1000);
   }
