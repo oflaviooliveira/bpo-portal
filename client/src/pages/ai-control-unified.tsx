@@ -57,7 +57,7 @@ export default function AIControlUnified() {
 
   const toggleProviderMutation = useMutation({
     mutationFn: async ({ name, enabled }: { name: string; enabled: boolean }) => {
-      return apiRequest("/api/ai-control/toggle-provider", "POST", { providerName: name, enabled });
+      return apiRequest("POST", "/api/ai-control/toggle-provider", { providerName: name, enabled });
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["/api/ai-control"] });
@@ -66,7 +66,7 @@ export default function AIControlUnified() {
 
   const updateConfigMutation = useMutation({
     mutationFn: async ({ providerName, config }: { providerName: string; config: any }) => {
-      return apiRequest("/api/ai-control/update-config", "POST", { providerName, config });
+      return apiRequest("POST", "/api/ai-control/update-config", { providerName, config });
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["/api/ai-control"] });
@@ -75,7 +75,7 @@ export default function AIControlUnified() {
 
   const swapPrioritiesMutation = useMutation({
     mutationFn: async () => {
-      return apiRequest("/api/ai-control/swap-priorities", "POST", {});
+      return apiRequest("POST", "/api/ai-control/swap-priorities", {});
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["/api/ai-control"] });
@@ -84,7 +84,7 @@ export default function AIControlUnified() {
 
   const emergencyModeMutation = useMutation({
     mutationFn: async ({ enabled }: { enabled: boolean }) => {
-      return apiRequest("/api/ai-control/emergency-mode", "POST", { enabled });
+      return apiRequest("POST", "/api/ai-control/emergency-mode", { enabled });
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["/api/ai-control"] });
