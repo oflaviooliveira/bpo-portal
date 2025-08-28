@@ -488,7 +488,6 @@ export default function AIControlUnified() {
           </div>
         </TabsContent>
       </Tabs>
-    </div>
-  );
+    );
 }
 
