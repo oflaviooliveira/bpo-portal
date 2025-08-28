@@ -166,7 +166,9 @@ class AIMultiProvider {
             result.extractedData.data_vencimento = normalizeDate(result.extractedData.data_vencimento);
           }
           
+          // Marcar provider como online apenas após sucesso completo
           provider.status = 'online';
+          console.log(`✅ Provider ${provider.name} marked as ONLINE after successful analysis`);
           
           // Atualizar estatísticas em tempo real
           provider.last30Days.totalRequests += 1;
@@ -189,21 +191,35 @@ class AIMultiProvider {
           return result;
           
         } catch (validationError) {
-          console.warn(`❌ Validação falhou para ${provider.name}:`, validationError);
+          console.warn(`❌ Schema validation failed for ${provider.name}:`, validationError);
           provider.status = 'error';
+          console.log(`🚨 Provider ${provider.name} marked as ERROR due to validation failure`);
+          
+          // Atualizar estatísticas de falha
+          provider.last30Days.totalRequests += 1;
+          const currentSuccessCount = Math.floor(provider.last30Days.successRate * (provider.last30Days.totalRequests - 1) / 100);
+          provider.last30Days.successRate = (currentSuccessCount / provider.last30Days.totalRequests) * 100;
+          
           fallbackReason = 'invalid_response_format';
           lastError = validationError;
           continue;
         }
         
       } catch (error: any) {
-        console.warn(`⚠️ Falha com ${provider.name}:`, error);
+        console.warn(`⚠️ Provider ${provider.name} failed:`, error.message);
+        
+        // Atualizar estatísticas de falha
+        provider.last30Days.totalRequests += 1;
+        const currentSuccessCount = Math.floor(provider.last30Days.successRate * (provider.last30Days.totalRequests - 1) / 100);
+        provider.last30Days.successRate = (currentSuccessCount / provider.last30Days.totalRequests) * 100;
         
         // Reset status for model code errors to allow retry with corrected model
         if (error.message?.includes('Unknown Model')) {
           provider.status = 'online';
+          console.log(`⚠️ Provider ${provider.name} kept ONLINE (model error, retryable)`);
         } else {
           provider.status = 'error';
+          console.log(`🚨 Provider ${provider.name} marked as ERROR due to: ${error.message}`);
         }
         
         // Determinar o motivo do fallback
@@ -288,23 +304,26 @@ class AIMultiProvider {
       
       console.log("🤖 GLM Response:", aiResponse);
 
-      // Clean markdown formatting from GLM response
-      if (aiResponse.includes('```json')) {
-        aiResponse = aiResponse.replace(/```json\s*/, '').replace(/```\s*$/, '');
-      }
-      if (aiResponse.includes('```')) {
-        aiResponse = aiResponse.replace(/```\s*/, '').replace(/```\s*$/, '');
+      // Clean markdown formatting from GLM response - melhorado
+      aiResponse = this.cleanMarkdownFromResponse(aiResponse);
+      
+      let extractedData;
+      try {
+        extractedData = JSON.parse(aiResponse.trim());
+      } catch (jsonError: any) {
+        console.error(`❌ GLM JSON parse error:`, jsonError.message);
+        console.error(`📝 Response to parse:`, JSON.stringify(aiResponse.trim()));
+        throw new Error(`GLM returned invalid JSON: ${jsonError.message}`);
       }
       
-      const extractedData = JSON.parse(aiResponse.trim());
       const tokenCount = this.estimateTokenCount(prompt + aiResponse);
       
       return {
-        provider: 'glm-4-plus',
+        provider: 'glm',
         extractedData,
         rawResponse: aiResponse,
         confidence: extractedData.confidence || 85,
-        processingCost: (tokenCount / 1000) * 0.0002,
+        processingCost: (tokenCount / 1000) * 0.0014, // Correção do custo para GLM-4.5
         tokensIn: Math.floor(tokenCount * 0.7),
         tokensOut: Math.floor(tokenCount * 0.3),
         processingTimeMs: 0,
@@ -343,15 +362,23 @@ class AIMultiProvider {
 
       console.log("🤖 OpenAI Response:", content);
 
-      const extractedData = JSON.parse(content);
+      let extractedData;
+      try {
+        extractedData = JSON.parse(content);
+      } catch (jsonError: any) {
+        console.error(`❌ OpenAI JSON parse error:`, jsonError.message);
+        console.error(`📝 Response to parse:`, JSON.stringify(content));
+        throw new Error(`OpenAI returned invalid JSON: ${jsonError.message}`);
+      }
+      
       const tokenCount = response.usage?.total_tokens || this.estimateTokenCount(prompt + content);
       
       return {
-        provider: 'openai-gpt4o-mini',
+        provider: 'openai',
         extractedData,
         rawResponse: content,
         confidence: extractedData.confidence || 80,
-        processingCost: (tokenCount / 1000) * 0.03,
+        processingCost: (tokenCount / 1000) * 0.0004, // Correção do custo para GPT-4o Mini
         tokensIn: response.usage?.prompt_tokens || Math.floor(tokenCount * 0.7),
         tokensOut: response.usage?.completion_tokens || Math.floor(tokenCount * 0.3),
         processingTimeMs: 0,
@@ -537,14 +564,6 @@ TEMPLATE:
     }
   }
 
-  // Reset provider status to online for retry
-  resetProviderStatus(providerName: string): void {
-    const provider = this.providers.find(p => p.name === providerName);
-    if (provider) {
-      provider.status = 'online';
-    }
-  }
-
   // Emergency mode: disable GLM, enable OpenAI only
   enableEmergencyMode(): void {
     const glm = this.providers.find(p => p.name === 'glm');
@@ -576,6 +595,50 @@ TEMPLATE:
       openai.status = 'online';
       openai.priority = 2;
     }
+  }
+
+  // Método para limpar formatação markdown das respostas
+  private cleanMarkdownFromResponse(response: string): string {
+    let cleaned = response;
+    
+    // Remove blocos de código JSON
+    if (cleaned.includes('```json')) {
+      cleaned = cleaned.replace(/```json\s*/, '').replace(/```\s*$/, '');
+    }
+    if (cleaned.includes('```')) {
+      cleaned = cleaned.replace(/```\s*/, '').replace(/```\s*$/, '');
+    }
+    
+    // Remove possíveis caracteres de escape extras
+    cleaned = cleaned.trim();
+    
+    return cleaned;
+  }
+
+  // Método para resetar status de um provider para diagnóstico
+  resetProviderStatus(providerName: string): void {
+    const provider = this.providers.find(p => p.name === providerName);
+    if (provider) {
+      provider.status = 'online';
+      console.log(`🔄 Provider ${providerName} status reset to ONLINE`);
+    }
+  }
+
+  // Método para obter status detalhado de todos os providers
+  getDetailedStatus(): any {
+    return this.providers.map(p => ({
+      name: p.name,
+      enabled: p.enabled,
+      status: p.status,
+      priority: p.priority,
+      model: p.model,
+      stats: {
+        requests: p.last30Days.totalRequests,
+        successRate: p.last30Days.successRate,
+        avgResponseTime: p.last30Days.avgResponseTime,
+        totalCost: p.last30Days.totalCost
+      }
+    }));
   }
 
   // Atualizar estatísticas após processamento

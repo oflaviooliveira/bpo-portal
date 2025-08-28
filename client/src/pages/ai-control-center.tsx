@@ -95,6 +95,27 @@ export default function AIControlCenter() {
     }
   });
 
+  const resetProviderMutation = useMutation({
+    mutationFn: async ({ name }: { name: string }) => {
+      return apiRequest("POST", "/api/ai-control/reset-provider", { providerName: name });
+    },
+    onSuccess: (data: any) => {
+      queryClient.invalidateQueries({ queryKey: ["/api/ai-control"] });
+      queryClient.invalidateQueries({ queryKey: ["/api/ai-control/status"] });
+      toast({
+        title: "Provider resetado",
+        description: `Status do ${data.provider} foi resetado para online`,
+      });
+    },
+    onError: (error: any) => {
+      toast({
+        title: "Erro ao resetar provider",
+        description: error?.message || "Ocorreu um erro inesperado",
+        variant: "destructive",
+      });
+    }
+  });
+
   // Data processing
   const providers = (providersData as any)?.providers || [];
   const status = (statusData as any) || { providers: [], systemHealth: null };
@@ -186,6 +207,32 @@ export default function AIControlCenter() {
 
         {/* CONTROLES TAB */}
         <TabsContent value="controls" className="space-y-6">
+          {/* System Status Alert */}
+          {status.systemHealth && (
+            <div className={`p-4 rounded-lg border ${
+              status.systemHealth.overall === 'healthy' 
+                ? 'bg-green-50 border-green-200 text-green-800' 
+                : 'bg-yellow-50 border-yellow-200 text-yellow-800'
+            }`}>
+              <div className="flex items-center gap-2">
+                {status.systemHealth.overall === 'healthy' ? (
+                  <CheckCircle className="h-5 w-5 text-green-600" />
+                ) : (
+                  <AlertTriangle className="h-5 w-5 text-yellow-600" />
+                )}
+                <div>
+                  <h4 className="font-medium">
+                    Status do Sistema: {status.systemHealth.overall === 'healthy' ? 'Saudável' : 'Degradado'}
+                  </h4>
+                  <p className="text-sm">
+                    Provider Primário: {status.systemHealth.primaryProvider?.toUpperCase() || 'N/A'} | 
+                    Última verificação: {new Date(status.systemHealth.lastCheck).toLocaleTimeString('pt-BR')}
+                  </p>
+                </div>
+              </div>
+            </div>
+          )}
+
           {/* Provider Controls */}
           <div className="grid gap-4 md:grid-cols-2">
             {providers.map((provider: any) => (
@@ -243,9 +290,27 @@ export default function AIControlCenter() {
                         <span>{formatCurrency(provider.costPer1000 * 1000)}</span>
                       </div>
                       <div className="flex justify-between text-sm">
-                        <span>Status:</span>
-                        <Badge variant={provider.status === 'online' ? 'default' : 'destructive'}>
-                          {provider.status === 'online' ? 'Online' : 'Offline'}
+                        <span>Status Operacional:</span>
+                        <div className="flex items-center gap-2">
+                          <Badge variant={provider.status === 'online' ? 'default' : 'destructive'}>
+                            {provider.status === 'online' ? 'Online' : 'Offline'}
+                          </Badge>
+                          {provider.status === 'error' && (
+                            <Button 
+                              size="sm" 
+                              variant="outline"
+                              onClick={() => resetProviderMutation.mutate({ name: provider.name })}
+                              disabled={resetProviderMutation.isPending}
+                            >
+                              Reset
+                            </Button>
+                          )}
+                        </div>
+                      </div>
+                      <div className="flex justify-between text-sm">
+                        <span>Habilitado para uso:</span>
+                        <Badge variant={provider.enabled ? 'default' : 'secondary'}>
+                          {provider.enabled ? 'Ativo' : 'Inativo'}
                         </Badge>
                       </div>
                     </div>

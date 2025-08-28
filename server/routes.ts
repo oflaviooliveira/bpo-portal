@@ -1801,6 +1801,34 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
+  // Reset provider status
+  app.post("/api/ai-control/reset-provider", ...authorize(["ADMIN", "GERENTE"]), async (req, res) => {
+    try {
+      const { providerName } = req.body;
+      const { aiMultiProvider } = await import("./ai-multi-provider");
+      
+      aiMultiProvider.resetProviderStatus(providerName);
+      
+      res.json({ success: true, provider: providerName, status: "reset" });
+    } catch (error) {
+      console.error("AI reset provider error:", error);
+      res.status(500).json({ error: "Erro ao resetar provider" });
+    }
+  });
+
+  // Get detailed status
+  app.get("/api/ai-control/detailed-status", ...authorize(["ADMIN", "GERENTE", "OPERADOR"]), async (req, res) => {
+    try {
+      const { aiMultiProvider } = await import("./ai-multi-provider");
+      const detailedStatus = aiMultiProvider.getDetailedStatus();
+      
+      res.json({ providers: detailedStatus });
+    } catch (error) {
+      console.error("AI detailed status error:", error);
+      res.status(500).json({ error: "Erro ao buscar status detalhado" });
+    }
+  });
+
   // Get recent AI document history
   app.get("/api/ai-control/recent-documents", ...authorize(["ADMIN", "GERENTE"]), async (req, res) => {
     try {
