@@ -268,7 +268,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
           description: data.descricao || '',
           dueDate: data.data_vencimento || '',
           paymentDate: data.data_pagamento || '',
-          documentType: data.tipo_documento || '',
+
           category: data.categoria || '',
           confidence: {
             amount: data.valor ? aiResult.confidence : 0,

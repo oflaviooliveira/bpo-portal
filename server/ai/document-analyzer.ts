@@ -14,7 +14,7 @@ export interface DocumentAnalysisResult {
     data_pagamento?: string;
     categoria?: string;
     centro_custo?: string;
-    tipo_documento?: 'PAGO' | 'AGENDADO' | 'EMITIR_BOLETO' | 'EMITIR_NF';
+
   };
   confidence: number;
   reasoning?: string;
@@ -138,7 +138,6 @@ ${text}
     "data_pagamento": "Data do pagamento se já pago (DD/MM/AAAA)",
     "categoria": "Categoria do gasto (Transporte, Combustível, Alimentação, etc)",
     "centro_custo": "Centro de custo se identificado",
-    "tipo_documento": "PAGO se já foi pago, AGENDADO se for para pagamento futuro, EMITIR_BOLETO ou EMITIR_NF se for emissão",
     
     "fornecedor": "Mesmo valor que contraparte (compatibilidade)"
   },
