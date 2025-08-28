@@ -34,7 +34,7 @@ class AIMultiProvider {
       priority: 1,
       costPer1000: 0.0002,
       status: 'online',
-      model: 'glm-4-0520',
+      model: 'glm-4-flash',
       temperature: 0.1,
       maxTokens: 1500
     },
@@ -108,6 +108,7 @@ class AIMultiProvider {
           
         } catch (validationError) {
           console.warn(`❌ Validação falhou para ${provider.name}:`, validationError);
+          provider.status = 'error';
           fallbackReason = 'invalid_response_format';
           lastError = validationError;
           continue;
@@ -169,7 +170,7 @@ class AIMultiProvider {
           'Content-Type': 'application/json',
         },
         body: JSON.stringify({
-          model: 'glm-4-0520',
+          model: 'glm-4-flash',
           messages: [
             {
               role: 'system',
@@ -182,11 +183,14 @@ class AIMultiProvider {
           ],
           temperature: 0.1,
           max_tokens: 1000,
+          stream: false
         }),
       });
 
       if (!response.ok) {
-        throw new Error(`GLM API error: ${response.status}`);
+        const errorText = await response.text();
+        console.error(`GLM API error ${response.status}:`, errorText);
+        throw new Error(`GLM API error: ${response.status} - ${errorText}`);
       }
 
       const data = await response.json();
@@ -206,7 +210,7 @@ class AIMultiProvider {
       const tokenCount = this.estimateTokenCount(prompt + aiResponse);
       
       return {
-        provider: 'glm-4-0520',
+        provider: 'glm-4-flash',
         extractedData,
         rawResponse: aiResponse,
         confidence: extractedData.confidence || 85,
@@ -414,6 +418,14 @@ TEMPLATE:
       const tempPriority = glm.priority;
       glm.priority = openai.priority;
       openai.priority = tempPriority;
+    }
+  }
+
+  // Reset provider status to online for retry
+  resetProviderStatus(providerName: string): void {
+    const provider = this.providers.find(p => p.name === providerName);
+    if (provider) {
+      provider.status = 'online';
     }
   }
 

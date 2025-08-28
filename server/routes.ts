@@ -239,10 +239,14 @@ export async function registerRoutes(app: Express): Promise<Server> {
       // 2. Analisar com IA se OCR foi bem-sucedido
       if (ocrResult.success && ocrResult.text && ocrResult.text.length > 10) {
         try {
+          // Gerar UUID temporário válido para a análise
+          const { randomUUID } = await import('crypto');
+          const tempDocId = randomUUID();
+          
           aiResult = await documentAnalyzer.analyzeDocument(
             ocrResult.text, 
             file.originalname,
-            'temp-doc-id', // TODO: usar documentId real quando disponível
+            tempDocId,
             user.tenantId
           );
         } catch (error) {
@@ -1701,7 +1705,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
             const doc = await storage.getDocument(run.documentId, user.tenantId);
             return {
               id: run.id,
-              documentName: doc?.originalFileName || 'Documento removido',
+              documentName: doc?.originalName || 'Documento removido',
               provider: run.providerUsed,
               timestamp: run.createdAt,
               confidence: run.confidence,
