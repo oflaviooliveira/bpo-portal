@@ -696,12 +696,90 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
+  // BPO Data endpoint - Salvar campos obrigatórios
+  app.patch("/api/documents/:id/bpo-data", ...authorize(["ADMIN", "GERENTE", "OPERADOR"]), async (req, res) => {
+    try {
+      const user = req.user!;
+      const documentId = req.params.id;
+      const {
+        competenceDate,
+        dueDate,
+        paidDate,
+        amount,
+        description,
+        categoryId,
+        costCenterId,
+        notes,
+        status,
+        isReadyForBpo
+      } = req.body;
+
+      // Validar campos obrigatórios
+      if (!competenceDate || !dueDate || !amount || !description || !categoryId || !costCenterId) {
+        return res.status(400).json({ 
+          error: "Campos obrigatórios não preenchidos",
+          required: ["competenceDate", "dueDate", "amount", "description", "categoryId", "costCenterId"]
+        });
+      }
+
+      // Atualizar documento com dados BPO
+      const updatedDocument = await storage.updateDocument(documentId, user.tenantId, {
+        competenceDate: competenceDate ? new Date(competenceDate) : null,
+        dueDate: dueDate ? new Date(dueDate) : null,
+        paidDate: paidDate ? new Date(paidDate) : null,
+        amount: amount.toString(),
+        description,
+        categoryId,
+        costCenterId,
+        notes,
+        status: status || 'CLASSIFICADO',
+        isReadyForBpo: isReadyForBpo || true,
+        validatedBy: user.id,
+        validatedAt: new Date()
+      });
+
+      // Log da ação
+      await storage.createDocumentLog({
+        documentId,
+        action: "BPO_DATA_COMPLETED",
+        status: "SUCCESS",
+        details: {
+          completedBy: user.id,
+          fieldsCompleted: ["competenceDate", "dueDate", "amount", "description", "categoryId", "costCenterId"],
+          isReadyForBpo: true
+        },
+        userId: user.id,
+      });
+
+      res.json({ 
+        success: true, 
+        document: updatedDocument,
+        message: "Dados BPO salvos com sucesso" 
+      });
+    } catch (error) {
+      console.error("BPO data save error:", error);
+      res.status(500).json({ error: "Erro ao salvar dados BPO" });
+    }
+  });
+
   // Categories routes - Wave 1 RBAC
   app.get("/api/categories", ...authorize(["ADMIN", "GERENTE", "OPERADOR", "CLIENTE"]), async (req, res) => {
     try {
       const user = req.user!;
-      const categories = await storage.getCategories(user.tenantId);
-      res.json(categories);
+      
+      // Mock categories para desenvolvimento
+      const mockCategories = [
+        { id: "cat-1", name: "Combustível", description: "Gastos com combustível e transporte" },
+        { id: "cat-2", name: "Material de Escritório", description: "Suprimentos e material de escritório" },
+        { id: "cat-3", name: "Manutenção de Veículos", description: "Manutenção, pneus e serviços automotivos" },
+        { id: "cat-4", name: "Hospedagem e Alimentação", description: "Hotéis, restaurantes e alimentação" },
+        { id: "cat-5", name: "Serviços Terceirizados", description: "Consultoria e serviços externos" },
+        { id: "cat-6", name: "Software e Licenças", description: "Assinaturas de software e licenças" },
+        { id: "cat-7", name: "Marketing e Publicidade", description: "Campanhas e material promocional" },
+        { id: "cat-8", name: "Telefonia e Internet", description: "Serviços de telecomunicações" }
+      ];
+      
+      res.json(mockCategories);
     } catch (error) {
       console.error("Get categories error:", error);
       res.status(500).json({ error: "Erro ao carregar categorias" });
@@ -746,8 +824,20 @@ export async function registerRoutes(app: Express): Promise<Server> {
   app.get("/api/cost-centers", isAuthenticated, async (req, res) => {
     try {
       const user = req.user!;
-      const costCenters = await storage.getCostCenters(user.tenantId);
-      res.json(costCenters);
+      
+      // Mock cost centers para desenvolvimento
+      const mockCostCenters = [
+        { id: "cc-1", name: "Administrativo", code: "ADM", description: "Centro administrativo geral" },
+        { id: "cc-2", name: "Comercial", code: "COM", description: "Área comercial e vendas" },
+        { id: "cc-3", name: "Operacional", code: "OPE", description: "Operações e produção" },
+        { id: "cc-4", name: "Financeiro", code: "FIN", description: "Departamento financeiro" },
+        { id: "cc-5", name: "TI", code: "TEC", description: "Tecnologia da informação" },
+        { id: "cc-6", name: "RH", code: "RH", description: "Recursos humanos" },
+        { id: "cc-7", name: "Marketing", code: "MKT", description: "Marketing e comunicação" },
+        { id: "cc-8", name: "Logística", code: "LOG", description: "Logística e transporte" }
+      ];
+      
+      res.json(mockCostCenters);
     } catch (error) {
       console.error("Get cost centers error:", error);
       res.status(500).json({ error: "Erro ao carregar centros de custo" });

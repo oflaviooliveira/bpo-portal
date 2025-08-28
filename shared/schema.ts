@@ -112,8 +112,11 @@ export const documents = pgTable("documents", {
   amount: decimal("amount", { precision: 15, scale: 2 }),
   supplier: varchar("supplier", { length: 255 }), // LEGACY: Nome do fornecedor/cliente (ex: Uber, Posto Shell)
   description: text("description"), // Descrição detalhada (ex: Corrida 01/05 - Centro ao Aeroporto)
-  dueDate: timestamp("due_date"),
-  paidDate: timestamp("paid_date"),
+  
+  // Datas obrigatórias para BPO
+  competenceDate: timestamp("competence_date"), // Data de Competência (quando a despesa/receita pertence)
+  dueDate: timestamp("due_date"), // Data de Vencimento
+  paidDate: timestamp("paid_date"), // Data de Pagamento (se aplicável)
   
   // Campos específicos para emissão de boletos/NF
   issuerData: jsonb("issuer_data"), // Dados do tomador para boletos/NF
@@ -135,7 +138,8 @@ export const documents = pgTable("documents", {
   validatedAt: timestamp("validated_at"),
   
   // Metadata
-  notes: text("notes"),
+  notes: text("notes"), // Observações (opcional)
+  isReadyForBpo: boolean("is_ready_for_bpo").notNull().default(false), // Flag para indicar se todos os campos obrigatórios estão preenchidos
   createdBy: uuid("created_by").notNull(),
   createdAt: timestamp("created_at").defaultNow(),
   updatedAt: timestamp("updated_at").defaultNow(),

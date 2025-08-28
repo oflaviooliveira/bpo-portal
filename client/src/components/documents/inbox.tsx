@@ -20,7 +20,9 @@ import { Input } from "@/components/ui/input";
 import { Drawer, DrawerContent, DrawerHeader, DrawerTitle } from "@/components/ui/drawer";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { AdvancedSearch } from "@/components/advanced-search";
+
 
 const statusConfig = {
   RECEBIDO: { label: "Recebido", className: "bg-blue-100 text-blue-800" },
@@ -49,6 +51,19 @@ export function Inbox() {
   const [expandedDoc, setExpandedDoc] = useState<string | null>(null);
   const [showDetailsDialog, setShowDetailsDialog] = useState(false);
   const [showPreviewDialog, setShowPreviewDialog] = useState(false);
+  const [showBpoFieldsDialog, setShowBpoFieldsDialog] = useState(false);
+  
+  // Estados para campos BPO editáveis
+  const [bpoFormData, setBpoFormData] = useState({
+    competenceDate: '',
+    dueDate: '',
+    paidDate: '',
+    amount: '',
+    description: '',
+    categoryId: '',
+    costCenterId: '',
+    notes: ''
+  });
   
   // Estados para seleção múltipla
   const [selectedDocuments, setSelectedDocuments] = useState<Set<string>>(new Set());
@@ -58,6 +73,15 @@ export function Inbox() {
 
   const { data: documents, isLoading, refetch } = useQuery({
     queryKey: ["/api/documents"],
+  });
+
+  // Queries para dropdowns
+  const { data: categories } = useQuery({
+    queryKey: ["/api/categories"],
+  });
+
+  const { data: costCenters } = useQuery({
+    queryKey: ["/api/cost-centers"],
   });
 
   // Ensure documents is always an array to prevent filter errors
@@ -219,6 +243,29 @@ export function Inbox() {
     }
   };
 
+  // Mutation para salvar dados BPO
+  const saveBpoDataMutation = useMutation({
+    mutationFn: async (data: any) => {
+      return apiRequest('PATCH', `/api/documents/${selectedDoc.id}/bpo-data`, data);
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['/api/documents'] });
+      setShowBpoFieldsDialog(false);
+      setSelectedDoc(null);
+      toast({
+        title: "Dados BPO salvos",
+        description: "Documento marcado como pronto para processamento BPO.",
+      });
+    },
+    onError: (error: any) => {
+      toast({
+        title: "Erro ao salvar",
+        description: error.message || "Erro ao salvar dados BPO",
+        variant: "destructive",
+      });
+    }
+  });
+
   // Mutation para aprovar documento com dados da IA
   const approveAIMutation = useMutation({
     mutationFn: async (document: any) => {
@@ -260,10 +307,22 @@ export function Inbox() {
   };
 
   const handleManualReview = (document: any) => {
-    // Redirecionar para página de edição/upload com o documento pré-carregado
+    // Preencher formulário com dados atuais do documento e extraídos pela IA
+    const aiData = document.extractedData || {};
+    setBpoFormData({
+      competenceDate: document.competenceDate ? new Date(document.competenceDate).toISOString().split('T')[0] : '',
+      dueDate: document.dueDate ? new Date(document.dueDate).toISOString().split('T')[0] : 
+               (aiData.data_vencimento ? aiData.data_vencimento : ''),
+      paidDate: document.paidDate ? new Date(document.paidDate).toISOString().split('T')[0] : 
+                (aiData.data_pagamento ? aiData.data_pagamento : ''),
+      amount: document.amount ? document.amount.toString() : (aiData.valor || ''),
+      description: document.description || aiData.descricao || '',
+      categoryId: document.categoryId || '',
+      costCenterId: document.costCenterId || '',
+      notes: document.notes || ''
+    });
     setSelectedDoc(document);
-    setActionType("revise");
-    setShowActionDialog(true);
+    setShowBpoFieldsDialog(true);
     setShowDetailsDialog(false);
   };
 
@@ -973,7 +1032,7 @@ export function Inbox() {
                       onClick={() => handleManualReview(selectedDoc)}
                     >
                       <Edit className="w-4 h-4 mr-2" />
-                      Revisar Manualmente
+                      Completar Dados BPO
                     </Button>
                   </div>
                 </div>
@@ -1145,6 +1204,229 @@ export function Inbox() {
               disabled={bulkDeleteMutation.isPending}
             >
               {bulkDeleteMutation.isPending ? "Excluindo..." : "Excluir"}
+            </Button>
+          </div>
+        </DialogContent>
+      </Dialog>
+
+      {/* BPO Fields Modal - Campos Obrigatórios */}
+      <Dialog open={showBpoFieldsDialog} onOpenChange={setShowBpoFieldsDialog}>
+        <DialogContent className="max-w-4xl max-h-[95vh] overflow-hidden">
+          <DialogHeader>
+            <DialogTitle className="flex items-center gap-2">
+              <Edit className="w-5 h-5" />
+              Completar Dados BPO - {selectedDoc?.originalName}
+            </DialogTitle>
+            <DialogDescription>
+              Complete todos os campos obrigatórios para o processamento BPO financeiro.
+            </DialogDescription>
+          </DialogHeader>
+          
+          {selectedDoc && (
+            <div className="grid grid-cols-2 gap-6 max-h-[70vh] overflow-y-auto p-1">
+              {/* Coluna 1 - Campos Obrigatórios */}
+              <div className="space-y-4">
+                <h3 className="font-semibold text-foreground border-b pb-2">
+                  Campos Obrigatórios BPO
+                </h3>
+                
+                {/* Data de Competência */}
+                <div className="space-y-2">
+                  <Label htmlFor="competence-date" className="text-sm font-medium text-red-600">
+                    Data de Competência *
+                  </Label>
+                  <Input
+                    id="competence-date"
+                    type="date"
+                    value={bpoFormData.competenceDate}
+                    onChange={(e) => setBpoFormData(prev => ({ ...prev, competenceDate: e.target.value }))}
+                    className="w-full"
+                    required
+                  />
+                  <p className="text-xs text-muted-foreground">
+                    Quando a despesa/receita pertence (competência contábil)
+                  </p>
+                </div>
+
+                {/* Data de Vencimento */}
+                <div className="space-y-2">
+                  <Label htmlFor="due-date" className="text-sm font-medium text-red-600">
+                    Data de Vencimento *
+                  </Label>
+                  <Input
+                    id="due-date"
+                    type="date"
+                    value={bpoFormData.dueDate}
+                    onChange={(e) => setBpoFormData(prev => ({ ...prev, dueDate: e.target.value }))}
+                    className="w-full"
+                    required
+                  />
+                </div>
+
+                {/* Data de Pagamento */}
+                <div className="space-y-2">
+                  <Label htmlFor="paid-date" className="text-sm font-medium">
+                    Data de Pagamento
+                  </Label>
+                  <Input
+                    id="paid-date"
+                    type="date"
+                    value={bpoFormData.paidDate}
+                    onChange={(e) => setBpoFormData(prev => ({ ...prev, paidDate: e.target.value }))}
+                    className="w-full"
+                  />
+                  <p className="text-xs text-muted-foreground">
+                    Se aplicável - quando foi pago/recebido
+                  </p>
+                </div>
+
+                {/* Valor */}
+                <div className="space-y-2">
+                  <Label htmlFor="amount" className="text-sm font-medium text-red-600">
+                    Valor *
+                  </Label>
+                  <Input
+                    id="amount"
+                    type="number"
+                    step="0.01"
+                    value={bpoFormData.amount}
+                    onChange={(e) => setBpoFormData(prev => ({ ...prev, amount: e.target.value }))}
+                    className="w-full"
+                    placeholder="0.00"
+                    required
+                  />
+                </div>
+              </div>
+
+              {/* Coluna 2 - Campos Complementares */}
+              <div className="space-y-4">
+                <h3 className="font-semibold text-foreground border-b pb-2">
+                  Classificação e Detalhes
+                </h3>
+
+                {/* Categoria */}
+                <div className="space-y-2">
+                  <Label htmlFor="category" className="text-sm font-medium text-red-600">
+                    Categoria *
+                  </Label>
+                  <Select value={bpoFormData.categoryId} onValueChange={(value) => setBpoFormData(prev => ({ ...prev, categoryId: value }))}>
+                    <SelectTrigger>
+                      <SelectValue placeholder="Selecione uma categoria" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      {categories?.map((category: any) => (
+                        <SelectItem key={category.id} value={category.id}>
+                          {category.name}
+                        </SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                </div>
+
+                {/* Centro de Custo */}
+                <div className="space-y-2">
+                  <Label htmlFor="cost-center" className="text-sm font-medium text-red-600">
+                    Centro de Custo *
+                  </Label>
+                  <Select value={bpoFormData.costCenterId} onValueChange={(value) => setBpoFormData(prev => ({ ...prev, costCenterId: value }))}>
+                    <SelectTrigger>
+                      <SelectValue placeholder="Selecione um centro de custo" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      {costCenters?.map((costCenter: any) => (
+                        <SelectItem key={costCenter.id} value={costCenter.id}>
+                          {costCenter.name}
+                        </SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                </div>
+
+                {/* Descrição */}
+                <div className="space-y-2">
+                  <Label htmlFor="description" className="text-sm font-medium text-red-600">
+                    Descrição *
+                  </Label>
+                  <Textarea
+                    id="description"
+                    value={bpoFormData.description}
+                    onChange={(e) => setBpoFormData(prev => ({ ...prev, description: e.target.value }))}
+                    className="w-full h-20"
+                    placeholder="Ex: Compra de descartáveis para escritório"
+                    required
+                  />
+                </div>
+
+                {/* Observações */}
+                <div className="space-y-2">
+                  <Label htmlFor="notes" className="text-sm font-medium">
+                    Observações
+                  </Label>
+                  <Textarea
+                    id="notes"
+                    value={bpoFormData.notes}
+                    onChange={(e) => setBpoFormData(prev => ({ ...prev, notes: e.target.value }))}
+                    className="w-full h-20"
+                    placeholder="Inconsistências, dúvidas ou informações extras..."
+                  />
+                </div>
+
+                {/* Validação Visual */}
+                <div className="p-3 bg-blue-50 border border-blue-200 rounded-lg">
+                  <h4 className="font-medium text-blue-800 mb-2">Status de Validação</h4>
+                  <div className="space-y-1 text-sm">
+                    <div className={`flex items-center gap-2 ${bpoFormData.competenceDate ? 'text-green-600' : 'text-red-600'}`}>
+                      {bpoFormData.competenceDate ? '✓' : '✗'} Data de Competência
+                    </div>
+                    <div className={`flex items-center gap-2 ${bpoFormData.dueDate ? 'text-green-600' : 'text-red-600'}`}>
+                      {bpoFormData.dueDate ? '✓' : '✗'} Data de Vencimento
+                    </div>
+                    <div className={`flex items-center gap-2 ${bpoFormData.amount ? 'text-green-600' : 'text-red-600'}`}>
+                      {bpoFormData.amount ? '✓' : '✗'} Valor
+                    </div>
+                    <div className={`flex items-center gap-2 ${bpoFormData.categoryId ? 'text-green-600' : 'text-red-600'}`}>
+                      {bpoFormData.categoryId ? '✓' : '✗'} Categoria
+                    </div>
+                    <div className={`flex items-center gap-2 ${bpoFormData.costCenterId ? 'text-green-600' : 'text-red-600'}`}>
+                      {bpoFormData.costCenterId ? '✓' : '✗'} Centro de Custo
+                    </div>
+                    <div className={`flex items-center gap-2 ${bpoFormData.description ? 'text-green-600' : 'text-red-600'}`}>
+                      {bpoFormData.description ? '✓' : '✗'} Descrição
+                    </div>
+                  </div>
+                </div>
+              </div>
+            </div>
+          )}
+
+          <div className="flex gap-3 pt-4 border-t">
+            <Button 
+              variant="outline" 
+              onClick={() => setShowBpoFieldsDialog(false)}
+              className="flex-1"
+            >
+              Cancelar
+            </Button>
+            <Button 
+              onClick={() => {
+                saveBpoDataMutation.mutate({
+                  competenceDate: bpoFormData.competenceDate,
+                  dueDate: bpoFormData.dueDate,
+                  paidDate: bpoFormData.paidDate || null,
+                  amount: parseFloat(bpoFormData.amount),
+                  description: bpoFormData.description,
+                  categoryId: bpoFormData.categoryId,
+                  costCenterId: bpoFormData.costCenterId,
+                  notes: bpoFormData.notes || null,
+                  status: 'CLASSIFICADO',
+                  isReadyForBpo: true
+                });
+              }}
+              className="flex-1 bg-gquicks-primary hover:bg-gquicks-primary/90"
+              disabled={!bpoFormData.competenceDate || !bpoFormData.dueDate || !bpoFormData.amount || !bpoFormData.categoryId || !bpoFormData.costCenterId || !bpoFormData.description || saveBpoDataMutation.isPending}
+            >
+              <CheckCircle2 className="w-4 h-4 mr-2" />
+              Salvar e Marcar como Pronto
             </Button>
           </div>
         </DialogContent>
