@@ -273,8 +273,8 @@ export class DocumentProcessor {
     try {
       console.log(`🤖 Iniciando análise IA melhorada para: ${filename}`);
       
-      // Usar o novo analisador de documentos melhorado
-      const result = await this.documentAnalyzer.analyzeDocument(ocrText, filename);
+      // Usar o novo analisador de documentos melhorado com AI Multi-Provider
+      const result = await this.documentAnalyzer.analyzeDocument(ocrText, filename, documentId, tenantId);
       
       if (result.success && result.extractedData) {
         console.log(`✅ Análise IA bem-sucedida. Confiança: ${result.confidence}%`);

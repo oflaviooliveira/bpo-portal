@@ -160,7 +160,7 @@ class AIMultiProvider {
           'Content-Type': 'application/json',
         },
         body: JSON.stringify({
-          model: 'glm-4-plus',
+          model: 'glm-4-0520',
           messages: [
             {
               role: 'system',
@@ -197,7 +197,7 @@ class AIMultiProvider {
       const tokenCount = this.estimateTokenCount(prompt + aiResponse);
       
       return {
-        provider: 'glm-4-plus',
+        provider: 'glm-4-0520',
         extractedData,
         rawResponse: aiResponse,
         confidence: extractedData.confidence || 85,

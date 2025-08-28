@@ -1,9 +1,7 @@
-import OpenAI from "openai";
 import { NotaFiscalAnalyzer } from "./nota-fiscal-analyzer";
+import { aiMultiProvider } from "../ai-multi-provider";
 
-const openai = new OpenAI({ 
-  apiKey: process.env.OPENAI_API_KEY || process.env.OPENAI_API_KEY_ENV_VAR || ""
-});
+// Removido OpenAI direto - agora usa AIMultiProvider
 
 export interface DocumentAnalysisResult {
   success: boolean;
@@ -28,11 +26,13 @@ export interface DocumentAnalysisResult {
 export class DocumentAnalyzer {
   
   /**
-   * Analisa texto extraído de documento financeiro
+   * Analisa texto extraído de documento financeiro usando AI Multi-Provider
    */
   async analyzeDocument(
     extractedText: string, 
     filename: string, 
+    documentId: string,
+    tenantId: string,
     documentContext?: string
   ): Promise<DocumentAnalysisResult> {
     
@@ -76,58 +76,30 @@ export class DocumentAnalyzer {
         }
       }
 
-      const prompt = this.buildAnalysisPrompt(extractedText, filename, documentContext);
+      // Usar AI Multi-Provider (GLM-4.5 como primária, OpenAI como fallback)
+      console.log("🔄 Usando AI Multi-Provider para análise...");
       
-      const completion = await openai.chat.completions.create({
-        model: "gpt-4o-mini",
-        messages: [
-          {
-            role: "system",
-            content: `Você é um especialista em análise de documentos financeiros brasileiros. 
-            Sua tarefa é extrair informações estruturadas de recibos, notas fiscais, boletos e comprovantes de pagamento.
-            
-            REGRA CRÍTICA PARA NOTAS FISCAIS:
-            - O FORNECEDOR é sempre quem EMITE a nota fiscal (campo "RAZÃO SOCIAL" no cabeçalho do emitente)
-            - O CLIENTE é quem RECEBE a mercadoria/serviço (campo "DESTINATÁRIO/REMETENTE")  
-            - NUNCA confunda emitente com destinatário
-            - Use o CNPJ do EMITENTE como documento do fornecedor
-            
-            CRÍTICO: Sempre responda APENAS com JSON válido, sem markdown, sem explicações.
-            Não use \`\`\`json ou qualquer formatação markdown na resposta.
-            Seja preciso e extraia apenas informações claramente presentes no documento.`
-          },
-          {
-            role: "user",
-            content: prompt
-          }
-        ],
-        temperature: 0.1,
-        max_tokens: 1500
-      });
+      const aiResult = await aiMultiProvider.analyzeDocument(
+        extractedText, 
+        filename, 
+        documentId, 
+        tenantId
+      );
 
-      const responseText = completion.choices[0]?.message?.content;
-      if (!responseText) {
-        throw new Error('Resposta vazia da IA');
+      console.log(`🤖 IA utilizada: ${aiResult.provider}`);
+      console.log(`🎯 Confiança: ${aiResult.confidence}%`);
+      console.log(`💰 Custo: $${aiResult.processingCost.toFixed(6)}`);
+      console.log(`⏱️ Tempo: ${aiResult.processingTimeMs}ms`);
+      
+      if (aiResult.fallbackReason) {
+        console.log(`🔄 Fallback: ${aiResult.fallbackReason}`);
       }
-
-      console.log(`🤖 Resposta da IA: ${responseText}`);
-
-      // Limpar resposta removendo markdown se presente
-      const cleanedResponse = responseText
-        .replace(/```json\s*/g, '')
-        .replace(/\s*```/g, '')
-        .trim();
-
-      console.log(`🧹 Resposta limpa: ${cleanedResponse}`);
-
-      // Parse da resposta JSON
-      const result = JSON.parse(cleanedResponse);
       
       return {
         success: true,
-        extractedData: result.dados_extraidos,
-        confidence: result.confianca || 0,
-        reasoning: result.raciocinio
+        extractedData: aiResult.extractedData,
+        confidence: aiResult.confidence,
+        reasoning: `Analisado com ${aiResult.provider}${aiResult.fallbackReason ? ` (fallback: ${aiResult.fallbackReason})` : ''}`
       };
 
     } catch (error) {

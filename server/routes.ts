@@ -241,7 +241,9 @@ export async function registerRoutes(app: Express): Promise<Server> {
         try {
           aiResult = await documentAnalyzer.analyzeDocument(
             ocrResult.text, 
-            file.originalname
+            file.originalname,
+            'temp-doc-id', // TODO: usar documentId real quando disponível
+            user.tenantId
           );
         } catch (error) {
           console.warn("⚠️ Erro na análise IA:", error);
