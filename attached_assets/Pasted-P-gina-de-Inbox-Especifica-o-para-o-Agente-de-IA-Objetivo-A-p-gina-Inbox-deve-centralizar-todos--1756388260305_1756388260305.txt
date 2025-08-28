@@ -1,0 +1,104 @@
+Página de Inbox – Especificação para o Agente de IA
+Objetivo
+
+A página Inbox deve centralizar todos os documentos já enviados pelo usuário (via página de Upload).
+Ela serve como painel de controle inicial, onde o usuário acompanha os arquivos recebidos, confere os dados extraídos pela IA/OCR e valida antes de classificar.
+
+Fluxo de um Documento no Inbox
+
+Recebido → O documento chegou no sistema (após upload).
+
+Em processamento → OCR/IA está rodando.
+
+Pendente de revisão → IA extraiu dados; usuário deve conferir/ajustar.
+
+Pronto → Documento revisado e confirmado pelo usuário.
+
+Erro → Falha no OCR/IA; permitir reprocessar.
+
+Funcionalidades da Página
+
+Lista de documentos recebidos:
+
+Colunas: Nome do arquivo | Status | Contraparte sugerida | Valor sugerido | Data sugerida | Confiança OCR | Ações.
+
+Filtros e busca:
+
+Filtrar por status, data, valor, contraparte.
+
+Campo de busca por nome ou CNPJ/CPF.
+
+Painel lateral (drawer de revisão) ao clicar em um documento:
+
+Mostrar preview (arquivo ou texto OCR).
+
+Campos editáveis com valores sugeridos pela IA:
+
+Contraparte (combobox com busca/criação rápida).
+
+Valor.
+
+Data de vencimento/pagamento.
+
+Descrição.
+
+Categoria / Centro de custo.
+
+Chip automático indicando se a contraparte é Cliente ou Fornecedor, derivado do Tipo de Solicitação.
+
+Botões: Confirmar, Salvar rascunho, Cancelar.
+
+Ações rápidas na lista:
+
+Confirmar (se todos campos ok).
+
+Reprocessar (se erro).
+
+Excluir documento.
+
+Baixar original.
+
+Regras de Negócio
+
+Contraparte é sempre única (campo unificado).
+
+Papel (Cliente/Fornecedor) é calculado automaticamente pelo tipo de solicitação:
+
+Pago / Agendado → Fornecedor
+
+Emitir NF / Emitir Boleto → Cliente
+
+Dados obrigatórios da contraparte: Nome + CNPJ/CPF.
+
+Multiusuário: cada empresa/usuário tem sua própria base de dados.
+
+Estrutura: users/{userId}/inbox/{docId}.
+
+Estrutura de Dados (Firestore)
+{
+  filename: string,
+  status: 'RECEBIDO' | 'PROCESSANDO' | 'PENDENTE_REVISAO' | 'PRONTO' | 'ERRO',
+  ocr: { text?: string, confidence?: number },
+  ai: {
+    suggested?: {
+      counterparty?: { name: string, document?: { type: 'CNPJ'|'CPF', value: string } },
+      amount?: number,
+      dueDate?: string,
+      description?: string
+    }
+  },
+  createdAt: number,
+  updatedAt: number,
+  error?: { message: string },
+  storagePath: string
+}
+
+Benefícios da Inbox
+
+Centraliza documentos recebidos em um só lugar.
+
+Permite revisão antes da classificação final.
+
+Garante consistência dos dados (contraparte única com CNPJ/CPF).
+
+Prepara a base para futuras integrações com sistemas externos (ex.: Conta Azul).
