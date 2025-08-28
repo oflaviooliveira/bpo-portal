@@ -1646,6 +1646,46 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
+  // Get available models
+  app.get('/api/ai-control/available-models', ...authorize(["ADMIN", "GERENTE"]), async (req, res) => {
+    try {
+      const { aiMultiProvider } = await import("./ai-multi-provider");
+      const models = aiMultiProvider.getAvailableModels();
+      res.json(models);
+    } catch (error) {
+      console.error('Error getting available models:', error);
+      res.status(500).json({ error: 'Failed to get available models' });
+    }
+  });
+
+  // Update provider model
+  app.post('/api/ai-control/update-model', ...authorize(["ADMIN", "GERENTE"]), async (req, res) => {
+    try {
+      const { providerName, modelId } = req.body;
+      
+      if (!providerName || !modelId) {
+        return res.status(400).json({ error: 'Provider name and model ID are required' });
+      }
+
+      const { aiMultiProvider } = await import("./ai-multi-provider");
+      const success = aiMultiProvider.updateProviderModel(providerName, modelId);
+      
+      if (!success) {
+        return res.status(400).json({ error: 'Invalid provider or model' });
+      }
+
+      res.json({ 
+        success: true, 
+        message: `Model updated to ${modelId}`,
+        providerName,
+        modelId
+      });
+    } catch (error) {
+      console.error('Error updating model:', error);
+      res.status(500).json({ error: 'Failed to update model' });
+    }
+  });
+
   // Update provider configuration (model, priority, etc)
   app.post("/api/ai-control/update-config", ...authorize(["ADMIN", "GERENTE"]), async (req, res) => {
     try {

@@ -7,6 +7,8 @@ import { Badge } from "@/components/ui/badge";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Switch } from "@/components/ui/switch";
 import { Progress } from "@/components/ui/progress";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import { useToast } from "@/hooks/use-toast";
 import { 
   Settings,
   BarChart3,
@@ -26,6 +28,7 @@ import {
 
 export default function AIControlCenter() {
   const [autoRefresh, setAutoRefresh] = useState(true);
+  const { toast } = useToast();
 
   // Data queries
   const { data: providersData, isLoading } = useQuery({
@@ -48,6 +51,11 @@ export default function AIControlCenter() {
     refetchInterval: autoRefresh ? 30000 : false
   });
 
+  const { data: availableModels } = useQuery({
+    queryKey: ["/api/ai-control/available-models"],
+    refetchInterval: false // Models don't change frequently
+  });
+
   // Mutations
   const toggleProviderMutation = useMutation({
     mutationFn: async ({ name }: { name: string }) => {
@@ -67,11 +75,32 @@ export default function AIControlCenter() {
     }
   });
 
+  const updateModelMutation = useMutation({
+    mutationFn: async ({ providerName, modelId }: { providerName: string; modelId: string }) => {
+      return apiRequest("POST", "/api/ai-control/update-model", { providerName, modelId });
+    },
+    onSuccess: (data: any) => {
+      queryClient.invalidateQueries({ queryKey: ["/api/ai-control"] });
+      toast({
+        title: "Modelo atualizado",
+        description: `Provider ${data.providerName} agora usa ${data.modelId}`,
+      });
+    },
+    onError: (error: any) => {
+      toast({
+        title: "Erro ao atualizar modelo",
+        description: error?.message || "Ocorreu um erro inesperado",
+        variant: "destructive",
+      });
+    }
+  });
+
   // Data processing
   const providers = (providersData as any)?.providers || [];
   const status = (statusData as any) || { providers: [], systemHealth: null };
   const performance = (performanceData as any) || { metrics: {}, comparison: null, summary: {} };
   const analytics = (analyticsData as any) || { timeline: [] };
+  const models = (availableModels as any) || { glm: [], openai: [] };
 
   const getStatusColor = (status: string) => {
     switch (status) {
@@ -174,20 +203,51 @@ export default function AIControlCenter() {
                     />
                   </CardTitle>
                   <CardDescription>
-                    Prioridade {provider.priority} • {provider.model}
+                    Prioridade {provider.priority}
                   </CardDescription>
                 </CardHeader>
                 <CardContent>
-                  <div className="space-y-2">
-                    <div className="flex justify-between text-sm">
-                      <span>Custo por 1000 tokens:</span>
-                      <span>{formatCurrency(provider.costPer1000 * 1000)}</span>
+                  <div className="space-y-4">
+                    {/* Model Selection */}
+                    <div className="space-y-2">
+                      <label className="text-sm font-medium">Modelo:</label>
+                      <Select 
+                        value={provider.model} 
+                        onValueChange={(modelId) => updateModelMutation.mutate({ 
+                          providerName: provider.name, 
+                          modelId 
+                        })}
+                        disabled={updateModelMutation.isPending}
+                      >
+                        <SelectTrigger data-testid={`select-model-${provider.name}`}>
+                          <SelectValue placeholder="Selecionar modelo" />
+                        </SelectTrigger>
+                        <SelectContent>
+                          {models[provider.name]?.map((model: any) => (
+                            <SelectItem key={model.id} value={model.id}>
+                              <div className="flex flex-col">
+                                <span>{model.name}</span>
+                                <span className="text-xs text-muted-foreground">
+                                  ${model.avgCost.toFixed(6)}/1k tokens
+                                </span>
+                              </div>
+                            </SelectItem>
+                          ))}
+                        </SelectContent>
+                      </Select>
                     </div>
-                    <div className="flex justify-between text-sm">
-                      <span>Status:</span>
-                      <Badge variant={provider.status === 'online' ? 'default' : 'destructive'}>
-                        {provider.status === 'online' ? 'Online' : 'Offline'}
-                      </Badge>
+
+                    <div className="space-y-2">
+                      <div className="flex justify-between text-sm">
+                        <span>Custo por 1000 tokens:</span>
+                        <span>{formatCurrency(provider.costPer1000 * 1000)}</span>
+                      </div>
+                      <div className="flex justify-between text-sm">
+                        <span>Status:</span>
+                        <Badge variant={provider.status === 'online' ? 'default' : 'destructive'}>
+                          {provider.status === 'online' ? 'Online' : 'Offline'}
+                        </Badge>
+                      </div>
                     </div>
                   </div>
                 </CardContent>

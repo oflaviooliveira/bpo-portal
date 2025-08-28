@@ -2,6 +2,49 @@ import OpenAI from "openai";
 import { storage } from "./storage";
 import { aiAnalysisResponseSchema, autoCorrectJsonResponse, normalizeValue, normalizeDate, type AiAnalysisResponse } from "./ai-validation-schema";
 
+// Available models configuration
+const AVAILABLE_MODELS = {
+  glm: [
+    { 
+      id: 'glm-4.5', 
+      name: 'GLM-4.5', 
+      inputCost: 0.0006, // $0.6 per 1M tokens
+      outputCost: 0.0022, // $2.2 per 1M tokens
+      avgCost: 0.0014 // Average for pricing display
+    },
+    { 
+      id: 'glm-4.5-air', 
+      name: 'GLM-4.5-Air', 
+      inputCost: 0.0002, // $0.2 per 1M tokens
+      outputCost: 0.0011, // $1.1 per 1M tokens
+      avgCost: 0.0007 // Average for pricing display
+    }
+  ],
+  openai: [
+    { 
+      id: 'gpt-4o-mini', 
+      name: 'GPT-4o Mini', 
+      inputCost: 0.00015, // $0.15 per 1M tokens
+      outputCost: 0.0006, // $0.6 per 1M tokens
+      avgCost: 0.0004 // Average for pricing display
+    },
+    { 
+      id: 'gpt-4o', 
+      name: 'GPT-4o', 
+      inputCost: 0.0025, // $2.5 per 1M tokens
+      outputCost: 0.01, // $10 per 1M tokens
+      avgCost: 0.006 // Average for pricing display
+    },
+    { 
+      id: 'gpt-4-turbo', 
+      name: 'GPT-4 Turbo', 
+      inputCost: 0.01, // $10 per 1M tokens
+      outputCost: 0.03, // $30 per 1M tokens
+      avgCost: 0.02 // Average for pricing display
+    }
+  ]
+};
+
 // Multi-provider AI system based on the other portal's documentation
 interface AIProvider {
   name: string;
@@ -40,9 +83,9 @@ class AIMultiProvider {
       name: 'glm',
       enabled: true,
       priority: 1,
-      costPer1000: 0.0002,
+      costPer1000: 0.0014, // GLM-4.5 average cost
       status: 'online',
-      model: 'glm-4-plus',
+      model: 'glm-4.5',
       temperature: 0.1,
       maxTokens: 1500,
       last30Days: {
@@ -58,7 +101,7 @@ class AIMultiProvider {
       name: 'openai',
       enabled: true, 
       priority: 2,
-      costPer1000: 0.03,
+      costPer1000: 0.0004, // GPT-4o Mini average cost
       status: 'online',
       model: 'gpt-4o-mini',
       temperature: 0.1,
@@ -205,7 +248,7 @@ class AIMultiProvider {
           'Content-Type': 'application/json',
         },
         body: JSON.stringify({
-          model: 'glm-4-plus',
+          model: this.getProviderByName('glm')?.model || 'glm-4.5',
           messages: [
             {
               role: 'system',
@@ -265,7 +308,7 @@ class AIMultiProvider {
     
     try {
       const response = await this.openai.chat.completions.create({
-        model: "gpt-4o-mini",
+        model: this.getProviderByName('openai')?.model || "gpt-4o-mini",
         messages: [
           {
             role: "system",
@@ -402,6 +445,28 @@ TEMPLATE:
   private estimateTokenCount(text: string): number {
     // Rough estimation: 1 token ≈ 4 characters
     return Math.ceil(text.length / 4);
+  }
+
+  // Get available models
+  getAvailableModels() {
+    return AVAILABLE_MODELS;
+  }
+
+  // Update provider model and cost
+  updateProviderModel(providerName: string, modelId: string): boolean {
+    const provider = this.providers.find(p => p.name === providerName);
+    if (!provider) return false;
+
+    const availableModels = AVAILABLE_MODELS[providerName as keyof typeof AVAILABLE_MODELS];
+    const selectedModel = availableModels?.find(m => m.id === modelId);
+    
+    if (!selectedModel) return false;
+
+    provider.model = modelId;
+    provider.costPer1000 = selectedModel.avgCost;
+    
+    console.log(`🔄 Modelo ${providerName} atualizado para ${modelId} (custo: $${selectedModel.avgCost}/1k)`);
+    return true;
   }
 
   // Provider control methods
