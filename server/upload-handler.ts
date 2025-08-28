@@ -2,12 +2,14 @@ import { z } from "zod";
 import { storage } from "./storage";
 import { parseFileName, validateBusinessRules, performCrossValidation } from "./validation";
 import { ContraparteService } from "./services/contraparte-service";
+import { detectDocumentType, formatDocument, validateDocument } from "../shared/document-utils";
 
 // Schema completo para upload - Nova versão com contrapartes
 const uploadDocumentSchema = z.object({
   // Nova estrutura com contrapartes
   contraparteId: z.string().uuid().optional(),
   contraparteName: z.string().optional(), // Para buscar/criar contraparte
+  contraparteDocument: z.string().optional(), // CPF/CNPJ da contraparte
   
   // Campos legacy (manter compatibilidade)
   clientId: z.string().uuid().optional(),
@@ -93,9 +95,23 @@ export class DocumentUploadHandler {
         const contraparteName = validatedData.contraparteName || validatedData.supplier!;
         console.log(`🔍 Buscando/criando contraparte: ${contraparteName} como ${relationshipType}`);
         
+        // Processar documento se fornecido
+        let documentData: any = {};
+        if (validatedData.contraparteDocument) {
+          const documentType = detectDocumentType(validatedData.contraparteDocument);
+          if (documentType && validateDocument(validatedData.contraparteDocument)) {
+            documentData = {
+              document: formatDocument(validatedData.contraparteDocument, documentType),
+              documentType
+            };
+            console.log(`📄 Documento processado: ${documentData.document} (${documentData.documentType})`);
+          }
+        }
+        
         const contraparte = await storage.findOrCreateContraparte(contraparteName, user.tenantId, {
           canBeClient: relationshipType === 'CLIENT',
-          canBeSupplier: relationshipType === 'SUPPLIER'
+          canBeSupplier: relationshipType === 'SUPPLIER',
+          ...documentData
         });
         
         contraparteId = contraparte.id;

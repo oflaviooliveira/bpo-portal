@@ -34,7 +34,8 @@ export const contrapartes = pgTable("contrapartes", {
   id: uuid("id").primaryKey().default(sql`gen_random_uuid()`),
   tenantId: uuid("tenant_id").notNull(),
   name: varchar("name", { length: 255 }).notNull(),
-  cnpj: varchar("cnpj", { length: 18 }), // Formato: XX.XXX.XXX/XXXX-XX
+  document: varchar("document", { length: 18 }), // CPF: XXX.XXX.XXX-XX ou CNPJ: XX.XXX.XXX/XXXX-XX
+  documentType: varchar("document_type", { length: 4 }), // "CPF" ou "CNPJ"
   canBeClient: boolean("can_be_client").notNull().default(true),
   canBeSupplier: boolean("can_be_supplier").notNull().default(true),
   isActive: boolean("is_active").notNull().default(true),
@@ -315,7 +316,8 @@ export const insertTenantSchema = createInsertSchema(tenants).pick({
 export const insertContraparteSchema = createInsertSchema(contrapartes).pick({
   tenantId: true,
   name: true,
-  cnpj: true,
+  document: true,
+  documentType: true,
   canBeClient: true,
   canBeSupplier: true,
 });

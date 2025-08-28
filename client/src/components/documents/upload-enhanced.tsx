@@ -15,12 +15,12 @@ import { Alert, AlertDescription } from "@/components/ui/alert";
 import { Badge } from "@/components/ui/badge";
 import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
 
-// Schema atualizado para contrapartes
+// Schema atualizado para contrapartes com documento único
 const uploadSchema = z.object({
   documentType: z.enum(["PAGO", "AGENDADO", "EMITIR_BOLETO", "EMITIR_NF"]),
   contraparteId: z.string().optional(),
   contraparteName: z.string().min(1, "Nome da contraparte é obrigatório"),
-  contraparteCnpj: z.string().optional(),
+  contraparteDocument: z.string().optional(),
   bankId: z.string().min(1, "Banco é obrigatório"),
   categoryId: z.string().min(1, "Categoria é obrigatória"),
   costCenterId: z.string().min(1, "Centro de custo é obrigatório"),
@@ -161,10 +161,11 @@ export function UploadEnhanced() {
             console.log("🏢 Contraparte preenchida:", contraparteName);
           }
           
-          if (data.suggestions.cnpj) {
-            setValue("contraparteCnpj", data.suggestions.cnpj);
-            suggestions.push({ field: 'contraparteCnpj', value: data.suggestions.cnpj, confidence: 0.9 });
-            console.log("📄 CNPJ preenchido:", data.suggestions.cnpj);
+          if (data.suggestions.documento || data.suggestions.cnpj) {
+            const document = data.suggestions.documento || data.suggestions.cnpj;
+            setValue("contraparteDocument", document);
+            suggestions.push({ field: 'contraparteDocument', value: document, confidence: 0.9 });
+            console.log("📄 Documento preenchido:", document);
           }
           
           if (data.suggestions.description) {
@@ -718,16 +719,16 @@ export function UploadEnhanced() {
                   </div>
                   
                   <div>
-                    <Label htmlFor="contraparteCnpj" className="flex items-center">
-                      CNPJ
-                      {getSuggestionBadge('contraparteCnpj')}
+                    <Label htmlFor="contraparteDocument" className="flex items-center">
+                      CPF/CNPJ
+                      {getSuggestionBadge('contraparteDocument')}
                     </Label>
                     <Input
-                      id="contraparteCnpj"
-                      {...register("contraparteCnpj")}
-                      placeholder="00.000.000/0000-00"
-                      className={isFieldSuggested('contraparteCnpj') ? 'border-blue-300 bg-blue-50' : ''}
-                      data-testid="input-contraparte-cnpj"
+                      id="contraparteDocument"
+                      {...register("contraparteDocument")}
+                      placeholder="000.000.000-00 ou 00.000.000/0000-00"
+                      className={isFieldSuggested('contraparteDocument') ? 'border-blue-300 bg-blue-50' : ''}
+                      data-testid="input-contraparte-document"
                     />
                   </div>
                 </div>

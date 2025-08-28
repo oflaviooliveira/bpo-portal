@@ -238,6 +238,13 @@ export class DatabaseStorage implements IStorage {
       .limit(1);
     
     if (existing) {
+      // Se existe e extraData contém documento, atualizar se necessário
+      if (extraData?.document && !existing.document) {
+        return this.updateContraparte(existing.id, tenantId, {
+          document: extraData.document,
+          documentType: extraData.documentType
+        });
+      }
       return existing;
     }
     

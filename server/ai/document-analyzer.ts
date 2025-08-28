@@ -129,7 +129,8 @@ ${text}
 {
   "dados_extraidos": {
     "contraparte": "Nome da empresa/pessoa (ex: Uber, Posto Shell, João Silva)",
-    "cnpj": "CNPJ da empresa se identificado (formato XX.XXX.XXX/XXXX-XX)",
+    "documento": "CPF ou CNPJ se identificado (apenas números: 12345678901 ou 12345678000123)",
+    "tipo_documento_pessoa": "CPF ou CNPJ conforme o documento encontrado",
     "tipo_relacao": "SUPPLIER se estamos pagando para eles, CLIENT se eles estão pagando para nós",
     "descricao": "Descrição específica do serviço/produto",
     "valor": "Valor total pago (formato R$ XX,XX)",
@@ -142,7 +143,7 @@ ${text}
     "fornecedor": "Mesmo valor que contraparte (compatibilidade)"
   },
   "confianca": 85,
-  "raciocinio": "Explicação breve de como chegou às conclusões, se encontrou CNPJ, e por que é SUPPLIER ou CLIENT"
+  "raciocinio": "Explicação breve de como chegou às conclusões, se encontrou CPF/CNPJ, e por que é SUPPLIER ou CLIENT"
 }`;
   }
 

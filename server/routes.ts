@@ -33,7 +33,7 @@ const uploadDocumentSchema = z.object({
   documentType: z.enum(['PAGO', 'AGENDADO', 'EMITIR_BOLETO', 'EMITIR_NF']),
   contraparteId: z.string().uuid().optional(),
   contraparteName: z.string().min(1),
-  contraparteCnpj: z.string().optional(),
+  contraparteDocument: z.string().optional(),
   bankId: z.string().uuid().optional(),
   categoryId: z.string().uuid().optional(),
   costCenterId: z.string().uuid().optional(),
@@ -263,6 +263,8 @@ export async function registerRoutes(app: Express): Promise<Server> {
         suggestions = {
           amount: data.valor || '',
           supplier: data.fornecedor || '',
+          contraparte: data.contraparte || data.fornecedor || '',
+          documento: data.documento || '',
           description: data.descricao || '',
           dueDate: data.data_vencimento || '',
           paymentDate: data.data_pagamento || '',
