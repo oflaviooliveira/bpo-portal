@@ -11,6 +11,7 @@ const uploadDocumentSchema = z.object({
   documentType: z.enum(['PAGO', 'AGENDADO', 'EMITIR_BOLETO', 'EMITIR_NF']),
   amount: z.string().optional(),
   supplier: z.string().optional(),
+  description: z.string().optional(),
   notes: z.string().optional(),
   // Campos condicionais por tipo
   paymentDate: z.string().optional(),
@@ -68,8 +69,11 @@ export class DocumentUploadHandler {
         };
         
         if (validatedData.documentType === 'EMITIR_NF') {
-          issuerData.serviceCode = validatedData.serviceCode;
-          issuerData.serviceDescription = validatedData.serviceDescription;
+          issuerData = {
+            ...issuerData,
+            serviceCode: validatedData.serviceCode,
+            serviceDescription: validatedData.serviceDescription
+          };
         }
       }
 
@@ -87,6 +91,8 @@ export class DocumentUploadHandler {
         filePath: file.path,
         documentType: validatedData.documentType,
         amount: this.parseAmount(validatedData.amount || '') || '0',
+        supplier: validatedData.supplier,
+        description: validatedData.description,
         dueDate: this.parseDate(validatedData.dueDate || ''),
         paidDate: this.parseDate(validatedData.paymentDate || ''),
         issuerData,

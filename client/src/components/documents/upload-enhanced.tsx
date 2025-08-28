@@ -23,7 +23,8 @@ const uploadSchema = z.object({
   categoryId: z.string().min(1, "Categoria é obrigatória"),
   costCenterId: z.string().min(1, "Centro de custo é obrigatório"),
   amount: z.string().min(1, "Valor é obrigatório"),
-  supplier: z.string().min(1, "Fornecedor/Descrição é obrigatório"),
+  supplier: z.string().min(1, "Fornecedor é obrigatório"),
+  description: z.string().min(1, "Descrição é obrigatória"),
   notes: z.string().optional(),
   // Campos condicionais
   paymentDate: z.string().optional(),
@@ -131,6 +132,11 @@ export function UploadEnhanced() {
           if (data.suggestions.supplier) {
             setValue("supplier", data.suggestions.supplier);
             suggestions.push({ field: 'supplier', value: data.suggestions.supplier, confidence: data.suggestions.confidence?.supplier || 0.8 });
+          }
+          
+          if (data.suggestions.description) {
+            setValue("description", data.suggestions.description);
+            suggestions.push({ field: 'description', value: data.suggestions.description, confidence: data.suggestions.confidence?.description || 0.75 });
           }
           
           if (data.suggestions.dueDate) {
@@ -685,7 +691,7 @@ export function UploadEnhanced() {
                 </div>
               </div>
 
-              <div className="grid grid-cols-2 gap-4">
+              <div className="grid grid-cols-3 gap-4">
                 <div>
                   <Label htmlFor="amount" className="flex items-center">
                     Valor *
@@ -705,18 +711,35 @@ export function UploadEnhanced() {
 
                 <div>
                   <Label htmlFor="supplier" className="flex items-center">
-                    Fornecedor/Descrição *
+                    Fornecedor *
                     {getSuggestionBadge('supplier')}
                   </Label>
                   <Input
                     id="supplier"
                     {...register("supplier")}
-                    placeholder="Uber"
+                    placeholder="Uber, Posto Shell, Locadora X"
                     className={isFieldSuggested('supplier') ? 'border-blue-300 bg-blue-50' : ''}
                     data-testid="input-supplier"
                   />
                   {errors.supplier && (
                     <p className="text-sm text-red-600 mt-1">{errors.supplier.message}</p>
+                  )}
+                </div>
+
+                <div>
+                  <Label htmlFor="description" className="flex items-center">
+                    Descrição *
+                    {getSuggestionBadge('description')}
+                  </Label>
+                  <Input
+                    id="description"
+                    {...register("description")}
+                    placeholder="Corrida 01/05 - Centro ao Aeroporto"
+                    className={isFieldSuggested('description') ? 'border-blue-300 bg-blue-50' : ''}
+                    data-testid="input-description"
+                  />
+                  {errors.description && (
+                    <p className="text-sm text-red-600 mt-1">{errors.description.message}</p>
                   )}
                 </div>
               </div>

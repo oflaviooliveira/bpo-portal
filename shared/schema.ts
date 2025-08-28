@@ -89,6 +89,8 @@ export const documents = pgTable("documents", {
   // Business data - Tipos conforme PRD
   documentType: varchar("document_type", { length: 50 }).notNull(), // PAGO, AGENDADO, EMITIR_BOLETO, EMITIR_NF
   amount: decimal("amount", { precision: 15, scale: 2 }),
+  supplier: varchar("supplier", { length: 255 }), // Nome do fornecedor/cliente (ex: Uber, Posto Shell)
+  description: text("description"), // Descrição detalhada (ex: Corrida 01/05 - Centro ao Aeroporto)
   dueDate: timestamp("due_date"),
   paidDate: timestamp("paid_date"),
   

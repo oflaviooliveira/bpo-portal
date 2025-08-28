@@ -601,6 +601,16 @@ export async function registerRoutes(app: Express): Promise<Server> {
             confidence.supplier = 0.60;
           }
         }
+        
+        // Buscar descrição do serviço/produto
+        if (!suggestions.description) {
+          const descRegex = /(?:DESCRIÇÃO|PRODUTO|SERVIÇO|HISTÓRICO)[\s:]*([A-Za-z0-9\s\-\/]{5,50})/gi;
+          const descMatch = text.match(descRegex);
+          if (descMatch) {
+            suggestions.description = descMatch[0].replace(/.*?([A-Za-z0-9\s\-\/]{5,50})/, '$1').trim();
+            confidence.description = 0.55;
+          }
+        }
       }
 
       // 4. Limpar arquivo temporário
