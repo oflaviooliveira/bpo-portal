@@ -34,7 +34,7 @@ class AIMultiProvider {
       priority: 1,
       costPer1000: 0.0002,
       status: 'online',
-      model: 'GLM-4-Plus',
+      model: 'glm-4-plus',
       temperature: 0.1,
       maxTokens: 1500
     },
@@ -178,7 +178,7 @@ class AIMultiProvider {
           'Content-Type': 'application/json',
         },
         body: JSON.stringify({
-          model: 'GLM-4-Plus',
+          model: 'glm-4-plus',
           messages: [
             {
               role: 'system',
@@ -218,7 +218,7 @@ class AIMultiProvider {
       const tokenCount = this.estimateTokenCount(prompt + aiResponse);
       
       return {
-        provider: 'GLM-4-Plus',
+        provider: 'glm-4-plus',
         extractedData,
         rawResponse: aiResponse,
         confidence: extractedData.confidence || 85,

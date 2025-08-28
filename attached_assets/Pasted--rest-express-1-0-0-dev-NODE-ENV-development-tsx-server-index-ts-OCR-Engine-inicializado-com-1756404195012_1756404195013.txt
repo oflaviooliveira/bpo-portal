@@ -1,0 +1,454 @@
+
+> rest-express@1.0.0 dev
+> NODE_ENV=development tsx server/index.ts
+
+🔧 OCR Engine inicializado com 7 estratégias
+🚀 AdvancedOcrProcessor inicializado com sistema completo de fallbacks
+🔧 OCR Engine inicializado com 7 estratégias
+🚀 AdvancedOcrProcessor inicializado com sistema completo de fallbacks
+📅 Configurando transições automáticas de status...
+🔄 Executando transições automáticas...
+⚠️ Auto-transitions temporarily disabled - need tenant-specific processing
+✅ Transições automáticas configuradas
+6:00:19 PM [express] serving on port 5000
+Browserslist: browsers data (caniuse-lite) is 10 months old. Please run:
+  npx update-browserslist-db@latest
+  Why you should do it regularly: https://github.com/browserslist/update-db#readme
+6:00:24 PM [express] GET /api/user 401 in 2ms
+6:00:27 PM [express] GET /api/user 304 in 128ms :: {"id":"59eb9f78-8dc1-4739-b357-2d44ee79cf24","use…
+6:00:27 PM [express] GET /api/documents 304 in 184ms :: [{"id":"cb2e16c8-74d6-4cfc-9eda-ed12be303224…
+6:00:27 PM [express] GET /api/dashboard/stats 304 in 272ms :: {"totalDocuments":1,"pendingReview":0,…
+6:00:31 PM [express] GET /api/ai-control/recent-documents 304 in 167ms :: {"recentDocuments":[],"las…
+6:00:31 PM [express] GET /api/ai-control/analytics 304 in 170ms :: {"timeline":[{"date":"2025-07-30"…
+6:00:31 PM [express] GET /api/ai-control 200 in 175ms :: {"providers":[{"name":"glm","enabled":true,…
+6:00:57 PM [express] POST /api/ai-control/toggle-provider 200 in 270ms :: {"success":true,"providerN…
+6:00:57 PM [express] GET /api/ai-control 200 in 170ms :: {"providers":[{"name":"glm","enabled":true,…
+6:01:01 PM [express] GET /api/ai-control/recent-documents 304 in 169ms :: {"recentDocuments":[],"las…
+6:01:06 PM [express] GET /api/contrapartes 304 in 192ms :: [{"id":"07503431-381b-4c56-9d69-09c5f8400…
+6:01:06 PM [express] GET /api/categories 304 in 328ms :: [{"id":"3765df3d-d887-42d0-972b-318d5cb0c5b…
+6:01:06 PM [express] GET /api/cost-centers 304 in 325ms :: [{"id":"84f9e046-e796-44e9-83e4-9708fa719…
+6:01:06 PM [express] GET /api/banks 304 in 331ms :: [{"id":"ec72d976-205a-474c-8282-0c4bee085de8","c…
+🔍 Processando arquivo para preview: 13.08.2025-PG-GUIA FGTS-COLABORADOR VITOR HUGO-R$75,71.pdf
+📄 Iniciando extração de texto PDF: uploads/3c2b4b38e8f04ae7c0816c1dc65da297
+Warning: Indexing all PDF objects
+⚠️ Extração via imagem HD falhou: Error: Command failed: pdftoppm -f 1 -l 1 -png -r 300 "uploads/3c2b4b38e8f04ae7c0816c1dc65da297" "uploads/3c2b4b38e8f04ae7c0816c1dc65da297_temp"
+/bin/sh: 1: pdftoppm: not found
+
+⚠️ Extração via imagem média falhou: Error: Command failed: pdftoppm -f 1 -l 1 -png -r 150 "uploads/3c2b4b38e8f04ae7c0816c1dc65da297" "uploads/3c2b4b38e8f04ae7c0816c1dc65da297_temp"
+/bin/sh: 1: pdftoppm: not found
+
+✅ Extração via Ghostscript bem-sucedida: 1299 caracteres
+🤖 Analisando documento com IA: 13.08.2025-PG-GUIA FGTS-COLABORADOR VITOR HUGO-R$75,71.pdf
+📝 Texto extraído (1299 chars): Ç FGT S GFD - Guia do FGTS Digital
+Digital
+Pagar este documento até
+CPF/CNPJ do Empregador Nome /Razão Soclal do Empregador 15 Vá O 8 / 20? 5
+24.824.109 || ECO EXPRESS SERVICOS SUSTENTAVEIS LTDA às 21...
+🔄 Usando AI Multi-Provider para análise...
+🤖 Tentando análise com glm...
+GLM API error 400: {"error":{"code":"1211","message":"Unknown Model, please check the model code."}}
+GLM analysis error: Error: GLM API error: 400 - {"error":{"code":"1211","message":"Unknown Model, please check the model code."}}
+    at AIMultiProvider.analyzeWithGLM (/home/runner/workspace/server/ai-multi-provider.ts:193:15)
+    at process.processTicksAndRejections (node:internal/process/task_queues:95:5)
+    at async AIMultiProvider.analyzeDocument (/home/runner/workspace/server/ai-multi-provider.ts:76:20)
+    at async DocumentAnalyzer.analyzeDocument (/home/runner/workspace/server/ai/document-analyzer.ts:82:24)
+    at async <anonymous> (/home/runner/workspace/server/routes.ts:246:22)
+⚠️ Falha com glm: Error: GLM API error: 400 - {"error":{"code":"1211","message":"Unknown Model, please check the model code."}}
+    at AIMultiProvider.analyzeWithGLM (/home/runner/workspace/server/ai-multi-provider.ts:193:15)
+    at process.processTicksAndRejections (node:internal/process/task_queues:95:5)
+    at async AIMultiProvider.analyzeDocument (/home/runner/workspace/server/ai-multi-provider.ts:76:20)
+    at async DocumentAnalyzer.analyzeDocument (/home/runner/workspace/server/ai/document-analyzer.ts:82:24)
+    at async <anonymous> (/home/runner/workspace/server/routes.ts:246:22)
+❌ Erro na análise com IA: Error: Todos os provedores de IA falharam. Último erro: GLM API error: 400 - {"error":{"code":"1211","message":"Unknown Model, please check the model code."}}
+⚠️ IA não retornou dados válidos: {
+  success: false,
+  confidence: 0,
+  error: 'Erro na análise: Error: Todos os provedores de IA falharam. Último erro: GLM API error: 400 - {"error":{"code":"1211","message":"Unknown Model, please check the model code."}}'
+}
+6:01:17 PM [express] POST /api/documents/process-file 200 in 6230ms :: {"success":true,"ocrText":"Ç …
+6:01:23 PM [express] GET /api/user 304 in 126ms :: {"id":"59eb9f78-8dc1-4739-b357-2d44ee79cf24","use…
+6:01:23 PM [express] GET /api/documents 304 in 226ms :: [{"id":"cb2e16c8-74d6-4cfc-9eda-ed12be303224…
+6:01:23 PM [express] GET /api/dashboard/stats 304 in 257ms :: {"totalDocuments":1,"pendingReview":0,…
+6:01:23 PM [express] GET /api/user 304 in 185ms :: {"id":"59eb9f78-8dc1-4739-b357-2d44ee79cf24","use…
+6:01:24 PM [express] GET /api/documents 304 in 175ms :: [{"id":"cb2e16c8-74d6-4cfc-9eda-ed12be303224…
+6:01:24 PM [express] GET /api/dashboard/stats 304 in 249ms :: {"totalDocuments":1,"pendingReview":0,…
+6:02:46 PM [vite] hmr update /src/pages/ai-control-unified.tsx, /src/index.css?v=Y7dwKL-iMEhwGndCVMOX1
+file:///home/runner/workspace/node_modules/@neondatabase/serverless/index.mjs:395
+0&&(o=t[0]),o instanceof Error)throw o;var u=new Error("Unhandled error."+(o?" ("+
+                               ^
+
+error: terminating connection due to administrator command
+    at cn.parseErrorMessage (file:///home/runner/workspace/node_modules/@neondatabase/serverless/index.mjs:1182:6)
+    at cn.handlePacket (file:///home/runner/workspace/node_modules/@neondatabase/serverless/index.mjs:1143:13)
+    at cn.parse (file:///home/runner/workspace/node_modules/@neondatabase/serverless/index.mjs:1127:36)
+    at v.<anonymous> (file:///home/runner/workspace/node_modules/@neondatabase/serverless/index.mjs:1190:16)
+    at v.emit (file:///home/runner/workspace/node_modules/@neondatabase/serverless/index.mjs:397:12)
+    at WebSocket.<anonymous> (file:///home/runner/workspace/node_modules/@neondatabase/serverless/index.mjs:987:80)
+    at callListener (/home/runner/workspace/node_modules/ws/lib/event-target.js:290:14)
+    at WebSocket.onMessage (/home/runner/workspace/node_modules/ws/lib/event-target.js:209:9)
+    at WebSocket.emit (node:events:524:28)
+    at Receiver.receiverOnMessage (/home/runner/workspace/node_modules/ws/lib/websocket.js:1220:20)
+    at Receiver.emit (node:events:524:28)
+    at Receiver.dataMessage (/home/runner/workspace/node_modules/ws/lib/receiver.js:569:14)
+    at Receiver.getData (/home/runner/workspace/node_modules/ws/lib/receiver.js:496:10)
+    at Receiver.startLoop (/home/runner/workspace/node_modules/ws/lib/receiver.js:167:16)
+    at Receiver._write (/home/runner/workspace/node_modules/ws/lib/receiver.js:94:10)
+    at writeOrBuffer (node:internal/streams/writable:572:12)
+    at _write (node:internal/streams/writable:501:10)
+    at Writable.write (node:internal/streams/writable:510:10)
+    at TLSSocket.socketOnData (/home/runner/workspace/node_modules/ws/lib/websocket.js:1355:35)
+    at TLSSocket.emit (node:events:524:28)
+    at addChunk (node:internal/streams/readable:561:12)
+    at readableAddChunkPushByteMode (node:internal/streams/readable:512:3)
+    at Readable.push (node:internal/streams/readable:392:5)
+    at TLSWrap.onStreamRead (node:internal/stream_base_commons:191:23) {
+  length: 116,
+  severity: 'FATAL',
+  code: '57P01',
+  detail: undefined,
+  hint: undefined,
+  position: undefined,
+  internalPosition: undefined,
+  internalQuery: undefined,
+  where: undefined,
+  schema: undefined,
+  table: undefined,
+  column: undefined,
+  dataType: undefined,
+  constraint: undefined,
+  file: 'postgres.c',
+  line: '3289',
+  routine: 'ProcessInterrupts',
+  client: NeonClient {
+    _events: [Object: null prototype] { error: [Function (anonymous)] },
+    _eventsCount: 1,
+    _maxListeners: undefined,
+    connectionParameters: ConnectionParameters {
+      user: 'neondb_owner',
+      database: 'neondb',
+      port: 5432,
+      host: 'ep-super-thunder-a69hvwmn.us-west-2.aws.neon.tech',
+      binary: false,
+      options: undefined,
+      ssl: {},
+      client_encoding: '',
+      replication: undefined,
+      isDomainSocket: false,
+      application_name: undefined,
+      fallback_application_name: undefined,
+      statement_timeout: false,
+      lock_timeout: false,
+      idle_in_transaction_session_timeout: false,
+      query_timeout: false,
+      connect_timeout: 0
+    },
+    user: 'neondb_owner',
+    database: 'neondb',
+    port: 5432,
+    host: 'ep-super-thunder-a69hvwmn.us-west-2.aws.neon.tech',
+    replication: undefined,
+    _Promise: [Function: Promise],
+    _types: TypeOverrides {
+      _types: {
+        getTypeParser: [Function: getTypeParser],
+        setTypeParser: [Function: setTypeParser],
+        arrayParser: { create: [Function: create] },
+        builtins: {
+          BOOL: 16,
+          BYTEA: 17,
+          CHAR: 18,
+          INT8: 20,
+          INT2: 21,
+          INT4: 23,
+          REGPROC: 24,
+          TEXT: 25,
+          OID: 26,
+          TID: 27,
+          XID: 28,
+          CID: 29,
+          JSON: 114,
+          XML: 142,
+          PG_NODE_TREE: 194,
+          SMGR: 210,
+          PATH: 602,
+          POLYGON: 604,
+          CIDR: 650,
+          FLOAT4: 700,
+          FLOAT8: 701,
+          ABSTIME: 702,
+          RELTIME: 703,
+          TINTERVAL: 704,
+          CIRCLE: 718,
+          MACADDR8: 774,
+          MONEY: 790,
+          MACADDR: 829,
+          INET: 869,
+          ACLITEM: 1033,
+          BPCHAR: 1042,
+          VARCHAR: 1043,
+          DATE: 1082,
+          TIME: 1083,
+          TIMESTAMP: 1114,
+          TIMESTAMPTZ: 1184,
+          INTERVAL: 1186,
+          TIMETZ: 1266,
+          BIT: 1560,
+          VARBIT: 1562,
+          NUMERIC: 1700,
+          REFCURSOR: 1790,
+          REGPROCEDURE: 2202,
+          REGOPER: 2203,
+          REGOPERATOR: 2204,
+          REGCLASS: 2205,
+          REGTYPE: 2206,
+          UUID: 2950,
+          TXID_SNAPSHOT: 2970,
+          PG_LSN: 3220,
+          PG_NDISTINCT: 3361,
+          PG_DEPENDENCIES: 3402,
+          TSVECTOR: 3614,
+          TSQUERY: 3615,
+          GTSVECTOR: 3642,
+          REGCONFIG: 3734,
+          REGDICTIONARY: 3769,
+          JSONB: 3802,
+          REGNAMESPACE: 4089,
+          REGROLE: 4096
+        }
+      },
+      text: {},
+      binary: {}
+    },
+    _ending: true,
+    _connecting: false,
+    _connected: true,
+    _connectionError: false,
+    _queryable: false,
+    connection: Connection {
+      _events: [Object: null prototype] {
+        newListener: [Function (anonymous)],
+        connect: [ [Function (anonymous)], [Function (anonymous)] ],
+        sslconnect: [Function (anonymous)],
+        authenticationMD5Password: [Function: bound _handleAuthMD5Password],
+        authenticationSASL: [Function: bound _handleAuthSASL],
+        authenticationSASLContinue: [Function: bound _handleAuthSASLContinue] AsyncFunction,
+        authenticationSASLFinal: [Function: bound _handleAuthSASLFinal],
+        backendKeyData: [Function: bound _handleBackendKeyData],
+        error: [Function: bound _handleErrorEvent],
+        errorMessage: [Function: bound _handleErrorMessage],
+        notice: [Function: bound _handleNotice],
+        rowDescription: [Function: bound _handleRowDescription],
+        dataRow: [Function: bound _handleDataRow],
+        portalSuspended: [Function: bound _handlePortalSuspended],
+        emptyQuery: [Function: bound _handleEmptyQuery],
+        commandComplete: [Function: bound _handleCommandComplete],
+        parseComplete: [Function: bound _handleParseComplete],
+        copyInResponse: [Function: bound _handleCopyInResponse],
+        copyData: [Function: bound _handleCopyData],
+        notification: [Function: bound _handleNotification],
+        end: [
+          [Function: bound onceWrapper] {
+            listener: [Function (anonymous)]
+          },
+          [Function: bound onceWrapper] {
+            listener: [Function (anonymous)]
+          }
+        ],
+        readyForQuery: [Function: bound _handleReadyForQuery]
+      },
+      _eventsCount: 22,
+      _maxListeners: undefined,
+      stream: Socket {
+        _events: [Object: null prototype] {
+          error: [Function: reportStreamError],
+          close: [Function (anonymous)],
+          end: [ [Function (anonymous)], [Function (anonymous)] ],
+          data: [Function (anonymous)]
+        },
+        _eventsCount: 4,
+        _maxListeners: undefined,
+        opts: {},
+        connecting: false,
+        pending: false,
+        writable: true,
+        encrypted: false,
+        authorized: false,
+        destroyed: true,
+        ws: <ref *1> WebSocket {
+          _events: [Object: null prototype] {
+            error: [Function],
+            message: [Function],
+            close: [Function],
+            open: [Function]
+          },
+          _eventsCount: 4,
+          _maxListeners: undefined,
+          _binaryType: 'arraybuffer',
+          _closeCode: 1006,
+          _closeFrameReceived: false,
+          _closeFrameSent: false,
+          _closeMessage: Buffer(0) [Uint8Array] [],
+          _closeTimer: Timeout {
+            _idleTimeout: 30000,
+            _idlePrev: [TimersList],
+            _idleNext: [Timeout],
+            _idleStart: 150527,
+            _onTimeout: [Function: bound ],
+            _timerArgs: undefined,
+            _repeat: null,
+            _destroyed: false,
+            [Symbol(refed)]: true,
+            [Symbol(kHasPrimitive)]: false,
+            [Symbol(asyncId)]: 11641,
+            [Symbol(triggerId)]: 11420
+          },
+          _errorEmitted: false,
+          _extensions: {},
+          _paused: false,
+          _protocol: '',
+          _readyState: 2,
+          _receiver: Receiver {
+            _events: [Object],
+            _writableState: [WritableState],
+            _maxListeners: undefined,
+            _allowSynchronousEvents: true,
+            _binaryType: 'arraybuffer',
+            _extensions: {},
+            _isServer: false,
+            _maxPayload: 104857600,
+            _skipUTF8Validation: false,
+            _bufferedBytes: 0,
+            _buffers: [],
+            _compressed: false,
+            _payloadLength: 117,
+            _mask: undefined,
+            _fragmented: 0,
+            _masked: false,
+            _fin: true,
+            _opcode: 2,
+            _totalPayloadLength: 0,
+            _messageLength: 0,
+            _fragments: [],
+            _errored: false,
+            _loop: true,
+            _state: 4,
+            _eventsCount: 6,
+            [Symbol(shapeMode)]: true,
+            [Symbol(kCapture)]: false,
+            [Symbol(websocket)]: [Circular *1]
+          },
+          _sender: Sender {
+            _extensions: {},
+            _socket: [TLSSocket],
+            _firstFragment: true,
+            _compress: false,
+            _bufferedBytes: 0,
+            _queue: [],
+            _state: 0,
+            onerror: [Function: senderOnError],
+            [Symbol(websocket)]: [Circular *1]
+          },
+          _socket: TLSSocket {
+            _tlsOptions: [Object],
+            _secureEstablished: true,
+            _securePending: false,
+            _newSessionPending: false,
+            _controlReleased: true,
+            secureConnecting: false,
+            _SNICallback: null,
+            servername: 'ep-super-thunder-a69hvwmn.us-west-2.aws.neon.tech',
+            alpnProtocol: false,
+            authorized: true,
+            authorizationError: null,
+            encrypted: true,
+            _events: [Object: null prototype],
+            _eventsCount: 6,
+            connecting: false,
+            _hadError: false,
+            _parent: null,
+            _host: 'ep-super-thunder-a69hvwmn.us-west-2.aws.neon.tech',
+            _closeAfterHandlingError: false,
+            _readableState: [ReadableState],
+            _writableState: [WritableState],
+            allowHalfOpen: false,
+            _maxListeners: undefined,
+            _sockname: null,
+            _pendingData: null,
+            _pendingEncoding: '',
+            server: undefined,
+            _server: null,
+            ssl: [TLSWrap],
+            _requestCert: true,
+            _rejectUnauthorized: true,
+            parser: null,
+            _httpMessage: null,
+            autoSelectFamilyAttemptedAddresses: [Array],
+            timeout: 0,
+            [Symbol(alpncallback)]: null,
+            [Symbol(res)]: [TLSWrap],
+            [Symbol(verified)]: true,
+            [Symbol(pendingSession)]: null,
+            [Symbol(async_id_symbol)]: 11420,
+            [Symbol(kHandle)]: [TLSWrap],
+            [Symbol(lastWriteQueueSize)]: 6,
+            [Symbol(timeout)]: null,
+            [Symbol(kBuffer)]: null,
+            [Symbol(kBufferCb)]: null,
+            [Symbol(kBufferGen)]: null,
+            [Symbol(shapeMode)]: true,
+            [Symbol(kCapture)]: false,
+            [Symbol(kSetNoDelay)]: true,
+            [Symbol(kSetKeepAlive)]: false,
+            [Symbol(kSetKeepAliveInitialDelay)]: 0,
+            [Symbol(kBytesRead)]: 0,
+            [Symbol(kBytesWritten)]: 0,
+            [Symbol(connect-options)]: [Object],
+            [Symbol(websocket)]: [Circular *1]
+          },
+          _bufferedAmount: 0,
+          _isServer: false,
+          _redirects: 0,
+          _autoPong: true,
+          _url: 'wss://ep-super-thunder-a69hvwmn.us-west-2.aws.neon.tech/v2',
+          _req: null,
+          [Symbol(shapeMode)]: false,
+          [Symbol(kCapture)]: false
+        },
+        writeBuffer: undefined,
+        tlsState: 0,
+        tlsRead: undefined,
+        tlsWrite: undefined
+      },
+      _keepAlive: false,
+      _keepAliveInitialDelayMillis: 0,
+      lastBuffer: false,
+      parsedStatements: {},
+      ssl: false,
+      _ending: true,
+      _emitMessage: false,
+      _connecting: true
+    },
+    queryQueue: [],
+    binary: false,
+    processID: 1984659264,
+    secretKey: 1202061049,
+    ssl: false,
+    _connectionTimeoutMillis: 0,
+    config: {
+      connectionString: 'postgresql://neondb_owner:npg_ZWp2fIabxk8s@ep-super-thunder-a69hvwmn.us-west-2.aws.neon.tech/neondb?sslmode=require',
+      max: 10,
+      maxUses: Infinity,
+      allowExitOnIdle: false,
+      maxLifetimeSeconds: 0,
+      idleTimeoutMillis: 10000
+    },
+    _connectionCallback: null,
+    release: [Function (anonymous)],
+    activeQuery: null,
+    readyForQuery: true,
+    hasExecuted: true,
+    _poolUseCount: 3
+  }
+}
+
+Node.js v20.19.3
