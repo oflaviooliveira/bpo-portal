@@ -52,11 +52,18 @@ interface SuggestedField {
   confidence: number;
 }
 
+interface OcrPreview {
+  text: string;
+  confidence: number;
+  strategy: string;
+}
+
 export function UploadEnhanced() {
   const [selectedFile, setSelectedFile] = useState<File | null>(null);
   const [processingState, setProcessingState] = useState<ProcessingState>({ stage: 'idle', message: '' });
   const [suggestedFields, setSuggestedFields] = useState<SuggestedField[]>([]);
   const [isDragOver, setIsDragOver] = useState(false);
+  const [ocrPreview, setOcrPreview] = useState<OcrPreview | null>(null);
   const { toast } = useToast();
   const queryClient = useQueryClient();
 
@@ -118,6 +125,15 @@ export function UploadEnhanced() {
     onSuccess: (data) => {
       setProcessingState({ stage: 'suggesting', message: 'Sugerindo campos com base na análise...' });
       
+      // Mostrar preview do OCR se disponível
+      if (data.ocrText && data.ocrText.length > 20) {
+        setOcrPreview({
+          text: data.ocrText,
+          confidence: data.ocrResult?.confidence || 0,
+          strategy: data.ocrResult?.strategy || 'unknown'
+        });
+      }
+      
       // Simular delay para UX
       setTimeout(() => {
         // Auto-preencher campos sugeridos
@@ -169,7 +185,7 @@ export function UploadEnhanced() {
   // Upload final do documento
   const uploadMutation = useMutation({
     mutationFn: async (formData: FormData) => {
-      const response = await fetch("/api/documents", {
+      const response = await fetch("/api/documents/upload", {
         method: "POST",
         body: formData,
       });
@@ -200,6 +216,7 @@ export function UploadEnhanced() {
       reset();
       setSelectedFile(null);
       setSuggestedFields([]);
+      setOcrPreview(null);
       setProcessingState({ stage: 'idle', message: '' });
       
       // Invalidar cache
@@ -574,6 +591,38 @@ export function UploadEnhanced() {
           <strong> Dica:</strong> Nomeie o arquivo com dados do documento para melhor precisão
         </AlertDescription>
       </Alert>
+
+      {/* OCR Preview */}
+      {ocrPreview && (
+        <Card>
+          <CardHeader className="pb-3">
+            <CardTitle className="flex items-center gap-2">
+              <FileText className="h-5 w-5" />
+              Texto Extraído do Documento
+              <Badge variant={ocrPreview.confidence > 80 ? 'default' : ocrPreview.confidence > 50 ? 'secondary' : 'destructive'}>
+                {Math.round(ocrPreview.confidence)}% confiança
+              </Badge>
+              <Badge variant="outline" className="text-xs">
+                {ocrPreview.strategy}
+              </Badge>
+            </CardTitle>
+          </CardHeader>
+          <CardContent>
+            <div className="bg-muted/50 p-4 rounded-lg">
+              <Textarea
+                value={ocrPreview.text}
+                readOnly
+                rows={4}
+                className="resize-none text-sm font-mono bg-transparent border-none shadow-none"
+                placeholder="Texto extraído aparecerá aqui..."
+              />
+            </div>
+            <p className="text-xs text-muted-foreground mt-2">
+              Este texto foi extraído automaticamente. Os campos abaixo foram preenchidos com base nesta análise.
+            </p>
+          </CardContent>
+        </Card>
+      )}
 
       {/* Formulário */}
       {selectedFile && processingState.stage !== 'processing' && processingState.stage !== 'suggesting' && (

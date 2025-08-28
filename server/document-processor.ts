@@ -3,13 +3,19 @@ import { aiMultiProvider } from "./ai-multi-provider";
 import { storage } from "./storage";
 import { inconsistencyDetector } from "./inconsistency-detector";
 import { AdvancedOcrProcessor } from "./ocr-processor-advanced";
+import { PdfTextExtractor } from "./ocr/pdf-extractor";
+import { DocumentAnalyzer } from "./ai/document-analyzer";
 
 export class DocumentProcessor {
   private advancedOcrProcessor: AdvancedOcrProcessor;
+  private pdfExtractor: PdfTextExtractor;
+  private documentAnalyzer: DocumentAnalyzer;
 
   constructor() {
     // No need for API key - using multi-provider system
     this.advancedOcrProcessor = new AdvancedOcrProcessor(storage);
+    this.pdfExtractor = new PdfTextExtractor();
+    this.documentAnalyzer = new DocumentAnalyzer();
   }
 
   async processDocument(documentId: string, tenantId: string) {
@@ -36,9 +42,9 @@ export class DocumentProcessor {
 
       console.log(`📄 Processando: ${document.originalName}`);
 
-      // 3. Processamento OCR Avançado
-      console.log("🔍 Iniciando OCR avançado com fallbacks...");
-      const ocrResult = await this.performAdvancedOCR(document.filePath, documentId, tenantId);
+      // 3. Processamento OCR Melhorado
+      console.log("🔍 Iniciando OCR melhorado com extração de PDF...");
+      const ocrResult = await this.performEnhancedOCR(document.filePath, document.originalName, documentId, tenantId);
       
       await storage.createDocumentLog({
         documentId,
@@ -53,9 +59,9 @@ export class DocumentProcessor {
         },
       });
 
-      // 4. Análise com IA Multi-Provider
-      console.log("🤖 Iniciando análise IA multi-provider...");
-      const aiResult = await this.performAIAnalysis(ocrResult.text, document);
+      // 4. Análise com IA Melhorada
+      console.log("🤖 Iniciando análise IA melhorada...");
+      const aiResult = await this.performEnhancedAIAnalysis(ocrResult.text, document.originalName, documentId, tenantId);
       
       await storage.createDocumentLog({
         documentId,
@@ -182,7 +188,62 @@ export class DocumentProcessor {
     }
   }
 
-  // Novo método OCR avançado
+  // Método OCR Melhorado com PDF Extraction
+  private async performEnhancedOCR(filePath: string, filename: string, documentId: string, tenantId: string) {
+    try {
+      console.log(`🚀 Iniciando OCR melhorado para: ${filename}`);
+      
+      // Primeiro tentar extração de PDF melhorada
+      if (filename.toLowerCase().endsWith('.pdf')) {
+        console.log(`📄 Detectado PDF, usando extrator otimizado...`);
+        const pdfResult = await this.pdfExtractor.extractText(filePath);
+        
+        if (pdfResult.success && pdfResult.text && pdfResult.text.length > 20) {
+          console.log(`✅ PDF extraction bem-sucedida: ${pdfResult.method}, confiança: ${pdfResult.confidence}%`);
+          
+          // Salvar métricas OCR
+          await storage.createOcrMetrics({
+            documentId,
+            tenantId,
+            strategyUsed: pdfResult.method,
+            success: true,
+            processingTimeMs: 0, // TODO: medir tempo
+            characterCount: pdfResult.text.length,
+            confidence: pdfResult.confidence,
+            fallbackLevel: 0,
+            metadata: { method: pdfResult.method }
+          });
+          
+          return {
+            text: pdfResult.text,
+            confidence: pdfResult.confidence / 100,
+            strategy: pdfResult.method,
+            strategiesAttempted: 1,
+            processingTime: 0
+          };
+        }
+      }
+      
+      // Fallback para OCR avançado se PDF extraction falhar
+      console.log(`📷 Usando OCR avançado como fallback...`);
+      const result = await this.advancedOcrProcessor.processDocument(filePath, documentId, tenantId);
+
+      console.log(`✅ OCR avançado concluído. Estratégia: ${result.strategy}, Confiança: ${result.confidence}%`);
+      
+      return {
+        text: result.text,
+        confidence: result.confidence / 100, // Normalizar para 0-1
+        strategy: result.strategy,
+        strategiesAttempted: result.strategiesAttempted,
+        processingTime: result.processingTime,
+      };
+    } catch (error) {
+      console.error("❌ Erro no OCR melhorado:", error);
+      throw new Error(`Falha no OCR melhorado: ${error instanceof Error ? error.message : String(error)}`);
+    }
+  }
+
+  // Método OCR avançado original (mantido para compatibilidade)
   private async performAdvancedOCR(filePath: string, documentId: string, tenantId: string) {
     try {
       console.log(`🚀 Iniciando OCR avançado com fallbacks para: ${filePath}`);
@@ -202,6 +263,58 @@ export class DocumentProcessor {
     } catch (error) {
       console.error("❌ Erro no OCR:", error);
       throw new Error(`Falha no OCR: ${error instanceof Error ? error.message : String(error)}`);
+    }
+  }
+
+  // Método de análise IA melhorado
+  private async performEnhancedAIAnalysis(ocrText: string, filename: string, documentId: string, tenantId: string) {
+    try {
+      console.log(`🤖 Iniciando análise IA melhorada para: ${filename}`);
+      
+      // Usar o novo analisador de documentos melhorado
+      const result = await this.documentAnalyzer.analyzeDocument(ocrText, filename);
+      
+      if (result.success && result.extractedData) {
+        console.log(`✅ Análise IA bem-sucedida. Confiança: ${result.confidence}%`);
+        
+        // Validar dados extraídos
+        const validation = this.documentAnalyzer.validateExtractedData(result.extractedData);
+        if (!validation.isValid) {
+          console.warn(`⚠️ Dados extraídos com problemas: ${validation.errors.join(', ')}`);
+        }
+        
+        // Salvar métricas de IA
+        await storage.createAiMetrics({
+          documentId,
+          tenantId,
+          provider: 'gpt-4o-mini',
+          model: 'gpt-4o-mini',
+          success: true,
+          processingTimeMs: 0, // TODO: medir tempo
+          tokensUsed: 0, // TODO: contar tokens
+          cost: 0.001, // Estimativa
+          confidence: result.confidence,
+          extractedFields: Object.keys(result.extractedData),
+          metadata: { reasoning: result.reasoning }
+        });
+        
+        return {
+          provider: 'gpt-4o-mini-enhanced',
+          extractedData: result.extractedData,
+          rawResponse: result.reasoning || '',
+          confidence: result.confidence,
+          processingCost: 0.001
+        };
+      } else {
+        // Fallback para análise multi-provider original
+        console.log(`🔄 Usando análise multi-provider como fallback...`);
+        return await this.performAIAnalysis(ocrText, { originalName: filename, id: documentId, tenantId });
+      }
+    } catch (error) {
+      console.error("❌ Erro na análise IA melhorada:", error);
+      // Fallback para análise multi-provider original
+      console.log(`🔄 Usando análise multi-provider como fallback após erro...`);
+      return await this.performAIAnalysis(ocrText, { originalName: filename, id: documentId, tenantId });
     }
   }
 

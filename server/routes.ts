@@ -144,6 +144,122 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
+  // Process file for OCR + AI analysis endpoint (for preview)
+  app.post("/api/documents/process-file", ...authorize(["ADMIN", "GERENTE", "OPERADOR", "CLIENTE"], true), upload.single('file'), async (req, res) => {
+    try {
+      const user = req.user!;
+      const file = req.file;
+
+      if (!file) {
+        return res.status(400).json({ error: "Nenhum arquivo foi enviado" });
+      }
+
+      console.log(`🔍 Processando arquivo para preview: ${file.originalname}`);
+
+      // Import processors
+      const { PdfTextExtractor } = await import("./ocr/pdf-extractor");
+      const { DocumentAnalyzer } = await import("./ai/document-analyzer");
+      
+      const pdfExtractor = new PdfTextExtractor();
+      const documentAnalyzer = new DocumentAnalyzer();
+
+      let ocrResult: any = null;
+      let aiResult: any = null;
+
+      // 1. Extrair texto OCR
+      try {
+        if (file.originalname.toLowerCase().endsWith('.pdf')) {
+          ocrResult = await pdfExtractor.extractText(file.path);
+        } else {
+          // Para imagens, usar Tesseract
+          const { createWorker } = await import('tesseract.js');
+          const worker = await createWorker('por');
+          const { data: { text, confidence } } = await worker.recognize(file.path);
+          await worker.terminate();
+          
+          ocrResult = {
+            success: true,
+            text: text.trim(),
+            method: 'TESSERACT_IMAGE_OCR',
+            confidence: Math.round(confidence)
+          };
+        }
+      } catch (error) {
+        console.warn("⚠️ Erro no OCR:", error);
+        ocrResult = {
+          success: false,
+          error: `Erro no OCR: ${error}`,
+          method: 'FAILED',
+          confidence: 0
+        };
+      }
+
+      // 2. Analisar com IA se OCR foi bem-sucedido
+      if (ocrResult.success && ocrResult.text && ocrResult.text.length > 10) {
+        try {
+          aiResult = await documentAnalyzer.analyzeDocument(
+            ocrResult.text, 
+            file.originalname
+          );
+        } catch (error) {
+          console.warn("⚠️ Erro na análise IA:", error);
+          aiResult = {
+            success: false,
+            error: `Erro na IA: ${error}`,
+            confidence: 0
+          };
+        }
+      }
+
+      // 3. Mapear dados extraídos para formato esperado pelo frontend
+      let suggestions: any = {};
+      if (aiResult && aiResult.success && aiResult.extractedData) {
+        const data = aiResult.extractedData;
+        
+        suggestions = {
+          amount: data.valor,
+          supplier: data.fornecedor,
+          description: data.descricao,
+          dueDate: data.data_vencimento,
+          paymentDate: data.data_pagamento,
+          confidence: {
+            amount: aiResult.confidence,
+            supplier: aiResult.confidence,
+            description: aiResult.confidence,
+            dueDate: aiResult.confidence,
+            paymentDate: aiResult.confidence
+          }
+        };
+      }
+
+      // 4. Retornar dados para preview
+      res.json({
+        success: true,
+        ocrText: ocrResult?.text || '',
+        ocrResult: {
+          confidence: ocrResult?.confidence || 0,
+          strategy: ocrResult?.method || 'UNKNOWN',
+          success: ocrResult?.success || false
+        },
+        aiResult: {
+          success: aiResult?.success || false,
+          confidence: aiResult?.confidence || 0,
+          reasoning: aiResult?.reasoning
+        },
+        suggestions
+      });
+
+    } catch (error) {
+      console.error("❌ Erro no processamento do arquivo:", error);
+      res.status(500).json({ 
+        error: "Erro no processamento",
+        success: false,
+        ocrText: '',
+        suggestions: {}
+      });
+    }
+  });
+
   // Upload and process document - Wave 1 RBAC  
   app.post("/api/documents/upload", ...authorize(["ADMIN", "GERENTE", "OPERADOR", "CLIENTE"], true), upload.single('file'), async (req, res) => {
     try {
