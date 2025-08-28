@@ -283,7 +283,8 @@ export class DocumentProcessor {
           console.warn(`⚠️ Dados extraídos com problemas: ${validation.errors.join(', ')}`);
         }
         
-        // Salvar métricas de IA
+        // Salvar métricas de IA (comentado até implementação do método)
+        /*
         await storage.createAiMetrics({
           documentId,
           tenantId,
@@ -297,6 +298,7 @@ export class DocumentProcessor {
           extractedFields: Object.keys(result.extractedData),
           metadata: { reasoning: result.reasoning }
         });
+        */
         
         return {
           provider: 'gpt-4o-mini-enhanced',
@@ -433,13 +435,13 @@ export class DocumentProcessor {
 
       case "AGENDADO":
         return {
-          status: "AGENDAR", 
+          status: "AGENDADO", 
           updates: {
             processedAt: new Date(),
             extractedData: JSON.stringify(extractedData)
           },
           createTask: true,
-          taskType: "AGENDAR",
+          taskType: "AGENDAMENTO",
           taskData: { 
             dueDate: document.dueDate || extractedData?.data_vencimento,
             priority: "normal" 
