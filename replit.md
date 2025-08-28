@@ -106,6 +106,13 @@ Portal de BPO Financeiro com OCR/IA multi-provider para processamento automátic
 - EMITIR_BOLETO/NF: Campos específicos de emissão
 - Validação em tempo real com status visual
 
+✅ **Correções de Identificação de Fornecedor (28/08/2025)**:
+- NotaFiscalAnalyzer especializado para DANFE/NF-e
+- Identificação correta: Emitente = Fornecedor, Destinatário = Cliente  
+- CNPJ do emitente usado como documento do fornecedor
+- Integração no DocumentAnalyzer com fallback inteligente
+- Validação específica para notas fiscais brasileiras
+
 ## Próximos Passos (Finalizar Wave 1)
 1. Completar scoping operador-cliente
 2. Ativar transições automáticas

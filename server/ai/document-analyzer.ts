@@ -1,4 +1,5 @@
 import OpenAI from "openai";
+import { NotaFiscalAnalyzer } from "./nota-fiscal-analyzer";
 
 const openai = new OpenAI({ 
   apiKey: process.env.OPENAI_API_KEY || process.env.OPENAI_API_KEY_ENV_VAR || ""
@@ -8,13 +9,16 @@ export interface DocumentAnalysisResult {
   success: boolean;
   extractedData?: {
     fornecedor?: string;
+    contraparte?: string;
+    documento?: string;
+    tipo_documento_pessoa?: string;
+    tipo_relacao?: string;
     descricao?: string;
     valor?: string;
     data_vencimento?: string;
     data_pagamento?: string;
     categoria?: string;
     centro_custo?: string;
-
   };
   confidence: number;
   reasoning?: string;
@@ -44,6 +48,34 @@ export class DocumentAnalyzer {
     console.log(`📝 Texto extraído (${extractedText.length} chars): ${extractedText.substring(0, 200)}...`);
 
     try {
+      // Se for nota fiscal, usar analisador específico primeiro
+      if (NotaFiscalAnalyzer.isNotaFiscal(extractedText)) {
+        console.log("📋 Detectada nota fiscal - usando analisador especializado");
+        const nfData = NotaFiscalAnalyzer.analyzeNotaFiscal(extractedText);
+        
+        if (nfData) {
+          console.log(`✅ Nota fiscal analisada: Fornecedor=${nfData.fornecedor}, Valor=${nfData.valor}`);
+          return {
+            success: true,
+            extractedData: {
+              fornecedor: nfData.fornecedor,
+              contraparte: nfData.fornecedor,
+              documento: nfData.fornecedorCnpj,
+              tipo_documento_pessoa: "CNPJ",
+              tipo_relacao: "SUPPLIER",
+              descricao: nfData.descricao,
+              valor: nfData.valor,
+              data_vencimento: "",
+              data_pagamento: "",
+              categoria: "Produtos/Serviços",
+              centro_custo: ""
+            },
+            confidence: 95,
+            reasoning: `Nota fiscal analisada: Emitente identificado como fornecedor (${nfData.fornecedor}), CNPJ ${nfData.fornecedorCnpj}`
+          };
+        }
+      }
+
       const prompt = this.buildAnalysisPrompt(extractedText, filename, documentContext);
       
       const completion = await openai.chat.completions.create({
@@ -53,6 +85,12 @@ export class DocumentAnalyzer {
             role: "system",
             content: `Você é um especialista em análise de documentos financeiros brasileiros. 
             Sua tarefa é extrair informações estruturadas de recibos, notas fiscais, boletos e comprovantes de pagamento.
+            
+            REGRA CRÍTICA PARA NOTAS FISCAIS:
+            - O FORNECEDOR é sempre quem EMITE a nota fiscal (campo "RAZÃO SOCIAL" no cabeçalho do emitente)
+            - O CLIENTE é quem RECEBE a mercadoria/serviço (campo "DESTINATÁRIO/REMETENTE")  
+            - NUNCA confunda emitente com destinatário
+            - Use o CNPJ do EMITENTE como documento do fornecedor
             
             CRÍTICO: Sempre responda APENAS com JSON válido, sem markdown, sem explicações.
             Não use \`\`\`json ou qualquer formatação markdown na resposta.
@@ -118,12 +156,14 @@ ${context ? `- Contexto adicional: ${context}` : ''}
 ${text}
 
 **INSTRUÇÕES IMPORTANTES:**
-1. Extraia APENAS informações que estão claramente presentes no texto
-2. Para valores monetários, use o formato "R$ XX,XX" 
-3. Para datas, use o formato "DD/MM/AAAA"
-4. Se não encontrar uma informação, deixe o campo vazio ""
-5. Para descrição, seja específico e útil (ex: "Corrida Uber do Centro ao Aeroporto")
-6. RETORNE APENAS JSON VÁLIDO, sem markdown, sem \`\`\`json, sem explicações extras
+1. Para NOTAS FISCAIS (DANFE): O EMITENTE (topo do documento) é sempre o FORNECEDOR
+2. Para NOTAS FISCAIS: Use CNPJ e Razão Social do EMITENTE, nunca do destinatário
+3. Extraia APENAS informações que estão claramente presentes no texto
+4. Para valores monetários, use o formato "R$ XX,XX" 
+5. Para datas, use o formato "DD/MM/AAAA"
+6. Se não encontrar uma informação, deixe o campo vazio ""
+7. Para descrição, seja específico e útil (ex: "Corrida Uber do Centro ao Aeroporto")
+8. RETORNE APENAS JSON VÁLIDO, sem markdown, sem \`\`\`json, sem explicações extras
 
 **RESPOSTA ESPERADA (APENAS JSON PURO):**
 {
@@ -156,8 +196,8 @@ ${text}
     if (lowerFilename.includes('uber') || lowerText.includes('uber')) {
       return 'Recibo de transporte Uber';
     }
-    if (lowerFilename.includes('nota') || lowerText.includes('nota fiscal')) {
-      return 'Nota fiscal';
+    if (lowerFilename.includes('nota') || lowerText.includes('nota fiscal') || lowerText.includes('danfe')) {
+      return 'Nota fiscal eletrônica - LEMBRE: Emitente é o FORNECEDOR, Destinatário é o CLIENTE';
     }
     if (lowerFilename.includes('boleto') || lowerText.includes('boleto')) {
       return 'Boleto bancário';

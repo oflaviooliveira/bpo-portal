@@ -388,7 +388,7 @@ export class DocumentProcessor {
 
     // Usar o sistema inteligente de gestão de inconsistências para cada campo
     const smartInconsistencyManager = new SmartInconsistencyManager();
-    const intelligentErrors = [];
+    const intelligentErrors: Array<{ type: string; message: string; field?: string; smartRecommendation?: any }> = [];
 
     // Analisar campos críticos com recomendações inteligentes
     const criticalFields = ['amount', 'supplier', 'description', 'dueDate'];
