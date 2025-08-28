@@ -24,23 +24,37 @@ const AVAILABLE_MODELS = {
     { 
       id: 'gpt-4o-mini', 
       name: 'GPT-4o Mini', 
-      inputCost: 0.00015, // $0.15 per 1M tokens
-      outputCost: 0.0006, // $0.6 per 1M tokens
-      avgCost: 0.0004 // Average for pricing display
+      inputCost: 0.15, // $0.15 per 1M tokens (Standard)
+      outputCost: 0.60, // $0.60 per 1M tokens (Standard)
+      avgCost: 0.375 // Average for pricing display
     },
     { 
       id: 'gpt-4o', 
       name: 'GPT-4o', 
-      inputCost: 0.0025, // $2.5 per 1M tokens
-      outputCost: 0.01, // $10 per 1M tokens
-      avgCost: 0.006 // Average for pricing display
+      inputCost: 2.50, // $2.50 per 1M tokens (Standard)
+      outputCost: 10.00, // $10.00 per 1M tokens (Standard)
+      avgCost: 6.25 // Average for pricing display
     },
     { 
       id: 'gpt-4-turbo', 
       name: 'GPT-4 Turbo', 
-      inputCost: 0.01, // $10 per 1M tokens
-      outputCost: 0.03, // $30 per 1M tokens
-      avgCost: 0.02 // Average for pricing display
+      inputCost: 10.00, // $10.00 per 1M tokens (Standard)
+      outputCost: 30.00, // $30.00 per 1M tokens (Standard)
+      avgCost: 20.00 // Average for pricing display
+    },
+    { 
+      id: 'gpt-5', 
+      name: 'GPT-5', 
+      inputCost: 1.25, // $1.25 per 1M tokens (Standard)
+      outputCost: 10.00, // $10.00 per 1M tokens (Standard)
+      avgCost: 5.625 // Average for pricing display
+    },
+    { 
+      id: 'gpt-5-mini', 
+      name: 'GPT-5 Mini', 
+      inputCost: 0.25, // $0.25 per 1M tokens (Standard)
+      outputCost: 2.00, // $2.00 per 1M tokens (Standard)
+      avgCost: 1.125 // Average for pricing display
     }
   ]
 };
@@ -83,7 +97,7 @@ class AIMultiProvider {
       name: 'glm',
       enabled: true,
       priority: 1,
-      costPer1000: 0.0014, // GLM-4.5 average cost
+      costPer1000: 1.4, // GLM-4.5: $1.4 per 1M tokens
       status: 'online',
       model: 'glm-4.5',
       temperature: 0.1,
@@ -101,7 +115,7 @@ class AIMultiProvider {
       name: 'openai',
       enabled: true, 
       priority: 2,
-      costPer1000: 0.0004, // GPT-4o Mini average cost
+      costPer1000: 0.375, // GPT-4o Mini: $0.375 avg per 1k tokens
       status: 'online',
       model: 'gpt-4o-mini',
       temperature: 0.1,
@@ -346,7 +360,7 @@ class AIMultiProvider {
         extractedData,
         rawResponse: aiResponse,
         confidence: extractedData.confidence || 85,
-        processingCost: (tokenCount / 1000) * 0.0014, // Correção do custo para GLM-4.5
+        processingCost: (tokenCount / 1000) * 1.4, // GLM custo: $1.4 per 1M tokens
         tokensIn: Math.floor(tokenCount * 0.7),
         tokensOut: Math.floor(tokenCount * 0.3),
         processingTimeMs: 0,
@@ -401,7 +415,7 @@ class AIMultiProvider {
         extractedData,
         rawResponse: content,
         confidence: extractedData.confidence || 80,
-        processingCost: (tokenCount / 1000) * 0.0004, // Correção do custo para GPT-4o Mini
+        processingCost: (tokenCount / 1000) * 0.375, // OpenAI custo: $0.375 avg per 1k tokens
         tokensIn: response.usage?.prompt_tokens || Math.floor(tokenCount * 0.7),
         tokensOut: response.usage?.completion_tokens || Math.floor(tokenCount * 0.3),
         processingTimeMs: 0,
