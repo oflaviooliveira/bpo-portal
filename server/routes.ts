@@ -561,14 +561,16 @@ export async function registerRoutes(app: Express): Promise<Server> {
         res.setHeader('Content-Type', document.mimeType);
       }
 
-      // For PDFs, allow inline viewing
+      // For PDFs, set proper headers for inline viewing
       if (document.mimeType?.includes('pdf')) {
         res.setHeader('Content-Disposition', 'inline');
+        res.setHeader('X-Content-Type-Options', 'nosniff');
+        res.setHeader('Access-Control-Allow-Origin', '*');
       }
 
-      // Stream the file
+      // Stream the file with proper content handling
       const fileBuffer = await fs.readFile(filePath);
-      res.send(fileBuffer);
+      res.end(fileBuffer);
     } catch (error) {
       console.error("Document preview error:", error);
       res.status(500).json({ error: "Erro ao visualizar documento" });
@@ -602,7 +604,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
       await storage.updateDocument(documentId, user.tenantId, {
         status: 'VALIDANDO',
         ocrText: null,
-        ocrConfidence: 0,
+        ocrConfidence: "0",
         aiAnalysis: null,
         extractedData: null,
         validationErrors: []
@@ -619,16 +621,18 @@ export async function registerRoutes(app: Express): Promise<Server> {
 
       // Reprocess the document using advanced OCR processor
       try {
-        // Mock file object for reprocessing
+        // Create proper file-like object for reprocessing
+        const fileStats = await fs.stat(filePath);
         const mockFile = {
           path: filePath,
-          originalname: document.originalName || 'document',
+          filename: path.basename(filePath),
+          originalname: document.originalName || path.basename(filePath),
           mimetype: document.mimeType || 'application/pdf',
-          size: document.fileSize || 0
+          size: fileStats.size
         };
 
         // Process with advanced OCR
-        const result = await advancedOcrProcessor.processDocument(mockFile as any, documentId);
+        const result = await advancedOcrProcessor.processDocument(mockFile as any, documentId, user.tenantId);
         
         if (result.success) {
           await storage.createDocumentLog({
@@ -637,8 +641,8 @@ export async function registerRoutes(app: Express): Promise<Server> {
             status: "SUCCESS",
             details: { 
               reprocessedBy: user.id,
-              ocrConfidence: result.ocrConfidence,
-              aiProvider: result.aiProvider 
+              ocrConfidence: result.confidence,
+              strategy: result.strategy 
             },
             userId: user.id,
           });
@@ -656,7 +660,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
             status: "ERROR",
             details: { 
               reprocessedBy: user.id,
-              error: result.error 
+              error: "Falha no processamento OCR" 
             },
             userId: user.id,
           });
@@ -664,7 +668,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
           res.status(500).json({ 
             success: false,
             error: "Erro no reprocessamento",
-            details: result.error
+            details: "Falha no processamento OCR"
           });
         }
       } catch (error) {

@@ -996,9 +996,10 @@ export function Inbox() {
                 {selectedDoc.mimeType?.includes('pdf') ? (
                   <div className="w-full h-full flex items-center justify-center">
                     <iframe 
-                      src={`/api/documents/${selectedDoc.id}/preview`}
+                      src={`/api/documents/${selectedDoc.id}/preview#view=FitH`}
                       className="w-full h-full border rounded"
                       title="Document Preview"
+                      style={{ minHeight: '600px' }}
                     />
                   </div>
                 ) : (
