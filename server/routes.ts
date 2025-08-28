@@ -216,20 +216,28 @@ export async function registerRoutes(app: Express): Promise<Server> {
       if (aiResult && aiResult.success && aiResult.extractedData) {
         const data = aiResult.extractedData;
         
+        console.log(`🔄 Mapeando dados IA:`, JSON.stringify(data, null, 2));
+        
         suggestions = {
-          amount: data.valor,
-          supplier: data.fornecedor,
-          description: data.descricao,
-          dueDate: data.data_vencimento,
-          paymentDate: data.data_pagamento,
+          amount: data.valor || '',
+          supplier: data.fornecedor || '',
+          description: data.descricao || '',
+          dueDate: data.data_vencimento || '',
+          paymentDate: data.data_pagamento || '',
+          documentType: data.tipo_documento || '',
+          category: data.categoria || '',
           confidence: {
-            amount: aiResult.confidence,
-            supplier: aiResult.confidence,
-            description: aiResult.confidence,
-            dueDate: aiResult.confidence,
-            paymentDate: aiResult.confidence
+            amount: data.valor ? aiResult.confidence : 0,
+            supplier: data.fornecedor ? aiResult.confidence : 0,
+            description: data.descricao ? aiResult.confidence : 0,
+            dueDate: data.data_vencimento ? aiResult.confidence : 0,
+            paymentDate: data.data_pagamento ? aiResult.confidence : 0
           }
         };
+        
+        console.log(`✅ Sugestões mapeadas:`, JSON.stringify(suggestions, null, 2));
+      } else {
+        console.log(`⚠️ IA não retornou dados válidos:`, aiResult);
       }
 
       // 4. Retornar dados para preview

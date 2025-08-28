@@ -53,7 +53,10 @@ export class DocumentAnalyzer {
             role: "system",
             content: `Você é um especialista em análise de documentos financeiros brasileiros. 
             Sua tarefa é extrair informações estruturadas de recibos, notas fiscais, boletos e comprovantes de pagamento.
-            Sempre responda em JSON válido e seja preciso nas informações extraídas.`
+            
+            CRÍTICO: Sempre responda APENAS com JSON válido, sem markdown, sem explicações.
+            Não use \`\`\`json ou qualquer formatação markdown na resposta.
+            Seja preciso e extraia apenas informações claramente presentes no documento.`
           },
           {
             role: "user",
@@ -71,8 +74,16 @@ export class DocumentAnalyzer {
 
       console.log(`🤖 Resposta da IA: ${responseText}`);
 
+      // Limpar resposta removendo markdown se presente
+      const cleanedResponse = responseText
+        .replace(/```json\s*/g, '')
+        .replace(/\s*```/g, '')
+        .trim();
+
+      console.log(`🧹 Resposta limpa: ${cleanedResponse}`);
+
       // Parse da resposta JSON
-      const result = JSON.parse(responseText);
+      const result = JSON.parse(cleanedResponse);
       
       return {
         success: true,
@@ -106,14 +117,15 @@ ${context ? `- Contexto adicional: ${context}` : ''}
 **TEXTO DO DOCUMENTO:**
 ${text}
 
-**INSTRUÇÕES:**
+**INSTRUÇÕES IMPORTANTES:**
 1. Extraia APENAS informações que estão claramente presentes no texto
 2. Para valores monetários, use o formato "R$ XX,XX" 
 3. Para datas, use o formato "DD/MM/AAAA"
-4. Se não encontrar uma informação, deixe o campo vazio
+4. Se não encontrar uma informação, deixe o campo vazio ""
 5. Para descrição, seja específico e útil (ex: "Corrida Uber do Centro ao Aeroporto")
+6. RETORNE APENAS JSON VÁLIDO, sem markdown, sem \`\`\`json, sem explicações extras
 
-**RESPOSTA ESPERADA (JSON):**
+**RESPOSTA ESPERADA (APENAS JSON PURO):**
 {
   "dados_extraidos": {
     "fornecedor": "Nome da empresa/prestador (ex: Uber, Posto Shell)",

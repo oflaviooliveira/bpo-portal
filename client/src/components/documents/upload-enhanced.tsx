@@ -138,34 +138,48 @@ export function UploadEnhanced() {
       setTimeout(() => {
         // Auto-preencher campos sugeridos
         if (data.suggestions) {
+          console.log("🎯 Recebendo sugestões:", data.suggestions);
           const suggestions: SuggestedField[] = [];
           
           if (data.suggestions.amount) {
             setValue("amount", data.suggestions.amount);
             suggestions.push({ field: 'amount', value: data.suggestions.amount, confidence: data.suggestions.confidence?.amount || 0.9 });
+            console.log("💰 Valor preenchido:", data.suggestions.amount);
           }
           
           if (data.suggestions.supplier) {
             setValue("supplier", data.suggestions.supplier);
             suggestions.push({ field: 'supplier', value: data.suggestions.supplier, confidence: data.suggestions.confidence?.supplier || 0.8 });
+            console.log("🏢 Fornecedor preenchido:", data.suggestions.supplier);
           }
           
           if (data.suggestions.description) {
             setValue("description", data.suggestions.description);
             suggestions.push({ field: 'description', value: data.suggestions.description, confidence: data.suggestions.confidence?.description || 0.75 });
+            console.log("📝 Descrição preenchida:", data.suggestions.description);
           }
           
           if (data.suggestions.dueDate) {
             setValue("dueDate", data.suggestions.dueDate);
             suggestions.push({ field: 'dueDate', value: data.suggestions.dueDate, confidence: data.suggestions.confidence?.dueDate || 0.85 });
+            console.log("📅 Data vencimento preenchida:", data.suggestions.dueDate);
           }
           
           if (data.suggestions.paymentDate) {
             setValue("paymentDate", data.suggestions.paymentDate);
             suggestions.push({ field: 'paymentDate', value: data.suggestions.paymentDate, confidence: data.suggestions.confidence?.paymentDate || 0.85 });
+            console.log("💳 Data pagamento preenchida:", data.suggestions.paymentDate);
+          }
+          
+          if (data.suggestions.documentType) {
+            setValue("documentType", data.suggestions.documentType);
+            console.log("📄 Tipo documento preenchido:", data.suggestions.documentType);
           }
           
           setSuggestedFields(suggestions);
+          console.log("✅ Total de campos sugeridos:", suggestions.length);
+        } else {
+          console.log("⚠️ Nenhuma sugestão recebida do backend");
         }
         
         setProcessingState({ stage: 'ready', message: 'Documento analisado! Revise os campos sugeridos.' });
