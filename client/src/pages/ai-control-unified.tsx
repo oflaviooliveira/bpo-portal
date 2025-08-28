@@ -257,9 +257,10 @@ export default function AIControlUnified() {
                       <SelectContent>
                         {provider.name === 'glm' ? (
                           <>
-                            <SelectItem value="glm-4-0520">glm-4-0520</SelectItem>
-                            <SelectItem value="glm-4-plus">glm-4-plus</SelectItem>
-                            <SelectItem value="glm-3.5-turbo">glm-3.5-turbo</SelectItem>
+                            <SelectItem value="GLM-4-Plus">GLM-4-Plus</SelectItem>
+                            <SelectItem value="GLM-4.5">GLM-4.5</SelectItem>
+                            <SelectItem value="GLM-4.5-Flash">GLM-4.5-Flash</SelectItem>
+                            <SelectItem value="GLM-4.5-Air">GLM-4.5-Air</SelectItem>
                           </>
                         ) : (
                           <>
