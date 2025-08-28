@@ -1634,6 +1634,108 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
+  // Update provider configuration (model, priority, etc)
+  app.post("/api/ai-control/update-config", ...authorize(["ADMIN", "GERENTE"]), async (req, res) => {
+    try {
+      const { providerName, config } = req.body;
+      const { aiMultiProvider } = await import("./ai-multi-provider");
+      const success = aiMultiProvider.updateProviderConfig(providerName, config);
+      
+      if (success) {
+        res.json({ success: true, providerName, config });
+      } else {
+        res.status(404).json({ error: "Provider não encontrado" });
+      }
+    } catch (error) {
+      console.error("AI config update error:", error);
+      res.status(500).json({ error: "Erro ao atualizar configuração" });
+    }
+  });
+
+  // Swap provider priorities
+  app.post("/api/ai-control/swap-priorities", ...authorize(["ADMIN", "GERENTE"]), async (req, res) => {
+    try {
+      const { aiMultiProvider } = await import("./ai-multi-provider");
+      aiMultiProvider.swapPriorities();
+      res.json({ success: true });
+    } catch (error) {
+      console.error("AI swap priorities error:", error);
+      res.status(500).json({ error: "Erro ao alternar prioridades" });
+    }
+  });
+
+  // Emergency mode control
+  app.post("/api/ai-control/emergency-mode", ...authorize(["ADMIN", "GERENTE"]), async (req, res) => {
+    try {
+      const { enabled } = req.body;
+      const { aiMultiProvider } = await import("./ai-multi-provider");
+      
+      if (enabled) {
+        aiMultiProvider.enableEmergencyMode();
+      } else {
+        aiMultiProvider.disableEmergencyMode();
+      }
+      
+      res.json({ success: true, emergencyMode: enabled });
+    } catch (error) {
+      console.error("AI emergency mode error:", error);
+      res.status(500).json({ error: "Erro ao alterar modo emergência" });
+    }
+  });
+
+  // Get recent AI document history
+  app.get("/api/ai-control/recent-documents", ...authorize(["ADMIN", "GERENTE"]), async (req, res) => {
+    try {
+      const user = req.user!;
+      const limit = parseInt(req.query.limit as string) || 10;
+      
+      const aiRuns = await storage.getAiRuns(user.tenantId, {
+        limit,
+        dateFrom: new Date(Date.now() - 24 * 60 * 60 * 1000) // Last 24h
+      });
+
+      // Get document details for each run
+      const documentsWithRuns = await Promise.all(
+        aiRuns.map(async (run) => {
+          try {
+            const doc = await storage.getDocument(run.documentId, user.tenantId);
+            return {
+              id: run.id,
+              documentName: doc?.originalFileName || 'Documento removido',
+              provider: run.providerUsed,
+              timestamp: run.createdAt,
+              confidence: run.confidence,
+              processingTime: run.processingTimeMs,
+              cost: parseFloat(run.costUsd?.toString() || '0'),
+              success: (run.confidence || 0) > 80,
+              fallbackReason: run.fallbackReason
+            };
+          } catch (error) {
+            return {
+              id: run.id,
+              documentName: 'Documento não encontrado',
+              provider: run.providerUsed,
+              timestamp: run.createdAt,
+              confidence: run.confidence,
+              processingTime: run.processingTimeMs,
+              cost: parseFloat(run.costUsd?.toString() || '0'),
+              success: (run.confidence || 0) > 80,
+              fallbackReason: run.fallbackReason
+            };
+          }
+        })
+      );
+
+      res.json({
+        recentDocuments: documentsWithRuns,
+        lastActivity: documentsWithRuns[0] || null
+      });
+    } catch (error) {
+      console.error("AI recent documents error:", error);
+      res.status(500).json({ error: "Erro ao buscar documentos recentes" });
+    }
+  });
+
   // AI usage analytics endpoint
   app.get("/api/ai-control/analytics", ...authorize(["ADMIN", "GERENTE"]), async (req, res) => {
     try {

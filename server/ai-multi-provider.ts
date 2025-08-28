@@ -9,6 +9,9 @@ interface AIProvider {
   priority: number;
   costPer1000: number;
   status: 'online' | 'offline' | 'error';
+  model?: string;
+  temperature?: number;
+  maxTokens?: number;
 }
 
 interface AIAnalysisResult {
@@ -30,14 +33,20 @@ class AIMultiProvider {
       enabled: true,
       priority: 1,
       costPer1000: 0.0002,
-      status: 'online'
+      status: 'online',
+      model: 'glm-4-0520',
+      temperature: 0.1,
+      maxTokens: 1500
     },
     {
       name: 'openai',
       enabled: true, 
       priority: 2,
       costPer1000: 0.03,
-      status: 'online'
+      status: 'online',
+      model: 'gpt-4o-mini',
+      temperature: 0.1,
+      maxTokens: 1500
     }
   ];
 
@@ -377,18 +386,68 @@ TEMPLATE:
     }
   }
 
-  updateProviderConfig(providerName: string, config: { priority?: number; costPer1000?: number }): boolean {
+  updateProviderConfig(providerName: string, config: { 
+    priority?: number; 
+    costPer1000?: number; 
+    model?: string; 
+    temperature?: number; 
+    maxTokens?: number; 
+  }): boolean {
     const provider = this.providers.find(p => p.name === providerName);
     if (provider) {
-      if (config.priority !== undefined) {
-        provider.priority = config.priority;
-      }
-      if (config.costPer1000 !== undefined) {
-        provider.costPer1000 = config.costPer1000;
-      }
+      if (config.priority !== undefined) provider.priority = config.priority;
+      if (config.costPer1000 !== undefined) provider.costPer1000 = config.costPer1000;
+      if (config.model !== undefined) provider.model = config.model;
+      if (config.temperature !== undefined) provider.temperature = config.temperature;
+      if (config.maxTokens !== undefined) provider.maxTokens = config.maxTokens;
       return true;
     }
     return false;
+  }
+
+  // Swap priorities between GLM and OpenAI
+  swapPriorities(): void {
+    const glm = this.providers.find(p => p.name === 'glm');
+    const openai = this.providers.find(p => p.name === 'openai');
+    
+    if (glm && openai) {
+      const tempPriority = glm.priority;
+      glm.priority = openai.priority;
+      openai.priority = tempPriority;
+    }
+  }
+
+  // Emergency mode: disable GLM, enable OpenAI only
+  enableEmergencyMode(): void {
+    const glm = this.providers.find(p => p.name === 'glm');
+    const openai = this.providers.find(p => p.name === 'openai');
+    
+    if (glm) {
+      glm.enabled = false;
+      glm.status = 'offline';
+    }
+    if (openai) {
+      openai.enabled = true;
+      openai.status = 'online';
+      openai.priority = 1;
+    }
+  }
+
+  // Disable emergency mode: restore normal priorities
+  disableEmergencyMode(): void {
+    const glm = this.providers.find(p => p.name === 'glm');
+    const openai = this.providers.find(p => p.name === 'openai');
+    
+    if (glm) {
+      glm.enabled = true;
+      glm.status = 'online';
+      glm.priority = 1;
+    }
+    if (openai) {
+      openai.enabled = true;
+      openai.status = 'online';
+      openai.priority = 2;
+    }
   }
 
   getProviderMetrics(): Record<string, any> {

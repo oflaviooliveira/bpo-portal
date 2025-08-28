@@ -8,7 +8,9 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Progress } from "@/components/ui/progress";
 import { Switch } from "@/components/ui/switch";
-import { Loader2, Cpu, DollarSign, Clock, TrendingUp, Activity, AlertTriangle } from "lucide-react";
+import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
+import { Label } from "@/components/ui/label";
+import { Loader2, Cpu, DollarSign, Clock, TrendingUp, Activity, AlertTriangle, CheckCircle, XCircle } from "lucide-react";
 import { LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, BarChart, Bar } from "recharts";
 
 interface Provider {
@@ -55,16 +57,50 @@ export default function AIControlUnified() {
 
   const toggleProviderMutation = useMutation({
     mutationFn: async ({ name, enabled }: { name: string; enabled: boolean }) => {
-      return apiRequest("PATCH", `/api/ai-control/provider/${name}`, { enabled });
+      return apiRequest("/api/ai-control/toggle-provider", "POST", { providerName: name, enabled });
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["/api/ai-control"] });
     },
   });
 
+  const updateConfigMutation = useMutation({
+    mutationFn: async ({ providerName, config }: { providerName: string; config: any }) => {
+      return apiRequest("/api/ai-control/update-config", "POST", { providerName, config });
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["/api/ai-control"] });
+    }
+  });
+
+  const swapPrioritiesMutation = useMutation({
+    mutationFn: async () => {
+      return apiRequest("/api/ai-control/swap-priorities", "POST", {});
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["/api/ai-control"] });
+    }
+  });
+
+  const emergencyModeMutation = useMutation({
+    mutationFn: async ({ enabled }: { enabled: boolean }) => {
+      return apiRequest("/api/ai-control/emergency-mode", "POST", { enabled });
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["/api/ai-control"] });
+    }
+  });
+
+  const { data: recentDocsData, isLoading: recentDocsLoading } = useQuery({
+    queryKey: ["/api/ai-control/recent-documents"],
+    refetchInterval: 30000
+  });
+
   const providers = (providersData as any)?.providers || [];
   const summary = (providersData as any)?.summary || {};
   const analytics = (analyticsData as any) || { timeline: [], providerStats: [], summary: {} };
+  const recentDocs = (recentDocsData as any)?.recentDocuments || [];
+  const lastActivity = (recentDocsData as any)?.lastActivity || null;
 
   console.log("Unified - Providers:", providersData, "Analytics:", analyticsData, "Errors:", providersError, analyticsError);
 
@@ -114,116 +150,39 @@ export default function AIControlUnified() {
         </TabsList>
 
         <TabsContent value="control" className="space-y-6">
-          {/* Summary Cards */}
-          <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4">
-            <Card>
-              <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-                <CardTitle className="text-sm font-medium">Total de Requests</CardTitle>
-                <Activity className="h-4 w-4 text-muted-foreground" />
-              </CardHeader>
-              <CardContent>
-                <div className="text-2xl font-bold">{summary.totalRequests || 0}</div>
-                <p className="text-xs text-muted-foreground">
-                  ~{summary.avgDailyRequests || 0} por dia
-                </p>
-              </CardContent>
-            </Card>
-
-            <Card>
-              <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-                <CardTitle className="text-sm font-medium">Custo Total</CardTitle>
-                <DollarSign className="h-4 w-4 text-muted-foreground" />
-              </CardHeader>
-              <CardContent>
-                <div className="text-2xl font-bold">${summary.totalCost || 0}</div>
-                <p className="text-xs text-muted-foreground">
-                  Últimos 30 dias
-                </p>
-              </CardContent>
-            </Card>
-
-            <Card>
-              <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-                <CardTitle className="text-sm font-medium">Provider Mais Usado</CardTitle>
-                <Cpu className="h-4 w-4 text-muted-foreground" />
-              </CardHeader>
-              <CardContent>
-                <div className="text-2xl font-bold">
-                  {Object.keys(summary.mostUsedProvider || {})[0] || 'N/A'}
-                </div>
-                <p className="text-xs text-muted-foreground">
-                  {(Object.values(summary.mostUsedProvider || {})[0] as number) || 0} requests
-                </p>
-              </CardContent>
-            </Card>
-
-            <Card>
-              <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-                <CardTitle className="text-sm font-medium">Providers Ativos</CardTitle>
-                <TrendingUp className="h-4 w-4 text-muted-foreground" />
-              </CardHeader>
-              <CardContent>
-                <div className="text-2xl font-bold">
-                  {providers.filter((p: Provider) => p.status === 'online').length}
-                </div>
-                <p className="text-xs text-muted-foreground">
-                  de {providers.length} total
-                </p>
-              </CardContent>
-            </Card>
-          </div>
-
-          {/* Providers List */}
+          {/* Status em Tempo Real */}
           <Card>
             <CardHeader>
-              <CardTitle>Provedores de IA</CardTitle>
+              <CardTitle className="text-lg font-semibold">Status Atual</CardTitle>
+            </CardHeader>
+            <CardContent>
+              <AIRealtimeStatus />
+            </CardContent>
+          </Card>
+
+          {/* Controles de Configuração */}
+          <Card>
+            <CardHeader>
+              <CardTitle>Controles de IA</CardTitle>
               <CardDescription>
-                Configure e monitore status dos provedores
+                Configure modelos, prioridades e modo de operação
               </CardDescription>
             </CardHeader>
             <CardContent>
-              <div className="space-y-4">
-                {providers.map((provider: Provider) => (
-                  <div key={provider.name} className="flex items-center justify-between p-4 border rounded-lg">
-                    <div className="flex items-center space-x-4">
-                      <div className="flex flex-col">
-                        <div className="flex items-center space-x-2">
-                          <h3 className="font-semibold text-lg">{provider.name}</h3>
-                          <Badge variant={provider.status === 'online' ? 'default' : 'destructive'}>
-                            {provider.status}
-                          </Badge>
-                        </div>
-                        <p className="text-sm text-muted-foreground">
-                          Prioridade: {provider.priority} | ${(provider.costPer1000 || 0).toFixed(4)}/1k tokens
-                        </p>
-                      </div>
-                    </div>
+              <AIControlsInterface providers={providers} />
+            </CardContent>
+          </Card>
 
-                    <div className="flex items-center space-x-4">
-                      <div className="text-right">
-                        <p className="text-sm font-medium">{provider.totalRequests} requests</p>
-                        <p className="text-sm text-muted-foreground">${(provider.totalCost || 0).toFixed(4)} gasto</p>
-                      </div>
-                      
-                      <div className="text-right">
-                        <p className="text-sm font-medium">{provider.successRate}% sucesso</p>
-                        <p className="text-sm text-muted-foreground">{provider.avgResponseTime}ms avg</p>
-                      </div>
-
-                      <Switch
-                        checked={provider.status === 'online'}
-                        onCheckedChange={(checked) => {
-                          toggleProviderMutation.mutate({
-                            name: provider.name,
-                            enabled: checked
-                          });
-                        }}
-                        disabled={toggleProviderMutation.isPending}
-                      />
-                    </div>
-                  </div>
-                ))}
-              </div>
+          {/* Histórico de Documentos */}
+          <Card>
+            <CardHeader>
+              <CardTitle>Últimos Documentos Processados</CardTitle>
+              <CardDescription>
+                Histórico dos 10 documentos mais recentes
+              </CardDescription>
+            </CardHeader>
+            <CardContent>
+              <AIDocumentHistory />
             </CardContent>
           </Card>
         </TabsContent>
@@ -333,6 +292,301 @@ export default function AIControlUnified() {
           </div>
         </TabsContent>
       </Tabs>
+    </div>
+  );
+}
+
+// Componente para Status em Tempo Real
+function AIRealtimeStatus() {
+  const { data: recentDocsData } = useQuery({
+    queryKey: ["/api/ai-control/recent-documents"],
+    refetchInterval: 30000
+  });
+
+  const { data: providersData } = useQuery({
+    queryKey: ["/api/ai-control"]
+  });
+
+  const lastActivity = (recentDocsData as any)?.lastActivity || null;
+  const providers = (providersData as any)?.providers || [];
+  const glm = providers.find((p: any) => p.name === 'glm');
+  const openai = providers.find((p: any) => p.name === 'openai');
+
+  const formatTime = (timestamp: string | null) => {
+    if (!timestamp) return "Nunca";
+    return new Date(timestamp).toLocaleTimeString('pt-BR', { 
+      hour: '2-digit', 
+      minute: '2-digit', 
+      second: '2-digit' 
+    });
+  };
+
+  return (
+    <div className="space-y-4">
+      {/* Status das IAs */}
+      <div className="grid gap-4 md:grid-cols-2">
+        <div className="flex items-center justify-between p-3 border rounded-lg">
+          <div className="flex items-center space-x-3">
+            <div className={`h-3 w-3 rounded-full ${glm?.status === 'online' ? 'bg-green-500' : 'bg-red-500'}`} />
+            <div>
+              <p className="font-semibold">GLM-4.5</p>
+              <p className="text-sm text-muted-foreground">Prioridade {glm?.priority || 1}</p>
+            </div>
+          </div>
+          <Badge variant={glm?.status === 'online' ? 'default' : 'destructive'}>
+            {glm?.status || 'offline'}
+          </Badge>
+        </div>
+
+        <div className="flex items-center justify-between p-3 border rounded-lg">
+          <div className="flex items-center space-x-3">
+            <div className={`h-3 w-3 rounded-full ${openai?.status === 'online' ? 'bg-green-500' : 'bg-red-500'}`} />
+            <div>
+              <p className="font-semibold">OpenAI</p>
+              <p className="text-sm text-muted-foreground">Prioridade {openai?.priority || 2}</p>
+            </div>
+          </div>
+          <Badge variant={openai?.status === 'online' ? 'default' : 'destructive'}>
+            {openai?.status || 'offline'}
+          </Badge>
+        </div>
+      </div>
+
+      {/* Última Atividade */}
+      {lastActivity && (
+        <div className="p-3 bg-muted/50 rounded-lg">
+          <div className="flex items-center justify-between">
+            <div>
+              <p className="font-medium">Último documento: {lastActivity.documentName}</p>
+              <p className="text-sm text-muted-foreground">IA: {lastActivity.provider} | {formatTime(lastActivity.timestamp)}</p>
+            </div>
+            <div className="flex items-center space-x-2">
+              {lastActivity.success ? (
+                <CheckCircle className="h-4 w-4 text-green-500" />
+              ) : (
+                <XCircle className="h-4 w-4 text-red-500" />
+              )}
+              <span className="text-sm">{lastActivity.confidence}%</span>
+            </div>
+          </div>
+        </div>
+      )}
+    </div>
+  );
+}
+
+// Componente para Controles de Interface
+function AIControlsInterface({ providers }: { providers: any[] }) {
+  const [selectedPriority, setSelectedPriority] = useState("glm_first");
+  
+  const updateConfigMutation = useMutation({
+    mutationFn: async ({ providerName, config }: { providerName: string; config: any }) => {
+      return apiRequest("/api/ai-control/update-config", "POST", { providerName, config });
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["/api/ai-control"] });
+    }
+  });
+
+  const swapPrioritiesMutation = useMutation({
+    mutationFn: async () => {
+      return apiRequest("/api/ai-control/swap-priorities", "POST", {});
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["/api/ai-control"] });
+      setSelectedPriority(prev => prev === "glm_first" ? "openai_first" : "glm_first");
+    }
+  });
+
+  const emergencyModeMutation = useMutation({
+    mutationFn: async ({ enabled }: { enabled: boolean }) => {
+      return apiRequest("/api/ai-control/emergency-mode", "POST", { enabled });
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["/api/ai-control"] });
+    }
+  });
+
+  const toggleProviderMutation = useMutation({
+    mutationFn: async ({ name, enabled }: { name: string; enabled: boolean }) => {
+      return apiRequest("/api/ai-control/toggle-provider", "POST", { providerName: name, enabled });
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["/api/ai-control"] });
+    }
+  });
+
+  const glm = providers.find(p => p.name === 'glm');
+  const openai = providers.find(p => p.name === 'openai');
+
+  const handlePriorityChange = (value: string) => {
+    setSelectedPriority(value);
+    if (value === "openai_first" && glm?.priority === 1) {
+      swapPrioritiesMutation.mutate();
+    } else if (value === "glm_first" && openai?.priority === 1) {
+      swapPrioritiesMutation.mutate();
+    }
+  };
+
+  return (
+    <div className="space-y-6">
+      {/* Controle de Prioridade */}
+      <div>
+        <Label className="text-base font-semibold">Prioridade de Processamento</Label>
+        <RadioGroup value={selectedPriority} onValueChange={handlePriorityChange} className="mt-2">
+          <div className="flex items-center space-x-2">
+            <RadioGroupItem value="glm_first" id="glm_first" />
+            <Label htmlFor="glm_first">GLM Primeiro (Custo-Eficiente)</Label>
+          </div>
+          <div className="flex items-center space-x-2">
+            <RadioGroupItem value="openai_first" id="openai_first" />
+            <Label htmlFor="openai_first">OpenAI Primeiro (Máxima Precisão)</Label>
+          </div>
+        </RadioGroup>
+      </div>
+
+      {/* Configuração de Providers */}
+      <div className="grid gap-4 md:grid-cols-2">
+        <div className="space-y-3">
+          <div className="flex items-center justify-between">
+            <Label className="font-semibold">GLM-4.5</Label>
+            <Switch
+              checked={glm?.status === 'online'}
+              onCheckedChange={(checked) => {
+                toggleProviderMutation.mutate({ name: 'glm', enabled: checked });
+              }}
+              disabled={toggleProviderMutation.isPending}
+            />
+          </div>
+          <Select
+            value={glm?.model || 'glm-4-0520'}
+            onValueChange={(value) => {
+              updateConfigMutation.mutate({ providerName: 'glm', config: { model: value } });
+            }}
+          >
+            <SelectTrigger>
+              <SelectValue placeholder="Selecionar modelo" />
+            </SelectTrigger>
+            <SelectContent>
+              <SelectItem value="glm-4-0520">glm-4-0520</SelectItem>
+              <SelectItem value="glm-4-plus">glm-4-plus</SelectItem>
+              <SelectItem value="glm-3.5-turbo">glm-3.5-turbo</SelectItem>
+            </SelectContent>
+          </Select>
+        </div>
+
+        <div className="space-y-3">
+          <div className="flex items-center justify-between">
+            <Label className="font-semibold">OpenAI</Label>
+            <Switch
+              checked={openai?.status === 'online'}
+              onCheckedChange={(checked) => {
+                toggleProviderMutation.mutate({ name: 'openai', enabled: checked });
+              }}
+              disabled={toggleProviderMutation.isPending}
+            />
+          </div>
+          <Select
+            value={openai?.model || 'gpt-4o-mini'}
+            onValueChange={(value) => {
+              updateConfigMutation.mutate({ providerName: 'openai', config: { model: value } });
+            }}
+          >
+            <SelectTrigger>
+              <SelectValue placeholder="Selecionar modelo" />
+            </SelectTrigger>
+            <SelectContent>
+              <SelectItem value="gpt-4o">gpt-4o</SelectItem>
+              <SelectItem value="gpt-4o-mini">gpt-4o-mini</SelectItem>
+              <SelectItem value="gpt-3.5-turbo">gpt-3.5-turbo</SelectItem>
+            </SelectContent>
+          </Select>
+        </div>
+      </div>
+
+      {/* Botão de Emergência */}
+      <div className="pt-4 border-t">
+        <Button
+          variant="destructive"
+          size="sm"
+          onClick={() => emergencyModeMutation.mutate({ enabled: true })}
+          disabled={emergencyModeMutation.isPending}
+          className="w-full"
+        >
+          <AlertTriangle className="h-4 w-4 mr-2" />
+          🚨 Emergência: Forçar Apenas OpenAI
+        </Button>
+        <p className="text-xs text-muted-foreground mt-2">
+          Desativa GLM temporariamente para usar apenas OpenAI
+        </p>
+      </div>
+    </div>
+  );
+}
+
+// Componente para Histórico de Documentos
+function AIDocumentHistory() {
+  const { data: recentDocsData, isLoading } = useQuery({
+    queryKey: ["/api/ai-control/recent-documents"],
+    refetchInterval: 30000
+  });
+
+  const recentDocs = (recentDocsData as any)?.recentDocuments || [];
+
+  const formatTime = (timestamp: string) => {
+    return new Date(timestamp).toLocaleString('pt-BR', {
+      day: '2-digit',
+      month: '2-digit',
+      hour: '2-digit',
+      minute: '2-digit'
+    });
+  };
+
+  if (isLoading) {
+    return (
+      <div className="flex items-center justify-center py-8">
+        <Loader2 className="h-6 w-6 animate-spin" />
+      </div>
+    );
+  }
+
+  if (recentDocs.length === 0) {
+    return (
+      <div className="text-center py-8 text-muted-foreground">
+        Nenhum documento processado recentemente
+      </div>
+    );
+  }
+
+  return (
+    <div className="space-y-2">
+      {recentDocs.slice(0, 10).map((doc: any) => (
+        <div key={doc.id} className="flex items-center justify-between p-3 border rounded-lg hover:bg-muted/50 transition-colors">
+          <div className="flex-1 min-w-0">
+            <p className="font-medium truncate">{doc.documentName}</p>
+            <p className="text-sm text-muted-foreground">{formatTime(doc.timestamp)}</p>
+          </div>
+          
+          <div className="flex items-center space-x-3 text-sm">
+            <span className="px-2 py-1 bg-muted rounded text-xs">
+              {doc.provider}
+            </span>
+            
+            <div className="flex items-center space-x-1">
+              {doc.success ? (
+                <CheckCircle className="h-4 w-4 text-green-500" />
+              ) : (
+                <XCircle className="h-4 w-4 text-red-500" />
+              )}
+              <span>{doc.confidence}%</span>
+            </div>
+
+            <span className="text-muted-foreground">
+              {doc.processingTime}ms
+            </span>
+          </div>
+        </div>
+      ))}
     </div>
   );
 }
