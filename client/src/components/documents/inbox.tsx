@@ -566,7 +566,11 @@ export function Inbox() {
                     </TableCell>
                     <TableCell className="text-center">
                       {(() => {
-                        const confidence = doc.ocrConfidence || 0;
+                        const confidence = typeof doc.ocrConfidence === 'number' 
+                          ? doc.ocrConfidence 
+                          : typeof doc.ocrConfidence === 'string' 
+                            ? parseFloat(doc.ocrConfidence) || 0
+                            : 0;
                         return (
                           <div className="flex flex-col items-center">
                             <span className={`font-medium ${getOCRConfidenceColor(confidence)}`}>
@@ -575,7 +579,7 @@ export function Inbox() {
                             <div className="w-12 bg-gray-200 rounded-full h-1.5 mt-1">
                               <div 
                                 className={`h-1.5 rounded-full ${confidence >= 90 ? 'bg-green-500' : confidence >= 70 ? 'bg-yellow-500' : 'bg-red-500'}`}
-                                style={{ width: `${confidence}%` }}
+                                style={{ width: `${Math.min(confidence, 100)}%` }}
                               ></div>
                             </div>
                           </div>
@@ -1037,8 +1041,19 @@ export function Inbox() {
                       </div>
                       <div className="flex justify-between">
                         <span className="text-muted-foreground">OCR:</span>
-                        <span className={getOCRConfidenceColor(selectedDoc.ocrConfidence || 0)}>
-                          {(selectedDoc.ocrConfidence || 0).toFixed(0)}%
+                        <span className={getOCRConfidenceColor(
+                          typeof selectedDoc.ocrConfidence === 'number' 
+                            ? selectedDoc.ocrConfidence 
+                            : typeof selectedDoc.ocrConfidence === 'string' 
+                              ? parseFloat(selectedDoc.ocrConfidence) || 0
+                              : 0
+                        )}>
+                          {(typeof selectedDoc.ocrConfidence === 'number' 
+                            ? selectedDoc.ocrConfidence 
+                            : typeof selectedDoc.ocrConfidence === 'string' 
+                              ? parseFloat(selectedDoc.ocrConfidence) || 0
+                              : 0
+                          ).toFixed(0)}%
                         </span>
                       </div>
                     </div>
