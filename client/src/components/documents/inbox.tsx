@@ -1314,7 +1314,7 @@ export function Inbox() {
                       <SelectValue placeholder="Selecione uma categoria" />
                     </SelectTrigger>
                     <SelectContent>
-                      {(categories || []).map((category: any) => (
+                      {categories?.map((category: any) => (
                         <SelectItem key={category.id} value={category.id}>
                           {category.name}
                         </SelectItem>
@@ -1333,7 +1333,7 @@ export function Inbox() {
                       <SelectValue placeholder="Selecione um centro de custo" />
                     </SelectTrigger>
                     <SelectContent>
-                      {(costCenters || []).map((costCenter: any) => (
+                      {costCenters?.map((costCenter: any) => (
                         <SelectItem key={costCenter.id} value={costCenter.id}>
                           {costCenter.name}
                         </SelectItem>

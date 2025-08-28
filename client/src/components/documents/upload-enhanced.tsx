@@ -15,7 +15,7 @@ import { Alert, AlertDescription } from "@/components/ui/alert";
 import { Badge } from "@/components/ui/badge";
 import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
 
-// Schema atualizado para contrapartes com documento único
+// Schema atualizado com campos obrigatórios BPO
 const uploadSchema = z.object({
   documentType: z.enum(["PAGO", "AGENDADO", "EMITIR_BOLETO", "EMITIR_NF"]),
   contraparteId: z.string().optional(),
@@ -27,9 +27,11 @@ const uploadSchema = z.object({
   amount: z.string().min(1, "Valor é obrigatório"),
   description: z.string().min(1, "Descrição é obrigatória"),
   notes: z.string().optional(),
+  // Campos obrigatórios BPO
+  competenceDate: z.string().min(1, "Data de competência é obrigatória"),
+  dueDate: z.string().min(1, "Data de vencimento é obrigatória"),
   // Campos condicionais
   paymentDate: z.string().optional(),
-  dueDate: z.string().optional(),
   // Campos para boleto/NF
   payerDocument: z.string().optional(),
   payerName: z.string().optional(),
@@ -93,7 +95,9 @@ export function UploadEnhanced() {
   } = useForm<UploadData>({
     resolver: zodResolver(uploadSchema),
     defaultValues: {
-      documentType: "PAGO"
+      documentType: "PAGO",
+      competenceDate: "",
+      dueDate: ""
     }
   });
 
@@ -194,6 +198,20 @@ export function UploadEnhanced() {
             setValue("dueDate", convertedDate);
             suggestions.push({ field: 'dueDate', value: convertedDate, confidence: data.suggestions.confidence?.dueDate || 0.85 });
             console.log("📅 Data vencimento preenchida:", data.suggestions.dueDate, "→", convertedDate);
+          }
+
+          // Auto-preencher data de competência se não estiver definida
+          if (data.suggestions.competenceDate) {
+            const convertedDate = convertBRDateToISO(data.suggestions.competenceDate);
+            setValue("competenceDate", convertedDate);
+            suggestions.push({ field: 'competenceDate', value: convertedDate, confidence: data.suggestions.confidence?.competenceDate || 0.8 });
+            console.log("📅 Data competência preenchida:", data.suggestions.competenceDate, "→", convertedDate);
+          } else if (data.suggestions.dueDate) {
+            // Se não há data de competência, usar a data de vencimento como fallback
+            const fallbackDate = convertBRDateToISO(data.suggestions.dueDate);
+            setValue("competenceDate", fallbackDate);
+            suggestions.push({ field: 'competenceDate', value: fallbackDate, confidence: 0.6 });
+            console.log("📅 Data competência (fallback do vencimento):", fallbackDate);
           }
           
           if (data.suggestions.paymentDate) {
@@ -412,7 +430,7 @@ export function UploadEnhanced() {
           <div className="space-y-4">
             <div>
               <Label htmlFor="paymentDate" className="flex items-center">
-                Data de Pagamento *
+                Data de Pagamento
                 {getSuggestionBadge('paymentDate')}
               </Label>
               <Input
@@ -422,51 +440,19 @@ export function UploadEnhanced() {
                 className={isFieldSuggested('paymentDate') ? 'border-blue-300 bg-blue-50' : ''}
                 data-testid="input-payment-date"
               />
-              {errors.paymentDate && (
-                <p className="text-sm text-red-600 mt-1">{errors.paymentDate.message}</p>
-              )}
+              <p className="text-xs text-muted-foreground mt-1">
+                Data efetiva do pagamento (opcional)
+              </p>
             </div>
           </div>
         );
         
       case "AGENDADO":
-        return (
-          <div className="space-y-4">
-            <div>
-              <Label htmlFor="dueDate" className="flex items-center">
-                Data de Vencimento *
-                {getSuggestionBadge('dueDate')}
-              </Label>
-              <Input
-                id="dueDate"
-                type="date"
-                {...register("dueDate")}
-                className={isFieldSuggested('dueDate') ? 'border-blue-300 bg-blue-50' : ''}
-                data-testid="input-due-date"
-              />
-              {errors.dueDate && (
-                <p className="text-sm text-red-600 mt-1">{errors.dueDate.message}</p>
-              )}
-            </div>
-          </div>
-        );
+        return null; // Não precisa de campos adicionais - data de vencimento já é obrigatória
         
       case "EMITIR_BOLETO":
         return (
           <div className="space-y-4">
-            <div>
-              <Label htmlFor="dueDate" className="flex items-center">
-                Data de Vencimento *
-                {getSuggestionBadge('dueDate')}
-              </Label>
-              <Input
-                id="dueDate"
-                type="date"
-                {...register("dueDate")}
-                className={isFieldSuggested('dueDate') ? 'border-blue-300 bg-blue-50' : ''}
-                data-testid="input-due-date"
-              />
-            </div>
             
             <div className="grid grid-cols-2 gap-4">
               <div>
@@ -861,6 +847,57 @@ export function UploadEnhanced() {
                   {errors.description && (
                     <p className="text-sm text-red-600 mt-1">{errors.description.message}</p>
                   )}
+                </div>
+              </div>
+
+              {/* Campos Obrigatórios BPO */}
+              <div className="space-y-4 p-4 border rounded-lg bg-blue-50/30 border-blue-200">
+                <div className="flex items-center gap-2">
+                  <Label className="text-sm font-medium text-blue-800">
+                    Campos Obrigatórios BPO
+                  </Label>
+                  <Badge variant="outline" className="text-xs bg-blue-100 text-blue-800 border-blue-300">
+                    Necessários para processamento
+                  </Badge>
+                </div>
+                
+                <div className="grid grid-cols-2 gap-4">
+                  <div>
+                    <Label htmlFor="competenceDate" className="flex items-center text-red-600">
+                      Data de Competência *
+                      {getSuggestionBadge('competenceDate')}
+                    </Label>
+                    <Input
+                      id="competenceDate"
+                      type="date"
+                      {...register("competenceDate")}
+                      className={isFieldSuggested('competenceDate') ? 'border-blue-300 bg-blue-50' : ''}
+                      data-testid="input-competence-date"
+                    />
+                    {errors.competenceDate && (
+                      <p className="text-sm text-red-600 mt-1">{errors.competenceDate.message}</p>
+                    )}
+                    <p className="text-xs text-muted-foreground mt-1">
+                      Quando a despesa/receita pertence
+                    </p>
+                  </div>
+
+                  <div>
+                    <Label htmlFor="dueDate" className="flex items-center text-red-600">
+                      Data de Vencimento *
+                      {getSuggestionBadge('dueDate')}
+                    </Label>
+                    <Input
+                      id="dueDate"
+                      type="date"
+                      {...register("dueDate")}
+                      className={isFieldSuggested('dueDate') ? 'border-blue-300 bg-blue-50' : ''}
+                      data-testid="input-due-date"
+                    />
+                    {errors.dueDate && (
+                      <p className="text-sm text-red-600 mt-1">{errors.dueDate.message}</p>
+                    )}
+                  </div>
                 </div>
               </div>
 
