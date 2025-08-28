@@ -5,6 +5,8 @@ import { inconsistencyDetector } from "./inconsistency-detector";
 import { AdvancedOcrProcessor } from "./ocr-processor-advanced";
 import { PdfTextExtractor } from "./ocr/pdf-extractor";
 import { DocumentAnalyzer } from "./ai/document-analyzer";
+import { SmartInconsistencyManager, type DataSource } from "./ai/smart-inconsistency-manager";
+import { AdaptiveOcrConfig } from "./ai/adaptive-ocr-config";
 
 export class DocumentProcessor {
   private advancedOcrProcessor: AdvancedOcrProcessor;
@@ -374,6 +376,8 @@ export class DocumentProcessor {
     errors: Array<{ type: string; message: string; field?: string }>;
     confidence: number;
   }> {
+    console.log("🧠 Executando validação cruzada inteligente...");
+    
     // Usar o detector de inconsistências avançado
     const validationResult = await inconsistencyDetector.detectInconsistencies(
       document.id, 
@@ -382,35 +386,125 @@ export class DocumentProcessor {
       document
     );
 
-    // Converter formato de resposta para manter compatibilidade
-    const errors = validationResult.errors.map(error => ({
+    // Usar o sistema inteligente de gestão de inconsistências para cada campo
+    const smartInconsistencyManager = new SmartInconsistencyManager();
+    const intelligentErrors = [];
+
+    // Analisar campos críticos com recomendações inteligentes
+    const criticalFields = ['amount', 'supplier', 'description', 'dueDate'];
+    
+    for (const fieldName of criticalFields) {
+      const dataSources: DataSource[] = [];
+      
+      // OCR source
+      if (ocrResult.extractedData && ocrResult.extractedData[fieldName]) {
+        dataSources.push({
+          value: ocrResult.extractedData[fieldName],
+          confidence: ocrResult.confidence * 100,
+          source: 'OCR',
+          quality: SmartInconsistencyManager.calculateQuality(ocrResult.confidence * 100, 'OCR')
+        });
+      }
+      
+      // AI source
+      if (aiResult.extractedData && aiResult.extractedData[fieldName]) {
+        dataSources.push({
+          value: aiResult.extractedData[fieldName],
+          confidence: aiResult.confidence,
+          source: 'AI',
+          quality: SmartInconsistencyManager.calculateQuality(aiResult.confidence, 'AI')
+        });
+      }
+
+      // Filename source (se relevante)
+      if (fieldName === 'supplier' && document.originalName) {
+        const filenameValue = this.extractFromFilename(document.originalName, fieldName);
+        if (filenameValue) {
+          dataSources.push({
+            value: filenameValue,
+            confidence: 60,
+            source: 'FILENAME',
+            quality: 'MEDIUM'
+          });
+        }
+      }
+
+      // Se há múltiplas fontes para este campo, usar o sistema inteligente
+      if (dataSources.length > 1) {
+        const recommendation = smartInconsistencyManager.analyzeField(fieldName, dataSources);
+        
+        if (recommendation.action === 'MANUAL_REQUIRED') {
+          intelligentErrors.push({
+            type: `INCONSISTENCIA_${fieldName.toUpperCase()}`,
+            message: `${recommendation.reasoning} - Recomendado: ${recommendation.recommendedValue}`,
+            field: fieldName,
+            smartRecommendation: recommendation
+          });
+        } else if (recommendation.action === 'SUGGEST_REVIEW' && recommendation.confidence < 75) {
+          intelligentErrors.push({
+            type: `REVISAO_${fieldName.toUpperCase()}`,
+            message: `Sugestão: ${recommendation.reasoning} - Valor recomendado: ${recommendation.recommendedValue}`,
+            field: fieldName,
+            smartRecommendation: recommendation
+          });
+        }
+      }
+    }
+
+    // Converter formato de resposta para manter compatibilidade com errors originais
+    const originalErrors = validationResult.errors.map(error => ({
       type: `INCONSISTENCIA_${error.field.toUpperCase()}`,
       message: `Inconsistência detectada em ${error.field}: OCR="${error.ocrValue || 'N/A'}", IA="${error.formValue || 'N/A'}"`,
       field: error.field
     }));
 
+    // Combinar errors originais com análise inteligente (priorizar inteligente)
+    const allErrors = [...intelligentErrors, ...originalErrors.filter(
+      original => !intelligentErrors.some(intelligent => intelligent.field === original.field)
+    )];
+
     // Adicionar validações adicionais
     if (ocrResult.confidence < 0.3) {
-      errors.push({
+      allErrors.push({
         type: "OCR_BAIXA_CONFIANCA",
-        message: `OCR com baixa confiança (${Math.round(ocrResult.confidence * 100)}%)`,
+        message: `OCR com baixa confiança (${Math.round(ocrResult.confidence * 100)}%) - Considere melhorar qualidade da imagem`,
         field: "ocr_confidence"
       });
     }
 
     if (!aiResult.extractedData?.descricao || aiResult.extractedData.descricao.length < 5) {
-      errors.push({
+      allErrors.push({
         type: "DADOS_INSUFICIENTES",
-        message: "IA não conseguiu extrair informações básicas do documento",
+        message: "IA não conseguiu extrair informações básicas do documento - Pode indicar documento ilegível",
         field: "description"
       });
     }
 
+    console.log(`🧠 Análise inteligente concluída: ${intelligentErrors.length} inconsistências inteligentes, ${allErrors.length} total`);
+
     return {
-      isValid: validationResult.isValid && errors.length === 0,
-      errors,
+      isValid: allErrors.length === 0 || allErrors.every(e => e.type.startsWith('REVISAO_')),
+      errors: allErrors,
       confidence: Math.min(validationResult.confidence / 100, ocrResult.confidence)
     };
+  }
+
+  private extractFromFilename(filename: string, fieldName: string): string | null {
+    const lowerFilename = filename.toLowerCase();
+    
+    switch (fieldName) {
+      case 'supplier':
+        const suppliers = ['uber', 'ifood', 'amazon', 'correios', 'magazine luiza', 'petrobras', 'shell'];
+        const foundSupplier = suppliers.find(s => lowerFilename.includes(s));
+        return foundSupplier ? foundSupplier.toUpperCase() : null;
+      
+      case 'amount':
+        const amountMatch = filename.match(/R?\$?\s?(\d+[.,]\d{2})/);
+        return amountMatch ? amountMatch[1] : null;
+        
+      default:
+        return null;
+    }
   }
 
   async classifyAndRoute(document: any, extractedData: any): Promise<{
