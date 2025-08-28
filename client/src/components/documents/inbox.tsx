@@ -674,9 +674,9 @@ export function Inbox() {
                           size="sm"
                           onClick={() => {
                             setSelectedDoc(doc);
-                            setShowPreviewDialog(true);
+                            setShowDetailsDialog(true);
                           }}
-                          data-testid={`button-preview-${doc.id}`}
+                          data-testid={`button-details-${doc.id}`}
                         >
                           <Eye className="w-4 h-4 text-blue-600" />
                         </Button>
@@ -697,12 +697,12 @@ export function Inbox() {
                             <Button 
                               variant="outline" 
                               size="sm"
-                              onClick={() => handleDocumentAction(doc, "revise")}
+                              onClick={() => handleManualReview(doc)}
                               className="text-orange-600 border-orange-600 hover:bg-orange-600 hover:text-white"
-                              data-testid={`button-revise-${doc.id}`}
+                              data-testid={`button-bpo-data-${doc.id}`}
                             >
                               <Edit className="w-4 h-4 mr-1" />
-                              Revisar
+                              Dados BPO
                             </Button>
                           </>
                         )}
@@ -1314,7 +1314,7 @@ export function Inbox() {
                       <SelectValue placeholder="Selecione uma categoria" />
                     </SelectTrigger>
                     <SelectContent>
-                      {categories?.map((category: any) => (
+                      {(categories || []).map((category: any) => (
                         <SelectItem key={category.id} value={category.id}>
                           {category.name}
                         </SelectItem>
@@ -1333,7 +1333,7 @@ export function Inbox() {
                       <SelectValue placeholder="Selecione um centro de custo" />
                     </SelectTrigger>
                     <SelectContent>
-                      {costCenters?.map((costCenter: any) => (
+                      {(costCenters || []).map((costCenter: any) => (
                         <SelectItem key={costCenter.id} value={costCenter.id}>
                           {costCenter.name}
                         </SelectItem>
