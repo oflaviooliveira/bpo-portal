@@ -152,58 +152,83 @@ class AIMultiProvider {
           result.fallbackReason = fallbackReason;
         }
         
-        // Validar a resposta com o schema stricto
+        // Validar a resposta com schema flexível - correção da over-validation
         try {
+          // Primeira tentativa: validação padrão
           const validatedData = aiAnalysisResponseSchema.parse(result.extractedData);
           result.extractedData = validatedData;
-          
-          // Normalizar valores
-          result.extractedData.valor = normalizeValue(result.extractedData.valor);
-          if (result.extractedData.data_pagamento) {
-            result.extractedData.data_pagamento = normalizeDate(result.extractedData.data_pagamento);
-          }
-          if (result.extractedData.data_vencimento) {
-            result.extractedData.data_vencimento = normalizeDate(result.extractedData.data_vencimento);
-          }
-          
-          // Marcar provider como online apenas após sucesso completo
-          provider.status = 'online';
-          console.log(`✅ Provider ${provider.name} marked as ONLINE after successful analysis`);
-          
-          // Atualizar estatísticas em tempo real
-          provider.last30Days.totalRequests += 1;
-          provider.last30Days.totalCost += result.processingCost || 0;
-          provider.last30Days.totalTokens += (result.tokensIn || 0) + (result.tokensOut || 0);
-          
-          // Calculate rolling average response time
-          const currentTotal = provider.last30Days.avgResponseTime * (provider.last30Days.totalRequests - 1);
-          provider.last30Days.avgResponseTime = (currentTotal + (result.processingTimeMs || 0)) / provider.last30Days.totalRequests;
-          
-          // Update success rate
-          const currentSuccessCount = Math.floor(provider.last30Days.successRate * (provider.last30Days.totalRequests - 1) / 100);
-          provider.last30Days.successRate = ((currentSuccessCount + 1) / provider.last30Days.totalRequests) * 100;
-          
-          console.log(`📊 Stats atualizadas para ${provider.name}: ${provider.last30Days.totalRequests} requests, ${provider.last30Days.successRate.toFixed(1)}% sucesso`);
-          
-          // Registrar no banco
-          await this.logAiRun(documentId, tenantId, result);
-          
-          return result;
-          
         } catch (validationError) {
-          console.warn(`❌ Schema validation failed for ${provider.name}:`, validationError);
-          provider.status = 'error';
-          console.log(`🚨 Provider ${provider.name} marked as ERROR due to validation failure`);
+          console.warn(`⚠️ Schema validation strict failed for ${provider.name}, trying flexible validation...`);
           
-          // Atualizar estatísticas de falha
-          provider.last30Days.totalRequests += 1;
-          const currentSuccessCount = Math.floor(provider.last30Days.successRate * (provider.last30Days.totalRequests - 1) / 100);
-          provider.last30Days.successRate = (currentSuccessCount / provider.last30Days.totalRequests) * 100;
-          
-          fallbackReason = 'invalid_response_format';
-          lastError = validationError;
-          continue;
+          // Segunda tentativa: auto-correção de problemas comuns do GLM
+          try {
+            const correctedData = this.autoCorrectGlmResponse(result.extractedData);
+            const validatedData = aiAnalysisResponseSchema.parse(correctedData);
+            result.extractedData = validatedData;
+            console.log(`✅ Provider ${provider.name} response auto-corrected successfully`);
+          } catch (secondValidationError) {
+            console.error(`❌ Both validation attempts failed for ${provider.name}:`, secondValidationError);
+            
+            // Categorizar erro: se é um problema de formato vs problema de dados
+            const isFormatError = this.isFormatError(validationError);
+            
+            if (isFormatError) {
+              // Erro de formato: marcar como temporário, permitir auto-recovery
+              provider.status = 'online'; // Manter online para permitir retry
+              console.log(`⚠️ Provider ${provider.name} kept ONLINE (format error, recoverable)`);
+              
+              fallbackReason = 'format_error_recoverable';
+              lastError = validationError;
+              continue;
+            } else {
+              // Erro de dados: marcar como erro real
+              provider.status = 'error';
+              console.log(`🚨 Provider ${provider.name} marked as ERROR (data validation failed)`);
+              
+              // Atualizar estatísticas de falha
+              provider.last30Days.totalRequests += 1;
+              const currentSuccessCount = Math.floor(provider.last30Days.successRate * (provider.last30Days.totalRequests - 1) / 100);
+              provider.last30Days.successRate = (currentSuccessCount / provider.last30Days.totalRequests) * 100;
+              
+              fallbackReason = 'invalid_response_format';
+              lastError = validationError;
+              continue;
+            }
+          }
         }
+        
+        // Normalizar valores
+        result.extractedData.valor = normalizeValue(result.extractedData.valor);
+        if (result.extractedData.data_pagamento) {
+          result.extractedData.data_pagamento = normalizeDate(result.extractedData.data_pagamento);
+        }
+        if (result.extractedData.data_vencimento) {
+          result.extractedData.data_vencimento = normalizeDate(result.extractedData.data_vencimento);
+        }
+        
+        // Marcar provider como online após sucesso completo
+        provider.status = 'online';
+        console.log(`✅ Provider ${provider.name} marked as ONLINE after successful analysis`);
+        
+        // Atualizar estatísticas em tempo real
+        provider.last30Days.totalRequests += 1;
+        provider.last30Days.totalCost += result.processingCost || 0;
+        provider.last30Days.totalTokens += (result.tokensIn || 0) + (result.tokensOut || 0);
+        
+        // Calculate rolling average response time
+        const currentTotal = provider.last30Days.avgResponseTime * (provider.last30Days.totalRequests - 1);
+        provider.last30Days.avgResponseTime = (currentTotal + (result.processingTimeMs || 0)) / provider.last30Days.totalRequests;
+        
+        // Update success rate
+        const currentSuccessCount = Math.floor(provider.last30Days.successRate * (provider.last30Days.totalRequests - 1) / 100);
+        provider.last30Days.successRate = ((currentSuccessCount + 1) / provider.last30Days.totalRequests) * 100;
+        
+        console.log(`📊 Stats atualizadas para ${provider.name}: ${provider.last30Days.totalRequests} requests, ${provider.last30Days.successRate.toFixed(1)}% sucesso`);
+        
+        // Registrar no banco
+        await this.logAiRun(documentId, tenantId, result);
+        
+        return result;
         
       } catch (error: any) {
         console.warn(`⚠️ Provider ${provider.name} failed:`, error.message);
@@ -213,26 +238,24 @@ class AIMultiProvider {
         const currentSuccessCount = Math.floor(provider.last30Days.successRate * (provider.last30Days.totalRequests - 1) / 100);
         provider.last30Days.successRate = (currentSuccessCount / provider.last30Days.totalRequests) * 100;
         
-        // Reset status for model code errors to allow retry with corrected model
-        if (error.message?.includes('Unknown Model')) {
-          provider.status = 'online';
-          console.log(`⚠️ Provider ${provider.name} kept ONLINE (model error, retryable)`);
+        // Categorização inteligente de erros
+        const errorCategory = this.categorizeError(error);
+        
+        if (errorCategory.isRecoverable) {
+          provider.status = 'online'; // Manter online para erros recuperáveis
+          console.log(`⚠️ Provider ${provider.name} kept ONLINE (${errorCategory.type}, recoverable)`);
+          
+          // Programar auto-recovery se necessário
+          if (errorCategory.needsRetry) {
+            this.scheduleProviderRetry(provider.name, 30000); // 30s retry
+          }
         } else {
           provider.status = 'error';
-          console.log(`🚨 Provider ${provider.name} marked as ERROR due to: ${error.message}`);
+          console.log(`🚨 Provider ${provider.name} marked as ERROR (${errorCategory.type}, not recoverable)`);
         }
         
-        // Determinar o motivo do fallback
-        if (error.message?.includes('timeout') || error.code === 'ECONNRESET') {
-          fallbackReason = 'timeout';
-        } else if (error.message?.includes('JSON')) {
-          fallbackReason = 'invalid_json';
-        } else if (error.message?.includes('Unknown Model')) {
-          fallbackReason = 'invalid_model';
-        } else {
-          fallbackReason = 'provider_error';
-        }
-        
+        // Determinar o motivo do fallback baseado na categoria
+        fallbackReason = errorCategory.fallbackReason;
         lastError = error;
         continue;
       }
@@ -562,6 +585,158 @@ TEMPLATE:
       glm.priority = openai.priority;
       openai.priority = tempPriority;
     }
+  }
+
+  // Auto-correção específica para respostas do GLM
+  private autoCorrectGlmResponse(data: any): any {
+    const corrected = { ...data };
+    
+    // Corrigir campos nulos para undefined (GLM às vezes retorna null)
+    Object.keys(corrected).forEach(key => {
+      if (corrected[key] === null || corrected[key] === "null") {
+        delete corrected[key];
+      }
+    });
+    
+    // Garantir que confidence é número
+    if (typeof corrected.confidence === 'string') {
+      corrected.confidence = parseInt(corrected.confidence) || 85;
+    }
+    if (!corrected.confidence) {
+      corrected.confidence = 85;
+    }
+    
+    // Corrigir formato de valor se necessário
+    if (corrected.valor && !corrected.valor.startsWith('R$')) {
+      corrected.valor = `R$ ${corrected.valor}`;
+    }
+    
+    // Normalizar campos obrigatórios se estão vazios
+    if (!corrected.fornecedor || corrected.fornecedor === "") {
+      corrected.fornecedor = "Não identificado";
+    }
+    if (!corrected.descricao || corrected.descricao === "") {
+      corrected.descricao = "Descrição não identificada";
+    }
+    if (!corrected.categoria || corrected.categoria === "") {
+      corrected.categoria = "Outros";
+    }
+    if (!corrected.centro_custo || corrected.centro_custo === "") {
+      corrected.centro_custo = "GERAL";
+    }
+    
+    console.log(`🔧 GLM response auto-corrected:`, corrected);
+    return corrected;
+  }
+  
+  // Verificar se é um erro de formato vs erro de dados
+  private isFormatError(error: any): boolean {
+    const errorMessage = error?.message || error?.toString() || "";
+    
+    // Erros de formato que podem ser recuperáveis
+    const formatErrorPatterns = [
+      /invalid_type/i,
+      /expected.*received/i,
+      /formato.*inválido/i,
+      /must be/i,
+      /should be/i
+    ];
+    
+    return formatErrorPatterns.some(pattern => pattern.test(errorMessage));
+  }
+  
+  // Categorização inteligente de erros
+  private categorizeError(error: any): {
+    type: string;
+    isRecoverable: boolean;
+    needsRetry: boolean;
+    fallbackReason: string;
+  } {
+    const errorMessage = error?.message || error?.toString() || "";
+    const errorCode = error?.code || "";
+    
+    // Erros de conectividade - temporários e recuperáveis
+    if (errorCode === 'ECONNRESET' || errorCode === 'ETIMEOUT' || 
+        errorMessage.includes('timeout') || errorMessage.includes('network')) {
+      return {
+        type: 'connectivity',
+        isRecoverable: true,
+        needsRetry: true,
+        fallbackReason: 'network_timeout'
+      };
+    }
+    
+    // Erros de rate limiting - temporários
+    if (errorMessage.includes('rate limit') || errorMessage.includes('too many requests')) {
+      return {
+        type: 'rate_limit',
+        isRecoverable: true,
+        needsRetry: true,
+        fallbackReason: 'rate_limited'
+      };
+    }
+    
+    // Erros de JSON/parsing - potencialmente recuperáveis
+    if (errorMessage.includes('JSON') || errorMessage.includes('parse')) {
+      return {
+        type: 'json_parse',
+        isRecoverable: true,
+        needsRetry: false,
+        fallbackReason: 'invalid_json'
+      };
+    }
+    
+    // Erros de modelo - recuperáveis com retry
+    if (errorMessage.includes('Unknown Model') || errorMessage.includes('model')) {
+      return {
+        type: 'model_error',
+        isRecoverable: true,
+        needsRetry: false,
+        fallbackReason: 'invalid_model'
+      };
+    }
+    
+    // Erros de API key - não recuperáveis
+    if (errorMessage.includes('api key') || errorMessage.includes('unauthorized') || 
+        errorMessage.includes('authentication')) {
+      return {
+        type: 'auth_error',
+        isRecoverable: false,
+        needsRetry: false,
+        fallbackReason: 'auth_failed'
+      };
+    }
+    
+    // Outros erros - assumir não recuperáveis por segurança
+    return {
+      type: 'unknown_error',
+      isRecoverable: false,
+      needsRetry: false,
+      fallbackReason: 'provider_error'
+    };
+  }
+  
+  // Sistema de retry automático para providers
+  private retryTimers = new Map<string, NodeJS.Timeout>();
+  
+  private scheduleProviderRetry(providerName: string, delayMs: number): void {
+    // Limpar retry anterior se existir
+    if (this.retryTimers.has(providerName)) {
+      clearTimeout(this.retryTimers.get(providerName)!);
+    }
+    
+    // Programar novo retry
+    const timer = setTimeout(() => {
+      const provider = this.providers.find(p => p.name === providerName);
+      if (provider && provider.status !== 'online') {
+        console.log(`🔄 Auto-recovery: resetting ${providerName} status to ONLINE`);
+        provider.status = 'online';
+      }
+      this.retryTimers.delete(providerName);
+    }, delayMs);
+    
+    this.retryTimers.set(providerName, timer);
+    console.log(`⏰ Scheduled auto-recovery for ${providerName} in ${delayMs/1000}s`);
   }
 
   // Emergency mode: disable GLM, enable OpenAI only

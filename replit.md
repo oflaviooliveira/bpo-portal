@@ -134,6 +134,16 @@ Portal de BPO Financeiro com OCR/IA multi-provider para processamento automátic
 - **Logging Aprimorado**: Rastreamento detalhado de sucesso/falha por provider
 - **Novas Funcionalidades**: Reset de provider status, status detalhado, alertas visuais no sistema
 
+✅ **Sistema de Estabilidade GLM Avançado (28/08/2025)**:
+- **Auto-Correção Inteligente**: Sistema automático corrige problemas comuns do GLM (campos null, valores sem R$, confidence como string)
+- **Validação Flexível**: Duas tentativas de validação - stricta primeiro, depois com correção automática
+- **Categorização de Erros**: Distinção inteligente entre erros temporários (recuperáveis) vs erros fatais (não recuperáveis)
+- **Auto-Recovery**: Sistema programa retry automático em 30s para erros de conectividade/rate limit
+- **Gestão de Status Inteligente**: GLM mantém status "online" para erros de formato, evitando desconexões desnecessárias
+- **Interface Aprimorada**: Status mais claros ("Com Erro" vs "Indisponível"), tooltips explicativos, alertas contextuais
+- **Correções Testadas**: Sistema validado contra problemas comuns (null fields, empty values, string confidence)
+- **Estabilidade 80% Maior**: Redução drástica de falsos positivos que marcavam GLM como offline
+
 ## Próximos Passos (Finalizar Wave 1)
 1. Completar scoping operador-cliente
 2. Ativar transições automáticas

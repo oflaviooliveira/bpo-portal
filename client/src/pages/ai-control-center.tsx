@@ -23,6 +23,7 @@ import {
   TrendingUp,
   AlertTriangle,
   CheckCircle,
+  XCircle,
   Loader2
 } from "lucide-react";
 
@@ -207,27 +208,39 @@ export default function AIControlCenter() {
 
         {/* CONTROLES TAB */}
         <TabsContent value="controls" className="space-y-6">
-          {/* System Status Alert */}
+          {/* System Status Alert - Melhorado */}
           {status.systemHealth && (
             <div className={`p-4 rounded-lg border ${
               status.systemHealth.overall === 'healthy' 
                 ? 'bg-green-50 border-green-200 text-green-800' 
-                : 'bg-yellow-50 border-yellow-200 text-yellow-800'
+                : status.systemHealth.overall === 'degraded'
+                ? 'bg-yellow-50 border-yellow-200 text-yellow-800'
+                : 'bg-red-50 border-red-200 text-red-800'
             }`}>
               <div className="flex items-center gap-2">
                 {status.systemHealth.overall === 'healthy' ? (
                   <CheckCircle className="h-5 w-5 text-green-600" />
-                ) : (
+                ) : status.systemHealth.overall === 'degraded' ? (
                   <AlertTriangle className="h-5 w-5 text-yellow-600" />
+                ) : (
+                  <XCircle className="h-5 w-5 text-red-600" />
                 )}
-                <div>
+                <div className="flex-1">
                   <h4 className="font-medium">
-                    Status do Sistema: {status.systemHealth.overall === 'healthy' ? 'Saudável' : 'Degradado'}
+                    Sistema: {status.systemHealth.overall === 'healthy' ? 'Saudável' : 
+                             status.systemHealth.overall === 'degraded' ? 'Degradado' : 'Crítico'}
                   </h4>
-                  <p className="text-sm">
-                    Provider Primário: {status.systemHealth.primaryProvider?.toUpperCase() || 'N/A'} | 
-                    Última verificação: {new Date(status.systemHealth.lastCheck).toLocaleTimeString('pt-BR')}
-                  </p>
+                  <div className="text-sm space-y-1">
+                    <p>
+                      Provider Primário: {status.systemHealth.primaryProvider?.toUpperCase() || 'N/A'} | 
+                      Última verificação: {new Date(status.systemHealth.lastCheck).toLocaleTimeString('pt-BR')}
+                    </p>
+                    {status.systemHealth.overall !== 'healthy' && (
+                      <p className="font-medium">
+                        💡 Dica: Use o botão "Reset" nos providers com erro ou ative o Modo Emergência se necessário
+                      </p>
+                    )}
+                  </div>
                 </div>
               </div>
             </div>
@@ -292,8 +305,10 @@ export default function AIControlCenter() {
                       <div className="flex justify-between text-sm">
                         <span>Status Operacional:</span>
                         <div className="flex items-center gap-2">
-                          <Badge variant={provider.status === 'online' ? 'default' : 'destructive'}>
-                            {provider.status === 'online' ? 'Online' : 'Offline'}
+                          <Badge variant={provider.status === 'online' ? 'default' : provider.status === 'error' ? 'destructive' : 'secondary'}>
+                            {provider.status === 'online' ? 'Online' : 
+                             provider.status === 'error' ? 'Com Erro' : 
+                             'Indisponível'}
                           </Badge>
                           {provider.status === 'error' && (
                             <Button 
@@ -301,6 +316,7 @@ export default function AIControlCenter() {
                               variant="outline"
                               onClick={() => resetProviderMutation.mutate({ name: provider.name })}
                               disabled={resetProviderMutation.isPending}
+                              title="Reset status para tentar novamente"
                             >
                               Reset
                             </Button>
