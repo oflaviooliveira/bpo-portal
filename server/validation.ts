@@ -341,11 +341,17 @@ export function performCrossValidation(
 // Schemas para validação específica por tipo de documento
 export const documentValidationSchemas = {
   PAGO: {
-    required: ['clientId', 'bankId', 'categoryId', 'costCenterId', 'amount', 'paymentDate'],
+    required: ['bankId', 'categoryId', 'costCenterId', 'amount', 'paymentDate'],
+    conditionalRequired: [
+      { fields: ['clientId', 'contraparteName'], condition: 'at_least_one' } // Cliente OU Contraparte
+    ],
     optional: ['supplier', 'notes']
   },
   AGENDADO: {
-    required: ['clientId', 'bankId', 'categoryId', 'costCenterId', 'amount', 'dueDate'],
+    required: ['bankId', 'categoryId', 'costCenterId', 'amount', 'dueDate'],
+    conditionalRequired: [
+      { fields: ['clientId', 'contraparteName'], condition: 'at_least_one' }
+    ],
     optional: ['supplier', 'notes']
   },
   EMITIR_BOLETO: {
@@ -372,29 +378,47 @@ export function validateBusinessRules(
     return { isValid: false, errors, warnings };
   }
   
+  // Mapear nomes de campos para mensagens mais amigáveis
+  const fieldNames: { [key: string]: string } = {
+    'clientId': 'Cliente',
+    'contraparteName': 'Contraparte',
+    'bankId': 'Banco',
+    'categoryId': 'Categoria',
+    'costCenterId': 'Centro de Custo',
+    'amount': 'Valor',
+    'paymentDate': 'Data de Pagamento',
+    'dueDate': 'Data de Vencimento',
+    'payerDocument': 'Documento do Tomador',
+    'payerName': 'Nome do Tomador',
+    'payerAddress': 'Endereço do Tomador',
+    'payerEmail': 'Email do Tomador',
+    'serviceCode': 'Código do Serviço',
+    'serviceDescription': 'Descrição do Serviço'
+  };
+
   // Verificar campos obrigatórios
   for (const field of schema.required) {
     if (!formData[field] || formData[field] === '') {
-      // Mapear nomes de campos para mensagens mais amigáveis
-      const fieldNames: { [key: string]: string } = {
-        'clientId': 'Cliente',
-        'bankId': 'Banco',
-        'categoryId': 'Categoria',
-        'costCenterId': 'Centro de Custo',
-        'amount': 'Valor',
-        'paymentDate': 'Data de Pagamento',
-        'dueDate': 'Data de Vencimento',
-        'payerDocument': 'Documento do Tomador',
-        'payerName': 'Nome do Tomador',
-        'payerAddress': 'Endereço do Tomador',
-        'payerEmail': 'Email do Tomador',
-        'serviceCode': 'Código do Serviço',
-        'serviceDescription': 'Descrição do Serviço'
-      };
-      
       const friendlyName = fieldNames[field] || field;
       errors.push(`Campo obrigatório não preenchido: ${friendlyName}`);
       console.log(`❌ Campo obrigatório ausente: ${field} (valor: "${formData[field]}")`);
+    }
+  }
+
+  // Verificar campos condicionalmente obrigatórios
+  if ('conditionalRequired' in schema && schema.conditionalRequired) {
+    for (const condition of schema.conditionalRequired) {
+      if (condition.condition === 'at_least_one') {
+        const hasAtLeastOne = condition.fields.some((field: string) => 
+          formData[field] && formData[field] !== ''
+        );
+        
+        if (!hasAtLeastOne) {
+          const fieldList = condition.fields.map((field: string) => fieldNames[field] || field).join(' OU ');
+          errors.push(`Pelo menos um campo deve ser preenchido: ${fieldList}`);
+          console.log(`❌ Validação condicional falhou - nenhum dos campos foi preenchido: ${condition.fields.join(', ')}`);
+        }
+      }
     }
   }
   

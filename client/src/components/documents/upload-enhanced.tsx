@@ -68,6 +68,20 @@ export function UploadEnhanced() {
   const { toast } = useToast();
   const queryClient = useQueryClient();
 
+  // Função auxiliar para converter data brasileira DD/MM/AAAA para ISO YYYY-MM-DD
+  const convertBRDateToISO = (brDate: string): string => {
+    if (!brDate || !brDate.includes('/')) return brDate;
+    
+    const parts = brDate.split('/');
+    if (parts.length !== 3) return brDate;
+    
+    const [day, month, year] = parts;
+    // Formato ISO: YYYY-MM-DD
+    const isoDate = `${year}-${month.padStart(2, '0')}-${day.padStart(2, '0')}`;
+    console.log(`📅 Conversão de data: ${brDate} → ${isoDate}`);
+    return isoDate;
+  };
+
   const {
     register,
     handleSubmit,
@@ -175,15 +189,19 @@ export function UploadEnhanced() {
           }
           
           if (data.suggestions.dueDate) {
-            setValue("dueDate", data.suggestions.dueDate);
-            suggestions.push({ field: 'dueDate', value: data.suggestions.dueDate, confidence: data.suggestions.confidence?.dueDate || 0.85 });
-            console.log("📅 Data vencimento preenchida:", data.suggestions.dueDate);
+            // Converter data de DD/MM/AAAA para YYYY-MM-DD para input HTML
+            const convertedDate = convertBRDateToISO(data.suggestions.dueDate);
+            setValue("dueDate", convertedDate);
+            suggestions.push({ field: 'dueDate', value: convertedDate, confidence: data.suggestions.confidence?.dueDate || 0.85 });
+            console.log("📅 Data vencimento preenchida:", data.suggestions.dueDate, "→", convertedDate);
           }
           
           if (data.suggestions.paymentDate) {
-            setValue("paymentDate", data.suggestions.paymentDate);
-            suggestions.push({ field: 'paymentDate', value: data.suggestions.paymentDate, confidence: data.suggestions.confidence?.paymentDate || 0.85 });
-            console.log("💳 Data pagamento preenchida:", data.suggestions.paymentDate);
+            // Converter data de DD/MM/AAAA para YYYY-MM-DD para input HTML
+            const convertedDate = convertBRDateToISO(data.suggestions.paymentDate);
+            setValue("paymentDate", convertedDate);
+            suggestions.push({ field: 'paymentDate', value: convertedDate, confidence: data.suggestions.confidence?.paymentDate || 0.85 });
+            console.log("💳 Data pagamento preenchida:", data.suggestions.paymentDate, "→", convertedDate);
           }
           
           if (data.suggestions.documentType) {
@@ -229,7 +247,7 @@ export function UploadEnhanced() {
           errorMessage = `${errorMessage}: ${errorData.details.join(', ')}`;
         }
         
-        const error = new Error(errorMessage);
+        const error = new Error(errorMessage) as any;
         error.response = errorData; // Anexar dados da resposta
         throw error;
       }
