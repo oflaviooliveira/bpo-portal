@@ -128,17 +128,20 @@ ${text}
 **RESPOSTA ESPERADA (APENAS JSON PURO):**
 {
   "dados_extraidos": {
-    "fornecedor": "Nome da empresa/prestador (ex: Uber, Posto Shell)",
+    "contraparte": "Nome da empresa/pessoa (ex: Uber, Posto Shell, João Silva)",
+    "tipo_relacao": "SUPPLIER se estamos pagando para eles, CLIENT se eles estão pagando para nós",
     "descricao": "Descrição específica do serviço/produto",
     "valor": "Valor total pago (formato R$ XX,XX)",
     "data_vencimento": "Data de vencimento se for boleto (DD/MM/AAAA)",
     "data_pagamento": "Data do pagamento se já pago (DD/MM/AAAA)",
     "categoria": "Categoria do gasto (Transporte, Combustível, Alimentação, etc)",
     "centro_custo": "Centro de custo se identificado",
-    "tipo_documento": "PAGO se já foi pago, AGENDADO se for para pagamento futuro, EMITIR_BOLETO ou EMITIR_NF se for emissão"
+    "tipo_documento": "PAGO se já foi pago, AGENDADO se for para pagamento futuro, EMITIR_BOLETO ou EMITIR_NF se for emissão",
+    
+    "fornecedor": "Mesmo valor que contraparte (compatibilidade)"
   },
   "confianca": 85,
-  "raciocinio": "Explicação breve de como chegou às conclusões"
+  "raciocinio": "Explicação breve de como chegou às conclusões e por que é SUPPLIER ou CLIENT"
 }`;
   }
 

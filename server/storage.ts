@@ -1,7 +1,7 @@
 import { 
-  users, clients, tenants, banks, categories, costCenters, documents, documentLogs, aiRuns, documentInconsistencies, ocrMetrics,
+  users, clients, contrapartes, tenants, banks, categories, costCenters, documents, documentLogs, aiRuns, documentInconsistencies, ocrMetrics,
   type User, type InsertUser, type Tenant, type InsertTenant, 
-  type Client, type InsertClient, type Document, type InsertDocument,
+  type Client, type InsertClient, type Contraparte, type InsertContraparte, type Document, type InsertDocument,
   type Bank, type Category, type CostCenter, type DocumentLog,
   type InsertCategory, type InsertCostCenter, type AiRun, type DocumentInconsistency
 } from "@shared/schema";
@@ -26,7 +26,14 @@ export interface IStorage {
   getTenantBySlug(slug: string): Promise<Tenant | undefined>;
   createTenant(tenant: InsertTenant): Promise<Tenant>;
   
-  // Clients
+  // Contrapartes
+  getContrapartes(tenantId: string, filters?: { canBeClient?: boolean; canBeSupplier?: boolean }): Promise<Contraparte[]>;
+  getContraparte(id: string, tenantId: string): Promise<Contraparte | undefined>;
+  createContraparte(contraparte: InsertContraparte): Promise<Contraparte>;
+  updateContraparte(id: string, tenantId: string, updates: Partial<Contraparte>): Promise<Contraparte>;
+  findOrCreateContraparte(name: string, tenantId: string, extraData?: Partial<InsertContraparte>): Promise<Contraparte>;
+  
+  // Clients (Legacy)
   getClients(tenantId: string): Promise<Client[]>;
   getClient(id: string, tenantId: string): Promise<Client | undefined>;
   createClient(client: InsertClient): Promise<Client>;
@@ -182,6 +189,68 @@ export class DatabaseStorage implements IStorage {
       .values(insertClient)
       .returning();
     return client;
+  }
+
+  // Contrapartes methods
+  async getContrapartes(tenantId: string, filters?: { canBeClient?: boolean; canBeSupplier?: boolean }): Promise<Contraparte[]> {
+    let whereConditions = [eq(contrapartes.tenantId, tenantId), eq(contrapartes.isActive, true)];
+    
+    if (filters?.canBeClient !== undefined) {
+      whereConditions.push(eq(contrapartes.canBeClient, filters.canBeClient));
+    }
+    
+    if (filters?.canBeSupplier !== undefined) {
+      whereConditions.push(eq(contrapartes.canBeSupplier, filters.canBeSupplier));
+    }
+    
+    return await db.select().from(contrapartes)
+      .where(and(...whereConditions))
+      .orderBy(contrapartes.name);
+  }
+
+  async getContraparte(id: string, tenantId: string): Promise<Contraparte | undefined> {
+    const [contraparte] = await db.select().from(contrapartes)
+      .where(and(eq(contrapartes.id, id), eq(contrapartes.tenantId, tenantId)));
+    return contraparte || undefined;
+  }
+
+  async createContraparte(insertContraparte: InsertContraparte): Promise<Contraparte> {
+    const [contraparte] = await db.insert(contrapartes).values(insertContraparte).returning();
+    return contraparte;
+  }
+
+  async updateContraparte(id: string, tenantId: string, updates: Partial<Contraparte>): Promise<Contraparte> {
+    const [updated] = await db.update(contrapartes)
+      .set({ ...updates, updatedAt: new Date() })
+      .where(and(eq(contrapartes.id, id), eq(contrapartes.tenantId, tenantId)))
+      .returning();
+    return updated;
+  }
+
+  async findOrCreateContraparte(name: string, tenantId: string, extraData?: Partial<InsertContraparte>): Promise<Contraparte> {
+    // Primeiro, tentar encontrar uma contraparte existente pelo nome
+    const [existing] = await db.select().from(contrapartes)
+      .where(and(
+        eq(contrapartes.name, name),
+        eq(contrapartes.tenantId, tenantId),
+        eq(contrapartes.isActive, true)
+      ))
+      .limit(1);
+    
+    if (existing) {
+      return existing;
+    }
+    
+    // Se não encontrou, criar uma nova
+    const newContraparte: InsertContraparte = {
+      name,
+      tenantId,
+      canBeClient: true,
+      canBeSupplier: true,
+      ...extraData
+    };
+    
+    return this.createContraparte(newContraparte);
   }
 
   async getBanks(): Promise<Bank[]> {

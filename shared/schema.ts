@@ -29,7 +29,24 @@ export const tenants = pgTable("tenants", {
   updatedAt: timestamp("updated_at").defaultNow(),
 });
 
-// Clients table
+// Contrapartes table - Unificado para clientes e fornecedores
+export const contrapartes = pgTable("contrapartes", {
+  id: uuid("id").primaryKey().default(sql`gen_random_uuid()`),
+  tenantId: uuid("tenant_id").notNull(),
+  name: varchar("name", { length: 255 }).notNull(),
+  document: varchar("document", { length: 50 }), // CNPJ/CPF
+  documentType: varchar("document_type", { length: 20 }).notNull().default("CNPJ"), // CNPJ, CPF
+  email: varchar("email", { length: 255 }),
+  phone: varchar("phone", { length: 20 }),
+  address: text("address"),
+  canBeClient: boolean("can_be_client").notNull().default(true),
+  canBeSupplier: boolean("can_be_supplier").notNull().default(true),
+  isActive: boolean("is_active").notNull().default(true),
+  createdAt: timestamp("created_at").defaultNow(),
+  updatedAt: timestamp("updated_at").defaultNow(),
+});
+
+// Legacy Clients table (manter por compatibilidade temporária)
 export const clients = pgTable("clients", {
   id: uuid("id").primaryKey().default(sql`gen_random_uuid()`),
   tenantId: uuid("tenant_id").notNull(),
@@ -74,7 +91,14 @@ export const costCenters = pgTable("cost_centers", {
 export const documents = pgTable("documents", {
   id: uuid("id").primaryKey().default(sql`gen_random_uuid()`),
   tenantId: uuid("tenant_id").notNull(),
-  clientId: uuid("client_id").notNull(),
+  
+  // Nova estrutura com contrapartes unificadas
+  contraparteId: uuid("contraparte_id"), // FK para contrapartes table
+  relationshipType: varchar("relationship_type", { length: 20 }), // CLIENT ou SUPPLIER (calculado automaticamente)
+  
+  // Campos legacy (manter por compatibilidade)
+  clientId: uuid("client_id"), // Manter para migração gradual
+  
   bankId: uuid("bank_id"),
   categoryId: uuid("category_id"),
   costCenterId: uuid("cost_center_id"),
@@ -89,7 +113,7 @@ export const documents = pgTable("documents", {
   // Business data - Tipos conforme PRD
   documentType: varchar("document_type", { length: 50 }).notNull(), // PAGO, AGENDADO, EMITIR_BOLETO, EMITIR_NF
   amount: decimal("amount", { precision: 15, scale: 2 }),
-  supplier: varchar("supplier", { length: 255 }), // Nome do fornecedor/cliente (ex: Uber, Posto Shell)
+  supplier: varchar("supplier", { length: 255 }), // LEGACY: Nome do fornecedor/cliente (ex: Uber, Posto Shell)
   description: text("description"), // Descrição detalhada (ex: Corrida 01/05 - Centro ao Aeroporto)
   dueDate: timestamp("due_date"),
   paidDate: timestamp("paid_date"),
@@ -186,9 +210,18 @@ export const usersRelations = relations(users, ({ one, many }) => ({
 
 export const tenantsRelations = relations(tenants, ({ many }) => ({
   users: many(users),
+  contrapartes: many(contrapartes),
   clients: many(clients),
   categories: many(categories),
   costCenters: many(costCenters),
+  documents: many(documents),
+}));
+
+export const contrapartesRelations = relations(contrapartes, ({ one, many }) => ({
+  tenant: one(tenants, {
+    fields: [contrapartes.tenantId],
+    references: [tenants.id],
+  }),
   documents: many(documents),
 }));
 
@@ -204,6 +237,10 @@ export const documentsRelations = relations(documents, ({ one, many }) => ({
   tenant: one(tenants, {
     fields: [documents.tenantId],
     references: [tenants.id],
+  }),
+  contraparte: one(contrapartes, {
+    fields: [documents.contraparteId],
+    references: [contrapartes.id],
   }),
   client: one(clients, {
     fields: [documents.clientId],
@@ -279,6 +316,18 @@ export const insertTenantSchema = createInsertSchema(tenants).pick({
   slug: true,
 });
 
+export const insertContraparteSchema = createInsertSchema(contrapartes).pick({
+  tenantId: true,
+  name: true,
+  document: true,
+  documentType: true,
+  email: true,
+  phone: true,
+  address: true,
+  canBeClient: true,
+  canBeSupplier: true,
+});
+
 export const insertClientSchema = createInsertSchema(clients).pick({
   tenantId: true,
   name: true,
@@ -301,7 +350,9 @@ export const insertCostCenterSchema = createInsertSchema(costCenters).pick({
 
 export const insertDocumentSchema = createInsertSchema(documents).pick({
   tenantId: true,
-  clientId: true,
+  contraparteId: true,
+  relationshipType: true,
+  clientId: true, // Legacy
   bankId: true,
   categoryId: true,
   costCenterId: true,
@@ -352,6 +403,9 @@ export type User = typeof users.$inferSelect;
 
 export type InsertTenant = z.infer<typeof insertTenantSchema>;
 export type Tenant = typeof tenants.$inferSelect;
+
+export type InsertContraparte = z.infer<typeof insertContraparteSchema>;
+export type Contraparte = typeof contrapartes.$inferSelect;
 
 export type InsertClient = z.infer<typeof insertClientSchema>;
 export type Client = typeof clients.$inferSelect;

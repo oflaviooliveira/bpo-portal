@@ -1,16 +1,23 @@
 import { z } from "zod";
 import { storage } from "./storage";
 import { parseFileName, validateBusinessRules, performCrossValidation } from "./validation";
+import { ContraparteService } from "./services/contraparte-service";
 
-// Schema completo para upload
+// Schema completo para upload - Nova versão com contrapartes
 const uploadDocumentSchema = z.object({
-  clientId: z.string().uuid(),
+  // Nova estrutura com contrapartes
+  contraparteId: z.string().uuid().optional(),
+  contraparteName: z.string().optional(), // Para buscar/criar contraparte
+  
+  // Campos legacy (manter compatibilidade)
+  clientId: z.string().uuid().optional(),
+  
   bankId: z.string().uuid().optional(),
   categoryId: z.string().uuid().optional(),
   costCenterId: z.string().uuid().optional(),
   documentType: z.enum(['PAGO', 'AGENDADO', 'EMITIR_BOLETO', 'EMITIR_NF']),
   amount: z.string().optional(),
-  supplier: z.string().optional(),
+  supplier: z.string().optional(), // Legacy field
   description: z.string().optional(),
   notes: z.string().optional(),
   // Campos condicionais por tipo
@@ -77,10 +84,30 @@ export class DocumentUploadHandler {
         }
       }
 
-      // 5. Criar documento no banco
+      // 5. Processar contraparte (nova lógica unificada)
+      let contraparteId = validatedData.contraparteId;
+      let relationshipType = ContraparteService.calculateRelationshipType(validatedData.documentType);
+      
+      // Se não tem contraparteId mas tem nome (supplier ou contraparteName)
+      if (!contraparteId && (validatedData.contraparteName || validatedData.supplier)) {
+        const contraparteName = validatedData.contraparteName || validatedData.supplier!;
+        console.log(`🔍 Buscando/criando contraparte: ${contraparteName} como ${relationshipType}`);
+        
+        const contraparte = await storage.findOrCreateContraparte(contraparteName, user.tenantId, {
+          canBeClient: relationshipType === 'CLIENT',
+          canBeSupplier: relationshipType === 'SUPPLIER'
+        });
+        
+        contraparteId = contraparte.id;
+        console.log(`✅ Contraparte processada: ${contraparte.name} (${contraparte.id})`);
+      }
+
+      // 6. Criar documento no banco com nova estrutura
       const document = await storage.createDocument({
         tenantId: user.tenantId,
-        clientId: validatedData.clientId,
+        contraparteId,
+        relationshipType,
+        clientId: validatedData.clientId, // Legacy compatibility
         bankId: validatedData.bankId,
         categoryId: validatedData.categoryId,
         costCenterId: validatedData.costCenterId,
@@ -91,7 +118,7 @@ export class DocumentUploadHandler {
         filePath: file.path,
         documentType: validatedData.documentType,
         amount: this.parseAmount(validatedData.amount || '') || '0',
-        supplier: validatedData.supplier,
+        supplier: validatedData.supplier, // Legacy field
         description: validatedData.description,
         dueDate: this.parseDate(validatedData.dueDate || ''),
         paidDate: this.parseDate(validatedData.paymentDate || ''),
@@ -102,7 +129,7 @@ export class DocumentUploadHandler {
         status: "RECEBIDO"
       });
 
-      // 6. Log da criação
+      // 7. Log da criação
       await storage.createDocumentLog({
         documentId: document.id,
         action: "UPLOAD",
@@ -116,7 +143,7 @@ export class DocumentUploadHandler {
         userId: user.id,
       });
 
-      // 7. Iniciar processamento assíncrono
+      // 8. Iniciar processamento assíncrono
       this.scheduleProcessing(document.id, user.tenantId);
 
       return {

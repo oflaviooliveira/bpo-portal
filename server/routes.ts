@@ -59,7 +59,37 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
-  // Get clients - Wave 1 RBAC
+  // Contrapartes endpoints - Nova implementação unificada
+  app.get("/api/contrapartes", ...authorize(["ADMIN", "GERENTE", "OPERADOR"], true), async (req, res) => {
+    try {
+      const tenantId = req.user?.tenantId!;
+      const filters = {
+        canBeClient: req.query.canBeClient === 'true' ? true : undefined,
+        canBeSupplier: req.query.canBeSupplier === 'true' ? true : undefined
+      };
+      
+      const contrapartes = await storage.getContrapartes(tenantId, filters);
+      res.json(contrapartes);
+    } catch (error) {
+      console.error("Get contrapartes error:", error);
+      res.status(500).json({ error: "Erro ao carregar contrapartes" });
+    }
+  });
+
+  app.post("/api/contrapartes", ...authorize(["ADMIN", "GERENTE"], true), async (req, res) => {
+    try {
+      const tenantId = req.user?.tenantId!;
+      const contraparteData = { ...req.body, tenantId };
+      
+      const newContraparte = await storage.createContraparte(contraparteData);
+      res.status(201).json(newContraparte);
+    } catch (error) {
+      console.error("Create contraparte error:", error);
+      res.status(500).json({ error: "Erro ao criar contraparte" });
+    }
+  });
+
+  // Get clients - Wave 1 RBAC (Legacy)
   app.get("/api/clients", ...authorize(["ADMIN", "GERENTE", "OPERADOR", "CLIENTE"]), async (req, res) => {
     try {
       const user = req.user!;
