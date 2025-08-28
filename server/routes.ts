@@ -4,6 +4,10 @@ import { setupAuth, isAuthenticated, requireRole, authorize } from "./auth";
 import { storage } from "./storage";
 import { documentProcessor } from "./document-processor";
 import { StatusTransitionService, setupStatusTransitions } from "./status-transitions";
+import { parseFileName } from "./validation";
+import { AdvancedOcrProcessor } from "./ocr-processor-advanced";
+
+const advancedOcrProcessor = new AdvancedOcrProcessor(storage);
 import multer from "multer";
 import path from "path";
 import fs from "fs/promises";
@@ -506,6 +510,134 @@ export async function registerRoutes(app: Express): Promise<Server> {
     } catch (error) {
       console.error("Get AI runs error:", error);
       res.status(500).json({ error: "Erro ao carregar métricas de IA" });
+    }
+  });
+
+  // Process file for suggestions - FASE 1 da especificação
+  app.post("/api/documents/process-file", isAuthenticated, upload.single("file"), async (req, res) => {
+    try {
+      if (!req.file) {
+        return res.status(400).json({ error: "Nenhum arquivo enviado" });
+      }
+
+      console.log(`🔍 Processando arquivo para sugestões: ${req.file.originalname}`);
+
+      // 1. Analisar nome do arquivo
+      const filenameAnalysis = parseFileName(req.file.originalname);
+      console.log("📋 Análise do nome:", filenameAnalysis);
+
+      // 2. Executar OCR + IA  
+      const ocrResult = await advancedOcrProcessor.processDocument(
+        req.file.path, 
+        'temp-doc-' + Date.now(), 
+        req.user!.tenantId
+      );
+
+      console.log("🤖 Resultado OCR+IA:", {
+        success: ocrResult.success,
+        text: ocrResult.text?.substring(0, 100) + "...",
+        strategy: ocrResult.strategy,
+        confidence: ocrResult.confidence
+      });
+
+      // 3. Montar sugestões baseadas em OCR + filename
+      const suggestions: any = {};
+      const confidence: any = {};
+
+      // Prioridade 1: Nome do arquivo
+      if (filenameAnalysis.parsed) {
+        if (filenameAnalysis.parsed.value) {
+          suggestions.amount = `R$ ${filenameAnalysis.parsed.value.toFixed(2).replace('.', ',')}`;
+          confidence.amount = 0.95;
+        }
+        
+        if (filenameAnalysis.parsed.date) {
+          const [day, month, year] = filenameAnalysis.parsed.date.split('.');
+          suggestions.dueDate = `${year}-${month.padStart(2, '0')}-${day.padStart(2, '0')}`;
+          suggestions.paymentDate = suggestions.dueDate;
+          confidence.dueDate = 0.90;
+          confidence.paymentDate = 0.90;
+        }
+        
+        if (filenameAnalysis.parsed.description) {
+          suggestions.supplier = filenameAnalysis.parsed.description;
+          confidence.supplier = 0.85;
+        }
+      }
+
+      // Prioridade 2: Análise de texto OCR (simulação por enquanto)
+      if (ocrResult.success && ocrResult.text) {
+        // Extrair valores do texto OCR usando regex simples
+        const text = ocrResult.text;
+        
+        // Buscar valores monetários
+        if (!suggestions.amount) {
+          const valueRegex = /(?:R\$|RS|VALOR|TOTAL)[\s:]*(\d{1,3}(?:\.\d{3})*,\d{2})/gi;
+          const valueMatch = text.match(valueRegex);
+          if (valueMatch) {
+            suggestions.amount = valueMatch[0].replace(/.*?(\d{1,3}(?:\.\d{3})*,\d{2})/, 'R$ $1');
+            confidence.amount = 0.70;
+          }
+        }
+        
+        // Buscar datas
+        if (!suggestions.dueDate) {
+          const dateRegex = /(?:VENCIMENTO|VENCE|DUE)[\s:]*(\d{1,2}\/\d{1,2}\/\d{4})/gi;
+          const dateMatch = text.match(dateRegex);
+          if (dateMatch) {
+            const dateStr = dateMatch[0].replace(/.*?(\d{1,2}\/\d{1,2}\/\d{4})/, '$1');
+            const [day, month, year] = dateStr.split('/');
+            suggestions.dueDate = `${year}-${month.padStart(2, '0')}-${day.padStart(2, '0')}`;
+            confidence.dueDate = 0.65;
+          }
+        }
+        
+        // Buscar fornecedor/empresa
+        if (!suggestions.supplier) {
+          const supplierRegex = /(?:FORNECEDOR|EMPRESA|CNPJ)[\s:]*([A-Z\s]{3,30})/gi;
+          const supplierMatch = text.match(supplierRegex);
+          if (supplierMatch) {
+            suggestions.supplier = supplierMatch[0].replace(/.*?([A-Z\s]{3,30})/, '$1').trim();
+            confidence.supplier = 0.60;
+          }
+        }
+      }
+
+      // 4. Limpar arquivo temporário
+      try {
+        await fs.unlink(req.file.path);
+      } catch (error) {
+        console.log("⚠️ Erro ao limpar arquivo temporário:", error);
+      }
+
+      // 5. Retornar sugestões
+      const response = {
+        success: true,
+        suggestions,
+        confidence,
+        filenameAnalysis: filenameAnalysis.parsed,
+        ocrSuccess: ocrResult.success,
+        processingTime: ocrResult.processingTime
+      };
+
+      console.log("✅ Sugestões enviadas:", response);
+      res.json(response);
+
+    } catch (error) {
+      console.error("❌ Erro no processamento do arquivo:", error);
+      
+      if (req.file) {
+        try {
+          await fs.unlink(req.file.path);
+        } catch (cleanupError) {
+          console.log("⚠️ Erro ao limpar arquivo após falha:", cleanupError);
+        }
+      }
+      
+      res.status(500).json({ 
+        error: "Erro interno no processamento",
+        details: error instanceof Error ? error.message : "Erro desconhecido"
+      });
     }
   });
 
