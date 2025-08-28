@@ -29,16 +29,12 @@ export const tenants = pgTable("tenants", {
   updatedAt: timestamp("updated_at").defaultNow(),
 });
 
-// Contrapartes table - Unificado para clientes e fornecedores
+// Contrapartes table - Estrutura simplificada: Nome + CNPJ
 export const contrapartes = pgTable("contrapartes", {
   id: uuid("id").primaryKey().default(sql`gen_random_uuid()`),
   tenantId: uuid("tenant_id").notNull(),
   name: varchar("name", { length: 255 }).notNull(),
-  document: varchar("document", { length: 50 }), // CNPJ/CPF
-  documentType: varchar("document_type", { length: 20 }).notNull().default("CNPJ"), // CNPJ, CPF
-  email: varchar("email", { length: 255 }),
-  phone: varchar("phone", { length: 20 }),
-  address: text("address"),
+  cnpj: varchar("cnpj", { length: 18 }), // Formato: XX.XXX.XXX/XXXX-XX
   canBeClient: boolean("can_be_client").notNull().default(true),
   canBeSupplier: boolean("can_be_supplier").notNull().default(true),
   isActive: boolean("is_active").notNull().default(true),
@@ -319,11 +315,7 @@ export const insertTenantSchema = createInsertSchema(tenants).pick({
 export const insertContraparteSchema = createInsertSchema(contrapartes).pick({
   tenantId: true,
   name: true,
-  document: true,
-  documentType: true,
-  email: true,
-  phone: true,
-  address: true,
+  cnpj: true,
   canBeClient: true,
   canBeSupplier: true,
 });

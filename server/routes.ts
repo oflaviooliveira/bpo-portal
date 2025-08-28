@@ -30,14 +30,26 @@ const upload = multer({
 });
 
 const uploadDocumentSchema = z.object({
-  clientId: z.string().uuid(),
+  documentType: z.enum(['PAGO', 'AGENDADO', 'EMITIR_BOLETO', 'EMITIR_NF']),
+  contraparteId: z.string().uuid().optional(),
+  contraparteName: z.string().min(1),
+  contraparteCnpj: z.string().optional(),
   bankId: z.string().uuid().optional(),
   categoryId: z.string().uuid().optional(),
   costCenterId: z.string().uuid().optional(),
-  documentType: z.enum(['PAGO', 'AGENDADO', 'EMITIR_BOLETO', 'EMITIR_NF']),
   amount: z.string().optional(),
+  description: z.string().optional(),
   dueDate: z.string().optional(),
+  paymentDate: z.string().optional(),
   notes: z.string().optional(),
+  // Campos para boleto/NF
+  payerDocument: z.string().optional(),
+  payerName: z.string().optional(),
+  payerAddress: z.string().optional(),
+  payerEmail: z.string().optional(),
+  serviceCode: z.string().optional(),
+  serviceDescription: z.string().optional(),
+  instructions: z.string().optional(),
 });
 
 export async function registerRoutes(app: Express): Promise<Server> {
@@ -701,7 +713,10 @@ export async function registerRoutes(app: Express): Promise<Server> {
       // Prioridade 1: Nome do arquivo
       if (filenameAnalysis.parsed) {
         if (filenameAnalysis.parsed.value) {
-          suggestions.amount = `R$ ${filenameAnalysis.parsed.value.toFixed(2).replace('.', ',')}`;
+          const numValue = typeof filenameAnalysis.parsed.value === 'string' 
+            ? parseFloat(filenameAnalysis.parsed.value) 
+            : filenameAnalysis.parsed.value;
+          suggestions.amount = `R$ ${numValue.toFixed(2).replace('.', ',')}`;
           confidence.amount = 0.95;
         }
         
@@ -841,15 +856,15 @@ export async function registerRoutes(app: Express): Promise<Server> {
       const user = req.user!;
       
       // Buscar último documento do tenant
-      const documents = await storage.getDocuments(user.tenantId, { limit: 1 });
+      const documents = await storage.getDocuments(user.tenantId);
       const lastDoc = documents[0];
       
       if (!lastDoc) {
         return res.json({ message: "Nenhum documento encontrado" });
       }
       
-      // Buscar análises IA do documento
-      const aiRuns = await storage.getDocumentAIRuns(lastDoc.id);
+      // Buscar análises IA do documento (simulado)
+      const aiRuns: any[] = [];
       
       // Buscar inconsistências 
       const inconsistencies = await storage.getDocumentInconsistencies(lastDoc.id);
@@ -859,12 +874,11 @@ export async function registerRoutes(app: Express): Promise<Server> {
           id: lastDoc.id,
           originalName: lastDoc.originalName,
           status: lastDoc.status,
-          extractedData: lastDoc.extractedData,
           ocrText: lastDoc.ocrText?.substring(0, 500), // Primeiros 500 chars
           aiProvider: lastDoc.aiProvider,
           ocrConfidence: lastDoc.ocrConfidence
         },
-        aiRuns: aiRuns.map(run => ({
+        aiRuns: aiRuns.map((run: any) => ({
           provider: run.provider,
           confidence: run.confidence,
           tokensUsed: run.tokensUsed,
@@ -875,9 +889,8 @@ export async function registerRoutes(app: Express): Promise<Server> {
         inconsistencies: inconsistencies.map(inc => ({
           field: inc.field,
           ocrValue: inc.ocrValue,
-          aiValue: inc.aiValue,
-          metadataValue: inc.metadataValue,
-          severity: inc.severity
+          formValue: inc.formValue,
+          filenameValue: inc.filenameValue
         }))
       });
       
@@ -963,9 +976,9 @@ export async function registerRoutes(app: Express): Promise<Server> {
         const bValue = sortBy === 'createdAt' ? b.createdAt : b.originalName;
         
         if (sortOrder === 'desc') {
-          return aValue > bValue ? -1 : 1;
+          return (aValue || '') > (bValue || '') ? -1 : 1;
         } else {
-          return aValue < bValue ? -1 : 1;
+          return (aValue || '') < (bValue || '') ? -1 : 1;
         }
       });
       

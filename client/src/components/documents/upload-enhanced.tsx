@@ -15,15 +15,16 @@ import { Alert, AlertDescription } from "@/components/ui/alert";
 import { Badge } from "@/components/ui/badge";
 import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
 
-// Schema conforme especificação
+// Schema atualizado para contrapartes
 const uploadSchema = z.object({
-  clientId: z.string().min(1, "Cliente é obrigatório"),
   documentType: z.enum(["PAGO", "AGENDADO", "EMITIR_BOLETO", "EMITIR_NF"]),
+  contraparteId: z.string().optional(),
+  contraparteName: z.string().min(1, "Nome da contraparte é obrigatório"),
+  contraparteCnpj: z.string().optional(),
   bankId: z.string().min(1, "Banco é obrigatório"),
   categoryId: z.string().min(1, "Categoria é obrigatória"),
   costCenterId: z.string().min(1, "Centro de custo é obrigatório"),
   amount: z.string().min(1, "Valor é obrigatório"),
-  supplier: z.string().min(1, "Fornecedor é obrigatório"),
   description: z.string().min(1, "Descrição é obrigatória"),
   notes: z.string().optional(),
   // Campos condicionais
@@ -84,9 +85,15 @@ export function UploadEnhanced() {
 
   const documentType = watch("documentType");
 
-  // Buscar dados do sistema
-  const { data: clients = [] } = useQuery<any[]>({
-    queryKey: ["/api/clients"],
+  // Buscar contrapartes baseado no tipo de documento
+  const { data: contrapartes = [] } = useQuery<any[]>({
+    queryKey: ["/api/contrapartes", documentType],
+    queryFn: () => {
+      const filters = documentType === "EMITIR_BOLETO" || documentType === "EMITIR_NF" 
+        ? "?canBeClient=true" 
+        : "?canBeSupplier=true";
+      return fetch(`/api/contrapartes${filters}`).then(res => res.json());
+    },
     enabled: true,
   });
 
@@ -147,10 +154,17 @@ export function UploadEnhanced() {
             console.log("💰 Valor preenchido:", data.suggestions.amount);
           }
           
-          if (data.suggestions.supplier) {
-            setValue("supplier", data.suggestions.supplier);
-            suggestions.push({ field: 'supplier', value: data.suggestions.supplier, confidence: data.suggestions.confidence?.supplier || 0.8 });
-            console.log("🏢 Fornecedor preenchido:", data.suggestions.supplier);
+          if (data.suggestions.supplier || data.suggestions.contraparte) {
+            const contraparteName = data.suggestions.contraparte || data.suggestions.supplier;
+            setValue("contraparteName", contraparteName);
+            suggestions.push({ field: 'contraparteName', value: contraparteName, confidence: data.suggestions.confidence?.supplier || 0.8 });
+            console.log("🏢 Contraparte preenchida:", contraparteName);
+          }
+          
+          if (data.suggestions.cnpj) {
+            setValue("contraparteCnpj", data.suggestions.cnpj);
+            suggestions.push({ field: 'contraparteCnpj', value: data.suggestions.cnpj, confidence: 0.9 });
+            console.log("📄 CNPJ preenchido:", data.suggestions.cnpj);
           }
           
           if (data.suggestions.description) {
@@ -647,51 +661,75 @@ export function UploadEnhanced() {
           <CardContent>
             <form onSubmit={handleSubmit(onSubmit)} className="space-y-6">
               
-              {/* Campos Comuns */}
-              <div className="grid grid-cols-2 gap-4">
-                <div>
-                  <Label htmlFor="clientId">Cliente *</Label>
-                  <Select onValueChange={(value) => setValue("clientId", value)}>
-                    <SelectTrigger data-testid="select-client">
-                      <SelectValue placeholder="Selecione o cliente" />
-                    </SelectTrigger>
-                    <SelectContent>
-                      {clients.map((client: any) => (
-                        <SelectItem key={client.id} value={client.id}>
-                          {client.name}
-                        </SelectItem>
-                      ))}
-                    </SelectContent>
-                  </Select>
-                  {errors.clientId && (
-                    <p className="text-sm text-red-600 mt-1">{errors.clientId.message}</p>
-                  )}
-                </div>
+              {/* Tipo de Documento */}
+              <div>
+                <Label>Tipo de Solicitação *</Label>
+                <RadioGroup
+                  defaultValue="PAGO"
+                  onValueChange={(value) => setValue("documentType", value as any)}
+                  className="flex gap-4 mt-2"
+                >
+                  <div className="flex items-center space-x-2">
+                    <RadioGroupItem value="PAGO" id="pago" />
+                    <Label htmlFor="pago">Pago (PG)</Label>
+                  </div>
+                  <div className="flex items-center space-x-2">
+                    <RadioGroupItem value="AGENDADO" id="agendado" />
+                    <Label htmlFor="agendado">Agendado (AGD)</Label>
+                  </div>
+                  <div className="flex items-center space-x-2">
+                    <RadioGroupItem value="EMITIR_BOLETO" id="boleto" />
+                    <Label htmlFor="boleto">Emitir Boleto</Label>
+                  </div>
+                  <div className="flex items-center space-x-2">
+                    <RadioGroupItem value="EMITIR_NF" id="nf" />
+                    <Label htmlFor="nf">Emitir NF</Label>
+                  </div>
+                </RadioGroup>
+              </div>
 
-                <div>
-                  <Label>Tipo de Solicitação *</Label>
-                  <RadioGroup
-                    defaultValue="PAGO"
-                    onValueChange={(value) => setValue("documentType", value as any)}
-                    className="flex gap-4 mt-2"
-                  >
-                    <div className="flex items-center space-x-2">
-                      <RadioGroupItem value="PAGO" id="pago" />
-                      <Label htmlFor="pago">Pago (PG)</Label>
-                    </div>
-                    <div className="flex items-center space-x-2">
-                      <RadioGroupItem value="AGENDADO" id="agendado" />
-                      <Label htmlFor="agendado">Agendado (AGD)</Label>
-                    </div>
-                    <div className="flex items-center space-x-2">
-                      <RadioGroupItem value="EMITIR_BOLETO" id="boleto" />
-                      <Label htmlFor="boleto">Emitir Boleto</Label>
-                    </div>
-                    <div className="flex items-center space-x-2">
-                      <RadioGroupItem value="EMITIR_NF" id="nf" />
-                      <Label htmlFor="nf">Emitir NF</Label>
-                    </div>
-                  </RadioGroup>
+              {/* Contraparte */}
+              <div className="space-y-4 p-4 border rounded-lg bg-muted/20">
+                <div className="flex items-center gap-2">
+                  <Label className="text-sm font-medium">
+                    {documentType === "EMITIR_BOLETO" || documentType === "EMITIR_NF" ? "Cliente" : "Fornecedor"} *
+                  </Label>
+                  <Badge variant="outline" className="text-xs">
+                    {documentType === "EMITIR_BOLETO" || documentType === "EMITIR_NF" ? "Recebimento" : "Pagamento"}
+                  </Badge>
+                </div>
+                
+                <div className="grid grid-cols-3 gap-4">
+                  <div className="col-span-2">
+                    <Label htmlFor="contraparteName" className="flex items-center">
+                      Nome da Empresa *
+                      {getSuggestionBadge('contraparteName')}
+                    </Label>
+                    <Input
+                      id="contraparteName"
+                      {...register("contraparteName")}
+                      placeholder="Ex: Uber, Posto Shell, João Silva Ltda"
+                      className={isFieldSuggested('contraparteName') ? 'border-blue-300 bg-blue-50' : ''}
+                      data-testid="input-contraparte-name"
+                    />
+                    {errors.contraparteName && (
+                      <p className="text-sm text-red-600 mt-1">{errors.contraparteName.message}</p>
+                    )}
+                  </div>
+                  
+                  <div>
+                    <Label htmlFor="contraparteCnpj" className="flex items-center">
+                      CNPJ
+                      {getSuggestionBadge('contraparteCnpj')}
+                    </Label>
+                    <Input
+                      id="contraparteCnpj"
+                      {...register("contraparteCnpj")}
+                      placeholder="00.000.000/0000-00"
+                      className={isFieldSuggested('contraparteCnpj') ? 'border-blue-300 bg-blue-50' : ''}
+                      data-testid="input-contraparte-cnpj"
+                    />
+                  </div>
                 </div>
               </div>
 
@@ -754,7 +792,7 @@ export function UploadEnhanced() {
                 </div>
               </div>
 
-              <div className="grid grid-cols-3 gap-4">
+              <div className="grid grid-cols-2 gap-4">
                 <div>
                   <Label htmlFor="amount" className="flex items-center">
                     Valor *
@@ -769,23 +807,6 @@ export function UploadEnhanced() {
                   />
                   {errors.amount && (
                     <p className="text-sm text-red-600 mt-1">{errors.amount.message}</p>
-                  )}
-                </div>
-
-                <div>
-                  <Label htmlFor="supplier" className="flex items-center">
-                    Fornecedor *
-                    {getSuggestionBadge('supplier')}
-                  </Label>
-                  <Input
-                    id="supplier"
-                    {...register("supplier")}
-                    placeholder="Uber, Posto Shell, Locadora X"
-                    className={isFieldSuggested('supplier') ? 'border-blue-300 bg-blue-50' : ''}
-                    data-testid="input-supplier"
-                  />
-                  {errors.supplier && (
-                    <p className="text-sm text-red-600 mt-1">{errors.supplier.message}</p>
                   )}
                 </div>
 
