@@ -11,12 +11,13 @@ import {
   TableHeader, 
   TableRow 
 } from "@/components/ui/table";
-import { Filter, RefreshCw, FileText, Eye, Edit, AlertTriangle, Calendar, CheckCircle2, CreditCard, Receipt, Download, Trash2 } from "lucide-react";
+import { Filter, RefreshCw, FileText, Eye, Edit, AlertTriangle, Calendar, CheckCircle2, CreditCard, Receipt, Download, Trash2, RotateCcw, ExternalLink } from "lucide-react";
 import { Checkbox } from "@/components/ui/checkbox";
 import { apiRequest, queryClient } from "@/lib/queryClient";
 import { useToast } from "@/hooks/use-toast";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger, DialogDescription } from "@/components/ui/dialog";
 import { Input } from "@/components/ui/input";
+import { Drawer, DrawerContent, DrawerHeader, DrawerTitle } from "@/components/ui/drawer";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { AdvancedSearch } from "@/components/advanced-search";
@@ -37,13 +38,17 @@ const statusConfig = {
 export function Inbox() {
   const [statusFilter, setStatusFilter] = useState<string>("all");
   const [typeFilter, setTypeFilter] = useState<string>("all");
+  const [contraparteFilter, setContraparteFilter] = useState<string>("all");
+  const [valueFilter, setValueFilter] = useState<string>("all");
+  const [dateFilter, setDateFilter] = useState<string>("all");
   const [selectedDoc, setSelectedDoc] = useState<any>(null);
   const [showActionDialog, setShowActionDialog] = useState(false);
-  const [actionType, setActionType] = useState<"approve" | "schedule" | "revise" | null>(null);
+  const [actionType, setActionType] = useState<"approve" | "schedule" | "revise" | "reprocess" | null>(null);
   const [searchResults, setSearchResults] = useState<any[]>([]);
   const [isShowingSearchResults, setIsShowingSearchResults] = useState(false);
   const [expandedDoc, setExpandedDoc] = useState<string | null>(null);
   const [showDetailsDialog, setShowDetailsDialog] = useState(false);
+  const [showPreviewDialog, setShowPreviewDialog] = useState(false);
   
   // Estados para seleção múltipla
   const [selectedDocuments, setSelectedDocuments] = useState<Set<string>>(new Set());
@@ -55,9 +60,31 @@ export function Inbox() {
     queryKey: ["/api/documents"],
   });
 
-  const filteredDocuments = (isShowingSearchResults ? searchResults : documents || []).filter((doc: any) => {
+  // Ensure documents is always an array to prevent filter errors
+  const documentsArray = Array.isArray(documents) ? documents : [];
+
+  const filteredDocuments = (isShowingSearchResults ? searchResults : documentsArray).filter((doc: any) => {
     if (statusFilter !== "all" && doc.status !== statusFilter) return false;
     if (typeFilter !== "all" && doc.documentType !== typeFilter) return false;
+    if (contraparteFilter !== "all") {
+      const contraparteName = doc.supplier || doc.client?.name || "";
+      if (!contraparteName.toLowerCase().includes(contraparteFilter.toLowerCase())) return false;
+    }
+    if (valueFilter !== "all") {
+      const value = parseFloat(String(doc.amount || 0));
+      if (valueFilter === "low" && value >= 1000) return false;
+      if (valueFilter === "medium" && (value < 1000 || value >= 5000)) return false;
+      if (valueFilter === "high" && value < 5000) return false;
+    }
+    if (dateFilter !== "all") {
+      const today = new Date();
+      const docDate = new Date(doc.createdAt);
+      const diffDays = Math.floor((today.getTime() - docDate.getTime()) / (1000 * 60 * 60 * 24));
+      
+      if (dateFilter === "today" && diffDays !== 0) return false;
+      if (dateFilter === "week" && diffDays > 7) return false;
+      if (dateFilter === "month" && diffDays > 30) return false;
+    }
     return true;
   });
 
@@ -102,7 +129,7 @@ export function Inbox() {
     },
   });
 
-  const handleDocumentAction = (doc: any, action: "approve" | "schedule" | "revise") => {
+  const handleDocumentAction = (doc: any, action: "approve" | "schedule" | "revise" | "reprocess") => {
     setSelectedDoc(doc);
     setActionType(action);
     setShowActionDialog(true);
@@ -110,6 +137,11 @@ export function Inbox() {
 
   const handleSubmitAction = () => {
     if (!selectedDoc || !actionType) return;
+
+    if (actionType === "reprocess") {
+      reprocessMutation.mutate(selectedDoc.id);
+      return;
+    }
 
     let actionData: any = {};
     
@@ -127,6 +159,64 @@ export function Inbox() {
       documentId: selectedDoc.id,
       ...actionData
     });
+  };
+
+  // Mutation for document reprocessing
+  const reprocessMutation = useMutation({
+    mutationFn: async (documentId: string) => {
+      return apiRequest('POST', `/api/documents/${documentId}/reprocess`);
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['/api/documents'] });
+      setShowActionDialog(false);
+      setSelectedDoc(null);
+      toast({
+        title: "Reprocessamento iniciado",
+        description: "O documento está sendo reprocessado com OCR e IA.",
+      });
+    },
+    onError: (error: any) => {
+      toast({
+        title: "Erro ao reprocessar",
+        description: error.message || "Erro ao reprocessar documento",
+        variant: "destructive",
+      });
+    },
+  });
+
+  // Function to handle document download
+  const handleDownloadDocument = async (doc: any) => {
+    try {
+      const response = await fetch(`/api/documents/${doc.id}/download`, {
+        credentials: 'include'
+      });
+      
+      if (!response.ok) {
+        throw new Error('Erro ao baixar documento');
+      }
+
+      const blob = await response.blob();
+      const url = window.URL.createObjectURL(blob);
+      const a = document.createElement('a');
+      a.style.display = 'none';
+      a.href = url;
+      a.download = doc.originalName || 'documento';
+      document.body.appendChild(a);
+      a.click();
+      window.URL.revokeObjectURL(url);
+      document.body.removeChild(a);
+
+      toast({
+        title: "Download iniciado",
+        description: `Baixando ${doc.originalName}`,
+      });
+    } catch (error) {
+      toast({
+        title: "Erro no download",
+        description: "Não foi possível baixar o documento",
+        variant: "destructive",
+      });
+    }
   };
 
   // Mutation para aprovar documento com dados da IA
@@ -190,10 +280,10 @@ export function Inbox() {
 
   const handleSelectAll = (checked: boolean) => {
     if (checked) {
-      const allIds = new Set(filteredDocuments.map((doc: any) => doc.id));
+      const allIds = new Set<string>(filteredDocuments.map((doc: any) => doc.id));
       setSelectedDocuments(allIds);
     } else {
-      setSelectedDocuments(new Set());
+      setSelectedDocuments(new Set<string>());
     }
   };
 
@@ -255,6 +345,26 @@ export function Inbox() {
     return <FileText className="w-5 h-5 text-blue-600" />;
   };
 
+  const getClientFornecedorChip = (documentType: string) => {
+    const isPago = documentType === "PAGO" || documentType === "AGENDADO";
+    const isClient = documentType === "EMITIR_BOLETO" || documentType === "EMITIR_NF";
+    
+    if (isPago) {
+      return <Badge variant="outline" className="text-xs bg-orange-50 text-orange-700 border-orange-200">Fornecedor</Badge>;
+    } else if (isClient) {
+      return <Badge variant="outline" className="text-xs bg-blue-50 text-blue-700 border-blue-200">Cliente</Badge>;
+    }
+    return null;
+  };
+
+  const getOCRConfidenceColor = (confidence: number) => {
+    if (confidence >= 90) return "text-green-600";
+    if (confidence >= 70) return "text-yellow-600";
+    return "text-red-600";
+  };
+
+
+
   if (isLoading) {
     return (
       <div className="p-6">
@@ -275,7 +385,7 @@ export function Inbox() {
           <p className="text-muted-foreground">Documentos recebidos aguardando processamento</p>
         </div>
         <div className="flex space-x-3">
-          <div className="flex items-center space-x-2">
+          <div className="flex items-center space-x-2 flex-wrap gap-2">
             <select
               value={statusFilter}
               onChange={(e) => setStatusFilter(e.target.value)}
@@ -302,6 +412,38 @@ export function Inbox() {
               <option value="EMITIR_BOLETO">Emitir Boleto</option>
               <option value="EMITIR_NF">Emitir NF</option>
             </select>
+
+            <select
+              value={valueFilter}
+              onChange={(e) => setValueFilter(e.target.value)}
+              className="px-3 py-2 border border-input rounded-md text-sm"
+              data-testid="select-value-filter"
+            >
+              <option value="all">Todos os Valores</option>
+              <option value="low">Até R$ 1.000</option>
+              <option value="medium">R$ 1.000 - R$ 5.000</option>
+              <option value="high">Acima R$ 5.000</option>
+            </select>
+
+            <select
+              value={dateFilter}
+              onChange={(e) => setDateFilter(e.target.value)}
+              className="px-3 py-2 border border-input rounded-md text-sm"
+              data-testid="select-date-filter"
+            >
+              <option value="all">Todas as Datas</option>
+              <option value="today">Hoje</option>
+              <option value="week">Última Semana</option>
+              <option value="month">Último Mês</option>
+            </select>
+
+            <Input
+              placeholder="Filtrar por contraparte..."
+              value={contraparteFilter === "all" ? "" : contraparteFilter}
+              onChange={(e) => setContraparteFilter(e.target.value || "all")}
+              className="px-3 py-2 w-48 text-sm"
+              data-testid="input-contraparte-filter"
+            />
           </div>
           <Button 
             onClick={handleRefresh}
@@ -347,9 +489,10 @@ export function Inbox() {
                   />
                 </TableHead>
                 <TableHead className="font-medium text-foreground">Documento</TableHead>
-                <TableHead className="font-medium text-foreground">Cliente</TableHead>
+                <TableHead className="font-medium text-foreground">Contraparte</TableHead>
                 <TableHead className="font-medium text-foreground">Status</TableHead>
                 <TableHead className="font-medium text-foreground">Valor</TableHead>
+                <TableHead className="font-medium text-foreground">Confiança OCR</TableHead>
                 <TableHead className="font-medium text-foreground">Data/Hora</TableHead>
                 <TableHead className="font-medium text-foreground">Ações</TableHead>
               </TableRow>
@@ -357,7 +500,7 @@ export function Inbox() {
             <TableBody>
               {!Array.isArray(filteredDocuments) || filteredDocuments.length === 0 ? (
                 <TableRow>
-                  <TableCell colSpan={7} className="text-center py-8 text-muted-foreground">
+                  <TableCell colSpan={8} className="text-center py-8 text-muted-foreground">
                     Nenhum documento encontrado
                   </TableCell>
                 </TableRow>
@@ -391,7 +534,10 @@ export function Inbox() {
                       </div>
                     </TableCell>
                     <TableCell className="text-foreground">
-                      {doc.client?.name || "-"}
+                      <div className="flex flex-col gap-1">
+                        <span className="text-sm">{doc.supplier || doc.client?.name || "-"}</span>
+                        {getClientFornecedorChip(doc.documentType)}
+                      </div>
                     </TableCell>
                     <TableCell>
                       <Badge 
@@ -416,6 +562,24 @@ export function Inbox() {
                         } catch (e) {
                           return formatCurrency(doc.amount) || "-";
                         }
+                      })()}
+                    </TableCell>
+                    <TableCell className="text-center">
+                      {(() => {
+                        const confidence = doc.ocrConfidence || 0;
+                        return (
+                          <div className="flex flex-col items-center">
+                            <span className={`font-medium ${getOCRConfidenceColor(confidence)}`}>
+                              {confidence.toFixed(0)}%
+                            </span>
+                            <div className="w-12 bg-gray-200 rounded-full h-1.5 mt-1">
+                              <div 
+                                className={`h-1.5 rounded-full ${confidence >= 90 ? 'bg-green-500' : confidence >= 70 ? 'bg-yellow-500' : 'bg-red-500'}`}
+                                style={{ width: `${confidence}%` }}
+                              ></div>
+                            </div>
+                          </div>
+                        );
                       })()}
                     </TableCell>
                     <TableCell className="text-muted-foreground">
@@ -447,9 +611,9 @@ export function Inbox() {
                           size="sm"
                           onClick={() => {
                             setSelectedDoc(doc);
-                            setShowDetailsDialog(true);
+                            setShowPreviewDialog(true);
                           }}
-                          data-testid={`button-view-${doc.id}`}
+                          data-testid={`button-preview-${doc.id}`}
                         >
                           <Eye className="w-4 h-4 text-blue-600" />
                         </Button>
@@ -519,10 +683,35 @@ export function Inbox() {
                             Emitir
                           </Button>
                         )}
+
+                        {/* Ação de reprocessar para documentos com erro */}
+                        {(doc.status === "ERRO" || doc.ocrConfidence < 50) && (
+                          <Button 
+                            variant="outline" 
+                            size="sm"
+                            onClick={() => handleDocumentAction(doc, "reprocess")}
+                            className="text-yellow-600 border-yellow-600 hover:bg-yellow-600 hover:text-white"
+                            data-testid={`button-reprocess-${doc.id}`}
+                          >
+                            <RotateCcw className="w-4 h-4 mr-1" />
+                            Reprocessar
+                          </Button>
+                        )}
+
+                        {/* Ação de download sempre disponível */}
+                        <Button 
+                          variant="ghost" 
+                          size="sm"
+                          onClick={() => handleDownloadDocument(doc)}
+                          className="text-green-600 hover:text-green-700"
+                          data-testid={`button-download-${doc.id}`}
+                        >
+                          <Download className="w-4 h-4" />
+                        </Button>
                       </div>
                     </TableCell>
                   </TableRow>
-                )) || []
+                ))
               )}
             </TableBody>
           </Table>
@@ -537,6 +726,7 @@ export function Inbox() {
               {actionType === "approve" && "Aprovar Documento"}
               {actionType === "schedule" && "Agendar Documento"}
               {actionType === "revise" && "Solicitar Revisão"}
+              {actionType === "reprocess" && "Reprocessar Documento"}
             </DialogTitle>
           </DialogHeader>
           
@@ -571,6 +761,17 @@ export function Inbox() {
                 </p>
                 <p className="text-sm">
                   Tipo: <strong>{selectedDoc.documentType}</strong>
+                </p>
+              </div>
+            )}
+
+            {actionType === "reprocess" && selectedDoc && (
+              <div className="grid gap-2">
+                <p className="text-sm text-muted-foreground">
+                  Confirma o reprocessamento do documento <strong>{selectedDoc.originalName}</strong>?
+                </p>
+                <p className="text-sm text-yellow-600">
+                  O OCR e análise de IA serão executados novamente.
                 </p>
               </div>
             )}
@@ -773,6 +974,126 @@ export function Inbox() {
                   </div>
                 </div>
               )}
+            </div>
+          )}
+        </DialogContent>
+      </Dialog>
+
+      {/* Preview Dialog/Drawer */}
+      <Dialog open={showPreviewDialog} onOpenChange={setShowPreviewDialog}>
+        <DialogContent className="max-w-5xl max-h-[95vh] overflow-hidden p-0">
+          <DialogHeader className="p-6 pb-2">
+            <DialogTitle className="flex items-center gap-2">
+              <FileText className="w-5 h-5" />
+              Preview: {selectedDoc?.originalName}
+            </DialogTitle>
+          </DialogHeader>
+          
+          {selectedDoc && (
+            <div className="flex h-[80vh]">
+              {/* Preview Panel */}
+              <div className="flex-1 bg-muted/30 p-4 overflow-auto">
+                {selectedDoc.mimeType?.includes('pdf') ? (
+                  <div className="w-full h-full flex items-center justify-center">
+                    <iframe 
+                      src={`/api/documents/${selectedDoc.id}/preview`}
+                      className="w-full h-full border rounded"
+                      title="Document Preview"
+                    />
+                  </div>
+                ) : (
+                  <div className="w-full h-full flex items-center justify-center">
+                    <img 
+                      src={`/api/documents/${selectedDoc.id}/preview`}
+                      alt="Document Preview"
+                      className="max-w-full max-h-full object-contain"
+                    />
+                  </div>
+                )}
+              </div>
+
+              {/* Sidebar com dados extraídos */}
+              <div className="w-96 border-l bg-background p-4 overflow-y-auto">
+                <div className="space-y-4">
+                  <div>
+                    <h3 className="font-semibold mb-2">Informações do Arquivo</h3>
+                    <div className="space-y-2 text-sm">
+                      <div className="flex justify-between">
+                        <span className="text-muted-foreground">Status:</span>
+                        <Badge 
+                          className={statusConfig[selectedDoc.status as keyof typeof statusConfig]?.className || "bg-gray-100 text-gray-800"}
+                        >
+                          {statusConfig[selectedDoc.status as keyof typeof statusConfig]?.label || selectedDoc.status}
+                        </Badge>
+                      </div>
+                      <div className="flex justify-between">
+                        <span className="text-muted-foreground">Tipo:</span>
+                        <span>{selectedDoc.documentType || "-"}</span>
+                      </div>
+                      <div className="flex justify-between">
+                        <span className="text-muted-foreground">Tamanho:</span>
+                        <span>{(selectedDoc.fileSize / 1024 / 1024).toFixed(1)} MB</span>
+                      </div>
+                      <div className="flex justify-between">
+                        <span className="text-muted-foreground">OCR:</span>
+                        <span className={getOCRConfidenceColor(selectedDoc.ocrConfidence || 0)}>
+                          {(selectedDoc.ocrConfidence || 0).toFixed(0)}%
+                        </span>
+                      </div>
+                    </div>
+                  </div>
+
+                  {/* OCR Text */}
+                  {selectedDoc.ocrText && (
+                    <div>
+                      <h3 className="font-semibold mb-2">Texto OCR</h3>
+                      <div className="bg-muted rounded p-3 text-xs max-h-32 overflow-y-auto">
+                        <pre className="whitespace-pre-wrap">{selectedDoc.ocrText}</pre>
+                      </div>
+                    </div>
+                  )}
+
+                  {/* Dados extraídos */}
+                  {selectedDoc.extractedData && (
+                    <div>
+                      <h3 className="font-semibold mb-2">Dados Extraídos por IA</h3>
+                      <div className="bg-muted rounded p-3 text-xs max-h-48 overflow-y-auto">
+                        <pre className="whitespace-pre-wrap">
+                          {JSON.stringify(typeof selectedDoc.extractedData === 'string' 
+                            ? JSON.parse(selectedDoc.extractedData) 
+                            : selectedDoc.extractedData, null, 2)}
+                        </pre>
+                      </div>
+                    </div>
+                  )}
+
+                  {/* Ações */}
+                  <div className="space-y-2 pt-4 border-t">
+                    <Button 
+                      onClick={() => handleDownloadDocument(selectedDoc)}
+                      className="w-full" 
+                      variant="outline"
+                    >
+                      <Download className="w-4 h-4 mr-2" />
+                      Baixar Original
+                    </Button>
+                    
+                    {(selectedDoc.status === "ERRO" || selectedDoc.ocrConfidence < 50) && (
+                      <Button 
+                        onClick={() => {
+                          setShowPreviewDialog(false);
+                          handleDocumentAction(selectedDoc, "reprocess");
+                        }}
+                        className="w-full" 
+                        variant="outline"
+                      >
+                        <RotateCcw className="w-4 h-4 mr-2" />
+                        Reprocessar
+                      </Button>
+                    )}
+                  </div>
+                </div>
+              </div>
             </div>
           )}
         </DialogContent>

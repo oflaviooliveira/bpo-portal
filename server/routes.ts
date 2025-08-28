@@ -503,6 +503,195 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
+  // Document download endpoint - NEW
+  app.get("/api/documents/:id/download", isAuthenticated, async (req, res) => {
+    try {
+      const user = req.user!;
+      const documentId = req.params.id;
+      
+      const document = await storage.getDocument(documentId, user.tenantId);
+      if (!document) {
+        return res.status(404).json({ error: "Documento não encontrado" });
+      }
+
+      const filePath = document.filePath;
+      if (!filePath) {
+        return res.status(404).json({ error: "Arquivo não encontrado" });
+      }
+
+      // Check if file exists
+      try {
+        await fs.access(filePath);
+      } catch {
+        return res.status(404).json({ error: "Arquivo físico não encontrado" });
+      }
+
+      res.download(filePath, document.originalName || 'documento');
+    } catch (error) {
+      console.error("Document download error:", error);
+      res.status(500).json({ error: "Erro ao baixar documento" });
+    }
+  });
+
+  // Document preview endpoint - NEW
+  app.get("/api/documents/:id/preview", isAuthenticated, async (req, res) => {
+    try {
+      const user = req.user!;
+      const documentId = req.params.id;
+      
+      const document = await storage.getDocument(documentId, user.tenantId);
+      if (!document) {
+        return res.status(404).json({ error: "Documento não encontrado" });
+      }
+
+      const filePath = document.filePath;
+      if (!filePath) {
+        return res.status(404).json({ error: "Arquivo não encontrado" });
+      }
+
+      // Check if file exists
+      try {
+        await fs.access(filePath);
+      } catch {
+        return res.status(404).json({ error: "Arquivo físico não encontrado" });
+      }
+
+      // Set appropriate content type
+      if (document.mimeType) {
+        res.setHeader('Content-Type', document.mimeType);
+      }
+
+      // For PDFs, allow inline viewing
+      if (document.mimeType?.includes('pdf')) {
+        res.setHeader('Content-Disposition', 'inline');
+      }
+
+      // Stream the file
+      const fileBuffer = await fs.readFile(filePath);
+      res.send(fileBuffer);
+    } catch (error) {
+      console.error("Document preview error:", error);
+      res.status(500).json({ error: "Erro ao visualizar documento" });
+    }
+  });
+
+  // Document reprocess endpoint - NEW
+  app.post("/api/documents/:id/reprocess", ...authorize(["ADMIN", "GERENTE", "OPERADOR"]), async (req, res) => {
+    try {
+      const user = req.user!;
+      const documentId = req.params.id;
+      
+      const document = await storage.getDocument(documentId, user.tenantId);
+      if (!document) {
+        return res.status(404).json({ error: "Documento não encontrado" });
+      }
+
+      const filePath = document.filePath;
+      if (!filePath) {
+        return res.status(404).json({ error: "Arquivo não encontrado" });
+      }
+
+      // Check if file exists
+      try {
+        await fs.access(filePath);
+      } catch {
+        return res.status(404).json({ error: "Arquivo físico não encontrado" });
+      }
+
+      // Update document status to VALIDANDO
+      await storage.updateDocument(documentId, user.tenantId, {
+        status: 'VALIDANDO',
+        ocrText: null,
+        ocrConfidence: 0,
+        aiAnalysis: null,
+        extractedData: null,
+        validationErrors: []
+      });
+
+      // Log reprocessing action
+      await storage.createDocumentLog({
+        documentId: document.id,
+        action: "REPROCESS",
+        status: "STARTED",
+        details: { reprocessedBy: user.id },
+        userId: user.id,
+      });
+
+      // Reprocess the document using advanced OCR processor
+      try {
+        // Mock file object for reprocessing
+        const mockFile = {
+          path: filePath,
+          originalname: document.originalName || 'document',
+          mimetype: document.mimeType || 'application/pdf',
+          size: document.fileSize || 0
+        };
+
+        // Process with advanced OCR
+        const result = await advancedOcrProcessor.processDocument(mockFile as any, documentId);
+        
+        if (result.success) {
+          await storage.createDocumentLog({
+            documentId: document.id,
+            action: "REPROCESS",
+            status: "SUCCESS",
+            details: { 
+              reprocessedBy: user.id,
+              ocrConfidence: result.ocrConfidence,
+              aiProvider: result.aiProvider 
+            },
+            userId: user.id,
+          });
+
+          const updatedDocument = await storage.getDocument(documentId, user.tenantId);
+          res.json({ 
+            success: true, 
+            document: updatedDocument,
+            message: "Documento reprocessado com sucesso" 
+          });
+        } else {
+          await storage.createDocumentLog({
+            documentId: document.id,
+            action: "REPROCESS",
+            status: "ERROR",
+            details: { 
+              reprocessedBy: user.id,
+              error: result.error 
+            },
+            userId: user.id,
+          });
+
+          res.status(500).json({ 
+            success: false,
+            error: "Erro no reprocessamento",
+            details: result.error
+          });
+        }
+      } catch (error) {
+        console.error("Reprocess error:", error);
+        await storage.createDocumentLog({
+          documentId: document.id,
+          action: "REPROCESS",
+          status: "ERROR",
+          details: { 
+            reprocessedBy: user.id,
+            error: String(error) 
+          },
+          userId: user.id,
+        });
+
+        res.status(500).json({ 
+          success: false,
+          error: "Erro interno no reprocessamento" 
+        });
+      }
+
+    } catch (error) {
+      console.error("Document reprocess error:", error);
+      res.status(500).json({ error: "Erro ao reprocessar documento" });
+    }
+  });
+
   // Categories routes - Wave 1 RBAC
   app.get("/api/categories", ...authorize(["ADMIN", "GERENTE", "OPERADOR", "CLIENTE"]), async (req, res) => {
     try {
