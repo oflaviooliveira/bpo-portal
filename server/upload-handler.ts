@@ -49,6 +49,7 @@ export class DocumentUploadHandler {
       console.log(`📁 Processando upload: ${file.originalname} (${Math.round(file.size/1024)}KB)`);
 
       // 1. Validar dados do formulário
+      console.log(`📋 Dados recebidos no formulário:`, JSON.stringify(formData, null, 2));
       const validatedData = uploadDocumentSchema.parse(formData);
       console.log(`✅ Dados do formulário validados: ${validatedData.documentType}`);
 
@@ -63,8 +64,12 @@ export class DocumentUploadHandler {
       }
 
       // 3. Validar regras de negócio
+      console.log(`🔍 Iniciando validação de regras de negócio para tipo: ${validatedData.documentType}`);
       const businessValidation = validateBusinessRules(validatedData.documentType, validatedData);
+      console.log(`📊 Resultado da validação: isValid=${businessValidation.isValid}, errors=${businessValidation.errors.length}, warnings=${businessValidation.warnings.length}`);
+      
       if (!businessValidation.isValid) {
+        console.log(`❌ Validação de negócio falhou:`, businessValidation.errors);
         return {
           success: false,
           message: "Dados inválidos",

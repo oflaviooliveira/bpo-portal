@@ -220,8 +220,18 @@ export function UploadEnhanced() {
       });
       
       if (!response.ok) {
-        const error = await response.json();
-        throw new Error(error.error || 'Erro no upload');
+        const errorData = await response.json();
+        console.error("❌ Erro detalhado do servidor:", errorData);
+        
+        // Criar uma mensagem de erro mais específica
+        let errorMessage = errorData.error || 'Erro no upload';
+        if (errorData.details && Array.isArray(errorData.details) && errorData.details.length > 0) {
+          errorMessage = `${errorMessage}: ${errorData.details.join(', ')}`;
+        }
+        
+        const error = new Error(errorMessage);
+        error.response = errorData; // Anexar dados da resposta
+        throw error;
       }
       
       return response.json();
@@ -253,12 +263,19 @@ export function UploadEnhanced() {
     },
     onError: (error: any) => {
       console.error("❌ Erro no upload:", error);
+      
+      // Usar dados da resposta se disponível
+      let errorMessage = error.message || "Erro interno do servidor";
+      if (error.response && error.response.details && Array.isArray(error.response.details)) {
+        errorMessage = `Campos obrigatórios:\n• ${error.response.details.join('\n• ')}`;
+      }
+      
       toast({
         title: "Erro no processamento",
-        description: error.message || "Erro interno do servidor",
+        description: errorMessage,
         variant: "destructive",
       });
-      setProcessingState({ stage: 'ready', message: 'Erro no envio. Tente novamente.' });
+      setProcessingState({ stage: 'ready', message: 'Erro no envio. Verifique os campos obrigatórios.' });
     },
   });
 

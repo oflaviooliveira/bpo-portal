@@ -375,7 +375,26 @@ export function validateBusinessRules(
   // Verificar campos obrigatórios
   for (const field of schema.required) {
     if (!formData[field] || formData[field] === '') {
-      errors.push(`Campo obrigatório ausente: ${field}`);
+      // Mapear nomes de campos para mensagens mais amigáveis
+      const fieldNames: { [key: string]: string } = {
+        'clientId': 'Cliente',
+        'bankId': 'Banco',
+        'categoryId': 'Categoria',
+        'costCenterId': 'Centro de Custo',
+        'amount': 'Valor',
+        'paymentDate': 'Data de Pagamento',
+        'dueDate': 'Data de Vencimento',
+        'payerDocument': 'Documento do Tomador',
+        'payerName': 'Nome do Tomador',
+        'payerAddress': 'Endereço do Tomador',
+        'payerEmail': 'Email do Tomador',
+        'serviceCode': 'Código do Serviço',
+        'serviceDescription': 'Descrição do Serviço'
+      };
+      
+      const friendlyName = fieldNames[field] || field;
+      errors.push(`Campo obrigatório não preenchido: ${friendlyName}`);
+      console.log(`❌ Campo obrigatório ausente: ${field} (valor: "${formData[field]}")`);
     }
   }
   
