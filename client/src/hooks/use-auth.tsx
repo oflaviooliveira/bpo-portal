@@ -33,15 +33,26 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 
   const loginMutation = useMutation({
     mutationFn: async (credentials: LoginData) => {
-      const res = await apiRequest("POST", "/api/login", credentials);
-      return await res.json();
+      try {
+        const res = await apiRequest("POST", "/api/login", credentials);
+        return await res.json();
+      } catch (error: any) {
+        // Parse error message from API response
+        let errorMessage = "Login falhou";
+        if (error.message && error.message.includes("401")) {
+          errorMessage = "Credenciais inválidas";
+        } else if (error.message && error.message.includes("500")) {
+          errorMessage = "Erro interno do servidor";
+        }
+        throw new Error(errorMessage);
+      }
     },
     onSuccess: (user: SelectUser) => {
       queryClient.setQueryData(["/api/user"], user);
     },
     onError: (error: Error) => {
       toast({
-        title: "Login failed",
+        title: "Falha no login",
         description: error.message,
         variant: "destructive",
       });
