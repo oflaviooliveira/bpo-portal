@@ -606,7 +606,6 @@ export async function registerRoutes(app: Express): Promise<Server> {
         ocrText: null,
         ocrConfidence: "0",
         aiAnalysis: null,
-        extractedData: null,
         validationErrors: []
       });
 

@@ -681,30 +681,30 @@ export function Inbox() {
                           <Eye className="w-4 h-4 text-blue-600" />
                         </Button>
                         
+                        {/* Botão Dados BPO sempre disponível */}
+                        <Button 
+                          variant="outline" 
+                          size="sm"
+                          onClick={() => handleManualReview(doc)}
+                          className="text-orange-600 border-orange-600 hover:bg-orange-600 hover:text-white"
+                          data-testid={`button-bpo-data-${doc.id}`}
+                        >
+                          <Edit className="w-4 h-4 mr-1" />
+                          Dados BPO
+                        </Button>
+
                         {/* Ações operacionais baseadas no status e tipo do documento */}
                         {doc.status === "PENDENTE_REVISAO" && (
-                          <>
-                            <Button 
-                              variant="outline" 
-                              size="sm"
-                              onClick={() => handleDocumentAction(doc, "approve")}
-                              className="text-green-600 border-green-600 hover:bg-green-600 hover:text-white"
-                              data-testid={`button-approve-${doc.id}`}
-                            >
-                              <CheckCircle2 className="w-4 h-4 mr-1" />
-                              Aprovar
-                            </Button>
-                            <Button 
-                              variant="outline" 
-                              size="sm"
-                              onClick={() => handleManualReview(doc)}
-                              className="text-orange-600 border-orange-600 hover:bg-orange-600 hover:text-white"
-                              data-testid={`button-bpo-data-${doc.id}`}
-                            >
-                              <Edit className="w-4 h-4 mr-1" />
-                              Dados BPO
-                            </Button>
-                          </>
+                          <Button 
+                            variant="outline" 
+                            size="sm"
+                            onClick={() => handleDocumentAction(doc, "approve")}
+                            className="text-green-600 border-green-600 hover:bg-green-600 hover:text-white"
+                            data-testid={`button-approve-${doc.id}`}
+                          >
+                            <CheckCircle2 className="w-4 h-4 mr-1" />
+                            Aprovar
+                          </Button>
                         )}
                         
                         {(doc.status === "RECEBIDO" || doc.status === "CLASSIFICADO") && doc.documentType === "AGENDADO" && (
@@ -1014,11 +1014,11 @@ export function Inbox() {
                 </div>
               )}
 
-              {/* Action Buttons */}
-              {selectedDoc?.status === 'PENDENTE_REVISAO' && (
-                <div className="grid gap-3 pt-4 border-t">
-                  <h3 className="font-semibold text-foreground">Ações do Operador</h3>
-                  <div className="flex gap-3">
+              {/* Action Buttons - Sempre disponíveis */}
+              <div className="grid gap-3 pt-4 border-t">
+                <h3 className="font-semibold text-foreground">Ações Disponíveis</h3>
+                <div className="flex gap-3">
+                  {selectedDoc?.status === 'PENDENTE_REVISAO' && (
                     <Button 
                       className="flex-1 bg-green-600 hover:bg-green-700 text-white"
                       onClick={() => handleApproveAI(selectedDoc)}
@@ -1026,17 +1026,17 @@ export function Inbox() {
                       <CheckCircle2 className="w-4 h-4 mr-2" />
                       Aprovar Dados da IA
                     </Button>
-                    <Button 
-                      variant="outline"
-                      className="flex-1"
-                      onClick={() => handleManualReview(selectedDoc)}
-                    >
-                      <Edit className="w-4 h-4 mr-2" />
-                      Completar Dados BPO
-                    </Button>
-                  </div>
+                  )}
+                  <Button 
+                    variant="outline"
+                    className="flex-1"
+                    onClick={() => handleManualReview(selectedDoc)}
+                  >
+                    <Edit className="w-4 h-4 mr-2" />
+                    Completar Dados BPO
+                  </Button>
                 </div>
-              )}
+              </div>
             </div>
           )}
         </DialogContent>
