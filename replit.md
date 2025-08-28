@@ -130,7 +130,7 @@ Portal de BPO Financeiro com OCR/IA multi-provider para processamento automátic
 - **Status System Aprimorado**: Distinção clara entre "enabled" (habilitado) vs "status" (operacional)
 - **Interface Melhorada**: Status operacional e habilitação separados, botão de reset para providers com erro
 - **APIs Testadas**: Ambas GLM (glm-4.5) e OpenAI (gpt-4o-mini) funcionando corretamente
-- **Custos Corrigidos**: GLM $1.4/1M tokens, OpenAI $0.375/1M tokens (GPT-4o Mini)
+- **Custos Atualizados**: GLM-4.5 $1.4/1M tokens (média $0.6 input + $2.2 output), OpenAI GPT-4o Mini $0.375/1M tokens (média $0.15 input + $0.60 output)
 - **Logging Aprimorado**: Rastreamento detalhado de sucesso/falha por provider
 - **Novas Funcionalidades**: Reset de provider status, status detalhado, alertas visuais no sistema
 

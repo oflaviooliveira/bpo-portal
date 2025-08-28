@@ -8,16 +8,30 @@ const AVAILABLE_MODELS = {
     { 
       id: 'glm-4.5', 
       name: 'GLM-4.5', 
-      inputCost: 0.0006, // $0.6 per 1M tokens
-      outputCost: 0.0022, // $2.2 per 1M tokens
-      avgCost: 0.0014 // Average for pricing display
+      inputCost: 0.6, // $0.6 per 1M tokens
+      outputCost: 2.2, // $2.2 per 1M tokens
+      avgCost: 1.4 // Average for pricing display
     },
     { 
       id: 'glm-4.5-air', 
       name: 'GLM-4.5-Air', 
-      inputCost: 0.0002, // $0.2 per 1M tokens
-      outputCost: 0.0011, // $1.1 per 1M tokens
-      avgCost: 0.0007 // Average for pricing display
+      inputCost: 0.2, // $0.2 per 1M tokens
+      outputCost: 1.1, // $1.1 per 1M tokens
+      avgCost: 0.65 // Average for pricing display
+    },
+    { 
+      id: 'glm-4.5-x', 
+      name: 'GLM-4.5-X', 
+      inputCost: 2.2, // $2.2 per 1M tokens
+      outputCost: 8.9, // $8.9 per 1M tokens
+      avgCost: 5.55 // Average for pricing display
+    },
+    { 
+      id: 'glm-4.5-flash', 
+      name: 'GLM-4.5-Flash', 
+      inputCost: 0, // Free
+      outputCost: 0, // Free
+      avgCost: 0 // Free
     }
   ],
   openai: [
@@ -97,7 +111,7 @@ class AIMultiProvider {
       name: 'glm',
       enabled: true,
       priority: 1,
-      costPer1000: 1.4, // GLM-4.5: $1.4 per 1M tokens
+      costPer1000: 1.4, // GLM-4.5: $1.4 avg per 1M tokens
       status: 'online',
       model: 'glm-4.5',
       temperature: 0.1,
@@ -360,7 +374,7 @@ class AIMultiProvider {
         extractedData,
         rawResponse: aiResponse,
         confidence: extractedData.confidence || 85,
-        processingCost: (tokenCount / 1000) * 1.4, // GLM custo: $1.4 per 1M tokens
+        processingCost: (tokenCount / 1000) * 1.4, // GLM custo: $1.4 avg per 1M tokens
         tokensIn: Math.floor(tokenCount * 0.7),
         tokensOut: Math.floor(tokenCount * 0.3),
         processingTimeMs: 0,
