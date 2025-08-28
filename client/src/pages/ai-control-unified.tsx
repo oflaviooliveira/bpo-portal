@@ -55,13 +55,7 @@ export default function AIControlUnified() {
 
   const toggleProviderMutation = useMutation({
     mutationFn: async ({ name, enabled }: { name: string; enabled: boolean }) => {
-      return apiRequest(`/api/ai-control/provider/${name}`, {
-        method: "PATCH",
-        body: JSON.stringify({ enabled }),
-        headers: {
-          'Content-Type': 'application/json'
-        }
-      });
+      return apiRequest("PATCH", `/api/ai-control/provider/${name}`, { enabled });
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["/api/ai-control"] });

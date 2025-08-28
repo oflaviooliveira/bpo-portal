@@ -1,0 +1,74 @@
+The source list for the Content Security Policy directive 'default-src' contains an invalid source: ''unsafe-dynamic''. It will be ignored.Understand this error
+88The Content-Security-Policy directive 'default-src' contains 'report-uri' as a source expression. Did you want to add it as a directive and forget a semicolon?Understand this error
+88The source list for Content Security Policy directive 'default-src' contains a source with an invalid path: '/api/4509669501698048/security/?sentry_key=7eb3d90eb4660416caf507087367e67e'. The query component, including the '?', will be ignored.Understand this error
+/~:1 The source list for the Content Security Policy directive 'default-src' contains an invalid source: ''unsafe-dynamic''. It will be ignored.Understand this error
+/~:1 The Content-Security-Policy directive 'default-src' contains 'report-uri' as a source expression. Did you want to add it as a directive and forget a semicolon?Understand this error
+/~:1 The source list for Content Security Policy directive 'default-src' contains a source with an invalid path: '/api/4509669501698048/security/?sentry_key=7eb3d90eb4660416caf507087367e67e'. The query component, including the '?', will be ignored.Understand this error
+_app-e61c7b16defb6651.js:38 
+      /////////////////////
+   ///////////////////////////
+  ////////@@@@@@@//////////////
+  ////////@@@@@@@//////////////
+  ////////@@@@@@@//////////////        Curious and driven?
+  ///////////////@@@@@@@///////        Work with us!
+  ///////////////@@@@@@@///////
+  ///////////////@@@@@@@///////        https://join.replit.com/hack.with.us
+  ////////@@@@@@@//////////////
+  ////////@@@@@@@//////////////
+  ////////@@@@@@#//////////////
+   ///////////////////////////
+      /////////////////////
+      
+ [Long Running Recorder] Content script initialised
+ [Long Running Recorder] Recorder disabled
+_app-e61c7b16defb6651.js:38 [LaunchDarkly] LaunchDarkly client initialized
+ [Long Running Recorder] Content script initialised
+ [Long Running Recorder] Recorder disabled
+ [Long Running Recorder] Content script initialised
+ [Long Running Recorder] Content script initialised
+ [Long Running Recorder] Recorder disabled
+ [Long Running Recorder] Recorder disabled
+ [Long Running Recorder] Content script initialised
+ [Long Running Recorder] Recorder disabled
+index.ts-abec1db7.js:1 [Long Running Recorder] Content script initialised
+index.ts-abec1db7.js:3 [Long Running Recorder] Recorder disabled
+/~:1 Banner not shown: beforeinstallpromptevent.preventDefault() called. The page must call beforeinstallpromptevent.prompt() to show the banner.
+index.ts-abec1db7.js:1 [Long Running Recorder] Content script initialised
+index.ts-abec1db7.js:3 [Long Running Recorder] Recorder disabled
+m.stripe.com/6:1  Failed to load resource: net::ERR_NAME_NOT_RESOLVEDUnderstand this error
+PortalBPOSystem:1 Uncaught (in promise) Error: A listener indicated an asynchronous response by returning true, but the message channel closed before a response was receivedUnderstand this error
+62Error while parsing the 'sandbox' attribute: 'allow-downloads-without-user-activation' is an invalid sandbox flag.Understand this error
+framework-9095b9499b939500.js:1 Unrecognized feature: 'ambient-light-sensor'.
+_ @ framework-9095b9499b939500.js:1Understand this warning
+framework-9095b9499b939500.js:1 Unrecognized feature: 'battery'.
+_ @ framework-9095b9499b939500.js:1Understand this warning
+framework-9095b9499b939500.js:1 Unrecognized feature: 'execution-while-not-rendered'.
+_ @ framework-9095b9499b939500.js:1Understand this warning
+framework-9095b9499b939500.js:1 Unrecognized feature: 'execution-while-out-of-viewport'.
+_ @ framework-9095b9499b939500.js:1Understand this warning
+framework-9095b9499b939500.js:1 Unrecognized feature: 'layout-animations'.
+_ @ framework-9095b9499b939500.js:1Understand this warning
+framework-9095b9499b939500.js:1 Unrecognized feature: 'legacy-image-formats'.
+_ @ framework-9095b9499b939500.js:1Understand this warning
+framework-9095b9499b939500.js:1 Unrecognized feature: 'navigation-override'.
+_ @ framework-9095b9499b939500.js:1Understand this warning
+framework-9095b9499b939500.js:1 Unrecognized feature: 'oversized-images'.
+_ @ framework-9095b9499b939500.js:1Understand this warning
+framework-9095b9499b939500.js:1 Unrecognized feature: 'publickey-credentials'.
+_ @ framework-9095b9499b939500.js:1Understand this warning
+framework-9095b9499b939500.js:1 Unrecognized feature: 'speaker-selection'.
+_ @ framework-9095b9499b939500.js:1Understand this warning
+framework-9095b9499b939500.js:1 Unrecognized feature: 'unoptimized-images'.
+_ @ framework-9095b9499b939500.js:1Understand this warning
+framework-9095b9499b939500.js:1 Unrecognized feature: 'unsized-media'.
+_ @ framework-9095b9499b939500.js:1Understand this warning
+framework-9095b9499b939500.js:1 Unrecognized feature: 'pointer-lock'.
+_ @ framework-9095b9499b939500.js:1Understand this warning
+framework-9095b9499b939500.js:1 Allow attribute will take precedence over 'allowfullscreen'.
+_ @ framework-9095b9499b939500.js:1Understand this warning
+framework-9095b9499b939500.js:1 Allow attribute will take precedence over 'allowpaymentrequest'.
+_ @ framework-9095b9499b939500.js:1Understand this warning
+18PortalBPOSystem:1 Uncaught (in promise) Error: A listener indicated an asynchronous response by returning true, but the message channel closed before a response was receivedUnderstand this error
+4PortalBPOSystem#PLANO_EXECUCAO_PRD.md:1 Uncaught (in promise) Error: A listener indicated an asynchronous response by returning true, but the message channel closed before a response was receivedUnderstand this error
+16PortalBPOSystem:1 Uncaught (in promise) Error: A listener indicated an asynchronous response by returning true, but the message channel closed before a response was receivedUnderstand this error
+ [Long Running Recorder] Content script initialised

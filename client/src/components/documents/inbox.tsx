@@ -80,10 +80,7 @@ export function Inbox() {
   // Mutation para ações operacionais
   const actionMutation = useMutation({
     mutationFn: async ({ documentId, action, data }: { documentId: string, action: string, data?: any }) => {
-      const response = await apiRequest(`/api/documents/${documentId}/action`, {
-        method: "PATCH",
-        body: { action, ...data }
-      });
+      const response = await apiRequest("PATCH", `/api/documents/${documentId}/action`, { action, ...data });
       return response.json();
     },
     onSuccess: () => {
@@ -148,10 +145,7 @@ export function Inbox() {
         isValidated: true
       };
       
-      return apiRequest(`/api/documents/${document.id}`, {
-        method: 'PATCH',
-        body: updates
-      });
+      return apiRequest('PATCH', `/api/documents/${document.id}`, updates);
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['/api/documents'] });
@@ -209,10 +203,7 @@ export function Inbox() {
   // Mutation para exclusão em lote
   const bulkDeleteMutation = useMutation({
     mutationFn: async (documentIds: string[]) => {
-      return apiRequest(`/api/documents/bulk-delete`, {
-        method: 'DELETE',
-        body: { documentIds }
-      });
+      return apiRequest('DELETE', `/api/documents/bulk-delete`, { documentIds });
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['/api/documents'] });
