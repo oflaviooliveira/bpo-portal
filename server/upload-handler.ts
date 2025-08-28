@@ -52,9 +52,15 @@ export class DocumentUploadHandler {
       const validatedData = uploadDocumentSchema.parse(formData);
       console.log(`✅ Dados do formulário validados: ${validatedData.documentType}`);
 
-      // 2. Analisar nome do arquivo
+      // 2. Analisar nome do arquivo (não bloquear upload se inválido)
       const filenameAnalysis = parseFileName(file.originalname);
       console.log(`🔍 Nome do arquivo analisado:`, filenameAnalysis);
+      
+      // Coletar warnings do nome do arquivo
+      const warnings: string[] = [];
+      if (!filenameAnalysis.isValid && filenameAnalysis.errors) {
+        warnings.push(...filenameAnalysis.errors.map(error => `Aviso do nome do arquivo: ${error}`));
+      }
 
       // 3. Validar regras de negócio
       const businessValidation = validateBusinessRules(validatedData.documentType, validatedData);
@@ -63,8 +69,13 @@ export class DocumentUploadHandler {
           success: false,
           message: "Dados inválidos",
           errors: businessValidation.errors,
-          warnings: businessValidation.warnings
+          warnings: [...warnings, ...(businessValidation.warnings || [])]
         };
+      }
+      
+      // Adicionar warnings de validação de negócio
+      if (businessValidation.warnings) {
+        warnings.push(...businessValidation.warnings);
       }
 
       // 4. Preparar dados do tomador para boletos/NF
@@ -134,7 +145,7 @@ export class DocumentUploadHandler {
         filePath: file.path,
         documentType: validatedData.documentType,
         amount: this.parseAmount(validatedData.amount || '') || '0',
-        supplier: validatedData.supplier, // Legacy field
+        supplier: validatedData.supplier || validatedData.contraparteName,
         description: validatedData.description,
         dueDate: this.parseDate(validatedData.dueDate || ''),
         paidDate: this.parseDate(validatedData.paymentDate || ''),
@@ -166,10 +177,7 @@ export class DocumentUploadHandler {
         success: true,
         documentId: document.id,
         message: "Documento enviado com sucesso",
-        warnings: [
-          ...businessValidation.warnings,
-          ...(filenameAnalysis.errors || [])
-        ].filter(Boolean)
+        warnings: warnings
       };
 
     } catch (error) {

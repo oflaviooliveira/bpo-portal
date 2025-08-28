@@ -357,7 +357,13 @@ export const insertDocumentSchema = createInsertSchema(documents).pick({
   filePath: true,
   documentType: true,
   amount: true,
+  supplier: true, // Legacy field for supplier name
+  description: true,
   dueDate: true,
+  paidDate: true,
+  issuerData: true,
+  instructions: true,
+  status: true,
   notes: true,
   createdBy: true,
 });
