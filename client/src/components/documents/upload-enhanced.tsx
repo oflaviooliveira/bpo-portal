@@ -67,6 +67,14 @@ export function UploadEnhanced() {
   const [suggestedFields, setSuggestedFields] = useState<SuggestedField[]>([]);
   const [isDragOver, setIsDragOver] = useState(false);
   const [ocrPreview, setOcrPreview] = useState<OcrPreview | null>(null);
+  const [aiAnalysis, setAiAnalysis] = useState<{
+    provider: string;
+    confidence: number;
+    extractedData: any;
+    processingTime: number;
+    cost: number;
+    rawResponse?: string;
+  } | null>(null);
   const { toast } = useToast();
   const queryClient = useQueryClient();
 
@@ -156,6 +164,18 @@ export function UploadEnhanced() {
           text: data.ocrText,
           confidence: data.ocrResult?.confidence || 0,
           strategy: data.ocrResult?.strategy || 'unknown'
+        });
+      }
+      
+      // Mostrar análise da IA se disponível
+      if (data.aiAnalysis) {
+        setAiAnalysis({
+          provider: data.aiAnalysis.provider || 'unknown',
+          confidence: data.aiAnalysis.confidence || 0,
+          extractedData: data.aiAnalysis.extractedData || {},
+          processingTime: data.aiAnalysis.processingTime || 0,
+          cost: data.aiAnalysis.processingCost || 0,
+          rawResponse: data.aiAnalysis.rawResponse
         });
       }
       
@@ -292,6 +312,7 @@ export function UploadEnhanced() {
       setSelectedFile(null);
       setSuggestedFields([]);
       setOcrPreview(null);
+      setAiAnalysis(null);
       setProcessingState({ stage: 'idle', message: '' });
       
       // Invalidar cache
@@ -642,15 +663,71 @@ export function UploadEnhanced() {
         </AlertDescription>
       </Alert>
 
-      {/* OCR Preview */}
-      {ocrPreview && (
-        <Card>
+      {/* AI Analysis Results */}
+      {aiAnalysis && (
+        <Card className="border-blue-200 bg-blue-50/50">
           <CardHeader className="pb-3">
             <CardTitle className="flex items-center gap-2">
-              <FileText className="h-5 w-5" />
-              Texto Extraído do Documento
+              <Sparkles className="h-5 w-5 text-blue-600" />
+              Análise IA - Dados Estruturados
+              <Badge variant={aiAnalysis.confidence > 80 ? 'default' : aiAnalysis.confidence > 50 ? 'secondary' : 'destructive'} className="bg-blue-600">
+                {Math.round(aiAnalysis.confidence)}% confiança
+              </Badge>
+              <Badge variant="outline" className="text-xs bg-white">
+                {aiAnalysis.provider.toUpperCase()}
+              </Badge>
+            </CardTitle>
+          </CardHeader>
+          <CardContent className="space-y-4">
+            <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
+              <div className="text-center p-3 bg-white rounded-lg border">
+                <div className="text-xs text-muted-foreground">Tempo</div>
+                <div className="font-semibold">{(aiAnalysis.processingTime / 1000).toFixed(1)}s</div>
+              </div>
+              <div className="text-center p-3 bg-white rounded-lg border">
+                <div className="text-xs text-muted-foreground">Custo</div>
+                <div className="font-semibold">${aiAnalysis.cost.toFixed(6)}</div>
+              </div>
+              <div className="text-center p-3 bg-white rounded-lg border">
+                <div className="text-xs text-muted-foreground">Confiança</div>
+                <div className="font-semibold text-blue-600">{aiAnalysis.confidence}%</div>
+              </div>
+              <div className="text-center p-3 bg-white rounded-lg border">
+                <div className="text-xs text-muted-foreground">Provider</div>
+                <div className="font-semibold">{aiAnalysis.provider}</div>
+              </div>
+            </div>
+            
+            {aiAnalysis.extractedData && Object.keys(aiAnalysis.extractedData).length > 0 && (
+              <div className="bg-white p-4 rounded-lg border">
+                <h4 className="font-medium mb-3 text-sm">Dados Extraídos:</h4>
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-3 text-sm">
+                  {Object.entries(aiAnalysis.extractedData).map(([key, value]) => (
+                    <div key={key} className="flex justify-between">
+                      <span className="text-muted-foreground capitalize">{key.replace('_', ' ')}:</span>
+                      <span className="font-medium text-right">{String(value) || '-'}</span>
+                    </div>
+                  ))}
+                </div>
+              </div>
+            )}
+            
+            <p className="text-xs text-blue-600 bg-white p-2 rounded border">
+              ✨ IA analisou o documento e extraiu dados estruturados com alta precisão. Os campos do formulário foram preenchidos automaticamente.
+            </p>
+          </CardContent>
+        </Card>
+      )}
+
+      {/* OCR Preview (Compact) */}
+      {ocrPreview && (
+        <Card className="border-gray-200">
+          <CardHeader className="pb-3">
+            <CardTitle className="flex items-center gap-2">
+              <FileText className="h-5 w-5 text-gray-600" />
+              Texto OCR (Referência)
               <Badge variant={ocrPreview.confidence > 80 ? 'default' : ocrPreview.confidence > 50 ? 'secondary' : 'destructive'}>
-                {Math.round(ocrPreview.confidence)}% confiança
+                {Math.round(ocrPreview.confidence)}% qualidade
               </Badge>
               <Badge variant="outline" className="text-xs">
                 {ocrPreview.strategy}
@@ -658,17 +735,18 @@ export function UploadEnhanced() {
             </CardTitle>
           </CardHeader>
           <CardContent>
-            <div className="bg-muted/50 p-4 rounded-lg">
-              <Textarea
-                value={ocrPreview.text}
-                readOnly
-                rows={4}
-                className="resize-none text-sm font-mono bg-transparent border-none shadow-none"
-                placeholder="Texto extraído aparecerá aqui..."
-              />
-            </div>
+            <details className="group">
+              <summary className="cursor-pointer text-sm text-muted-foreground hover:text-foreground">
+                Ver texto bruto extraído ({ocrPreview.text.length} caracteres)
+              </summary>
+              <div className="mt-3 bg-muted/50 p-3 rounded-lg">
+                <div className="text-xs font-mono max-h-32 overflow-y-auto">
+                  {ocrPreview.text || 'Nenhum texto extraído'}
+                </div>
+              </div>
+            </details>
             <p className="text-xs text-muted-foreground mt-2">
-              Este texto foi extraído automaticamente. Os campos abaixo foram preenchidos com base nesta análise.
+              Texto bruto usado como base para análise IA. Para auditoria e referência.
             </p>
           </CardContent>
         </Card>

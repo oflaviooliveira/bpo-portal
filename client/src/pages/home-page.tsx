@@ -9,8 +9,9 @@ import { Reconciliation } from "@/components/documents/reconciliation";
 import { Emission } from "@/components/documents/emission";
 import { Archived } from "@/components/documents/archived";
 import AIControlUnified from "@/pages/ai-control-unified";
+import { AIDashboard } from "@/pages/ai-dashboard";
 
-type Section = 'dashboard' | 'inbox' | 'upload' | 'scheduled' | 'reconciliation' | 'emission' | 'archived' | 'clients' | 'users' | 'ai-control';
+type Section = 'dashboard' | 'inbox' | 'upload' | 'scheduled' | 'reconciliation' | 'emission' | 'archived' | 'clients' | 'users' | 'ai-control' | 'ai-dashboard';
 
 export default function HomePage() {
   const [activeSection, setActiveSection] = useState<Section>('dashboard');
@@ -53,6 +54,12 @@ export default function HomePage() {
         return (
           <div className="p-6">
             <AIControlUnified />
+          </div>
+        );
+      case 'ai-dashboard':
+        return (
+          <div className="p-6">
+            <AIDashboard />
           </div>
         );
       default:

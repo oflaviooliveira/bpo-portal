@@ -304,6 +304,14 @@ export async function registerRoutes(app: Express): Promise<Server> {
           confidence: aiResult?.confidence || 0,
           reasoning: aiResult?.reasoning
         },
+        aiAnalysis: aiResult?.success ? {
+          provider: aiResult.provider || 'unknown',
+          confidence: aiResult.confidence || 0,
+          extractedData: aiResult.extractedData || {},
+          processingTime: aiResult.processingTime || 0,
+          processingCost: aiResult.processingCost || 0,
+          rawResponse: aiResult.rawResponse
+        } : null,
         suggestions
       });
 
@@ -1665,6 +1673,57 @@ export async function registerRoutes(app: Express): Promise<Server> {
     } catch (error) {
       console.error("AI swap priorities error:", error);
       res.status(500).json({ error: "Erro ao alternar prioridades" });
+    }
+  });
+
+  // AI Control - Performance metrics
+  app.get("/api/ai-control/performance", ...authorize(["ADMIN", "GERENTE"]), async (req, res) => {
+    try {
+      const { aiMultiProvider } = await import("./ai-multi-provider");
+      const metrics = aiMultiProvider.getProviderMetrics();
+      const comparison = aiMultiProvider.getProviderComparison();
+      
+      res.json({
+        metrics,
+        comparison,
+        summary: {
+          totalRequests: Object.values(metrics).reduce((sum: number, m: any) => sum + m.performance.totalRequests, 0),
+          totalCost: Object.values(metrics).reduce((sum: number, m: any) => sum + m.performance.totalCost, 0),
+          avgSuccessRate: Object.values(metrics).reduce((sum: number, m: any) => sum + m.performance.successRate, 0) / Object.keys(metrics).length
+        }
+      });
+    } catch (error) {
+      console.error("❌ Erro ao buscar métricas:", error);
+      res.status(500).json({ error: "Erro interno" });
+    }
+  });
+
+  // AI Control - Real-time status
+  app.get("/api/ai-control/status", ...authorize(["ADMIN", "GERENTE", "OPERADOR"]), async (req, res) => {
+    try {
+      const { aiMultiProvider } = await import("./ai-multi-provider");
+      const providers = aiMultiProvider.getProviders();
+      const now = new Date();
+      
+      res.json({
+        providers: providers.map(p => ({
+          name: p.name,
+          status: p.status,
+          enabled: p.enabled,
+          priority: p.priority,
+          model: p.model,
+          lastUpdate: now.toISOString(),
+          healthScore: p.last30Days.successRate
+        })),
+        systemHealth: {
+          overall: providers.every(p => p.status === 'online') ? 'healthy' : 'degraded',
+          primaryProvider: providers.find(p => p.priority === 1)?.name,
+          lastCheck: now.toISOString()
+        }
+      });
+    } catch (error) {
+      console.error("❌ Erro ao buscar status:", error);
+      res.status(500).json({ error: "Erro interno" });
     }
   });
 

@@ -12,6 +12,14 @@ interface AIProvider {
   model?: string;
   temperature?: number;
   maxTokens?: number;
+  last30Days: {
+    totalRequests: number;
+    totalCost: number;
+    totalTokens: number;
+    avgResponseTime: number;
+    successRate: number;
+    failureReasons: Record<string, number>;
+  };
 }
 
 interface AIAnalysisResult {
@@ -36,7 +44,15 @@ class AIMultiProvider {
       status: 'online',
       model: 'glm-4-plus',
       temperature: 0.1,
-      maxTokens: 1500
+      maxTokens: 1500,
+      last30Days: {
+        totalRequests: 0,
+        totalCost: 0,
+        totalTokens: 0,
+        avgResponseTime: 0,
+        successRate: 0,
+        failureReasons: {}
+      }
     },
     {
       name: 'openai',
@@ -46,7 +62,15 @@ class AIMultiProvider {
       status: 'online',
       model: 'gpt-4o-mini',
       temperature: 0.1,
-      maxTokens: 1500
+      maxTokens: 1500,
+      last30Days: {
+        totalRequests: 0,
+        totalCost: 0,
+        totalTokens: 0,
+        avgResponseTime: 0,
+        successRate: 0,
+        failureReasons: {}
+      }
     }
   ];
 
@@ -100,6 +124,9 @@ class AIMultiProvider {
           }
           
           provider.status = 'online';
+          
+          // Atualizar estatísticas em tempo real
+          this.updateProviderStats(provider, true, result.processingCost || 0, result.processingTimeMs || 0);
           
           // Registrar no banco
           await this.logAiRun(documentId, tenantId, result);
@@ -470,16 +497,89 @@ TEMPLATE:
     }
   }
 
+  // Atualizar estatísticas após processamento
+  private updateProviderStats(provider: AIProvider, success: boolean, cost: number, responseTime: number, error?: string) {
+    const stats = provider.last30Days;
+    stats.totalRequests++;
+    stats.totalCost += cost;
+    stats.totalTokens += Math.ceil(responseTime / 100); // Aproximação
+    
+    if (stats.totalRequests === 1) {
+      stats.avgResponseTime = responseTime;
+    } else {
+      stats.avgResponseTime = (stats.avgResponseTime * (stats.totalRequests - 1) + responseTime) / stats.totalRequests;
+    }
+    
+    if (success) {
+      const successCount = Math.round((stats.successRate * (stats.totalRequests - 1)) / 100);
+      stats.successRate = ((successCount + 1) / stats.totalRequests) * 100;
+    } else {
+      const successCount = Math.round((stats.successRate * (stats.totalRequests - 1)) / 100);
+      stats.successRate = (successCount / stats.totalRequests) * 100;
+      if (error) {
+        const errorKey = error.length > 50 ? error.substring(0, 50) + '...' : error;
+        stats.failureReasons[errorKey] = (stats.failureReasons[errorKey] || 0) + 1;
+      }
+    }
+  }
+
   getProviderMetrics(): Record<string, any> {
     return this.providers.reduce((acc, provider) => {
       acc[provider.name] = {
         enabled: provider.enabled,
         status: provider.status,
         priority: provider.priority,
-        costPer1000: provider.costPer1000
+        costPer1000: provider.costPer1000,
+        performance: provider.last30Days
       };
       return acc;
     }, {} as Record<string, any>);
+  }
+
+  // Métrica avançada: comparação de providers
+  getProviderComparison() {
+    const glm = this.providers.find(p => p.name === 'glm');
+    const openai = this.providers.find(p => p.name === 'openai');
+    
+    return {
+      glm: glm ? {
+        name: 'GLM',
+        requests: glm.last30Days.totalRequests,
+        successRate: glm.last30Days.successRate,
+        avgCost: glm.last30Days.totalCost / Math.max(glm.last30Days.totalRequests, 1),
+        avgTime: glm.last30Days.avgResponseTime,
+        status: glm.status
+      } : null,
+      openai: openai ? {
+        name: 'OpenAI', 
+        requests: openai.last30Days.totalRequests,
+        successRate: openai.last30Days.successRate,
+        avgCost: openai.last30Days.totalCost / Math.max(openai.last30Days.totalRequests, 1),
+        avgTime: openai.last30Days.avgResponseTime,
+        status: openai.status
+      } : null,
+      recommendations: this.generateRecommendations()
+    };
+  }
+
+  private generateRecommendations(): string[] {
+    const recommendations: string[] = [];
+    const glm = this.providers.find(p => p.name === 'glm');
+    const openai = this.providers.find(p => p.name === 'openai');
+    
+    if (glm && openai && glm.last30Days.totalRequests > 0 && openai.last30Days.totalRequests > 0) {
+      if (glm.last30Days.successRate < 70) {
+        recommendations.push('GLM com baixa taxa de sucesso - revisar configuração');
+      }
+      if (openai.last30Days.avgResponseTime > 10000) {
+        recommendations.push('OpenAI com tempo de resposta alto - considerar upgrade');
+      }
+      if (glm.last30Days.totalCost < openai.last30Days.totalCost / 10) {
+        recommendations.push('GLM é 10x mais barato - priorizar uso');
+      }
+    }
+    
+    return recommendations;
   }
 }
 
