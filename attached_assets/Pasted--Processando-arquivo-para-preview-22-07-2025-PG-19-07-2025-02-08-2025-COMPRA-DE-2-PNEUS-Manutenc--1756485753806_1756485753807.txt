@@ -1,0 +1,160 @@
+🔍 Processando arquivo para preview: 22.07.2025_PG_19.07.2025_02.08.2025_COMPRA DE 2 PNEUS_ManutencÌ§aÌo de Veiculos_SRJ1_R$1.450,00.pdf
+📄 Iniciando extração de texto PDF: uploads/39b618e6a9470f53cdd591a8b28fc7de
+Warning: Indexing all PDF objects
+✅ Extração nativa bem-sucedida: 2342 caracteres
+🤖 Analisando documento com IA: 22.07.2025_PG_19.07.2025_02.08.2025_COMPRA DE 2 PNEUS_ManutencÌ§aÌo de Veiculos_SRJ1_R$1.450,00.pdf
+📝 Texto extraído (2342 chars): DANFE
+Documento Auxiliar da 
+Nota Fiscal Eletrônica
+AV MARIA DO CARMO, 1571
+POSTO LAVA TUCUNS
+CRUZ / CE
+62595-000
+(88) 9729-5739 - 
+0 - ENTRADA
+1 - SAÍDA
+CHAVE DE ACESSO
+Nº 645   
+Série 1 
+Consulta de...
+📋 Detectada nota fiscal - usando analisador especializado
+🔄 Usando AI Multi-Provider para análise...
+📋 Documento classificado como: DANFE (57.5% confiança)
+🔍 Indicadores: Keyword: DANFE, Keyword: Nota Fiscal Eletrônica, Keyword: CNPJ, Keyword: Chave de Acesso, Keyword: ICMS, Keyword: CFOP, Keyword: NCM, Pattern: \d{4}\s\d{4}\s\d{4}\s\d{4}\s\d{4}\s\d{4}\s\d{4}\s\d{4}\s\d{4}\s\d{4}\s\d{4}
+📋 Documento complexo detectado (DANFE) - priorizando OpenAI
+🤖 Tentando análise com openai...
+🔗 OpenAI API Request - Model: gpt-4o-mini
+💰 OpenAI Expected Cost: $0.375/1k tokens
+🤖 OpenAI Response (gpt-4o-mini): {
+  "valor": "R$ 1.450,00",
+  "fornecedor": "ROBSON PNEUS E AUTOPECAS LTDA",
+  "cnpj_emitente": "95.001.834/0001-34",
+  "cnpj_destinatario": "24.824.109/0001-01",
+  "data_emissao": "19/07/2025",
+  "data_saida": "19/07/2025",
+  "data_vencimento": null,
+  "descricao": "2 Pneus - Manutenção de Veículos - SRJ1",
+  "categoria": "PAGO",
+  "chave_acesso": "645123250071454265",
+  "confidence": 0.95
+}
+⚠️ Schema validation strict failed for openai, trying flexible validation...
+🔧 GLM response auto-corrected: {
+  valor: 'R$ 1.450,00',
+  fornecedor: 'ROBSON PNEUS E AUTOPECAS LTDA',
+  cnpj_emitente: '95.001.834/0001-34',
+  cnpj_destinatario: '24.824.109/0001-01',
+  data_emissao: '19/07/2025',
+  data_saida: '19/07/2025',
+  descricao: '2 Pneus - Manutenção de Veículos - SRJ1',
+  categoria: 'PAGO',
+  chave_acesso: '645123250071454265',
+  confidence: 0.95,
+  centro_custo: 'GERAL'
+}
+❌ Both validation attempts failed for openai: ZodError: [
+  {
+    "code": "invalid_type",
+    "expected": "integer",
+    "received": "float",
+    "message": "Expected integer, received float",
+    "path": [
+      "confidence"
+    ]
+  }
+]
+    at get error [as error] (file:///home/runner/workspace/node_modules/zod/lib/index.mjs:587:31)
+    at ZodObject.parse (file:///home/runner/workspace/node_modules/zod/lib/index.mjs:663:22)
+    at AIMultiProvider.analyzeDocument (/home/runner/workspace/server/ai-multi-provider.ts:639:60)
+    at process.processTicksAndRejections (node:internal/process/task_queues:95:5)
+    at async DocumentAnalyzer.analyzeDocument (/home/runner/workspace/server/ai/document-analyzer.ts:82:24)
+    at async <anonymous> (/home/runner/workspace/server/routes.ts:276:22) {
+  issues: [
+    {
+      code: 'invalid_type',
+      expected: 'integer',
+      received: 'float',
+      message: 'Expected integer, received float',
+      path: [Array]
+    }
+  ],
+  addIssue: [Function (anonymous)],
+  addIssues: [Function (anonymous)],
+  errors: [
+    {
+      code: 'invalid_type',
+      expected: 'integer',
+      received: 'float',
+      message: 'Expected integer, received float',
+      path: [Array]
+    }
+  ]
+}
+⚠️ Provider openai kept ONLINE (format error, recoverable)
+🤖 Tentando análise com glm (fallback)...
+🔗 GLM API Request - Model: glm-4.5
+💰 GLM Expected Cost: $1.4/1k tokens
+📝 GLM Full prompt length: 2878 chars
+📝 GLM Prompt preview: Você é um especialista em análise de DANFE (Documento Auxiliar da Nota Fiscal Eletrônica) brasileira.
+
+
+ARQUIVO: 22.07.2025_PG_19.07.2025_02.08.2025_COMPRA DE 2 PNEUS_ManutencÌ§aÌo de Veiculos_SRJ1_R$1.450,00.pdf
+TEXTO OCR: DANFE
+Documento Auxiliar da 
+Nota Fiscal Eletrônica
+AV MARIA DO CARMO, 1571...
+📝 GLM Request payload size: 219 chars
+⏰ Starting GLM request with 15s timeout...
+🔍 GLM Response status: 200 (13183ms)
+📊 GLM Response headers: {"connection":"keep-alive","content-encoding":"gzip","content-type":"application/json; charset=UTF-8","date":"Fri, 29 Aug 2025 16:41:55 GMT","server":"ZenZGA/2.4","strict-transport-security":"max-age=31536000; includeSubDomains","transfer-encoding":"chunked","vary":"Accept-Encoding, Origin, Access-Control-Request-Method, Access-Control-Request-Headers, Origin, Access-Control-Request-Method, Access-Control-Request-Headers","x-log-id":"20250830004143de47fa886300469b"}
+📦 GLM Raw response structure: [ 'choices', 'created', 'id', 'model', 'request_id', 'usage' ]
+🤖 GLM Response (glm-4.5): ```json
+{
+  "valor": "R$ 1.450,00",
+  "fornecedor": "ROBSON PNEUS E AUTOPECAS LTDA",
+  "data_pagamento": "22/07/2025",
+  "data_vencimento": "02/08/2025",
+  "descricao": "PG COMPRA DE 2 PNEUS ManutencÌ§aÌo de Veiculos SRJ1",
+  "categoria": "Manutenção de Veiculos",
+  "centro_custo": "PG",
+  "documento": "22.07.2025_PG_19.07.2025_02.08.2025_COMPRA DE 2 PNEUS_ManutencÌ§aÌo de Veiculos_SRJ1_R$1.450,00.pdf",
+  "confidence": 95
+}
+```
+📏 GLM Response length: 433 chars
+✅ Provider glm marked as ONLINE after successful analysis
+📊 Stats atualizadas para glm: 1 requests, 100.0% sucesso
+🤖 IA utilizada: glm
+🎯 Confiança: 95%
+💰 Custo: $1.155000
+⏱️ Tempo: 13185ms
+🔄 Fallback: format_error_recoverable
+🔄 Mapeando dados IA: {
+  "valor": "R$ 1.450,00",
+  "data_pagamento": "22/07/2025",
+  "data_vencimento": "02/08/2025",
+  "fornecedor": "ROBSON PNEUS E AUTOPECAS LTDA",
+  "descricao": "PG COMPRA DE 2 PNEUS ManutencÌ§aÌo de Veiculos SRJ1",
+  "categoria": "Manutenção de Veiculos",
+  "centro_custo": "PG",
+  "documento": "22.07.2025_PG_19.07.2025_02.08.2025_COMPRA DE 2 PNEUS_ManutencÌ§aÌo de Veiculos_SRJ1_R$1.450,00.pdf",
+  "confidence": 95
+}
+✅ Sugestões mapeadas: {
+  "amount": "R$ 1.450,00",
+  "supplier": "ROBSON PNEUS E AUTOPECAS LTDA",
+  "contraparte": "ROBSON PNEUS E AUTOPECAS LTDA",
+  "documento": "22.07.2025_PG_19.07.2025_02.08.2025_COMPRA DE 2 PNEUS_ManutencÌ§aÌo de Veiculos_SRJ1_R$1.450,00.pdf",
+  "description": "PG COMPRA DE 2 PNEUS ManutencÌ§aÌo de Veiculos SRJ1",
+  "dueDate": "02/08/2025",
+  "paymentDate": "22/07/2025",
+  "category": "Manutenção de Veiculos",
+  "confidence": {
+    "amount": 95,
+    "supplier": 95,
+    "description": 95,
+    "dueDate": 95,
+    "paymentDate": 95
+  }
+}
+4:41:56 PM [express] POST /api/documents/process-file 200 in 16829ms :: {"success":true,"ocrText":"D…
