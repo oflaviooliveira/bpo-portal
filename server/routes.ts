@@ -309,15 +309,15 @@ export async function registerRoutes(app: Express): Promise<Server> {
         
         // NOVA FUNCIONALIDADE: Análise de qualidade integrada ao OCR básico
         if (ocrResult.success && ocrResult.text) {
-          const qualityFlags = analyzeOcrQuality(ocrResult.text);
-          ocrResult.metadata = { qualityFlags };
+          const qualityAnalysis = analyzeOcrQuality(ocrResult.text);
+          ocrResult.metadata = { qualityFlags: qualityAnalysis };
           
           console.log(`🔍 Análise de qualidade OCR:`);
-          console.log(`   📏 Caracteres: ${qualityFlags.characterCount}`);
-          console.log(`   🔍 Qualidade: ${qualityFlags.estimatedQuality}`);
-          console.log(`   💰 Valores monetários: ${qualityFlags.hasMonetaryValues ? 'Sim' : 'Não'}`);
-          console.log(`   🖥️ Página de sistema: ${qualityFlags.isSystemPage ? 'Sim' : 'Não'}`);
-          console.log(`   ⚠️ Incompleto: ${qualityFlags.isIncomplete ? 'Sim' : 'Não'}`);
+          console.log(`   📏 Caracteres: ${qualityAnalysis.characterCount}`);
+          console.log(`   🔍 Qualidade: ${qualityAnalysis.estimatedQuality}`);
+          console.log(`   💰 Valores monetários: ${qualityAnalysis.hasMonetaryValues ? 'Sim' : 'Não'}`);
+          console.log(`   🖥️ Página de sistema: ${qualityAnalysis.isSystemPage ? 'Sim' : 'Não'}`);
+          console.log(`   ⚠️ Incompleto: ${qualityAnalysis.isIncomplete ? 'Sim' : 'Não'}`);
         }
         
       } catch (error) {
@@ -346,7 +346,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
           const tempDocId = randomUUID();
           
           // Integrar flags de qualidade com IA
-          const qualityFlags = ocrResult?.metadata?.qualityFlags;
+          const documentQualityFlags = ocrResult?.metadata?.qualityFlags;
           
           aiResult = await documentAnalyzer.analyzeDocument(
             ocrResult.text, 
@@ -354,7 +354,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
             tempDocId,
             user.tenantId,
             undefined, // documentContext
-            qualityFlags
+            documentQualityFlags
           );
         } catch (error) {
           console.warn("⚠️ Erro na análise IA:", error);
@@ -408,8 +408,8 @@ export async function registerRoutes(app: Express): Promise<Server> {
         const isFilenameData = dataSource.includes('FILENAME');
         const adjustedConfidence = isFilenameData ? Math.round(aiResult.confidence * 0.7) : Math.round(aiResult.confidence);
         
-        // Garantir que qualityFlags está disponível no escopo correto
-        const qualityFlags = ocrResult?.metadata?.qualityFlags || {
+        // Garantir que flags de qualidade estão disponíveis no escopo correto
+        const qualityMetadata = ocrResult?.metadata?.qualityFlags || {
           estimatedQuality: 'UNKNOWN',
           isSystemPage: false,
           isIncomplete: false,
@@ -444,11 +444,11 @@ export async function registerRoutes(app: Express): Promise<Server> {
           qualityMetadata: {
             dataSource,
             isFilenameData,
-            ocrQuality: qualityFlags.estimatedQuality,
-            isSystemPage: qualityFlags.isSystemPage,
-            isIncomplete: qualityFlags.isIncomplete,
-            characterCount: qualityFlags.characterCount,
-            hasMonetaryValues: qualityFlags.hasMonetaryValues
+            ocrQuality: qualityMetadata.estimatedQuality,
+            isSystemPage: qualityMetadata.isSystemPage,
+            isIncomplete: qualityMetadata.isIncomplete,
+            characterCount: qualityMetadata.characterCount,
+            hasMonetaryValues: qualityMetadata.hasMonetaryValues
           },
           
           // Confidence granular por campo ajustado pela fonte
@@ -471,11 +471,11 @@ export async function registerRoutes(app: Express): Promise<Server> {
         
         console.log(`📊 Taxa de preenchimento: ${completionRate}% (${filledFields.length}/${totalFields.length} campos)`);
         console.log(`🔍 Fonte dos dados: ${dataSource}`);
-        if (qualityFlags) {
+        if (qualityMetadata) {
           console.log(`⚠️ Alertas de qualidade:`, {
-            isSystemPage: qualityFlags.isSystemPage,
-            isIncomplete: qualityFlags.isIncomplete,
-            ocrQuality: qualityFlags.estimatedQuality,
+            isSystemPage: qualityMetadata.isSystemPage,
+            isIncomplete: qualityMetadata.isIncomplete,
+            ocrQuality: qualityMetadata.estimatedQuality,
             adjustedConfidence: `${adjustedConfidence}% (${isFilenameData ? 'reduzido' : 'original'})`
           });
         }
