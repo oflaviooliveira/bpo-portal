@@ -266,7 +266,7 @@ class AIMultiProvider {
         const currentSuccessCount = Math.floor(provider.last30Days.successRate * (provider.last30Days.totalRequests - 1) / 100);
         provider.last30Days.successRate = (currentSuccessCount / provider.last30Days.totalRequests) * 100;
         
-        // Categorização inteligente de erros
+        // Categorização inteligente de erros aprimorada
         const errorCategory = this.categorizeError(error);
         
         if (errorCategory.isRecoverable) {
@@ -280,6 +280,11 @@ class AIMultiProvider {
         } else {
           provider.status = 'error';
           console.log(`🚨 Provider ${provider.name} marked as ERROR (${errorCategory.type}, not recoverable)`);
+        }
+        
+        // Log específico para debugging
+        if (provider.name === 'glm') {
+          console.log(`🔍 GLM Error Details - Type: ${errorCategory.type}, Recoverable: ${errorCategory.isRecoverable}, Message: ${error.message}`);
         }
         
         // Determinar o motivo do fallback baseado na categoria
@@ -320,12 +325,20 @@ class AIMultiProvider {
     const prompt = this.buildAnalysisPrompt(ocrText, fileName);
     
     try {
+      console.log(`🔗 GLM API Request - Model: ${this.getProviderByName('glm')?.model || 'glm-4.5'}`);
+      console.log(`📝 GLM Request payload size: ${JSON.stringify({ prompt: prompt.substring(0, 200) + '...' }).length} chars`);
+      
+      // Implementar timeout personalizado para GLM
+      const controller = new AbortController();
+      const timeoutId = setTimeout(() => controller.abort(), 15000); // 15s timeout
+      
       const response = await fetch('https://open.bigmodel.cn/api/paas/v4/chat/completions', {
         method: 'POST',
         headers: {
           'Authorization': `Bearer ${apiKey}`,
           'Content-Type': 'application/json',
         },
+        signal: controller.signal,
         body: JSON.stringify({
           model: this.getProviderByName('glm')?.model || 'glm-4.5',
           messages: [
@@ -343,17 +356,51 @@ class AIMultiProvider {
           stream: false
         }),
       });
+      
+      clearTimeout(timeoutId);
+
+      console.log(`🔍 GLM Response status: ${response.status}`);
+      console.log(`📊 GLM Response headers: ${JSON.stringify(Object.fromEntries(response.headers.entries()))}`);
 
       if (!response.ok) {
         const errorText = await response.text();
-        console.error(`GLM API error ${response.status}:`, errorText);
-        throw new Error(`GLM API error: ${response.status} - ${errorText}`);
+        console.error(`🚨 GLM API error ${response.status}:`, errorText);
+        
+        // Categorizar erro HTTP para melhor tratamento
+        if (response.status === 429) {
+          throw new Error(`GLM rate limit exceeded: ${errorText}`);
+        } else if (response.status >= 500) {
+          throw new Error(`GLM server error: ${response.status} - ${errorText}`);
+        } else if (response.status === 401) {
+          throw new Error(`GLM authentication error: Invalid API key`);
+        } else {
+          throw new Error(`GLM API error: ${response.status} - ${errorText}`);
+        }
       }
 
       const data = await response.json();
-      let aiResponse = data.choices[0].message.content;
+      console.log(`📦 GLM Raw response structure:`, Object.keys(data));
       
+      // Validar estrutura da resposta GLM
+      if (!data.choices || !Array.isArray(data.choices) || data.choices.length === 0) {
+        console.error(`🚨 GLM Invalid response structure:`, JSON.stringify(data, null, 2));
+        throw new Error(`GLM invalid response: missing choices array`);
+      }
+      
+      if (!data.choices[0].message || !data.choices[0].message.content) {
+        console.error(`🚨 GLM Invalid message structure:`, JSON.stringify(data.choices[0], null, 2));
+        throw new Error(`GLM invalid response: missing message content`);
+      }
+      
+      let aiResponse = data.choices[0].message.content;
       console.log("🤖 GLM Response:", aiResponse);
+      console.log(`📏 GLM Response length: ${aiResponse ? aiResponse.length : 0} chars`);
+      
+      // Validar se resposta não está vazia
+      if (!aiResponse || aiResponse.trim().length === 0) {
+        console.error(`🚨 GLM returned empty response`);
+        throw new Error(`GLM returned empty response`);
+      }
 
       // Clean markdown formatting from GLM response - melhorado
       aiResponse = this.cleanMarkdownFromResponse(aiResponse);
@@ -379,9 +426,19 @@ class AIMultiProvider {
         tokensOut: Math.floor(tokenCount * 0.3),
         processingTimeMs: 0,
       };
-    } catch (error) {
-      console.error('GLM analysis error:', error);
-      throw error;
+    } catch (error: any) {
+      // Logging detalhado para debugging
+      if (error.name === 'AbortError') {
+        console.error('🕐 GLM request timeout after 15s');
+        throw new Error('GLM timeout: Request took too long');
+      } else if (error.message?.includes('fetch')) {
+        console.error('🌐 GLM network error:', error.message);
+        throw new Error(`GLM network error: ${error.message}`);
+      } else {
+        console.error('🚨 GLM analysis error:', error.message);
+        console.error('📍 GLM error stack:', error.stack);
+        throw error;
+      }
     }
   }
 
@@ -714,6 +771,28 @@ TEMPLATE:
       };
     }
     
+    // Erros específicos do GLM - timeouts e respostas vazias  
+    if (errorMessage.includes('GLM timeout') || errorMessage.includes('empty response') || 
+        errorMessage.includes('Request took too long')) {
+      return {
+        type: 'glm_timeout',
+        isRecoverable: false,  // GLM timeout = marcar como erro para usar fallback
+        needsRetry: true,
+        fallbackReason: 'glm_timeout'
+      };
+    }
+
+    // Erros de autenticação - não recuperáveis
+    if (errorMessage.includes('authentication') || errorMessage.includes('Invalid API key') ||
+        errorMessage.includes('Unauthorized')) {
+      return {
+        type: 'authentication',
+        isRecoverable: false,
+        needsRetry: false,
+        fallbackReason: 'invalid_api_key'
+      };
+    }
+
     // Erros de modelo - recuperáveis com retry
     if (errorMessage.includes('Unknown Model') || errorMessage.includes('model')) {
       return {

@@ -118,6 +118,18 @@ Portal de BPO Financeiro com OCR/IA multi-provider para processamento automátic
 - Analytics avançado: timeline, comparações GLM vs OpenAI, recomendações
 - UX simplificada: uma única fonte da verdade para gerenciamento de IA
 
+**CORREÇÕES COMPLETAS SISTEMA GLM IMPLEMENTADAS (29/08/2025)**:
+✅ **Diagnóstico e Correção de Timeout GLM**:
+- Detectado problema root: GLM API com timeout de conexão (>15s)
+- Implementado timeout customizado de 15s com AbortController
+- Logging detalhado de requisições/respostas para debugging
+- Validação robusta de estrutura de resposta GLM
+- Categorização inteligente de erros: timeout, autenticação, format, etc.
+- Sistema de health check com AIDiagnostics para monitoramento contínuo
+- Endpoints /healthz, /readyz, /api/ai/diagnostics para status em tempo real
+- GLM corretamente marcado como ERROR quando timeout, não mais ONLINE incorretamente
+- Fallback automático para OpenAI continua funcionando perfeitamente
+
 **MELHORIAS DE ALTA PRIORIDADE IMPLEMENTADAS (28/08/2025)**:
 ✅ **Sistema Inteligente de Gestão de Inconsistências**:
 - SmartInconsistencyManager com lógica contextual por tipo de campo

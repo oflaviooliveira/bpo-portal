@@ -17,9 +17,11 @@ import {
 import { createFileStorage } from "./storage/local-storage";
 import { FileValidator } from "./storage/interface";
 import { registerFileRoutes } from "./routes/files";
+import { AIDiagnostics } from "./ai-diagnostics";
 
 const advancedOcrProcessor = new AdvancedOcrProcessor(storage);
 const fileStorage = createFileStorage();
+const aiDiagnostics = AIDiagnostics.getInstance();
 import multer from "multer";
 import path from "path";
 import fs from "fs/promises";
@@ -2338,6 +2340,69 @@ export async function registerRoutes(app: Express): Promise<Server> {
     } catch (error) {
       console.error("Get NF documents error:", error);
       res.status(500).json({ error: "Erro ao carregar documentos de NF" });
+    }
+  });
+
+  // Health check endpoints - Sistema de diagnóstico GLM aprimorado
+  app.get("/healthz", async (req, res) => {
+    try {
+      const health = await aiDiagnostics.getHealthReport();
+      const isHealthy = health.summary.downProviders === 0;
+      
+      res.status(isHealthy ? 200 : 503).json({
+        status: isHealthy ? 'healthy' : 'degraded',
+        timestamp: health.timestamp,
+        providers: health.providers.map(p => ({
+          name: p.name,
+          status: p.status,
+          latency: p.latency,
+          error: p.error
+        }))
+      });
+    } catch (error) {
+      res.status(500).json({
+        status: 'error',
+        timestamp: new Date().toISOString(),
+        error: 'Health check failed'
+      });
+    }
+  });
+
+  app.get("/readyz", async (req, res) => {
+    try {
+      // Verificar se pelo menos um provedor está funcionando
+      const health = await aiDiagnostics.getHealthReport();
+      const hasHealthyProvider = health.providers.some(p => p.status === 'healthy');
+      
+      if (hasHealthyProvider) {
+        res.status(200).json({
+          status: 'ready',
+          timestamp: health.timestamp,
+          healthyProviders: health.summary.healthyProviders
+        });
+      } else {
+        res.status(503).json({
+          status: 'not ready',
+          timestamp: health.timestamp,
+          error: 'No healthy AI providers available'
+        });
+      }
+    } catch (error) {
+      res.status(500).json({
+        status: 'error',
+        timestamp: new Date().toISOString(),
+        error: 'Readiness check failed'
+      });
+    }
+  });
+
+  app.get("/api/ai/diagnostics", isAuthenticated, async (req, res) => {
+    try {
+      const health = await aiDiagnostics.getHealthReport();
+      res.json(health);
+    } catch (error) {
+      console.error("AI diagnostics error:", error);
+      res.status(500).json({ error: "Failed to get AI diagnostics" });
     }
   });
 
