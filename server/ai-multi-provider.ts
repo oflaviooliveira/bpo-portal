@@ -341,7 +341,10 @@ class AIMultiProvider {
       throw new Error('GLM API key not configured');
     }
 
-    const prompt = this.buildAnalysisPrompt(ocrText, fileName);
+    // ESTRATÉGIA 2: Prompt adaptado para GLM
+    const prompt = this.shouldUseSimplifiedPrompt(ocrText) 
+      ? this.createSimplifiedGLMPrompt(ocrText, fileName)
+      : this.buildAnalysisPrompt(ocrText, fileName);
     
     try {
       console.log(`🔗 GLM API Request - Model: ${this.getProviderByName('glm')?.model || 'glm-4.5'}`);
@@ -666,6 +669,37 @@ Exemplo: {"valor": "R$ 100,00", "fornecedor": "Empresa", "data_pagamento": "01/0
     return isSimpleDocument && !hasComplexTables;
   }
 
+  // ESTRATÉGIA 2: Verificar se deve usar prompt simplificado para GLM
+  private shouldUseSimplifiedPrompt(ocrText: string): boolean {
+    return ocrText.length > 1000 || ocrText.includes('DANFE') || ocrText.includes('Tabela');
+  }
+
+  // ESTRATÉGIA 2: Prompt simplificado específico para GLM
+  private createSimplifiedGLMPrompt(ocrText: string, fileName: string): string {
+    // Truncar texto OCR para 800 chars max para GLM
+    const truncatedText = ocrText.substring(0, 800);
+    
+    return `Extrair dados deste documento brasileiro em JSON:
+
+ARQUIVO: ${fileName}
+TEXTO: "${truncatedText}${ocrText.length > 800 ? '...' : ''}"
+
+JSON obrigatório:
+{
+  "valor": "R$ 0,00",
+  "fornecedor": "Nome",  
+  "data_pagamento": "DD/MM/AAAA",
+  "data_vencimento": "DD/MM/AAAA",
+  "descricao": "Texto",
+  "categoria": "Tipo",
+  "centro_custo": "OK",
+  "documento": "CNPJ/CPF",
+  "confidence": 85
+}
+
+Resposta apenas JSON, sem texto extra.`;
+  }
+
   private estimateTokenCount(text: string): number {
     // Rough estimation: 1 token ≈ 4 characters
     return Math.ceil(text.length / 4);
@@ -759,6 +793,15 @@ Exemplo: {"valor": "R$ 100,00", "fornecedor": "Empresa", "data_pagamento": "01/0
         delete corrected[key];
       }
     });
+    
+    // CORREÇÃO CRÍTICA: Tratar strings vazias em campos de data como null
+    if (corrected.data_vencimento === "" || corrected.data_vencimento === "null" || corrected.data_vencimento === null) {
+      delete corrected.data_vencimento; // Remove campo vazio para passar validação
+    }
+    
+    if (corrected.data_pagamento === "" || corrected.data_pagamento === "null" || corrected.data_pagamento === null) {
+      delete corrected.data_pagamento; // Remove campo vazio para passar validação
+    }
     
     // Garantir que confidence é número
     if (typeof corrected.confidence === 'string') {
