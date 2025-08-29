@@ -1,0 +1,36 @@
+Olá, precisamos da sua análise sobre o que já construímos no nosso sistema.  
+Nosso objetivo é garantir que tudo esteja funcionando de maneira correta e escalável.  
+
+## ✅ O que já temos construído
+- **Upload de documentos (PDF e imagens)** com interface de drag & drop.  
+- **Processamento automático via OCR + IA** (Tesseract.js + validação GPT/GLM).  
+- **Extração de dados padronizados**: datas, valores, descrição, centro de custo, cliente/fornecedor, etc.  
+- **Validação cruzada** com nome do arquivo (datas, valores, categoria, centro de custo).  
+- **Resposta estruturada em JSON** para integração com Google Sheets / Conta Azul.  
+- **Histórico de processamento** salvo no banco de dados.  
+
+## 🔑 Estrutura de Usuários
+- **Admin** → gerencia clientes, operadores e tem visão geral do sistema.  
+- **Operadores** → validam documentos, conferem inconsistências e acompanham status.  
+- **Clientes** → enviam documentos e acessam apenas seus próprios arquivos.  
+
+## 🗂 Organização por Clientes
+- Cada cliente tem seus **documentos separados e arquivados**.  
+- Estrutura deve ser multi-tenant (nenhum cliente pode ver documentos de outro).  
+- Status do documento: *Recebido → Processado → Validado → Exportado*.  
+
+## 🎯 O que precisamos de você
+1. **Explique o que já foi feito para que o sistema funcione de forma correta.**  
+   - Como está organizada a lógica de usuários (admin, operadores, clientes)?  
+   - Como está sendo feita a separação de clientes e documentos?  
+   - Como está o fluxo de processamento e arquivamento?  
+
+2. **Valide se a arquitetura atual está de acordo com as melhores práticas** para:  
+   - Multi-clientes (isolamento de dados)  
+   - Escalabilidade (suporte a muitos documentos/clientes)  
+   - Segurança (cada cliente acessa só o que é dele)  
+
+3. **Aponte ajustes necessários** para garantir que o sistema esteja pronto para uso em produção.  
+
+---
+👉 Por favor, revise e nos diga **o que já foi implementado de fato** e **o que ainda precisa ser ajustado** para termos um sistema sólido.
