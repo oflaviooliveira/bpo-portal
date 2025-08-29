@@ -408,6 +408,9 @@ export async function registerRoutes(app: Express): Promise<Server> {
         const isFilenameData = dataSource.includes('FILENAME');
         const adjustedConfidence = isFilenameData ? Math.round(aiResult.confidence * 0.7) : Math.round(aiResult.confidence);
         
+        // Garantir que qualityFlags está disponível
+        const qualityFlags = ocrResult?.metadata?.qualityFlags;
+        
         suggestions = {
           // Campos básicos sempre mapeados
           amount: data.valor || '',

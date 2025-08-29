@@ -1,0 +1,95 @@
+ Processando arquivo para preview: 20.08.2025-PG-NOTA OFICINA-MANUTENCÌ§AÌO DE VEICULO-SPR1-R$2.800,00.pdf
+📄 Iniciando extração de texto PDF: uploads/1d4bd44bf66b650363b85788db96126c
+Warning: Indexing all PDF objects
+✅ Extração nativa bem-sucedida: 170 caracteres
+🔍 Análise de qualidade OCR:
+   📏 Caracteres: 170
+   🔍 Qualidade: LOW
+   💰 Valores monetários: Não
+   🖥️ Página de sistema: Sim
+   ⚠️ Incompleto: Sim
+🤖 Analisando documento com IA: 20.08.2025-PG-NOTA OFICINA-MANUTENCÌ§AÌO DE VEICULO-SPR1-R$2.800,00.pdf
+📝 Texto extraído (170 chars): 12/08/2025, 14:48ISS-Curitiba - Sistema de Administração de ISS
+https://isscuritiba.curitiba.pr.gov....
+
+🔍 ===== TEXTO COMPLETO ENVIADO PARA IA =====
+12/08/2025, 14:48ISS-Curitiba - Sistema de Administração de ISS
+https://isscuritiba.curitiba.pr.gov.br/iss/Principal/frmFramesPgPrincipal.aspx?sParam=MENSAGEM&sLogin=11/1
+🔍 ===== FIM DO TEXTO ===== (170 chars)
+
+🤖 Analisando documento com IA: 20.08.2025-PG-NOTA OFICINA-MANUTENCÌ§AÌO DE VEICULO-SPR1-R$2.800,00.pdf
+📝 Texto extraído (170 chars): 12/08/2025, 14:48ISS-Curitiba - Sistema de Administração de ISS
+https://isscuritiba.curitiba.pr.gov.br/iss/Principal/frmFramesPgPrincipal.aspx?sParam=MENSAGEM&sLogin=11/1...
+🔄 Usando AI Multi-Provider para análise...
+📋 Documento classificado como: OUTROS (35.0% confiança)
+🔍 Indicadores: Pattern: .*
+🔍 Qualidade OCR: LOW
+🖥️ DETECTADO: Página de sistema (170 chars)
+⚠️ DETECTADO: Documento incompleto ou limitado
+🤖 Tentando análise com glm...
+🔗 GLM API Request - Model: glm-4.5
+💰 GLM Expected Cost: $1.4/1k tokens
+📝 GLM Full prompt length: 1179 chars
+📝 GLM Prompt preview: 
+Analise este documento fiscal brasileiro e extraia os dados em formato JSON.
+
+DOCUMENTO: 20.08.2025-PG-NOTA OFICINA-MANUTENCÌ§AÌO DE VEICULO-SPR1-R$2.800,00.pdf
+TEXTO OCR: "12/08/2025, 14:48ISS-Curitiba - Sistema de Administração de ISS
+https://isscuritiba.curitiba.pr.gov.br/iss/Principal/frmFrame...
+📝 GLM Request payload size: 221 chars
+⏰ Starting GLM request with 15s timeout...
+🔍 GLM Response status: 200 (7670ms)
+📊 GLM Response headers: {"connection":"keep-alive","content-encoding":"gzip","content-type":"application/json; charset=UTF-8","date":"Fri, 29 Aug 2025 17:38:26 GMT","server":"ZenZGA/2.4","strict-transport-security":"max-age=31536000; includeSubDomains","transfer-encoding":"chunked","vary":"Accept-Encoding, Origin, Access-Control-Request-Method, Access-Control-Request-Headers, Origin, Access-Control-Request-Method, Access-Control-Request-Headers","x-log-id":"202508300138190d62680f440943a6"}
+📦 GLM Raw response structure: [ 'choices', 'created', 'id', 'model', 'request_id', 'usage' ]
+🤖 GLM Response (glm-4.5): ```json
+{
+  "valor": "R$ 2.800,00",
+  "fornecedor": "Oficina",
+  "data_pagamento": "20/08/2025",
+  "descricao": "NOTA OFICINA-MANUTENÇÃO DE VEÍCULO",
+  "categoria": "Manutenção de Veículo",
+  "centro_custo": "PG",
+  "documento": "20.08.2025-PG-NOTA OFICINA-MANUTENCÌ§AÌO DE VEICULO-SPR1-R$2.800,00.pdf",
+  "confidence": 90
+}
+```
+📏 GLM Response length: 329 chars
+✅ Provider glm marked as ONLINE after successful analysis
+📊 Stats atualizadas para glm: 1 requests, 100.0% sucesso
+🔍 Validação: ERROR (70/100)
+📋 Classificação: OUTROS (35% confiança)
+🔍 Indicadores: Pattern: .*
+🤖 IA utilizada: glm
+🎯 Confiança: 90%
+💰 Custo: $0.523600
+⏱️ Tempo: 7677ms
+🔄 Mapeando dados IA: {
+  "valor": "R$ 2.800,00",
+  "data_pagamento": "20/08/2025",
+  "fornecedor": "Oficina",
+  "descricao": "NOTA OFICINA-MANUTENÇÃO DE VEÍCULO",
+  "categoria": "Manutenção de Veículo",
+  "centro_custo": "PG",
+  "documento": "20.08.2025-PG-NOTA OFICINA-MANUTENCÌ§AÌO DE VEICULO-SPR1-R$2.800,00.pdf",
+  "confidence": 90
+}
+🔍 TODOS OS CAMPOS EXTRAÍDOS: {
+  valor: 'R$ 2.800,00',
+  fornecedor: 'Oficina',
+  cnpj_emitente: undefined,
+  data_emissao: undefined,
+  data_saida: undefined,
+  data_vencimento: undefined,
+  documento: '20.08.2025-PG-NOTA OFICINA-MANUTENCÌ§AÌ\x83O DE VEICULO-SPR1-R$2.800,00.pdf',
+  descricao: 'NOTA OFICINA-MANUTENÇÃO DE VEÍCULO',
+  categoria: 'Manutenção de Veículo',
+  centro_custo: 'PG'
+}
+💰 VALOR EXTRAÍDO: R$ 2.800,00
+📋 CNPJ EXTRAÍDO: VAZIO
+📅 DATAS EXTRAÍDAS: { emissao: 'VAZIO', saida: 'VAZIO', vencimento: 'VAZIO' }
+🎯 isDANFE detectado: false
+❌ Erro no processamento do arquivo: ReferenceError: qualityFlags is not defined
+    at <anonymous> (/home/runner/workspace/server/routes.ts:438:25)
+    at process.processTicksAndRejections (node:internal/process/task_queues:95:5)
+5:38:26 PM [express] POST /api/documents/process-file 500 in 8203ms :: {"error":"Erro no processamen…
