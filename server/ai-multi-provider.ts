@@ -150,9 +150,22 @@ class AIMultiProvider {
   });
 
   async analyzeDocument(ocrText: string, fileName: string, documentId: string, tenantId: string): Promise<AIAnalysisResult> {
-    const enabledProviders = this.providers
+    let enabledProviders = this.providers
       .filter(p => p.enabled)
       .sort((a, b) => a.priority - b.priority);
+
+    // ESTRATÉGIA 4: Seleção inteligente de provider
+    const shouldTryGLMFirst = this.shouldUseGLMForContent(ocrText, fileName);
+    if (!shouldTryGLMFirst) {
+      console.log(`📋 Documento complexo detectado - priorizando OpenAI`);
+      // Temporariamente inverter prioridades para documentos complexos
+      const glmProvider = enabledProviders.find(p => p.name === 'glm');
+      const openaiProvider = enabledProviders.find(p => p.name === 'openai');
+      if (glmProvider && openaiProvider) {
+        enabledProviders.splice(enabledProviders.indexOf(glmProvider), 1);
+        enabledProviders.push(glmProvider); // GLM por último para docs complexos
+      }
+    }
 
     let lastError: any = null;
     let fallbackReason: string | undefined = undefined;
@@ -168,7 +181,8 @@ class AIMultiProvider {
         const startTime = Date.now();
         
         if (provider.name === 'glm') {
-          result = await this.analyzeWithGLM(ocrText, fileName);
+          // ESTRATÉGIA 3: Usar retry inteligente para GLM
+          result = await this.analyzeWithGLMRetry(ocrText, fileName);
         } else if (provider.name === 'openai') {
           result = await this.analyzeWithOpenAI(ocrText, fileName);
         } else {
@@ -237,6 +251,11 @@ class AIMultiProvider {
         // Marcar provider como online após sucesso completo
         provider.status = 'online';
         console.log(`✅ Provider ${provider.name} marked as ONLINE after successful analysis`);
+        
+        // Reset GLM timeout attempts on success
+        if (provider.name === 'glm') {
+          this.glmTimeoutAttempts = 0;
+        }
         
         // Atualizar estatísticas em tempo real
         provider.last30Days.totalRequests += 1;
@@ -330,14 +349,15 @@ class AIMultiProvider {
       console.log(`📝 GLM Prompt preview: ${prompt.substring(0, 300)}...`);
       console.log(`📝 GLM Request payload size: ${JSON.stringify({ prompt: prompt.substring(0, 200) + '...' }).length} chars`);
       
-      // Implementar timeout personalizado para GLM  
-      console.log(`⏰ Starting GLM request with 15s timeout...`);
+      // ESTRATÉGIA 1: Timeout progressivo (15s → 30s → 45s)
+      const timeoutDuration = this.getGLMTimeoutDuration();
+      console.log(`⏰ Starting GLM request with ${timeoutDuration/1000}s timeout...`);
       const startTime = Date.now();
       const controller = new AbortController();
       const timeoutId = setTimeout(() => {
-        console.log(`🕐 GLM timeout triggered after 15s`);
+        console.log(`🕐 GLM timeout triggered after ${timeoutDuration/1000}s`);
         controller.abort();
-      }, 15000);
+      }, timeoutDuration);
       
       const response = await fetch('https://open.bigmodel.cn/api/paas/v4/chat/completions', {
         method: 'POST',
@@ -355,14 +375,15 @@ class AIMultiProvider {
             },
             {
               role: 'user', 
-              content: prompt
+              content: this.adaptPromptForGLM(prompt, ocrText, fileName)
             }
           ],
           temperature: 0.1,
-          max_tokens: 2000,
+          max_tokens: 3000, // ESTRATÉGIA 2: Mais tokens
           stream: false,
-          top_p: 0.7,
-          do_sample: true
+          top_p: 0.8, // ESTRATÉGIA 3: Parâmetros ajustados
+          presence_penalty: 0.1,
+          frequency_penalty: 0.1
         }),
       });
       
@@ -583,6 +604,66 @@ RESPOSTA JSON:
     }
     
     return metadata;
+  }
+
+  // ESTRATÉGIA 1: Timeout progressivo baseado em tentativas
+  private glmTimeoutAttempts = 0;
+  private getGLMTimeoutDuration(): number {
+    const timeouts = [15000, 30000, 45000]; // 15s, 30s, 45s
+    const timeout = timeouts[Math.min(this.glmTimeoutAttempts, timeouts.length - 1)];
+    this.glmTimeoutAttempts++;
+    
+    // Reset após sucesso ou 3 falhas
+    if (this.glmTimeoutAttempts >= 3) {
+      this.glmTimeoutAttempts = 0;
+    }
+    
+    return timeout;
+  }
+
+  // ESTRATÉGIA 2: Prompt adaptado especificamente para GLM
+  private adaptPromptForGLM(originalPrompt: string, ocrText: string, fileName: string): string {
+    // Se o prompt for muito complexo, usar versão simplificada para GLM
+    if (originalPrompt.length > 1000) {
+      const fileData = this.extractFileMetadata(fileName);
+      
+      return `Extraia dados deste documento brasileiro em JSON:
+
+ARQUIVO: ${fileName}
+TEXTO: ${ocrText.substring(0, 800)}
+METADADOS: ${JSON.stringify(fileData)}
+
+Retorne JSON com: valor, fornecedor, data_pagamento, data_vencimento, descricao, categoria, centro_custo, documento, confidence
+
+Exemplo: {"valor": "R$ 100,00", "fornecedor": "Empresa", "data_pagamento": "01/01/2025", "confidence": 90}`;
+    }
+    
+    return originalPrompt;
+  }
+
+  // ESTRATÉGIA 3: Retry inteligente com backoff
+  private async analyzeWithGLMRetry(ocrText: string, fileName: string, attempt = 1): Promise<AIAnalysisResult> {
+    try {
+      return await this.analyzeWithGLM(ocrText, fileName);
+    } catch (error: any) {
+      if (attempt < 3 && (error.message?.includes('timeout') || error.message?.includes('network'))) {
+        const delay = Math.pow(2, attempt) * 1000; // 2s, 4s, 8s
+        console.log(`🔄 GLM retry attempt ${attempt + 1} in ${delay}ms...`);
+        
+        await new Promise(resolve => setTimeout(resolve, delay));
+        return this.analyzeWithGLMRetry(ocrText, fileName, attempt + 1);
+      }
+      throw error;
+    }
+  }
+
+  // ESTRATÉGIA 4: Fallback inteligente baseado em conteúdo
+  private shouldUseGLMForContent(ocrText: string, fileName: string): boolean {
+    // GLM funciona melhor com documentos mais simples
+    const isSimpleDocument = ocrText.length < 1000 && fileName.includes('PG');
+    const hasComplexTables = ocrText.includes('DANFE') || ocrText.includes('Tabela');
+    
+    return isSimpleDocument && !hasComplexTables;
   }
 
   private estimateTokenCount(text: string): number {
