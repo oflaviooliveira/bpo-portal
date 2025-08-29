@@ -1,0 +1,90 @@
+🔍 Processando arquivo para preview: 22.07.2025_PG_19.07.2025_02.08.2025_COMPRA DE 2 PNEUS_ManutencÌ§aÌo de Veiculos_SRJ1_R$1.450,00.pdf
+📄 Iniciando extração de texto PDF: uploads/0975e0c98b7d86deeaba0e2c836e609b
+✅ Extração nativa bem-sucedida: 2342 caracteres
+🤖 Analisando documento com IA: 22.07.2025_PG_19.07.2025_02.08.2025_COMPRA DE 2 PNEUS_ManutencÌ§aÌo de Veiculos_SRJ1_R$1.450,00.pdf
+📝 Texto extraído (2342 chars): DANFE
+Documento Auxiliar da 
+Nota Fiscal Eletrônica
+AV MARIA DO CARMO, 1571
+POSTO LAVA TUCUNS
+CRUZ / CE
+62595-000
+(88) 9729-5739 - 
+0 - ENTRADA
+1 - SAÍDA
+CHAVE DE ACESSO
+Nº 645   
+Série 1 
+Consulta de...
+📋 Detectada nota fiscal - usando analisador especializado
+🔄 Usando AI Multi-Provider para análise...
+🤖 Tentando análise com glm...
+🔗 GLM API Request - Model: glm-4.5-air
+📝 GLM Request payload size: 219 chars
+🔍 GLM Response status: 200
+📊 GLM Response headers: {"connection":"keep-alive","content-encoding":"gzip","content-type":"application/json; charset=UTF-8","date":"Fri, 29 Aug 2025 15:21:53 GMT","server":"ZenZGA/2.4","strict-transport-security":"max-age=31536000; includeSubDomains","transfer-encoding":"chunked","vary":"Accept-Encoding, Origin, Access-Control-Request-Method, Access-Control-Request-Headers, Origin, Access-Control-Request-Method, Access-Control-Request-Headers","x-log-id":"20250829232141d15492cb0f514b1a"}
+📦 GLM Raw response structure: [ 'choices', 'created', 'id', 'model', 'request_id', 'usage' ]
+🤖 GLM Response: 
+
+📏 GLM Response length: 1 chars
+🚨 GLM returned empty response
+🚨 GLM analysis error: GLM returned empty response
+📍 GLM error stack: Error: GLM returned empty response
+    at AIMultiProvider.analyzeWithGLM (/home/runner/workspace/server/ai-multi-provider.ts:402:15)
+    at process.processTicksAndRejections (node:internal/process/task_queues:95:5)
+    at async AIMultiProvider.analyzeDocument (/home/runner/workspace/server/ai-multi-provider.ts:171:20)
+    at async DocumentAnalyzer.analyzeDocument (/home/runner/workspace/server/ai/document-analyzer.ts:82:24)
+    at async <anonymous> (/home/runner/workspace/server/routes.ts:276:22)
+⚠️ Provider glm failed: GLM returned empty response
+🚨 Provider glm marked as ERROR (glm_timeout, not recoverable)
+🔍 GLM Error Details - Type: glm_timeout, Recoverable: false, Message: GLM returned empty response
+🤖 Tentando análise com openai (fallback)...
+🤖 OpenAI Response: {
+  "valor": "R$ 1.450,00",
+  "data_pagamento": "19/07/2025",
+  "data_vencimento": "22/07/2025",
+  "fornecedor": "ROBSON PNEUS E AUTOPECAS LTDA",
+  "descricao": "PG COMPRA DE 2 PNEUS ManutencÌ§aÌo de Veiculos SRJ1 - PNEU WANLI 225/75R16LT 120/116 S",
+  "categoria": "Manutenção de Veículos",
+  "centro_custo": "SRJ1",
+  "documento": "CNPJ: 72.368.276/58",
+  "cliente_fornecedor": "ECO EXPRESS SERVIÇOS SUSTENTÁVEIS LTDA",
+  "observacoes": "Pagamento realizado via PIX.",
+  "confidence": 95
+}
+✅ Provider openai marked as ONLINE after successful analysis
+📊 Stats atualizadas para openai: 2 requests, 100.0% sucesso
+🤖 IA utilizada: openai
+🎯 Confiança: 95%
+💰 Custo: $0.698625
+⏱️ Tempo: 5076ms
+🔄 Fallback: glm_timeout
+🔄 Mapeando dados IA: {
+  "valor": "R$ 1.450,00",
+  "data_pagamento": "19/07/2025",
+  "data_vencimento": "22/07/2025",
+  "fornecedor": "ROBSON PNEUS E AUTOPECAS LTDA",
+  "descricao": "PG COMPRA DE 2 PNEUS ManutencÌ§aÌo de Veiculos SRJ1 - PNEU WANLI 225/75R16LT 120/116 S",
+  "categoria": "Manutenção de Veículos",
+  "centro_custo": "SRJ1",
+  "documento": "CNPJ: 72.368.276/58",
+  "cliente_fornecedor": "ECO EXPRESS SERVIÇOS SUSTENTÁVEIS LTDA",
+  "observacoes": "Pagamento realizado via PIX.",
+  "confidence": 95
+}
+✅ Sugestões mapeadas: {
+  "amount": "R$ 1.450,00",
+  "supplier": "ROBSON PNEUS E AUTOPECAS LTDA",
+  "contraparte": "ROBSON PNEUS E AUTOPECAS LTDA",
+  "documento": "CNPJ: 72.368.276/58",
+  "description": "PG COMPRA DE 2 PNEUS ManutencÌ§aÌo de Veiculos SRJ1 - PNEU WANLI 225/75R16LT 120/116 S",
+  "dueDate": "22/07/2025",
+  "paymentDate": "19/07/2025",
+  "category": "Manutenção de Veículos",
+  "confidence": {
+    "amount": 95,
+    "supplier": 95,
+    "description": 95,
+    "dueDate": 95,
+    "paymentDate": 95
+  }
