@@ -8,12 +8,19 @@ export const aiAnalysisResponseSchema = z.object({
   competencia: z.string().regex(/^\d{2}\/\d{4}$/, "Competência deve estar no formato MM/AAAA").optional(),
   fornecedor: z.string().min(1, "Fornecedor é obrigatório"),
   descricao: z.string().min(3, "Descrição muito curta"),
-  categoria: z.string().min(1, "Categoria é obrigatória"),
-  centro_custo: z.string().min(1, "Centro de custo é obrigatório"),
+  categoria: z.string().optional(),
+  centro_custo: z.string().optional().default("GERAL"),
   documento: z.string().optional(), // CNPJ/CPF
+  cnpj_emitente: z.string().optional(), // CNPJ específico para DANFE
+  data_emissao: z.string().regex(/^\d{2}\/\d{2}\/\d{4}$/).optional(),
+  data_saida: z.string().regex(/^\d{2}\/\d{2}\/\d{4}$/).optional(),
+  chave_acesso: z.string().optional(),
   cliente_fornecedor: z.string().optional(),
   observacoes: z.string().optional(),
-  confidence: z.number().min(0).max(100, "Confiança deve estar entre 0 e 100"),
+  confidence: z.union([
+    z.number().min(0).max(100),
+    z.number().min(0).max(1).transform(val => Math.round(val * 100))
+  ]).optional().default(75),
 });
 
 export type AiAnalysisResponse = z.infer<typeof aiAnalysisResponseSchema>;

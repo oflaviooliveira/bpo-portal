@@ -299,8 +299,17 @@ export async function registerRoutes(app: Express): Promise<Server> {
         
         console.log(`🔄 Mapeando dados IA:`, JSON.stringify(data, null, 2));
         
+        // Debug detalhado para identificar problemas
+        console.log(`🔍 Debug campos críticos:`, {
+          cnpj_emitente: data.cnpj_emitente,
+          data_emissao: data.data_emissao,
+          data_saida: data.data_saida,
+          documento: data.documento
+        });
+        
         // Mapeamento inteligente baseado no tipo de documento
         const isDANFE = data.cnpj_emitente && (data.documento?.includes('Nº') || data.documento?.includes('Série'));
+        console.log(`🎯 isDANFE detectado:`, isDANFE);
         
         suggestions = {
           // Campos básicos sempre mapeados
@@ -311,13 +320,13 @@ export async function registerRoutes(app: Express): Promise<Server> {
           category: data.categoria || '',
           
           // Mapeamento inteligente de documento e datas
-          documento: isDANFE ? data.cnpj_emitente : (data.documento || ''),
-          numeroNF: isDANFE ? data.documento : '', // Número da NF para DANFEs
-          cnpjEmitente: data.cnpj_emitente || '', // CNPJ separado
+          documento: isDANFE ? (data.cnpj_emitente || '') : (data.documento || ''),
+          numeroNF: isDANFE ? (data.documento || '') : '', // Número da NF para DANFEs
+          cnpjEmitente: data.cnpj_emitente || '', // CNPJ sempre disponível
           
-          // Mapeamento inteligente de datas com fallbacks
+          // Mapeamento inteligente de datas com fallbacks múltiplos
           paymentDate: data.data_pagamento || data.data_emissao || data.data_saida || '',
-          dueDate: data.data_vencimento || (data.data_emissao && data.data_emissao !== data.data_saida ? data.data_emissao : ''),
+          dueDate: data.data_vencimento || '',
           issueDate: data.data_emissao || '',
           exitDate: data.data_saida || '',
           
