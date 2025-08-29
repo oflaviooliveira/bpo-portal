@@ -87,6 +87,27 @@ Portal de BPO Financeiro com OCR/IA multi-provider para processamento automátic
 - ⏳ Transições automáticas por data funcionais
 - ⏳ Interface frontend atualizada para novos endpoints
 
+**MELHORIAS BÁSICAS DE PRODUÇÃO IMPLEMENTADAS (29/08/2025)**:
+✅ **Interface de Storage Abstrata**:
+- FileStorage interface preparada para migração S3 futura
+- LocalFileStorage mantém compatibilidade atual
+- FileValidator com verificação MIME types e magic numbers
+- Validação robusta de arquivos (PDF, JPG, PNG, GIF, WebP)
+- Endpoints /api/files/* para servir arquivos com autenticação
+
+✅ **Validação Zod em Endpoints Críticos**:
+- Schemas de validação para upload, update, query parameters
+- Middleware validateBody() e validateQuery() implementados
+- Sanitização básica de strings contra XSS
+- Validação de UUIDs, datas brasileiras, documentos
+- Prevenção de ataques via input malicioso
+
+✅ **Secrets Management via Replit**:
+- Migração completa para Replit Secrets
+- DATABASE_URL, OPENAI_API_KEY, GLM_API_KEY seguros
+- Eliminação de .env do repositório
+- Configuração production-ready
+
 **CENTRO DE CONTROLE IA UNIFICADO (28/08/2025)**:
 ✅ **Unificação de Interfaces de IA**:
 - Centro de Controle único com 3 abas: Controles, Monitoramento, Analytics

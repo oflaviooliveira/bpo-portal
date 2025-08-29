@@ -6,25 +6,37 @@ import { documentProcessor } from "./document-processor";
 import { StatusTransitionService, setupStatusTransitions } from "./status-transitions";
 import { parseFileName } from "./validation";
 import { AdvancedOcrProcessor } from "./ocr-processor-advanced";
+import { 
+  validateBody, 
+  validateQuery, 
+  documentUploadSchema, 
+  documentUpdateSchema,
+  listDocumentsQuerySchema,
+  statusTransitionSchema 
+} from "./validation/schemas";
+import { createFileStorage } from "./storage/local-storage";
+import { FileValidator } from "./storage/interface";
+import { registerFileRoutes } from "./routes/files";
 
 const advancedOcrProcessor = new AdvancedOcrProcessor(storage);
+const fileStorage = createFileStorage();
 import multer from "multer";
 import path from "path";
 import fs from "fs/promises";
 import { z } from "zod";
 
-// Configure multer for file uploads
+// Configure multer for file uploads com validação aprimorada
 const upload = multer({
   dest: "uploads/",
   limits: {
     fileSize: 10 * 1024 * 1024, // 10MB
   },
-  fileFilter: (req, file, cb) => {
-    const allowedMimes = ['application/pdf', 'image/jpeg', 'image/png', 'image/jpg'];
+  fileFilter: async (req, file, cb) => {
+    const allowedMimes = ['application/pdf', 'image/jpeg', 'image/png', 'image/jpg', 'image/gif', 'image/webp'];
     if (allowedMimes.includes(file.mimetype)) {
       cb(null, true);
     } else {
-      cb(new Error('Tipo de arquivo não permitido. Use PDF, JPG ou PNG.'));
+      cb(new Error('Tipo de arquivo não permitido. Use PDF, JPG, PNG, GIF ou WebP.'));
     }
   },
 });
@@ -55,6 +67,9 @@ const uploadDocumentSchema = z.object({
 export async function registerRoutes(app: Express): Promise<Server> {
   // Setup authentication
   await setupAuth(app);
+  
+  // Setup file serving routes with storage interface
+  registerFileRoutes(app);
   
   // Setup status transitions - Wave 1
   setupStatusTransitions();
@@ -157,8 +172,8 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
-  // Get documents with filters - Wave 1 RBAC + Scoping
-  app.get("/api/documents", ...authorize(["ADMIN", "GERENTE", "OPERADOR", "CLIENTE"], true), async (req, res) => {
+  // Get documents with filters - Wave 1 RBAC + Scoping + Validação
+  app.get("/api/documents", ...authorize(["ADMIN", "GERENTE", "OPERADOR", "CLIENTE"], true), validateQuery(listDocumentsQuerySchema), async (req, res) => {
     try {
       const user = req.user!;
       const filters = {
@@ -186,7 +201,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
-  // Process file for OCR + AI analysis endpoint (for preview)
+  // Process file for OCR + AI analysis endpoint (for preview) + Validação aprimorada
   app.post("/api/documents/process-file", ...authorize(["ADMIN", "GERENTE", "OPERADOR", "CLIENTE"], true), upload.single('file'), async (req, res) => {
     try {
       const user = req.user!;
@@ -194,6 +209,19 @@ export async function registerRoutes(app: Express): Promise<Server> {
 
       if (!file) {
         return res.status(400).json({ error: "Nenhum arquivo foi enviado" });
+      }
+
+      // Validação aprimorada do arquivo
+      const fileBuffer = await fs.readFile(file.path);
+      const validation = await FileValidator.validateFile(fileBuffer, file.originalname, file.mimetype);
+      
+      if (!validation.isValid) {
+        // Limpar arquivo temporário
+        await fs.unlink(file.path).catch(() => {});
+        return res.status(400).json({ 
+          error: "Arquivo inválido", 
+          details: validation.errors 
+        });
       }
 
       console.log(`🔍 Processando arquivo para preview: ${file.originalname}`);
@@ -326,14 +354,27 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
-  // Upload and process document - Wave 1 RBAC  
-  app.post("/api/documents/upload", ...authorize(["ADMIN", "GERENTE", "OPERADOR", "CLIENTE"], true), upload.single('file'), async (req, res) => {
+  // Upload and process document - Wave 1 RBAC + Validação aprimorada
+  app.post("/api/documents/upload", ...authorize(["ADMIN", "GERENTE", "OPERADOR", "CLIENTE"], true), upload.single('file'), validateBody(documentUploadSchema), async (req, res) => {
     try {
       const user = req.user!;
       const file = req.file;
 
       if (!file) {
         return res.status(400).json({ error: "Nenhum arquivo foi enviado" });
+      }
+
+      // Validação aprimorada do arquivo
+      const fileBuffer = await fs.readFile(file.path);
+      const validation = await FileValidator.validateFile(fileBuffer, file.originalname, file.mimetype);
+      
+      if (!validation.isValid) {
+        // Limpar arquivo temporário
+        await fs.unlink(file.path).catch(() => {});
+        return res.status(400).json({ 
+          error: "Arquivo inválido", 
+          details: validation.errors 
+        });
       }
 
       // Usar o handler de upload estruturado
