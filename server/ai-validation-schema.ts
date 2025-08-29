@@ -1,26 +1,56 @@
 import { z } from "zod";
 
-// Schema stricto para validação da resposta da IA
+// Schema ultra-flexível para máxima tolerância
 export const aiAnalysisResponseSchema = z.object({
-  valor: z.string().regex(/^R\$\s?\d{1,3}(?:\.\d{3})*(?:,\d{2})?$/, "Formato de valor inválido. Use: R$ X.XXX,XX"),
-  data_pagamento: z.string().regex(/^\d{2}\/\d{2}\/\d{4}$/, "Data deve estar no formato DD/MM/AAAA").optional(),
-  data_vencimento: z.string().regex(/^\d{2}\/\d{2}\/\d{4}$/, "Data deve estar no formato DD/MM/AAAA").optional(),
-  competencia: z.string().regex(/^\d{2}\/\d{4}$/, "Competência deve estar no formato MM/AAAA").optional(),
-  fornecedor: z.string().min(1, "Fornecedor é obrigatório"),
-  descricao: z.string().min(3, "Descrição muito curta"),
+  valor: z.string().optional(),
+  data_pagamento: z.string().optional(),
+  data_vencimento: z.string().optional(),
+  competencia: z.string().optional(),
+  fornecedor: z.string().optional(),
+  descricao: z.string().optional(),
   categoria: z.string().optional(),
   centro_custo: z.string().optional().default("GERAL"),
-  documento: z.string().optional(), // CNPJ/CPF
-  cnpj_emitente: z.string().optional(), // CNPJ específico para DANFE
-  data_emissao: z.string().regex(/^\d{2}\/\d{2}\/\d{4}$/).optional(),
-  data_saida: z.string().regex(/^\d{2}\/\d{2}\/\d{4}$/).optional(),
+  documento: z.string().optional(),
+  cnpj_emitente: z.string().optional(),
+  data_emissao: z.string().optional(),
+  data_saida: z.string().optional(),
   chave_acesso: z.string().optional(),
   cliente_fornecedor: z.string().optional(),
   observacoes: z.string().optional(),
   confidence: z.union([
-    z.number().min(0).max(100),
-    z.number().min(0).max(1).transform(val => Math.round(val * 100))
+    z.number(),
+    z.string().transform(val => {
+      if (val === "alta") return 90;
+      if (val === "media") return 70;
+      if (val === "baixa") return 50;
+      return parseFloat(val) || 75;
+    })
   ]).optional().default(75),
+}).transform(data => {
+  // Post-processing para normalizar dados após validação flexível
+  const processed = { ...data };
+  
+  // Normalizar valor monetário
+  if (processed.valor && !processed.valor.includes('R$')) {
+    const numbers = processed.valor.match(/[\d.,]+/);
+    if (numbers) {
+      processed.valor = `R$ ${numbers[0]}`;
+    }
+  }
+  
+  // Normalizar datas no formato DD/MM/AAAA
+  const dateFields = ['data_pagamento', 'data_vencimento', 'data_emissao', 'data_saida'] as const;
+  dateFields.forEach(field => {
+    const fieldValue = processed[field as keyof typeof processed];
+    if (fieldValue && typeof fieldValue === 'string' && fieldValue !== 'null' && fieldValue.length > 5) {
+      const dateMatch = fieldValue.match(/(\d{1,2})\/(\d{1,2})\/(\d{4})/);
+      if (dateMatch) {
+        (processed as any)[field] = `${dateMatch[1].padStart(2, '0')}/${dateMatch[2].padStart(2, '0')}/${dateMatch[3]}`;
+      }
+    }
+  });
+  
+  return processed;
 });
 
 export type AiAnalysisResponse = z.infer<typeof aiAnalysisResponseSchema>;

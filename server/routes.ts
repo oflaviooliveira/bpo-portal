@@ -269,6 +269,14 @@ export async function registerRoutes(app: Express): Promise<Server> {
       // 2. Analisar com IA se OCR foi bem-sucedido
       if (ocrResult.success && ocrResult.text && ocrResult.text.length > 10) {
         try {
+          console.log(`🤖 Analisando documento com IA: ${file.originalname}`);
+          console.log(`📝 Texto extraído (${ocrResult.text.length} chars): ${ocrResult.text.substring(0, 100)}...`);
+          
+          // DEBUG EXTREMO: Log do texto completo que será enviado para IA
+          console.log(`\n🔍 ===== TEXTO COMPLETO ENVIADO PARA IA =====`);
+          console.log(ocrResult.text);
+          console.log(`🔍 ===== FIM DO TEXTO ===== (${ocrResult.text.length} chars)\n`);
+          
           // Gerar UUID temporário válido para a análise
           const { randomUUID } = await import('crypto');
           const tempDocId = randomUUID();
@@ -299,12 +307,27 @@ export async function registerRoutes(app: Express): Promise<Server> {
         
         console.log(`🔄 Mapeando dados IA:`, JSON.stringify(data, null, 2));
         
-        // Debug detalhado para identificar problemas
-        console.log(`🔍 Debug campos críticos:`, {
+        // Debug ultra-detalhado
+        console.log(`🔍 TODOS OS CAMPOS EXTRAÍDOS:`, {
+          valor: data.valor,
+          fornecedor: data.fornecedor,
           cnpj_emitente: data.cnpj_emitente,
           data_emissao: data.data_emissao,
           data_saida: data.data_saida,
-          documento: data.documento
+          data_vencimento: data.data_vencimento,
+          documento: data.documento,
+          descricao: data.descricao,
+          categoria: data.categoria,
+          centro_custo: data.centro_custo
+        });
+        
+        // Debug específico para campos perdidos
+        console.log(`💰 VALOR EXTRAÍDO:`, data.valor || 'VAZIO');
+        console.log(`📋 CNPJ EXTRAÍDO:`, data.cnpj_emitente || 'VAZIO');
+        console.log(`📅 DATAS EXTRAÍDAS:`, {
+          emissao: data.data_emissao || 'VAZIO',
+          saida: data.data_saida || 'VAZIO', 
+          vencimento: data.data_vencimento || 'VAZIO'
         });
         
         // Mapeamento inteligente baseado no tipo de documento
