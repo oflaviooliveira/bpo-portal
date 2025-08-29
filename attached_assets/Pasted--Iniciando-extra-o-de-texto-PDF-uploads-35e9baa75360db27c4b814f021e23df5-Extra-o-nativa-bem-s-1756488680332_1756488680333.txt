@@ -1,0 +1,108 @@
+📄 Iniciando extração de texto PDF: uploads/35e9baa75360db27c4b814f021e23df5
+✅ Extração nativa bem-sucedida: 170 caracteres
+🤖 Analisando documento com IA: 20.08.2025-PG-NOTA OFICINA-MANUTENCÌ§AÌO DE VEICULO-SPR1-R$2.800,00.pdf
+📝 Texto extraído (170 chars): 12/08/2025, 14:48ISS-Curitiba - Sistema de Administração de ISS
+https://isscuritiba.curitiba.pr.gov....
+
+🔍 ===== TEXTO COMPLETO ENVIADO PARA IA =====
+12/08/2025, 14:48ISS-Curitiba - Sistema de Administração de ISS
+https://isscuritiba.curitiba.pr.gov.br/iss/Principal/frmFramesPgPrincipal.aspx?sParam=MENSAGEM&sLogin=11/1
+🔍 ===== FIM DO TEXTO ===== (170 chars)
+
+🤖 Analisando documento com IA: 20.08.2025-PG-NOTA OFICINA-MANUTENCÌ§AÌO DE VEICULO-SPR1-R$2.800,00.pdf
+📝 Texto extraído (170 chars): 12/08/2025, 14:48ISS-Curitiba - Sistema de Administração de ISS
+https://isscuritiba.curitiba.pr.gov.br/iss/Principal/frmFramesPgPrincipal.aspx?sParam=MENSAGEM&sLogin=11/1...
+🔄 Usando AI Multi-Provider para análise...
+📋 Documento classificado como: OUTROS (35.0% confiança)
+🔍 Indicadores: Pattern: .*
+🤖 Tentando análise com glm...
+🔗 GLM API Request - Model: glm-4.5
+💰 GLM Expected Cost: $1.4/1k tokens
+📝 GLM Full prompt length: 1078 chars
+📝 GLM Prompt preview: 
+Analise este documento fiscal brasileiro e extraia os dados em formato JSON.
+
+DOCUMENTO: 20.08.2025-PG-NOTA OFICINA-MANUTENCÌ§AÌO DE VEICULO-SPR1-R$2.800,00.pdf
+TEXTO OCR: "12/08/2025, 14:48ISS-Curitiba - Sistema de Administração de ISS
+https://isscuritiba.curitiba.pr.gov.br/iss/Principal/frmFrame...
+📝 GLM Request payload size: 221 chars
+⏰ Starting GLM request with 15s timeout...
+🔍 GLM Response status: 200 (10985ms)
+📊 GLM Response headers: {"connection":"keep-alive","content-encoding":"gzip","content-type":"application/json; charset=UTF-8","date":"Fri, 29 Aug 2025 17:29:43 GMT","server":"ZenZGA/2.4","strict-transport-security":"max-age=31536000; includeSubDomains","transfer-encoding":"chunked","vary":"Accept-Encoding, Origin, Access-Control-Request-Method, Access-Control-Request-Headers, Origin, Access-Control-Request-Method, Access-Control-Request-Headers","x-log-id":"20250830012933c6c82a837c1145de"}
+📦 GLM Raw response structure: [ 'choices', 'created', 'id', 'model', 'request_id', 'usage' ]
+🤖 GLM Response (glm-4.5): ```json
+{
+  "valor": "R$ 2.800,00",
+  "fornecedor": "OFICINA MANUTENÇÃO VEICULO",
+  "data_pagamento": "20/08/2025",
+  "data_vencimento": "20/08/2025",
+  "descricao": "NOTA OFICINA-MANUTENÇÃO DE VEICULO",
+  "categoria": "Manutenção de Veículos",
+  "centro_custo": "PG",
+  "documento": "20.08.2025-PG-NOTA OFICINA-MANUTENCÌ§AÌO DE VEICULO-SPR1-R$2.800,00.pdf",
+  "confidence": 85
+}
+```
+📏 GLM Response length: 384 chars
+✅ Provider glm marked as ONLINE after successful analysis
+📊 Stats atualizadas para glm: 1 requests, 100.0% sucesso
+🔍 Validação: ERROR (70/100)
+📋 Classificação: OUTROS (35% confiança)
+🔍 Indicadores: Pattern: .*
+🤖 IA utilizada: glm
+🎯 Confiança: 85%
+💰 Custo: $0.508200
+⏱️ Tempo: 10989ms
+🔄 Mapeando dados IA: {
+  "valor": "R$ 2.800,00",
+  "data_pagamento": "20/08/2025",
+  "data_vencimento": "20/08/2025",
+  "fornecedor": "OFICINA MANUTENÇÃO VEICULO",
+  "descricao": "NOTA OFICINA-MANUTENÇÃO DE VEICULO",
+  "categoria": "Manutenção de Veículos",
+  "centro_custo": "PG",
+  "documento": "20.08.2025-PG-NOTA OFICINA-MANUTENCÌ§AÌO DE VEICULO-SPR1-R$2.800,00.pdf",
+  "confidence": 85
+}
+🔍 TODOS OS CAMPOS EXTRAÍDOS: {
+  valor: 'R$ 2.800,00',
+  fornecedor: 'OFICINA MANUTENÇÃO VEICULO',
+  cnpj_emitente: undefined,
+  data_emissao: undefined,
+  data_saida: undefined,
+  data_vencimento: '20/08/2025',
+  documento: '20.08.2025-PG-NOTA OFICINA-MANUTENCÌ§AÌ\x83O DE VEICULO-SPR1-R$2.800,00.pdf',
+  descricao: 'NOTA OFICINA-MANUTENÇÃO DE VEICULO',
+  categoria: 'Manutenção de Veículos',
+  centro_custo: 'PG'
+}
+💰 VALOR EXTRAÍDO: R$ 2.800,00
+📋 CNPJ EXTRAÍDO: VAZIO
+📅 DATAS EXTRAÍDAS: { emissao: 'VAZIO', saida: 'VAZIO', vencimento: '20/08/2025' }
+🎯 isDANFE detectado: false
+✅ Sugestões mapeadas: {
+  "amount": "R$ 2.800,00",
+  "supplier": "OFICINA MANUTENÇÃO VEICULO",
+  "contraparte": "OFICINA MANUTENÇÃO VEICULO",
+  "description": "NOTA OFICINA-MANUTENÇÃO DE VEICULO",
+  "category": "Manutenção de Veículos",
+  "documento": "20.08.2025-PG-NOTA OFICINA-MANUTENCÌ§AÌO DE VEICULO-SPR1-R$2.800,00.pdf",
+  "numeroNF": "",
+  "cnpjEmitente": "",
+  "paymentDate": "20/08/2025",
+  "dueDate": "20/08/2025",
+  "issueDate": "",
+  "exitDate": "",
+  "centerCost": "PG",
+  "documentType": "",
+  "confidence": {
+    "amount": 85,
+    "supplier": 85,
+    "description": 85,
+    "documento": 85,
+    "paymentDate": 85,
+    "dueDate": 85
+  }
+}
+📊 Taxa de preenchimento: 100% (6/6 campos)
+5:29:43 PM [express] POST /api/documents/process-file 200 in 11199ms :: {"success":true,"ocrText":"1…
