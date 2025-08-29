@@ -606,11 +606,22 @@ Retorne JSON com: valor, remetente, destinatario, data_transacao, hora_transacao
     return fixes;
   }
 
-  async analyzeDocument(ocrText: string, fileName: string, documentId: string, tenantId: string): Promise<AIAnalysisResult> {
+  async analyzeDocument(ocrText: string, fileName: string, documentId: string, tenantId: string, qualityFlags?: any): Promise<AIAnalysisResult> {
     // FASE 1: CLASSIFICAÇÃO INTELIGENTE DO DOCUMENTO
     const classification = this.classifyDocument(ocrText, fileName);
     console.log(`📋 Documento classificado como: ${classification.type} (${classification.confidence.toFixed(1)}% confiança)`);
     console.log(`🔍 Indicadores: ${classification.indicators.join(', ')}`);
+
+    // NOVA FUNCIONALIDADE: Análise de qualidade integrada
+    if (qualityFlags) {
+      console.log(`🔍 Qualidade OCR: ${qualityFlags.estimatedQuality}`);
+      if (qualityFlags.isSystemPage) {
+        console.log(`🖥️ DETECTADO: Página de sistema (${qualityFlags.characterCount} chars)`);
+      }
+      if (qualityFlags.isIncomplete) {
+        console.log(`⚠️ DETECTADO: Documento incompleto ou limitado`);
+      }
+    }
 
     let enabledProviders = this.providers
       .filter(p => p.enabled)
@@ -646,7 +657,7 @@ Retorne JSON com: valor, remetente, destinatario, data_transacao, hora_transacao
           // ESTRATÉGIA 3: Usar retry inteligente para GLM com prompt especializado
           result = await this.analyzeWithGLMRetry(ocrText, fileName, classification);
         } else if (provider.name === 'openai') {
-          result = await this.analyzeWithOpenAI(ocrText, fileName, classification);
+          result = await this.analyzeWithOpenAI(ocrText, fileName, classification, qualityFlags);
         } else {
           throw new Error(`Provider desconhecido: ${provider.name}`);
         }
@@ -977,10 +988,10 @@ Retorne JSON com: valor, remetente, destinatario, data_transacao, hora_transacao
     }
   }
 
-  async analyzeWithOpenAI(ocrText: string, fileName: string, classification?: DocumentClassification): Promise<AIAnalysisResult> {
+  async analyzeWithOpenAI(ocrText: string, fileName: string, classification?: DocumentClassification, qualityFlags?: any): Promise<AIAnalysisResult> {
     const prompt = classification 
       ? this.createSpecializedPrompt(classification.type, ocrText, fileName)
-      : this.buildAnalysisPrompt(ocrText, fileName);
+      : this.buildAnalysisPrompt(ocrText, fileName, qualityFlags);
     const modelToUse = this.getProviderByName('openai')?.model || "gpt-4o-mini";
     
     try {
@@ -1038,9 +1049,38 @@ Retorne JSON com: valor, remetente, destinatario, data_transacao, hora_transacao
     }
   }
 
-  private buildAnalysisPrompt(ocrText: string, fileName: string): string {
+  private buildAnalysisPrompt(ocrText: string, fileName: string, qualityFlags?: any): string {
     // Extrair dados do nome do arquivo para validação cruzada
     const fileData = this.extractFileMetadata(fileName);
+    
+    // Adaptar prompt baseado na qualidade do OCR
+    let specialInstructions = '';
+    let expectedConfidence = 95;
+    
+    if (qualityFlags) {
+      if (qualityFlags.isSystemPage) {
+        specialInstructions = `
+⚠️ ALERTA: Documento parece ser página de sistema, não documento fiscal.
+- Se não conseguir extrair dados reais, retorne confidence baixa (30-40)
+- Marque data_source: "FILENAME" se dados vieram do nome do arquivo
+- Se texto for apenas cabeçalho/sistema, indique na observação`;
+        expectedConfidence = 40;
+      } else if (qualityFlags.isIncomplete) {
+        specialInstructions = `
+⚠️ TEXTO LIMITADO: OCR extraiu apenas ${qualityFlags.characterCount} caracteres.
+- Priorize dados do nome do arquivo se texto OCR for insuficiente
+- Marque data_source: "MIXED" se usar filename + OCR
+- Reduza confidence para indicar incerteza (50-70)`;
+        expectedConfidence = 60;
+      } else if (!qualityFlags.hasMonetaryValues && qualityFlags.characterCount < 300) {
+        specialInstructions = `
+⚠️ SEM VALORES MONETÁRIOS: Documento pode estar incompleto.
+- Verifique se é realmente documento fiscal
+- Use dados do filename se disponíveis
+- Confidence baixa se não encontrar valor real`;
+        expectedConfidence = 50;
+      }
+    }
     
     return `
 Analise este documento fiscal brasileiro e extraia os dados em formato JSON.
@@ -1050,12 +1090,15 @@ TEXTO OCR: "${ocrText.substring(0, 1500)}${ocrText.length > 1500 ? '...' : ''}"
 
 DADOS DO ARQUIVO: ${JSON.stringify(fileData, null, 2)}
 
-INSTRUÇÕES:
+${specialInstructions}
+
+INSTRUÇÕES PRINCIPAIS:
 - Extraia valor, fornecedor, datas, CNPJ, descrição
 - Use dados do arquivo para validar informações
 - Responda APENAS com JSON, sem explicações
 - Formato de data: DD/MM/AAAA
 - Formato de valor: R$ 0.000,00
+- Indique fonte dos dados (OCR, FILENAME, MIXED)
 
 RESPOSTA JSON:
 {
@@ -1069,7 +1112,8 @@ RESPOSTA JSON:
   "documento": "CNPJ ou CPF",
   "cliente_fornecedor": "Nome do cliente",
   "observacoes": "Informações adicionais",
-  "confidence": 95
+  "data_source": "OCR|FILENAME|MIXED",
+  "confidence": ${expectedConfidence}
 }`;
   }
 

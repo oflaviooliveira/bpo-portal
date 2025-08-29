@@ -33,7 +33,8 @@ export class DocumentAnalyzer {
     filename: string, 
     documentId: string,
     tenantId: string,
-    documentContext?: string
+    documentContext?: string,
+    qualityFlags?: any
   ): Promise<DocumentAnalysisResult> {
     
     if (!extractedText || extractedText.trim().length < 10) {
@@ -83,7 +84,8 @@ export class DocumentAnalyzer {
         extractedText, 
         filename, 
         documentId, 
-        tenantId
+        tenantId,
+        qualityFlags
       );
 
       console.log(`🤖 IA utilizada: ${aiResult.provider}`);

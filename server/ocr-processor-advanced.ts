@@ -29,6 +29,13 @@ export class AdvancedOcrProcessor {
     strategiesAttempted: number;
     success: boolean;
     metadata?: any;
+    qualityFlags?: {
+      isIncomplete: boolean;
+      isSystemPage: boolean;
+      hasMonetaryValues: boolean;
+      characterCount: number;
+      estimatedQuality: 'HIGH' | 'MEDIUM' | 'LOW' | 'CRITICAL';
+    };
   }> {
     const startTime = Date.now();
     
@@ -49,11 +56,22 @@ export class AdvancedOcrProcessor {
       
       const totalTime = Date.now() - startTime;
       
+      // NOVA FUNCIONALIDADE: Análise de qualidade do OCR
+      const qualityFlags = this.analyzeOcrQuality(result.text);
+      
       console.log(`✅ OCR avançado concluído em ${totalTime}ms`);
       console.log(`   📝 Estratégia: ${result.strategy}`);
       console.log(`   🎯 Confiança: ${result.confidence}%`);
       console.log(`   📏 Caracteres: ${result.text.length}`);
       console.log(`   🔄 Tentativas: ${result.strategiesAttempted}`);
+      console.log(`   🔍 Qualidade: ${qualityFlags.estimatedQuality}`);
+      
+      if (qualityFlags.isIncomplete) {
+        console.log(`   ⚠️ ALERTA: Documento parece incompleto`);
+      }
+      if (qualityFlags.isSystemPage) {
+        console.log(`   🖥️ AVISO: Detectada página de sistema, não documento fiscal`);
+      }
 
       return {
         text: result.text,
@@ -62,6 +80,7 @@ export class AdvancedOcrProcessor {
         processingTime: totalTime,
         strategiesAttempted: result.strategiesAttempted,
         success: result.confidence > 0,
+        qualityFlags,
         metadata: {
           allResults: result.allResults.map(r => ({
             strategy: r.strategy,
@@ -97,5 +116,68 @@ export class AdvancedOcrProcessor {
 
   getEngineInfo() {
     return this.ocrEngine.getEngineInfo();
+  }
+
+  /**
+   * Analisa qualidade do texto extraído por OCR
+   */
+  private analyzeOcrQuality(text: string): {
+    isIncomplete: boolean;
+    isSystemPage: boolean;
+    hasMonetaryValues: boolean;
+    characterCount: number;
+    estimatedQuality: 'HIGH' | 'MEDIUM' | 'LOW' | 'CRITICAL';
+  } {
+    const characterCount = text.length;
+    
+    // Detectar valores monetários
+    const hasMonetaryValues = /R\$\s*\d+[.,]\d{2}|valor|total|preço|custo/i.test(text);
+    
+    // Detectar páginas de sistema
+    const systemIndicators = [
+      'Sistema de Administração',
+      'https://',
+      'Login',
+      'Acesso',
+      'Portal',
+      'Dashboard',
+      'Menu',
+      '.gov.br',
+      'Área Restrita'
+    ];
+    const isSystemPage = systemIndicators.some(indicator => 
+      text.toLowerCase().includes(indicator.toLowerCase())
+    );
+    
+    // Detectar documentos incompletos
+    let isIncomplete = false;
+    let estimatedQuality: 'HIGH' | 'MEDIUM' | 'LOW' | 'CRITICAL' = 'HIGH';
+    
+    if (characterCount < 100) {
+      isIncomplete = true;
+      estimatedQuality = 'CRITICAL';
+    } else if (characterCount < 300 && !hasMonetaryValues) {
+      isIncomplete = true;
+      estimatedQuality = 'LOW';
+    } else if (isSystemPage && characterCount < 500) {
+      isIncomplete = true;
+      estimatedQuality = 'LOW';
+    } else if (characterCount < 500) {
+      estimatedQuality = 'MEDIUM';
+    }
+    
+    // Se tem valores monetários mas pouco texto, pode ser um recibo simples válido
+    if (hasMonetaryValues && characterCount >= 100) {
+      estimatedQuality = characterCount > 300 ? 'HIGH' : 'MEDIUM';
+      isIncomplete = false;
+    }
+    
+    return {
+      isIncomplete,
+      isSystemPage,
+      hasMonetaryValues,
+      characterCount,
+      estimatedQuality
+    };
   }
 }

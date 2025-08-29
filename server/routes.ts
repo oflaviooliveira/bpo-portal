@@ -43,6 +43,56 @@ const upload = multer({
   },
 });
 
+/**
+ * Função utilitária para análise de qualidade OCR (duplicada do AdvancedOcrProcessor)
+ */
+function analyzeOcrQuality(text: string) {
+  const characterCount = text.length;
+  
+  // Detectar valores monetários
+  const hasMonetaryValues = /R\$\s*\d+[.,]\d{2}|valor|total|preço|custo/i.test(text);
+  
+  // Detectar páginas de sistema
+  const systemIndicators = [
+    'Sistema de Administração', 'https://', 'Login', 'Acesso', 'Portal', 
+    'Dashboard', 'Menu', '.gov.br', 'Área Restrita'
+  ];
+  const isSystemPage = systemIndicators.some(indicator => 
+    text.toLowerCase().includes(indicator.toLowerCase())
+  );
+  
+  // Detectar documentos incompletos
+  let isIncomplete = false;
+  let estimatedQuality: 'HIGH' | 'MEDIUM' | 'LOW' | 'CRITICAL' = 'HIGH';
+  
+  if (characterCount < 100) {
+    isIncomplete = true;
+    estimatedQuality = 'CRITICAL';
+  } else if (characterCount < 300 && !hasMonetaryValues) {
+    isIncomplete = true;
+    estimatedQuality = 'LOW';
+  } else if (isSystemPage && characterCount < 500) {
+    isIncomplete = true;
+    estimatedQuality = 'LOW';
+  } else if (characterCount < 500) {
+    estimatedQuality = 'MEDIUM';
+  }
+  
+  // Se tem valores monetários mas pouco texto, pode ser um recibo simples válido
+  if (hasMonetaryValues && characterCount >= 100) {
+    estimatedQuality = characterCount > 300 ? 'HIGH' : 'MEDIUM';
+    isIncomplete = false;
+  }
+  
+  return {
+    isIncomplete,
+    isSystemPage,
+    hasMonetaryValues,
+    characterCount,
+    estimatedQuality
+  };
+}
+
 const uploadDocumentSchema = z.object({
   documentType: z.enum(['PAGO', 'AGENDADO', 'EMITIR_BOLETO', 'EMITIR_NF']),
   contraparteId: z.string().uuid().optional(),
@@ -238,7 +288,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
       let ocrResult: any = null;
       let aiResult: any = null;
 
-      // 1. Extrair texto OCR
+      // 1. Extrair texto OCR com análise de qualidade avançada
       try {
         if (file.originalname.toLowerCase().endsWith('.pdf')) {
           ocrResult = await pdfExtractor.extractText(file.path);
@@ -256,6 +306,20 @@ export async function registerRoutes(app: Express): Promise<Server> {
             confidence: Math.round(confidence)
           };
         }
+        
+        // NOVA FUNCIONALIDADE: Análise de qualidade integrada ao OCR básico
+        if (ocrResult.success && ocrResult.text) {
+          const qualityFlags = analyzeOcrQuality(ocrResult.text);
+          ocrResult.metadata = { qualityFlags };
+          
+          console.log(`🔍 Análise de qualidade OCR:`);
+          console.log(`   📏 Caracteres: ${qualityFlags.characterCount}`);
+          console.log(`   🔍 Qualidade: ${qualityFlags.estimatedQuality}`);
+          console.log(`   💰 Valores monetários: ${qualityFlags.hasMonetaryValues ? 'Sim' : 'Não'}`);
+          console.log(`   🖥️ Página de sistema: ${qualityFlags.isSystemPage ? 'Sim' : 'Não'}`);
+          console.log(`   ⚠️ Incompleto: ${qualityFlags.isIncomplete ? 'Sim' : 'Não'}`);
+        }
+        
       } catch (error) {
         console.warn("⚠️ Erro no OCR:", error);
         ocrResult = {
@@ -281,11 +345,16 @@ export async function registerRoutes(app: Express): Promise<Server> {
           const { randomUUID } = await import('crypto');
           const tempDocId = randomUUID();
           
+          // Integrar flags de qualidade com IA
+          const qualityFlags = ocrResult?.metadata?.qualityFlags;
+          
           aiResult = await documentAnalyzer.analyzeDocument(
             ocrResult.text, 
             file.originalname,
             tempDocId,
-            user.tenantId
+            user.tenantId,
+            undefined, // documentContext
+            qualityFlags
           );
         } catch (error) {
           console.warn("⚠️ Erro na análise IA:", error);
@@ -334,6 +403,11 @@ export async function registerRoutes(app: Express): Promise<Server> {
         const isDANFE = !!(data.cnpj_emitente || data.data_emissao || data.chave_acesso);
         console.log(`🎯 isDANFE detectado:`, isDANFE);
         
+        // NOVA FUNCIONALIDADE: Sistema de transparência de fontes de dados
+        const dataSource = data.data_source || 'OCR';
+        const isFilenameData = dataSource.includes('FILENAME');
+        const adjustedConfidence = isFilenameData ? Math.round(aiResult.confidence * 0.7) : Math.round(aiResult.confidence);
+        
         suggestions = {
           // Campos básicos sempre mapeados
           amount: data.valor || '',
@@ -357,25 +431,45 @@ export async function registerRoutes(app: Express): Promise<Server> {
           centerCost: data.centro_custo || '',
           documentType: data.tipo_documento || '',
           
-          // Confidence granular por campo
+          // NOVA FUNCIONALIDADE: Metadata de qualidade e fonte
+          qualityMetadata: {
+            dataSource,
+            isFilenameData,
+            ocrQuality: qualityFlags?.estimatedQuality || 'UNKNOWN',
+            isSystemPage: qualityFlags?.isSystemPage || false,
+            isIncomplete: qualityFlags?.isIncomplete || false,
+            characterCount: qualityFlags?.characterCount || 0,
+            hasMonetaryValues: qualityFlags?.hasMonetaryValues || false
+          },
+          
+          // Confidence granular por campo ajustado pela fonte
           confidence: {
-            amount: data.valor ? Math.round(aiResult.confidence) : 0,
-            supplier: data.fornecedor ? Math.round(aiResult.confidence) : 0,
-            description: data.descricao ? Math.round(aiResult.confidence) : 0,
-            documento: (data.cnpj_emitente || data.documento) ? Math.round(aiResult.confidence) : 0,
-            paymentDate: (data.data_pagamento || data.data_emissao) ? Math.round(aiResult.confidence) : 0,
-            dueDate: data.data_vencimento ? Math.round(aiResult.confidence) : 0
+            amount: data.valor ? adjustedConfidence : 0,
+            supplier: data.fornecedor ? adjustedConfidence : 0,
+            description: data.descricao ? adjustedConfidence : 0,
+            documento: (data.cnpj_emitente || data.documento) ? adjustedConfidence : 0,
+            paymentDate: (data.data_pagamento || data.data_emissao) ? adjustedConfidence : 0,
+            dueDate: data.data_vencimento ? adjustedConfidence : 0
           }
         };
         
         console.log(`✅ Sugestões mapeadas:`, JSON.stringify(suggestions, null, 2));
         
-        // Análise de completude dos dados
+        // NOVA FUNCIONALIDADE: Análise avançada de qualidade
         const totalFields = ['amount', 'supplier', 'documento', 'description', 'paymentDate', 'dueDate'];
         const filledFields = totalFields.filter(field => suggestions[field] && suggestions[field] !== '');
         const completionRate = Math.round((filledFields.length / totalFields.length) * 100);
         
         console.log(`📊 Taxa de preenchimento: ${completionRate}% (${filledFields.length}/${totalFields.length} campos)`);
+        console.log(`🔍 Fonte dos dados: ${dataSource}`);
+        if (qualityFlags) {
+          console.log(`⚠️ Alertas de qualidade:`, {
+            isSystemPage: qualityFlags.isSystemPage,
+            isIncomplete: qualityFlags.isIncomplete,
+            ocrQuality: qualityFlags.estimatedQuality,
+            adjustedConfidence: `${adjustedConfidence}% (${isFilenameData ? 'reduzido' : 'original'})`
+          });
+        }
       } else {
         console.log(`⚠️ IA não retornou dados válidos:`, aiResult);
       }
