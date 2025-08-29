@@ -1,0 +1,97 @@
+🔍 Processando arquivo para preview: 22.07.2025_PG_19.07.2025_02.08.2025_COMPRA DE 2 PNEUS_ManutencÌ§aÌo de Veiculos_SRJ1_R$1.450,00.pdf
+📄 Iniciando extração de texto PDF: uploads/c867fad497544e73a4f9963571a555e1
+Warning: Indexing all PDF objects
+✅ Extração nativa bem-sucedida: 2342 caracteres
+🤖 Analisando documento com IA: 22.07.2025_PG_19.07.2025_02.08.2025_COMPRA DE 2 PNEUS_ManutencÌ§aÌo de Veiculos_SRJ1_R$1.450,00.pdf
+📝 Texto extraído (2342 chars): DANFE
+Documento Auxiliar da 
+Nota Fiscal Eletrônica
+AV MARIA DO CARMO, 1571
+POSTO LAVA TUCUNS
+CRUZ / CE
+62595-000
+(88) 9729-5739 - 
+0 - ENTRADA
+1 - SAÍDA
+CHAVE DE ACESSO
+Nº 645   
+Série 1 
+Consulta de...
+📋 Detectada nota fiscal - usando analisador especializado
+🔄 Usando AI Multi-Provider para análise...
+📋 Documento classificado como: DANFE (57.5% confiança)
+🔍 Indicadores: Keyword: DANFE, Keyword: Nota Fiscal Eletrônica, Keyword: CNPJ, Keyword: Chave de Acesso, Keyword: ICMS, Keyword: CFOP, Keyword: NCM, Pattern: \d{4}\s\d{4}\s\d{4}\s\d{4}\s\d{4}\s\d{4}\s\d{4}\s\d{4}\s\d{4}\s\d{4}\s\d{4}
+📋 Documento complexo detectado (DANFE) - priorizando OpenAI
+🤖 Tentando análise com openai...
+🔗 OpenAI API Request - Model: gpt-4o-mini
+💰 OpenAI Expected Cost: $0.375/1k tokens
+🤖 OpenAI Response (gpt-4o-mini): {
+  "valor": "R$ 1.450,00",
+  "fornecedor": "ROBSON PNEUS E AUTOPECAS LTDA",
+  "cnpj_emitente": "95.001.834/0001-34",
+  "data_emissao": "19/07/2025",
+  "data_saida": "19/07/2025",
+  "data_vencimento": null,
+  "descricao": "COMPRA DE 2 PNEUS ManutencÌ§aÌo de Veiculos SRJ1",
+  "categoria": "Manutenção de Veículos",
+  "documento": "Nº 645 Série 1",
+  "confidence": 0.95
+}
+⚠️ Schema validation strict failed for openai, trying flexible validation...
+🔧 GLM response auto-corrected: {
+  valor: 'R$ 1.450,00',
+  fornecedor: 'ROBSON PNEUS E AUTOPECAS LTDA',
+  cnpj_emitente: '95.001.834/0001-34',
+  data_emissao: '19/07/2025',
+  data_saida: '19/07/2025',
+  descricao: 'COMPRA DE 2 PNEUS ManutencÌ§aÌ\x83o de Veiculos SRJ1',
+  categoria: 'Manutenção de Veículos',
+  documento: 'Nº 645 Série 1',
+  confidence: 95,
+  centro_custo: 'GERAL'
+}
+✅ Provider openai response auto-corrected successfully
+✅ Provider openai marked as ONLINE after successful analysis
+📊 Stats atualizadas para openai: 1 requests, 100.0% sucesso
+🔍 Validação: ERROR (55/100)
+📋 Classificação: DANFE (57.5% confiança)
+🔍 Indicadores: Keyword: DANFE, Keyword: Nota Fiscal Eletrônica, Keyword: CNPJ, Keyword: Chave de Acesso, Keyword: ICMS, Keyword: CFOP, Keyword: NCM, Pattern: \d{4}\s\d{4}\s\d{4}\s\d{4}\s\d{4}\s\d{4}\s\d{4}\s\d{4}\s\d{4}\s\d{4}\s\d{4}
+🤖 IA utilizada: openai
+🎯 Confiança: 0.95%
+💰 Custo: $0.520875
+⏱️ Tempo: 3594ms
+🔄 Mapeando dados IA: {
+  "valor": "R$ 1.450,00",
+  "fornecedor": "ROBSON PNEUS E AUTOPECAS LTDA",
+  "descricao": "COMPRA DE 2 PNEUS ManutencÌ§aÌo de Veiculos SRJ1",
+  "categoria": "Manutenção de Veículos",
+  "centro_custo": "GERAL",
+  "documento": "Nº 645 Série 1",
+  "confidence": 95
+}
+✅ Sugestões mapeadas: {
+  "amount": "R$ 1.450,00",
+  "supplier": "ROBSON PNEUS E AUTOPECAS LTDA",
+  "contraparte": "ROBSON PNEUS E AUTOPECAS LTDA",
+  "description": "COMPRA DE 2 PNEUS ManutencÌ§aÌo de Veiculos SRJ1",
+  "category": "Manutenção de Veículos",
+  "documento": "Nº 645 Série 1",
+  "numeroNF": "",
+  "cnpjEmitente": "",
+  "paymentDate": "",
+  "dueDate": "",
+  "issueDate": "",
+  "exitDate": "",
+  "centerCost": "GERAL",
+  "documentType": "",
+  "confidence": {
+    "amount": 1,
+    "supplier": 1,
+    "description": 1,
+    "documento": 1,
+    "paymentDate": 0,
+    "dueDate": 0
+  }
+}
+📊 Taxa de preenchimento: 67% (4/6 campos)
+5:02:48 PM [express] POST /api/documents/process-file 200 in 4289ms :: {"success":true,"ocrText":"DA…
