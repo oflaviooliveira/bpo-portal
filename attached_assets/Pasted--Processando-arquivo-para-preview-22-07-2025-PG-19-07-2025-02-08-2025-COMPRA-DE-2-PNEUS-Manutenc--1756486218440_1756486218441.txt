@@ -1,0 +1,116 @@
+🔍 Processando arquivo para preview: 22.07.2025_PG_19.07.2025_02.08.2025_COMPRA DE 2 PNEUS_ManutencÌ§aÌo de Veiculos_SRJ1_R$1.450,00.pdf
+📄 Iniciando extração de texto PDF: uploads/3b3407ce0546d584ca4300becd657ed8
+Warning: Indexing all PDF objects
+✅ Extração nativa bem-sucedida: 2342 caracteres
+🤖 Analisando documento com IA: 22.07.2025_PG_19.07.2025_02.08.2025_COMPRA DE 2 PNEUS_ManutencÌ§aÌo de Veiculos_SRJ1_R$1.450,00.pdf
+📝 Texto extraído (2342 chars): DANFE
+Documento Auxiliar da 
+Nota Fiscal Eletrônica
+AV MARIA DO CARMO, 1571
+POSTO LAVA TUCUNS
+CRUZ / CE
+62595-000
+(88) 9729-5739 - 
+0 - ENTRADA
+1 - SAÍDA
+CHAVE DE ACESSO
+Nº 645   
+Série 1 
+Consulta de...
+📋 Detectada nota fiscal - usando analisador especializado
+🔄 Usando AI Multi-Provider para análise...
+📋 Documento classificado como: DANFE (57.5% confiança)
+🔍 Indicadores: Keyword: DANFE, Keyword: Nota Fiscal Eletrônica, Keyword: CNPJ, Keyword: Chave de Acesso, Keyword: ICMS, Keyword: CFOP, Keyword: NCM, Pattern: \d{4}\s\d{4}\s\d{4}\s\d{4}\s\d{4}\s\d{4}\s\d{4}\s\d{4}\s\d{4}\s\d{4}\s\d{4}
+📋 Documento complexo detectado (DANFE) - priorizando OpenAI
+🤖 Tentando análise com openai...
+🔗 OpenAI API Request - Model: gpt-4o-mini
+💰 OpenAI Expected Cost: $0.375/1k tokens
+🤖 OpenAI Response (gpt-4o-mini): {
+  "valor": "R$ 1.450,00",
+  "fornecedor": "ROBSON PNEUS E AUTOPECAS LTDA",
+  "cnpj_emitente": "95.001.834/0001-34",
+  "data_emissao": "19/07/2025",
+  "data_saida": "19/07/2025",
+  "data_vencimento": null,
+  "descricao": "Manutenção de Veículos SRJ1 - Compra de 2 Pneus",
+  "categoria": "PAGO",
+  "documento": "Nº 645 Série 1",
+  "confidence": 0.95
+}
+⚠️ Schema validation strict failed for openai, trying flexible validation...
+🔧 GLM response auto-corrected: {
+  valor: 'R$ 1.450,00',
+  fornecedor: 'ROBSON PNEUS E AUTOPECAS LTDA',
+  cnpj_emitente: '95.001.834/0001-34',
+  data_emissao: '19/07/2025',
+  data_saida: '19/07/2025',
+  descricao: 'Manutenção de Veículos SRJ1 - Compra de 2 Pneus',
+  categoria: 'PAGO',
+  documento: 'Nº 645 Série 1',
+  confidence: 95,
+  centro_custo: 'GERAL'
+}
+✅ Provider openai response auto-corrected successfully
+✅ Provider openai marked as ONLINE after successful analysis
+📊 Stats atualizadas para openai: 1 requests, 100.0% sucesso
+🔍 Validação: ERROR (60/100)
+📋 Classificação: DANFE (57.5% confiança)
+🔍 Indicadores: Keyword: DANFE, Keyword: Nota Fiscal Eletrônica, Keyword: CNPJ, Keyword: Chave de Acesso, Keyword: ICMS, Keyword: CFOP, Keyword: NCM, Pattern: \d{4}\s\d{4}\s\d{4}\s\d{4}\s\d{4}\s\d{4}\s\d{4}\s\d{4}\s\d{4}\s\d{4}\s\d{4}
+Erro ao registrar AI run: error: invalid input syntax for type integer: "0.95"
+    at file:///home/runner/workspace/node_modules/@neondatabase/serverless/index.mjs:1345:74
+    at process.processTicksAndRejections (node:internal/process/task_queues:95:5)
+    at async NeonPreparedQuery.execute (/home/runner/workspace/node_modules/src/neon-serverless/session.ts:102:18)
+    at async DatabaseStorage.createAiRun (/home/runner/workspace/server/storage.ts:643:21)
+    at async AIMultiProvider.logAiRun (/home/runner/workspace/server/ai-multi-provider.ts:769:7)
+    at async AIMultiProvider.analyzeDocument (/home/runner/workspace/server/ai-multi-provider.ts:724:9)
+    at async DocumentAnalyzer.analyzeDocument (/home/runner/workspace/server/ai/document-analyzer.ts:82:24)
+    at async <anonymous> (/home/runner/workspace/server/routes.ts:276:22) {
+  length: 148,
+  severity: 'ERROR',
+  code: '22P02',
+  detail: undefined,
+  hint: undefined,
+  position: undefined,
+  internalPosition: undefined,
+  internalQuery: undefined,
+  where: "unnamed portal parameter $10 = '...'",
+  schema: undefined,
+  table: undefined,
+  column: undefined,
+  dataType: undefined,
+  constraint: undefined,
+  file: 'numutils.c',
+  line: '617',
+  routine: 'pg_strtoint32_safe'
+}
+🤖 IA utilizada: openai
+🎯 Confiança: 0.95%
+💰 Custo: $0.516375
+⏱️ Tempo: 3079ms
+🔄 Mapeando dados IA: {
+  "valor": "R$ 1.450,00",
+  "fornecedor": "ROBSON PNEUS E AUTOPECAS LTDA",
+  "descricao": "Manutenção de Veículos SRJ1 - Compra de 2 Pneus",
+  "categoria": "PAGO",
+  "centro_custo": "GERAL",
+  "documento": "Nº 645 Série 1",
+  "confidence": 95
+}
+✅ Sugestões mapeadas: {
+  "amount": "R$ 1.450,00",
+  "supplier": "ROBSON PNEUS E AUTOPECAS LTDA",
+  "contraparte": "ROBSON PNEUS E AUTOPECAS LTDA",
+  "documento": "Nº 645 Série 1",
+  "description": "Manutenção de Veículos SRJ1 - Compra de 2 Pneus",
+  "dueDate": "",
+  "paymentDate": "",
+  "category": "PAGO",
+  "confidence": {
+    "amount": 0.95,
+    "supplier": 0.95,
+    "description": 0.95,
+    "dueDate": 0,
+    "paymentDate": 0
+  }
+}
+4:49:48 PM [express] POST /api/documents/process-file 200 in 3630ms :: {"success":true,"ocrText":"DA…
