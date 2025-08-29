@@ -1,0 +1,146 @@
+🔍 Processando arquivo para preview: 22.07.2025_PG_19.07.2025_02.08.2025_COMPRA DE 2 PNEUS_ManutencÌ§aÌo de Veiculos_SRJ1_R$1.450,00.pdf
+📄 Iniciando extração de texto PDF: uploads/53dab3a5db2e185506a122458c80cb55
+Warning: Indexing all PDF objects
+✅ Extração nativa bem-sucedida: 2342 caracteres
+🤖 Analisando documento com IA: 22.07.2025_PG_19.07.2025_02.08.2025_COMPRA DE 2 PNEUS_ManutencÌ§aÌo de Veiculos_SRJ1_R$1.450,00.pdf
+📝 Texto extraído (2342 chars): DANFE
+Documento Auxiliar da 
+Nota Fiscal Eletrônica
+AV MARIA DO CARMO, 1571
+POSTO LAVA TUCUNS
+CRUZ /...
+
+🔍 ===== TEXTO COMPLETO ENVIADO PARA IA =====
+DANFE
+Documento Auxiliar da 
+Nota Fiscal Eletrônica
+AV MARIA DO CARMO, 1571
+POSTO LAVA TUCUNS
+CRUZ / CE
+62595-000
+(88) 9729-5739 - 
+0 - ENTRADA
+1 - SAÍDA
+CHAVE DE ACESSO
+Nº 645   
+Série 1 
+Consulta de Autenticidade no portal nacional da NF-e
+www.nfe.fazenda.gov.br/portal ou no site da Sefaz Autorizada
+FL        1  / 1
+NATUREZA DA OPERAÇÃO
+INSCRIÇÃO ESTADUALINSCR.EST.DO SUBST.TRIBUTÁRIOCNPJ
+PROTOCOLO DE AUTORIZAÇÃO DE USO: 223250071454265 - 19/07/2025
+®79'Z£æ2æ!BWæ*ææ&M.rdN4B©
+ROBSON PNEUS E AUTOPECAS LTDA
+Revenda de mercadorias com ST
+07236827658.950.018/0001-34
+ 1
+2325 0758 9500 1800 0134 5500 1000 0006 4514 8268 4620 
+ DESTINATÁRIO / REMETENTE
+ECO EXPRESS SERVICOS SUSTENTAVEIS LTDA
+NOME / RAZÃO SOCIAL
+ENDEREÇO
+MUNICÍPIO
+ST SRTVS, 110  QUADRA701 BLOCO O SALA 521 - PARTE
+BRASÍLIA
+FONE / FAX
+(61) 8123-4535
+BAIRRO / DISTRITO
+ASA SUL
+UF
+DF
+INSCRIÇÃO ESTADUAL
+0776914000149
+CNPJ / CPF
+24.824.109/0001-01
+CEP
+70340-000
+19/07/2025
+DATA DE EMISSÃO
+DATA SAÍDA / ENTRADA
+HORA SAÍDA / ENTRADA
+10:56:28
+19/07/2025
+ FATURA
+Aliq  
+ICMS
+Aliq 
+IPI
+V. IPIV. ICMSBC ICMSV. TOTALV. UNITÁRIOQTDEUNCFOPCSTNCMDESCRIÇÃO DOS PRODUTOS / SERVIÇOSCÓDIGO
+ DADOS DOS PRODUTOS / SERVIÇOS
+MUNICÍPIO
+NUMERAÇÃOPESO BRUTOMARCAESPÉCIEQUANTIDADE
+ENDEREÇO
+RAZÃO SOCIALFRETE POR CONTACÓDIGO ANTTPLACA VEÍCULO
+UF
+UFCNPJ / CPF
+INSCRIÇÃO ESTADUAL
+PESO LÍQUIDO
+BASE DE CÁLCULOVALOR ICMS
+VALOR TOTAL DOS PRODUTOS
+VALOR DO ICMS STBASE DE CÁLCULO ICMS SUBSTITUIÇÃO
+VALOR TOTAL DA NOTAVALOR DO IPIOUTRAS DESPESAS ACESSÓRIASDESCONTOVALOR DO SEGUROVALOR DO FRETE
+ TRANSPORTADOR / VOLUMES TRANSPORTADOS
+ CÁLCULO DO IMPOSTO
+0 - A VISTA
+1 - A PRAZO
+, 
+0,000,000,000,001.450,00
+1.450,000,000,000,000,000,00
+9 - sem frete
+ 0
+21/07/2025
+ 1.450,00
+PIX
+060 PNEU WANLI 225/75R16LT  120/116 S 225/75R16 401190906.403UN2725,001.450,000,000,000,00000001010000007
+Série 1   
+DATA DE RECEBIMENTOIDENTIFICAÇÃO E ASSINATURA DO RECEBEDOR
+FL        1  / 1
+Nº 645   
+RECEBEMOS DE ROBSON PNEUS E AUTOPECAS LTDA OS PRODUTOS CONSTANTES DA NOTA FISCAL INDICADA AO LADO
+NF-e
+RESERVADO AO FISCO
+INFORMAÇÕES COMPLEMENTARES
+ DADOS ADICIONAIS
+INSCRIÇÃO MUNICIPALVALOR DO ISSQNBASE DE CÁLCULO DO ISSQNVALOR TOTAL DOS SERVIÇOS
+ CÁLCULO DO ISSQN
+STi3 - Soluções em TI - (14) 3411  -3333 - www.sti3.com.br
+ICMS APENAS PARA EFEITO DE CREDITO DO DESTINATÁRIO.
+0,000,000,00
+ECO EXPRESS SERVICOS SUSTENTAVEIS LTDA
+🔍 ===== FIM DO TEXTO ===== (2342 chars)
+
+🤖 Analisando documento com IA: 22.07.2025_PG_19.07.2025_02.08.2025_COMPRA DE 2 PNEUS_ManutencÌ§aÌo de Veiculos_SRJ1_R$1.450,00.pdf
+📝 Texto extraído (2342 chars): DANFE
+Documento Auxiliar da 
+Nota Fiscal Eletrônica
+AV MARIA DO CARMO, 1571
+POSTO LAVA TUCUNS
+CRUZ / CE
+62595-000
+(88) 9729-5739 - 
+0 - ENTRADA
+1 - SAÍDA
+CHAVE DE ACESSO
+Nº 645   
+Série 1 
+Consulta de...
+📋 Detectada nota fiscal - usando analisador especializado
+🔄 Usando AI Multi-Provider para análise...
+📋 Documento classificado como: DANFE (57.5% confiança)
+🔍 Indicadores: Keyword: DANFE, Keyword: Nota Fiscal Eletrônica, Keyword: CNPJ, Keyword: Chave de Acesso, Keyword: ICMS, Keyword: CFOP, Keyword: NCM, Pattern: \d{4}\s\d{4}\s\d{4}\s\d{4}\s\d{4}\s\d{4}\s\d{4}\s\d{4}\s\d{4}\s\d{4}\s\d{4}
+📋 Documento complexo detectado (DANFE) - priorizando OpenAI
+🤖 Tentando análise com openai...
+⚠️ Provider openai failed: text is not defined
+🚨 Provider openai marked as ERROR (unknown_error, not recoverable)
+🤖 Tentando análise com glm (fallback)...
+⚠️ Provider glm failed: text is not defined
+🚨 Provider glm marked as ERROR (unknown_error, not recoverable)
+🔍 GLM Error Details - Type: unknown_error, Recoverable: false, Message: text is not defined
+❌ Erro na análise com IA: Error: Todos os provedores de IA falharam. Último erro: text is not defined
+⚠️ IA não retornou dados válidos: {
+  success: false,
+  confidence: 0,
+  error: 'Erro na análise: Error: Todos os provedores de IA falharam. Último erro: text is not defined'
+}
+5:18:21 PM [express] POST /api/documents/process-file 200 in 454ms :: {"success":true,"ocrText":"DAN…
