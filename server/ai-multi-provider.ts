@@ -340,7 +340,7 @@ VOCÊ É UM EXPERT EM DANFE. SUA MISSÃO É EXTRAIR DADOS REAIS E NUMÉRICOS.
 - EXEMPLO: "Revenda de mercadorias com ST"
 
 TEXTO DO DOCUMENTO:
-${text}
+${ocrText}
 
 RETORNE JSON COM DADOS REAIS (números exatos, não textos):
 {
@@ -725,7 +725,9 @@ Retorne JSON com: valor, remetente, destinatario, data_transacao, hora_transacao
         }
         
         // Normalizar valores
-        result.extractedData.valor = normalizeValue(result.extractedData.valor);
+        if (result.extractedData.valor) {
+          result.extractedData.valor = normalizeValue(result.extractedData.valor);
+        }
         if (result.extractedData.data_pagamento) {
           result.extractedData.data_pagamento = normalizeDate(result.extractedData.data_pagamento);
         }

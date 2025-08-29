@@ -331,7 +331,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
         });
         
         // Mapeamento inteligente baseado no tipo de documento
-        const isDANFE = data.cnpj_emitente && (data.documento?.includes('Nº') || data.documento?.includes('Série'));
+        const isDANFE = !!(data.cnpj_emitente || data.data_emissao || data.chave_acesso);
         console.log(`🎯 isDANFE detectado:`, isDANFE);
         
         suggestions = {
