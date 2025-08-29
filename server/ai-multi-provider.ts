@@ -326,11 +326,18 @@ class AIMultiProvider {
     
     try {
       console.log(`🔗 GLM API Request - Model: ${this.getProviderByName('glm')?.model || 'glm-4.5'}`);
+      console.log(`📝 GLM Full prompt length: ${prompt.length} chars`);
+      console.log(`📝 GLM Prompt preview: ${prompt.substring(0, 300)}...`);
       console.log(`📝 GLM Request payload size: ${JSON.stringify({ prompt: prompt.substring(0, 200) + '...' }).length} chars`);
       
-      // Implementar timeout personalizado para GLM
+      // Implementar timeout personalizado para GLM  
+      console.log(`⏰ Starting GLM request with 15s timeout...`);
+      const startTime = Date.now();
       const controller = new AbortController();
-      const timeoutId = setTimeout(() => controller.abort(), 15000); // 15s timeout
+      const timeoutId = setTimeout(() => {
+        console.log(`🕐 GLM timeout triggered after 15s`);
+        controller.abort();
+      }, 15000);
       
       const response = await fetch('https://open.bigmodel.cn/api/paas/v4/chat/completions', {
         method: 'POST',
@@ -360,8 +367,9 @@ class AIMultiProvider {
       });
       
       clearTimeout(timeoutId);
-
-      console.log(`🔍 GLM Response status: ${response.status}`);
+      const responseTime = Date.now() - startTime;
+      
+      console.log(`🔍 GLM Response status: ${response.status} (${responseTime}ms)`);
       console.log(`📊 GLM Response headers: ${JSON.stringify(Object.fromEntries(response.headers.entries()))}`);
 
       if (!response.ok) {
@@ -889,8 +897,8 @@ RESPOSTA JSON:
     }
     
     // Remove common GLM response prefixes/suffixes
-    cleaned = cleaned.replace(/^.*?(?=\{)/s, ''); // Remove everything before first {
-    cleaned = cleaned.replace(/\}.*$/s, '}'); // Remove everything after last }
+    cleaned = cleaned.replace(/^.*?(?=\{)/, ''); // Remove everything before first {
+    cleaned = cleaned.replace(/\}.*$/, '}'); // Remove everything after last }
     
     return cleaned;
   }
