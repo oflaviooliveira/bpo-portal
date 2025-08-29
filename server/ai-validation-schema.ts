@@ -13,7 +13,7 @@ export const aiAnalysisResponseSchema = z.object({
   documento: z.string().optional(), // CNPJ/CPF
   cliente_fornecedor: z.string().optional(),
   observacoes: z.string().optional(),
-  confidence: z.number().int().min(0).max(100, "Confiança deve estar entre 0 e 100"),
+  confidence: z.number().min(0).max(100, "Confiança deve estar entre 0 e 100"),
 });
 
 export type AiAnalysisResponse = z.infer<typeof aiAnalysisResponseSchema>;

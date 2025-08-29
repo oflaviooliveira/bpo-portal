@@ -300,10 +300,11 @@ export async function registerRoutes(app: Express): Promise<Server> {
           amount: data.valor || '',
           supplier: data.fornecedor || '',
           contraparte: data.contraparte || data.fornecedor || '',
-          documento: data.documento || '',
+          // Para DANFE, use o CNPJ do emitente; caso contrário, use documento
+          documento: data.cnpj_emitente || data.documento || '',
           description: data.descricao || '',
           dueDate: data.data_vencimento || '',
-          paymentDate: data.data_pagamento || '',
+          paymentDate: data.data_pagamento || data.data_emissao || '',
 
           category: data.categoria || '',
           confidence: {

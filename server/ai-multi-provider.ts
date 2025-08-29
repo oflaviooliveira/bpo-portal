@@ -309,24 +309,33 @@ METADADOS: ${JSON.stringify(fileMetadata, null, 2)}
 
 ${baseContext}
 
-INSTRUÇÕES CRÍTICAS:
-1. CNPJ do EMITENTE: Busque na seção "EMITENTE" ou próximo ao nome da empresa emissora
-2. CNPJ do DESTINATÁRIO: Busque na seção "DESTINATÁRIO" ou "REMETENTE"  
-3. DATAS: Distinga claramente:
-   - Data de Emissão: quando a NF foi emitida
-   - Data de Saída: quando produto saiu (pode ser igual à emissão)
-   - Data de Vencimento: para pagamento (pode não existir se à vista)
-4. PRODUTO: Mantenha descrição técnica completa (marca, modelo, especificações)
-5. VALORES: Validar que Quantidade × Valor Unitário = Valor Total
-6. CHAVE DE ACESSO: 44 dígitos da chave da NF-e
+INSTRUÇÕES CRÍTICAS PARA DANFE:
+1. EMITENTE (FORNECEDOR): Empresa que EMITE a nota fiscal - topo do documento
+   - CNPJ do EMITENTE é o documento do fornecedor
+   - Nome do emitente é o fornecedor
+   
+2. DESTINATÁRIO: Empresa que RECEBE a mercadoria - seção "DESTINATÁRIO/REMETENTE"
 
-VALIDAÇÕES OBRIGATÓRIAS:
-- CNPJs no formato XX.XXX.XXX/XXXX-XX
-- Datas no formato DD/MM/AAAA
-- Valores sempre com R$ e centavos
-- Descrição técnica detalhada, não genérica
+3. DATAS PRIORITÁRIAS:
+   - Use SEMPRE as datas do DOCUMENTO, NÃO do nome do arquivo
+   - Data de Emissão: campo "DATA DE EMISSÃO" 
+   - Data de Saída: campo "DATA SAÍDA/ENTRADA"
+   - Data de Vencimento: campo "FATURA" ou "DUPLICATA" (se existir)
 
-Retorne JSON com: valor, fornecedor, cnpj_emitente, cnpj_destinatario, data_emissao, data_saida, data_vencimento, descricao, categoria, chave_acesso, confidence`;
+4. PRODUTO: Use descrição do campo "DESCRIÇÃO DOS PRODUTOS/SERVIÇOS"
+
+5. NÚMERO DOCUMENTO: Use "Nº" + "Série" da nota fiscal, não o nome do arquivo
+
+6. VALORES: Campo "VALOR TOTAL DA NOTA"
+
+EXEMPLO DE MAPEAMENTO CORRETO:
+- fornecedor: nome do EMITENTE
+- cnpj_emitente: CNPJ do EMITENTE (formato XX.XXX.XXX/XXXX-XX)
+- documento: "Nº XXX Série X" da nota fiscal
+- data_emissao: data do campo "DATA DE EMISSÃO" 
+- data_saida: data do campo "DATA SAÍDA/ENTRADA"
+
+Retorne JSON com: valor, fornecedor, cnpj_emitente, data_emissao, data_saida, data_vencimento, descricao, categoria, documento, confidence`;
 
       case 'RECIBO':
         return `Você é um especialista em análise de recibos de pagamento brasileiros.
@@ -705,15 +714,11 @@ Retorne JSON com: valor, remetente, destinatario, data_transacao, hora_transacao
         
         // FASE 3: VALIDAÇÃO INTELIGENTE DOS DADOS EXTRAÍDOS
         const validationResult = this.validateExtractedData(result.extractedData, classification);
+        console.log(`🔍 Validação: ${validationResult.status} (${validationResult.score}/100)`);
         
-        // Adicionar informações de classificação e validação ao resultado
-        result.documentClassification = {
-          type: classification.type,
-          confidence: classification.confidence,
-          indicators: classification.indicators
-        };
-        
-        result.validationResults = validationResult;
+        // Adicionar informações de classificação no log
+        console.log(`📋 Classificação: ${classification.type} (${classification.confidence}% confiança)`);
+        console.log(`🔍 Indicadores: ${classification.indicators.join(', ')}`);
 
         // Registrar no banco
         await this.logAiRun(documentId, tenantId, result);
@@ -1273,6 +1278,9 @@ Resposta apenas JSON, sem texto extra.`;
     // Garantir que confidence é número
     if (typeof corrected.confidence === 'string') {
       corrected.confidence = parseInt(corrected.confidence) || 85;
+    } else if (typeof corrected.confidence === 'number' && corrected.confidence <= 1) {
+      // Se confidence está como decimal (0.95), converter para inteiro (95)
+      corrected.confidence = Math.round(corrected.confidence * 100);
     }
     if (!corrected.confidence) {
       corrected.confidence = 85;
