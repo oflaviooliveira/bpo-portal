@@ -158,14 +158,35 @@ export default function AIControlCenter() {
 
   return (
     <div className="w-full max-w-7xl mx-auto space-y-6 p-6">
-      {/* Header */}
+      {/* Header Reformulado */}
       <div className="flex justify-between items-center">
         <div>
-          <h1 className="text-3xl font-bold">Centro de Controle IA</h1>
-          <p className="text-muted-foreground">Gerenciamento completo dos providers de IA</p>
+          <h1 className="text-3xl font-bold text-[#E40064]">Centro de Controle IA</h1>
+          <p className="text-muted-foreground">Controle inteligente de custos e performance</p>
         </div>
         
-        <div className="flex gap-2">
+        <div className="flex items-center gap-3">
+          {/* Status Geral Compacto */}
+          {status.systemHealth && (
+            <div className={`flex items-center gap-2 px-3 py-1.5 rounded-full text-xs font-medium ${
+              status.systemHealth.overall === 'healthy' 
+                ? 'bg-green-100 text-green-800' 
+                : status.systemHealth.overall === 'degraded'
+                ? 'bg-yellow-100 text-yellow-800'
+                : 'bg-red-100 text-red-800'
+            }`}>
+              {status.systemHealth.overall === 'healthy' ? (
+                <CheckCircle className="h-3 w-3" />
+              ) : status.systemHealth.overall === 'degraded' ? (
+                <AlertTriangle className="h-3 w-3" />
+              ) : (
+                <XCircle className="h-3 w-3" />
+              )}
+              {status.systemHealth.overall === 'healthy' ? 'Sistema OK' : 
+               status.systemHealth.overall === 'degraded' ? 'Atenção' : 'Problema'}
+            </div>
+          )}
+          
           <Button
             variant={autoRefresh ? "default" : "outline"}
             size="sm"
@@ -173,19 +194,7 @@ export default function AIControlCenter() {
             data-testid="button-auto-refresh"
           >
             <Activity className="h-4 w-4 mr-2" />
-            Auto-atualizar {autoRefresh && '(ativo)'}
-          </Button>
-          
-          <Button
-            variant="outline"
-            size="sm"
-            onClick={() => {
-              queryClient.invalidateQueries({ queryKey: ["/api/ai-control"] });
-            }}
-            data-testid="button-manual-refresh"
-          >
-            <RefreshCw className="h-4 w-4 mr-2" />
-            Atualizar
+            {autoRefresh ? 'Ao Vivo' : 'Manual'}
           </Button>
         </div>
       </div>
@@ -194,90 +203,93 @@ export default function AIControlCenter() {
         <TabsList className="grid w-full grid-cols-3">
           <TabsTrigger value="controls" className="flex items-center gap-2">
             <Settings className="h-4 w-4" />
-            Controles
+            Configuração
           </TabsTrigger>
           <TabsTrigger value="monitoring" className="flex items-center gap-2">
             <Gauge className="h-4 w-4" />
-            Monitoramento
+            Status Atual
           </TabsTrigger>
           <TabsTrigger value="analytics" className="flex items-center gap-2">
             <BarChart3 className="h-4 w-4" />
-            Analytics
+            Histórico
           </TabsTrigger>
         </TabsList>
 
-        {/* CONTROLES TAB */}
+        {/* ABA CONFIGURAÇÃO - Reformulada */}
         <TabsContent value="controls" className="space-y-6">
-          {/* System Status Alert - Melhorado */}
-          {status.systemHealth && (
-            <div className={`p-4 rounded-lg border ${
-              status.systemHealth.overall === 'healthy' 
-                ? 'bg-green-50 border-green-200 text-green-800' 
-                : status.systemHealth.overall === 'degraded'
-                ? 'bg-yellow-50 border-yellow-200 text-yellow-800'
-                : 'bg-red-50 border-red-200 text-red-800'
-            }`}>
-              <div className="flex items-center gap-2">
-                {status.systemHealth.overall === 'healthy' ? (
-                  <CheckCircle className="h-5 w-5 text-green-600" />
-                ) : status.systemHealth.overall === 'degraded' ? (
-                  <AlertTriangle className="h-5 w-5 text-yellow-600" />
-                ) : (
-                  <XCircle className="h-5 w-5 text-red-600" />
+          {/* Quick Actions Bar */}
+          <div className="flex gap-4 p-4 bg-slate-50 dark:bg-slate-900 rounded-lg">
+            <div className="flex-1">
+              <h3 className="font-semibold mb-2">Ações Rápidas</h3>
+              <div className="flex gap-2">
+                <Button 
+                  variant="outline" 
+                  size="sm"
+                  onClick={() => swapPrioritiesMutation.mutate()}
+                  disabled={swapPrioritiesMutation.isPending}
+                >
+                  <RefreshCw className="h-4 w-4 mr-1" />
+                  Trocar Prioridades
+                </Button>
+                {status.systemHealth?.overall !== 'healthy' && (
+                  <Button variant="outline" size="sm" className="text-yellow-600">
+                    <Zap className="h-4 w-4 mr-1" />
+                    Modo Emergência
+                  </Button>
                 )}
-                <div className="flex-1">
-                  <h4 className="font-medium">
-                    Sistema: {status.systemHealth.overall === 'healthy' ? 'Saudável' : 
-                             status.systemHealth.overall === 'degraded' ? 'Degradado' : 'Crítico'}
-                  </h4>
-                  <div className="text-sm space-y-1">
-                    <p>
-                      Provider Primário: {status.systemHealth.primaryProvider?.toUpperCase() || 'N/A'} | 
-                      Última verificação: {new Date(status.systemHealth.lastCheck).toLocaleTimeString('pt-BR')}
-                    </p>
-                    {status.systemHealth.overall !== 'healthy' && (
-                      <p className="font-medium">
-                        💡 Dica: Use o botão "Reset" nos providers com erro ou ative o Modo Emergência se necessário
-                      </p>
-                    )}
-                  </div>
-                </div>
               </div>
             </div>
-          )}
+            
+            {/* Custo do Mês */}
+            {performance.summary && (
+              <div className="text-right">
+                <p className="text-sm text-muted-foreground">Custo do Mês</p>
+                <p className="text-2xl font-bold text-[#E40064]">
+                  ${(performance.summary.totalCost || 0).toFixed(3)}
+                </p>
+                <p className="text-xs text-muted-foreground">
+                  {performance.summary.totalRequests || 0} documentos processados
+                </p>
+              </div>
+            )}
+          </div>
 
-          {/* Provider Controls */}
-          <div className="grid gap-4 md:grid-cols-2">
-            {providers.map((provider: any) => (
-              <Card key={provider.name}>
-                <CardHeader>
-                  <CardTitle className="flex items-center justify-between">
-                    <div className="flex items-center gap-2">
-                      <div className={`w-3 h-3 rounded-full ${getStatusColor(provider.status)}`} />
-                      {provider.name.toUpperCase()}
+          {/* Configuração de Modelos IA */}
+          <div className="space-y-4">
+            <h3 className="text-lg font-semibold">Configuração de Modelos IA</h3>
+            <div className="grid gap-4 md:grid-cols-2">
+              {providers.map((provider: any) => (
+                <Card key={provider.name} className="relative">
+                  <CardHeader className="pb-3">
+                    <div className="flex items-center justify-between">
+                      <div className="flex items-center gap-3">
+                        <div className={`w-4 h-4 rounded-full ${getStatusColor(provider.status)}`} />
+                        <div>
+                          <CardTitle className="text-base">{provider.name.toUpperCase()}</CardTitle>
+                          <CardDescription className="text-xs">
+                            Prioridade {provider.priority} • {provider.status === 'online' ? 'Operacional' : 'Indisponível'}
+                          </CardDescription>
+                        </div>
+                      </div>
+                      <Switch
+                        checked={provider.enabled}
+                        onCheckedChange={() => toggleProviderMutation.mutate({ name: provider.name })}
+                        disabled={toggleProviderMutation.isPending}
+                      />
                     </div>
-                    <Switch
-                      checked={provider.enabled}
-                      onCheckedChange={() => toggleProviderMutation.mutate({ name: provider.name })}
-                      disabled={toggleProviderMutation.isPending}
-                    />
-                  </CardTitle>
-                  <CardDescription>
-                    Prioridade {provider.priority}
-                  </CardDescription>
-                </CardHeader>
-                <CardContent>
-                  <div className="space-y-4">
-                    {/* Model Selection */}
+                  </CardHeader>
+                  
+                  <CardContent className="space-y-4">
+                    {/* Model Selection Melhorado */}
                     <div className="space-y-2">
-                      <label className="text-sm font-medium">Modelo:</label>
+                      <label className="text-sm font-medium text-muted-foreground">Modelo Ativo:</label>
                       <Select 
                         value={provider.model} 
                         onValueChange={(modelId) => updateModelMutation.mutate({ 
                           providerName: provider.name, 
                           modelId 
                         })}
-                        disabled={updateModelMutation.isPending}
+                        disabled={updateModelMutation.isPending || !provider.enabled}
                       >
                         <SelectTrigger data-testid={`select-model-${provider.name}`}>
                           <SelectValue placeholder="Selecionar modelo" />
@@ -285,10 +297,10 @@ export default function AIControlCenter() {
                         <SelectContent>
                           {models[provider.name]?.map((model: any) => (
                             <SelectItem key={model.id} value={model.id}>
-                              <div className="flex flex-col">
-                                <span>{model.name}</span>
-                                <span className="text-xs text-muted-foreground">
-                                  ${model.avgCost.toFixed(6)}/1k tokens
+                              <div className="flex justify-between items-center w-full">
+                                <span className="font-medium">{model.name}</span>
+                                <span className="text-xs text-[#E40064] font-semibold">
+                                  ${model.avgCost.toFixed(3)}/1k
                                 </span>
                               </div>
                             </SelectItem>
@@ -297,18 +309,20 @@ export default function AIControlCenter() {
                       </Select>
                     </div>
 
-                    <div className="space-y-2">
-                      <div className="flex justify-between text-sm">
-                        <span>Custo por 1000 tokens:</span>
-                        <span>{formatCurrency(provider.costPer1000 * 1000)}</span>
+                    {/* Status e Informações */}
+                    <div className="space-y-3 pt-2 border-t">
+                      <div className="flex justify-between items-center text-sm">
+                        <span className="text-muted-foreground">Custo:</span>
+                        <span className="font-semibold">${(provider.costPer1000 || 0).toFixed(3)}/1k tokens</span>
                       </div>
-                      <div className="flex justify-between text-sm">
-                        <span>Status Operacional:</span>
+                      
+                      <div className="flex justify-between items-center text-sm">
+                        <span className="text-muted-foreground">Status:</span>
                         <div className="flex items-center gap-2">
                           <Badge variant={provider.status === 'online' ? 'default' : provider.status === 'error' ? 'destructive' : 'secondary'}>
-                            {provider.status === 'online' ? 'Online' : 
-                             provider.status === 'error' ? 'Com Erro' : 
-                             'Indisponível'}
+                            {provider.status === 'online' ? '🟢 Online' : 
+                             provider.status === 'error' ? '🔴 Erro' : 
+                             '⚪ Indisponível'}
                           </Badge>
                           {provider.status === 'error' && (
                             <Button 
@@ -316,43 +330,19 @@ export default function AIControlCenter() {
                               variant="outline"
                               onClick={() => resetProviderMutation.mutate({ name: provider.name })}
                               disabled={resetProviderMutation.isPending}
-                              title="Reset status para tentar novamente"
+                              className="h-6 px-2 text-xs"
                             >
                               Reset
                             </Button>
                           )}
                         </div>
                       </div>
-                      <div className="flex justify-between text-sm">
-                        <span>Habilitado para uso:</span>
-                        <Badge variant={provider.enabled ? 'default' : 'secondary'}>
-                          {provider.enabled ? 'Ativo' : 'Inativo'}
-                        </Badge>
-                      </div>
                     </div>
-                  </div>
                 </CardContent>
               </Card>
             ))}
           </div>
-
-          {/* Actions */}
-          <Card>
-            <CardHeader>
-              <CardTitle>Ações Rápidas</CardTitle>
-              <CardDescription>Controles gerais do sistema</CardDescription>
-            </CardHeader>
-            <CardContent className="space-y-4">
-              <Button
-                onClick={() => swapPrioritiesMutation.mutate()}
-                disabled={swapPrioritiesMutation.isPending}
-                className="w-full"
-              >
-                <Zap className="h-4 w-4 mr-2" />
-                Trocar Prioridades GLM ↔ OpenAI
-              </Button>
-            </CardContent>
-          </Card>
+          </div>
         </TabsContent>
 
         {/* MONITORAMENTO TAB */}
