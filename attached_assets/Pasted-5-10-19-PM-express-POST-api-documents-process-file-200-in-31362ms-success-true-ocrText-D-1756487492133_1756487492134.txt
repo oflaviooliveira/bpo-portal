@@ -1,0 +1,274 @@
+5:10:19 PM [express] POST /api/documents/process-file 200 in 31362ms :: {"success":true,"ocrText":"D…
+🔍 Processando arquivo para preview: Compra Pneus.pdf
+📄 Iniciando extração de texto PDF: uploads/d0f5d8dfe2d21e20e5c51a23411490b1
+✅ Extração nativa bem-sucedida: 2342 caracteres
+🤖 Analisando documento com IA: Compra Pneus.pdf
+📝 Texto extraído (2342 chars): DANFE
+Documento Auxiliar da 
+Nota Fiscal Eletrônica
+AV MARIA DO CARMO, 1571
+POSTO LAVA TUCUNS
+CRUZ / CE
+62595-000
+(88) 9729-5739 - 
+0 - ENTRADA
+1 - SAÍDA
+CHAVE DE ACESSO
+Nº 645   
+Série 1 
+Consulta de...
+📋 Detectada nota fiscal - usando analisador especializado
+🔄 Usando AI Multi-Provider para análise...
+📋 Documento classificado como: DANFE (57.5% confiança)
+🔍 Indicadores: Keyword: DANFE, Keyword: Nota Fiscal Eletrônica, Keyword: CNPJ, Keyword: Chave de Acesso, Keyword: ICMS, Keyword: CFOP, Keyword: NCM, Pattern: \d{4}\s\d{4}\s\d{4}\s\d{4}\s\d{4}\s\d{4}\s\d{4}\s\d{4}\s\d{4}\s\d{4}\s\d{4}
+📋 Documento complexo detectado (DANFE) - priorizando OpenAI
+🤖 Tentando análise com openai...
+🔗 OpenAI API Request - Model: gpt-4o-mini
+💰 OpenAI Expected Cost: $0.375/1k tokens
+🤖 OpenAI Response (gpt-4o-mini): {
+  "valor": "VALOR TOTAL DA NOTA",
+  "fornecedor": "ROBSON PNEUS E AUTOPECAS LTDA",
+  "cnpj_emitente": "95.001.834/0001-34",
+  "data_emissao": "19/07/2025",
+  "data_saida": "19/07/2025",
+  "data_vencimento": "FATURA",
+  "descricao": "Revenda de mercadorias com ST",
+  "categoria": "COMP",
+  "documento": "Nº 645 Série 1",
+  "confidence": "alta"
+}
+⚠️ Schema validation strict failed for openai, trying flexible validation...
+🔧 GLM response auto-corrected: {
+  valor: 'R$ VALOR TOTAL DA NOTA',
+  fornecedor: 'ROBSON PNEUS E AUTOPECAS LTDA',
+  cnpj_emitente: '95.001.834/0001-34',
+  data_emissao: '19/07/2025',
+  data_saida: '19/07/2025',
+  data_vencimento: 'FATURA',
+  descricao: 'Revenda de mercadorias com ST',
+  categoria: 'COMP',
+  documento: 'Nº 645 Série 1',
+  confidence: 85,
+  centro_custo: 'GERAL'
+}
+❌ Both validation attempts failed for openai: ZodError: [
+  {
+    "validation": "regex",
+    "code": "invalid_string",
+    "message": "Formato de valor inválido. Use: R$ X.XXX,XX",
+    "path": [
+      "valor"
+    ]
+  },
+  {
+    "validation": "regex",
+    "code": "invalid_string",
+    "message": "Data deve estar no formato DD/MM/AAAA",
+    "path": [
+      "data_vencimento"
+    ]
+  }
+]
+    at get error [as error] (file:///home/runner/workspace/node_modules/zod/lib/index.mjs:587:31)
+    at ZodObject.parse (file:///home/runner/workspace/node_modules/zod/lib/index.mjs:663:22)
+    at AIMultiProvider.analyzeDocument (/home/runner/workspace/server/ai-multi-provider.ts:652:60)
+    at process.processTicksAndRejections (node:internal/process/task_queues:95:5)
+    at async DocumentAnalyzer.analyzeDocument (/home/runner/workspace/server/ai/document-analyzer.ts:82:24)
+    at async <anonymous> (/home/runner/workspace/server/routes.ts:276:22) {
+  issues: [
+    {
+      validation: 'regex',
+      code: 'invalid_string',
+      message: 'Formato de valor inválido. Use: R$ X.XXX,XX',
+      path: [Array]
+    },
+    {
+      validation: 'regex',
+      code: 'invalid_string',
+      message: 'Data deve estar no formato DD/MM/AAAA',
+      path: [Array]
+    }
+  ],
+  addIssue: [Function (anonymous)],
+  addIssues: [Function (anonymous)],
+  errors: [
+    {
+      validation: 'regex',
+      code: 'invalid_string',
+      message: 'Formato de valor inválido. Use: R$ X.XXX,XX',
+      path: [Array]
+    },
+    {
+      validation: 'regex',
+      code: 'invalid_string',
+      message: 'Data deve estar no formato DD/MM/AAAA',
+      path: [Array]
+    }
+  ]
+}
+⚠️ Provider openai kept ONLINE (format error, recoverable)
+🤖 Tentando análise com glm (fallback)...
+🔗 GLM API Request - Model: glm-4.5
+💰 GLM Expected Cost: $1.4/1k tokens
+📝 GLM Full prompt length: 2816 chars
+📝 GLM Prompt preview: Você é um especialista em análise de DANFE (Documento Auxiliar da Nota Fiscal Eletrônica) brasileira.
+
+
+ARQUIVO: Compra Pneus.pdf
+TEXTO OCR: DANFE
+Documento Auxiliar da 
+Nota Fiscal Eletrônica
+AV MARIA DO CARMO, 1571
+POSTO LAVA TUCUNS
+CRUZ / CE
+62595-000
+(88) 9729-5739 - 
+0 - ENTRADA
+1 - SAÍDA
+CHAVE...
+📝 GLM Request payload size: 223 chars
+⏰ Starting GLM request with 45s timeout...
+🔍 GLM Response status: 200 (16863ms)
+📊 GLM Response headers: {"connection":"keep-alive","content-encoding":"gzip","content-type":"application/json; charset=UTF-8","date":"Fri, 29 Aug 2025 17:11:25 GMT","server":"ZenZGA/2.4","strict-transport-security":"max-age=31536000; includeSubDomains","transfer-encoding":"chunked","vary":"Accept-Encoding, Origin, Access-Control-Request-Method, Access-Control-Request-Headers, Origin, Access-Control-Request-Method, Access-Control-Request-Headers","x-log-id":"20250830011109956aa5dd62d74d3d"}
+📦 GLM Raw response structure: [ 'choices', 'created', 'id', 'model', 'request_id', 'usage' ]
+🤖 GLM Response (glm-4.5): {
+  "valor": null,
+  "fornecedor": "ROBSON PNEUS E AUTOPECAS LTDA",
+  "data_pagamento": null,
+  "data_vencimento": null,
+  "descricao": "Revenda de mercadorias com ST",
+  "categoria": null,
+  "centro_custo": "COMP",
+  "documento": "DANFE Nº 645 Série 1",
+  "confidence": 30
+}
+📏 GLM Response length: 275 chars
+⚠️ Schema validation strict failed for glm, trying flexible validation...
+🔧 GLM response auto-corrected: {
+  fornecedor: 'ROBSON PNEUS E AUTOPECAS LTDA',
+  descricao: 'Revenda de mercadorias com ST',
+  centro_custo: 'COMP',
+  documento: 'DANFE Nº 645 Série 1',
+  confidence: 30,
+  categoria: 'Outros'
+}
+❌ Both validation attempts failed for glm: ZodError: [
+  {
+    "code": "invalid_type",
+    "expected": "string",
+    "received": "undefined",
+    "path": [
+      "valor"
+    ],
+    "message": "Required"
+  }
+]
+    at get error [as error] (file:///home/runner/workspace/node_modules/zod/lib/index.mjs:587:31)
+    at ZodObject.parse (file:///home/runner/workspace/node_modules/zod/lib/index.mjs:663:22)
+    at AIMultiProvider.analyzeDocument (/home/runner/workspace/server/ai-multi-provider.ts:652:60)
+    at process.processTicksAndRejections (node:internal/process/task_queues:95:5)
+    at async DocumentAnalyzer.analyzeDocument (/home/runner/workspace/server/ai/document-analyzer.ts:82:24)
+    at async <anonymous> (/home/runner/workspace/server/routes.ts:276:22) {
+  issues: [
+    {
+      code: 'invalid_type',
+      expected: 'string',
+      received: 'undefined',
+      path: [Array],
+      message: 'Required'
+    }
+  ],
+  addIssue: [Function (anonymous)],
+  addIssues: [Function (anonymous)],
+  errors: [
+    {
+      code: 'invalid_type',
+      expected: 'string',
+      received: 'undefined',
+      path: [Array],
+      message: 'Required'
+    }
+  ]
+}
+⚠️ Provider glm kept ONLINE (format error, recoverable)
+❌ Erro na análise com IA: Error: Todos os provedores de IA falharam. Último erro: [
+  {
+    "code": "invalid_type",
+    "expected": "string",
+    "received": "null",
+    "path": [
+      "valor"
+    ],
+    "message": "Expected string, received null"
+  },
+  {
+    "code": "invalid_type",
+    "expected": "string",
+    "received": "null",
+    "path": [
+      "data_pagamento"
+    ],
+    "message": "Expected string, received null"
+  },
+  {
+    "code": "invalid_type",
+    "expected": "string",
+    "received": "null",
+    "path": [
+      "data_vencimento"
+    ],
+    "message": "Expected string, received null"
+  },
+  {
+    "code": "invalid_type",
+    "expected": "string",
+    "received": "null",
+    "path": [
+      "categoria"
+    ],
+    "message": "Expected string, received null"
+  }
+]
+⚠️ IA não retornou dados válidos: {
+  success: false,
+  confidence: 0,
+  error: 'Erro na análise: Error: Todos os provedores de IA falharam. Último erro: [\n' +
+    '  {\n' +
+    '    "code": "invalid_type",\n' +
+    '    "expected": "string",\n' +
+    '    "received": "null",\n' +
+    '    "path": [\n' +
+    '      "valor"\n' +
+    '    ],\n' +
+    '    "message": "Expected string, received null"\n' +
+    '  },\n' +
+    '  {\n' +
+    '    "code": "invalid_type",\n' +
+    '    "expected": "string",\n' +
+    '    "received": "null",\n' +
+    '    "path": [\n' +
+    '      "data_pagamento"\n' +
+    '    ],\n' +
+    '    "message": "Expected string, received null"\n' +
+    '  },\n' +
+    '  {\n' +
+    '    "code": "invalid_type",\n' +
+    '    "expected": "string",\n' +
+    '    "received": "null",\n' +
+    '    "path": [\n' +
+    '      "data_vencimento"\n' +
+    '    ],\n' +
+    '    "message": "Expected string, received null"\n' +
+    '  },\n' +
+    '  {\n' +
+    '    "code": "invalid_type",\n' +
+    '    "expected": "string",\n' +
+    '    "received": "null",\n' +
+    '    "path": [\n' +
+    '      "categoria"\n' +
+    '    ],\n' +
+    '    "message": "Expected string, received null"\n' +
+    '  }\n' +
+    ']'
+}
+5:11:25 PM [express] POST /api/documents/process-file 200 in 20461ms :: {"success":true,"ocrText":"D…
