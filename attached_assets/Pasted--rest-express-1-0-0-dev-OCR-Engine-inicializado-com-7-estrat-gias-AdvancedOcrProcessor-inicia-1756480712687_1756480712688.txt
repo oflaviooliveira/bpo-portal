@@ -1,0 +1,111 @@
+> rest-express@1.0.0 dev
+🔧 OCR Engine inicializado com 7 estratégias
+🚀 AdvancedOcrProcessor inicializado com sistema completo de fallbacks
+🔧 OCR Engine inicializado com 7 estratégias
+🚀 AdvancedOcrProcessor inicializado com sistema completo de fallbacks
+📅 Configurando transições automáticas de status...
+🔄 Executando transições automáticas...
+⚠️ Auto-transitions temporarily disabled - need tenant-specific processing
+✅ Transições automáticas configuradas
+3:16:58 PM [express] serving on port 5000
+Browserslist: browsers data (caniuse-lite) is 10 months old. Please run:
+  npx update-browserslist-db@latest
+  Why you should do it regularly: https://github.com/browserslist/update-db#readme
+3:17:02 PM [express] GET /api/user 401 in 3ms
+3:17:07 PM [express] GET /api/user 304 in 140ms :: {"id":"59eb9f78-8dc1-4739-b357-2d44ee79cf24","use…
+3:17:08 PM [express] GET /api/documents 304 in 191ms :: []
+3:17:08 PM [express] GET /api/dashboard/stats 304 in 285ms :: {"totalDocuments":0,"pendingReview":0,…
+3:17:11 PM [express] GET /api/user 304 in 134ms :: {"id":"59eb9f78-8dc1-4739-b357-2d44ee79cf24","use…
+3:17:11 PM [express] GET /api/documents 304 in 172ms :: []
+3:17:11 PM [express] GET /api/dashboard/stats 304 in 275ms :: {"totalDocuments":0,"pendingReview":0,…
+3:17:38 PM [express] GET /api/ai-control/available-models 304 in 129ms :: {"glm":[{"id":"glm-4.5","n…
+3:17:38 PM [express] GET /api/ai-control 304 in 185ms :: {"providers":[{"name":"glm","enabled":true,…
+3:17:38 PM [express] GET /api/ai-control/performance 200 in 257ms :: {"metrics":{"glm":{"enabled":tr…
+3:17:38 PM [express] GET /api/ai-control/analytics 304 in 327ms :: {"timeline":[{"date":"2025-07-31"…
+3:17:38 PM [express] GET /api/ai-control/status 200 in 331ms :: {"providers":[{"name":"glm","status"…
+3:17:44 PM [express] GET /api/ai-control/status 200 in 181ms :: {"providers":[{"name":"glm","status"…
+3:17:48 PM [express] GET /api/cost-centers 304 in 179ms :: [{"id":"84f9e046-e796-44e9-83e4-9708fa719…
+3:17:48 PM [express] GET /api/categories 304 in 180ms :: [{"id":"3765df3d-d887-42d0-972b-318d5cb0c5b…
+3:17:48 PM [express] GET /api/contrapartes 304 in 189ms :: [{"id":"07503431-381b-4c56-9d69-09c5f8400…
+3:17:48 PM [express] GET /api/banks 304 in 192ms :: [{"id":"ec72d976-205a-474c-8282-0c4bee085de8","c…
+🔍 Processando arquivo para preview: 22.07.2025_PG_19.07.2025_02.08.2025_COMPRA DE 2 PNEUS_ManutencÌ§aÌo de Veiculos_SRJ1_R$1.450,00.pdf
+📄 Iniciando extração de texto PDF: uploads/fb08e6623eefe221573130efd236ffe2
+Warning: Indexing all PDF objects
+✅ Extração nativa bem-sucedida: 2342 caracteres
+🤖 Analisando documento com IA: 22.07.2025_PG_19.07.2025_02.08.2025_COMPRA DE 2 PNEUS_ManutencÌ§aÌo de Veiculos_SRJ1_R$1.450,00.pdf
+📝 Texto extraído (2342 chars): DANFE
+Documento Auxiliar da 
+Nota Fiscal Eletrônica
+AV MARIA DO CARMO, 1571
+POSTO LAVA TUCUNS
+CRUZ / CE
+62595-000
+(88) 9729-5739 - 
+0 - ENTRADA
+1 - SAÍDA
+CHAVE DE ACESSO
+Nº 645   
+Série 1 
+Consulta de...
+📋 Detectada nota fiscal - usando analisador especializado
+🔄 Usando AI Multi-Provider para análise...
+🤖 Tentando análise com glm...
+🔗 GLM API Request - Model: glm-4.5
+📝 GLM Request payload size: 219 chars
+🕐 GLM request timeout after 15s
+⚠️ Provider glm failed: GLM timeout: Request took too long
+⚠️ Provider glm kept ONLINE (connectivity, recoverable)
+⏰ Scheduled auto-recovery for glm in 30s
+🔍 GLM Error Details - Type: connectivity, Recoverable: true, Message: GLM timeout: Request took too long
+🤖 Tentando análise com openai (fallback)...
+🤖 OpenAI Response: {
+  "valor": "R$ 1.450,00",
+  "data_pagamento": "19/07/2025",
+  "data_vencimento": "22/07/2025",
+  "fornecedor": "ROBSON PNEUS E AUTOPECAS LTDA",
+  "descricao": "PG COMPRA DE 2 PNEUS ManutencÌ§aÌo de Veiculos SRJ1 - PNEU WANLI 225/75R16LT 120/116 S",
+  "categoria": "Manutenção de Veículos",
+  "centro_custo": "SRJ1",
+  "documento": "CNPJ: 07236827658.950.018/0001-34",
+  "cliente_fornecedor": "ECO EXPRESS SERVIÇOS SUSTENTÁVEIS LTDA",
+  "observacoes": "Nota Fiscal Eletrônica, Protocolo de Autorização de Uso: 223250071454265 - 19/07/2025",
+  "confidence": 95
+}
+✅ Provider openai marked as ONLINE after successful analysis
+📊 Stats atualizadas para openai: 1 requests, 100.0% sucesso
+🤖 IA utilizada: openai
+🎯 Confiança: 95%
+💰 Custo: $0.710625
+⏱️ Tempo: 7567ms
+🔄 Fallback: network_timeout
+🔄 Mapeando dados IA: {
+  "valor": "R$ 1.450,00",
+  "data_pagamento": "19/07/2025",
+  "data_vencimento": "22/07/2025",
+  "fornecedor": "ROBSON PNEUS E AUTOPECAS LTDA",
+  "descricao": "PG COMPRA DE 2 PNEUS ManutencÌ§aÌo de Veiculos SRJ1 - PNEU WANLI 225/75R16LT 120/116 S",
+  "categoria": "Manutenção de Veículos",
+  "centro_custo": "SRJ1",
+  "documento": "CNPJ: 07236827658.950.018/0001-34",
+  "cliente_fornecedor": "ECO EXPRESS SERVIÇOS SUSTENTÁVEIS LTDA",
+  "observacoes": "Nota Fiscal Eletrônica, Protocolo de Autorização de Uso: 223250071454265 - 19/07/2025",
+  "confidence": 95
+}
+✅ Sugestões mapeadas: {
+  "amount": "R$ 1.450,00",
+  "supplier": "ROBSON PNEUS E AUTOPECAS LTDA",
+  "contraparte": "ROBSON PNEUS E AUTOPECAS LTDA",
+  "documento": "CNPJ: 07236827658.950.018/0001-34",
+  "description": "PG COMPRA DE 2 PNEUS ManutencÌ§aÌo de Veiculos SRJ1 - PNEU WANLI 225/75R16LT 120/116 S",
+  "dueDate": "22/07/2025",
+  "paymentDate": "19/07/2025",
+  "category": "Manutenção de Veículos",
+  "confidence": {
+    "amount": 95,
+    "supplier": 95,
+    "description": 95,
+    "dueDate": 95,
+    "paymentDate": 95
+  }
+}
+3:18:19 PM [express] POST /api/documents/process-file 200 in 23285ms :: {"success":true,"ocrText":"D
