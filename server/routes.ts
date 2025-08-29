@@ -408,8 +408,14 @@ export async function registerRoutes(app: Express): Promise<Server> {
         const isFilenameData = dataSource.includes('FILENAME');
         const adjustedConfidence = isFilenameData ? Math.round(aiResult.confidence * 0.7) : Math.round(aiResult.confidence);
         
-        // Garantir que qualityFlags está disponível
-        const qualityFlags = ocrResult?.metadata?.qualityFlags;
+        // Garantir que qualityFlags está disponível no escopo correto
+        const qualityFlags = ocrResult?.metadata?.qualityFlags || {
+          estimatedQuality: 'UNKNOWN',
+          isSystemPage: false,
+          isIncomplete: false,
+          characterCount: 0,
+          hasMonetaryValues: false
+        };
         
         suggestions = {
           // Campos básicos sempre mapeados
@@ -438,11 +444,11 @@ export async function registerRoutes(app: Express): Promise<Server> {
           qualityMetadata: {
             dataSource,
             isFilenameData,
-            ocrQuality: qualityFlags?.estimatedQuality || 'UNKNOWN',
-            isSystemPage: qualityFlags?.isSystemPage || false,
-            isIncomplete: qualityFlags?.isIncomplete || false,
-            characterCount: qualityFlags?.characterCount || 0,
-            hasMonetaryValues: qualityFlags?.hasMonetaryValues || false
+            ocrQuality: qualityFlags.estimatedQuality,
+            isSystemPage: qualityFlags.isSystemPage,
+            isIncomplete: qualityFlags.isIncomplete,
+            characterCount: qualityFlags.characterCount,
+            hasMonetaryValues: qualityFlags.hasMonetaryValues
           },
           
           // Confidence granular por campo ajustado pela fonte
