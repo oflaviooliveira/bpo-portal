@@ -2,6 +2,38 @@ import OpenAI from "openai";
 import { storage } from "./storage";
 import { aiAnalysisResponseSchema, autoCorrectJsonResponse, normalizeValue, normalizeDate, type AiAnalysisResponse } from "./ai-validation-schema";
 
+// Document classification types
+export type DocumentType = 'DANFE' | 'RECIBO' | 'BOLETO' | 'PIX' | 'CUPOM' | 'FATURA' | 'CONTRATO' | 'OUTROS';
+
+interface DocumentClassification {
+  type: DocumentType;
+  confidence: number;
+  indicators: string[];
+}
+
+interface DocumentTypeConfig {
+  keywords: string[];
+  structurePatterns: RegExp[];
+  requiredFields: string[];
+  validationRules: string[];
+}
+
+interface ValidationResult {
+  score: number;
+  status: 'VALID' | 'WARNING' | 'ERROR';
+  errors: string[];
+  warnings: string[];
+  suggestions: string[];
+  autoFixes: AutoFix[];
+}
+
+interface AutoFix {
+  field: string;
+  currentValue: any;
+  suggestedValue: any;
+  reason: string;
+}
+
 // Available models configuration
 const AVAILABLE_MODELS = {
   glm: [
@@ -71,6 +103,58 @@ const AVAILABLE_MODELS = {
       avgCost: 1.125 // Average for pricing display
     }
   ]
+};
+
+// Document type configurations for intelligent classification
+const DOCUMENT_TYPE_CONFIGS: Record<DocumentType, DocumentTypeConfig> = {
+  DANFE: {
+    keywords: ['DANFE', 'Nota Fiscal Eletrônica', 'CNPJ', 'Chave de Acesso', 'ICMS', 'CFOP', 'NCM'],
+    structurePatterns: [/\d{4}\s\d{4}\s\d{4}\s\d{4}\s\d{4}\s\d{4}\s\d{4}\s\d{4}\s\d{4}\s\d{4}\s\d{4}/, /CNPJ.*\d{2}\.\d{3}\.\d{3}\/\d{4}-\d{2}/],
+    requiredFields: ['valor', 'fornecedor', 'data_emissao', 'cnpj_emitente'],
+    validationRules: ['CNPJ format', 'Chave NF-e length', 'Mathematical consistency']
+  },
+  RECIBO: {
+    keywords: ['RECIBO', 'Valor recebido', 'Pagamento', 'Assinatura', 'Finalidade', 'Por extenso'],
+    structurePatterns: [/RECIBO/i, /valor.*recebido/i, /finalidade/i],
+    requiredFields: ['valor', 'pagador', 'recebedor', 'finalidade', 'data_pagamento'],
+    validationRules: ['Value consistency', 'Date logic']
+  },
+  BOLETO: {
+    keywords: ['Boleto', 'Código de barras', 'Linha digitável', 'Vencimento', 'Cedente', 'Sacado', 'Banco'],
+    structurePatterns: [/\d{5}\.\d{5}\s\d{5}\.\d{6}\s\d{5}\.\d{6}/, /\d{47,48}/],
+    requiredFields: ['valor', 'cedente', 'sacado', 'data_vencimento', 'codigo_barras'],
+    validationRules: ['Barcode validation', 'Bank code validation']
+  },
+  PIX: {
+    keywords: ['PIX', 'Chave PIX', 'QR Code', 'ID Transação', 'Transferência', 'Protocolo'],
+    structurePatterns: [/PIX/i, /chave.*pix/i, /id.*transação/i],
+    requiredFields: ['valor', 'remetente', 'destinatario', 'data_transacao', 'id_transacao'],
+    validationRules: ['Transaction ID format', 'PIX key validation']
+  },
+  CUPOM: {
+    keywords: ['Cupom Fiscal', 'ECF', 'Não Fiscal', 'CNPJ', 'Total'],
+    structurePatterns: [/cupom.*fiscal/i, /ecf/i],
+    requiredFields: ['valor', 'estabelecimento', 'data_emissao', 'itens'],
+    validationRules: ['Total calculation', 'Item consistency']
+  },
+  FATURA: {
+    keywords: ['Fatura', 'Conta', 'Serviços', 'Mensalidade', 'Referente'],
+    structurePatterns: [/fatura/i, /conta/i, /referente.*a/i],
+    requiredFields: ['valor', 'prestador', 'periodo', 'data_vencimento'],
+    validationRules: ['Period validation', 'Service description']
+  },
+  CONTRATO: {
+    keywords: ['Contrato', 'Acordo', 'Partes', 'Cláusulas', 'Anexo'],
+    structurePatterns: [/contrato/i, /acordo/i, /partes/i],
+    requiredFields: ['partes', 'objeto', 'valor', 'data_assinatura'],
+    validationRules: ['Party identification', 'Contract terms']
+  },
+  OUTROS: {
+    keywords: ['Documento', 'Comprovante', 'Atestado'],
+    structurePatterns: [/.*/],
+    requiredFields: ['valor', 'descricao', 'data'],
+    validationRules: ['Basic validation']
+  }
 };
 
 // Multi-provider AI system based on the other portal's documentation
@@ -149,15 +233,362 @@ class AIMultiProvider {
     apiKey: process.env.OPENAI_API_KEY || ""
   });
 
+  // INTELLIGENT DOCUMENT CLASSIFICATION SYSTEM
+  private classifyDocument(ocrText: string, fileName: string): DocumentClassification {
+    const scores: Record<DocumentType, number> = {
+      DANFE: 0, RECIBO: 0, BOLETO: 0, PIX: 0, 
+      CUPOM: 0, FATURA: 0, CONTRATO: 0, OUTROS: 0
+    };
+    
+    const indicators: Record<DocumentType, string[]> = {
+      DANFE: [], RECIBO: [], BOLETO: [], PIX: [], 
+      CUPOM: [], FATURA: [], CONTRATO: [], OUTROS: []
+    };
+
+    // Analyze text content and filename for classification
+    const fullText = `${ocrText} ${fileName}`.toLowerCase();
+
+    Object.entries(DOCUMENT_TYPE_CONFIGS).forEach(([type, config]) => {
+      const docType = type as DocumentType;
+      
+      // Keyword matching (40% weight)
+      config.keywords.forEach(keyword => {
+        if (fullText.includes(keyword.toLowerCase())) {
+          scores[docType] += 40 / config.keywords.length;
+          indicators[docType].push(`Keyword: ${keyword}`);
+        }
+      });
+
+      // Structure pattern matching (35% weight)
+      config.structurePatterns.forEach(pattern => {
+        if (pattern.test(ocrText)) {
+          scores[docType] += 35 / config.structurePatterns.length;
+          indicators[docType].push(`Pattern: ${pattern.source}`);
+        }
+      });
+
+      // Filename analysis (25% weight)
+      if (docType === 'DANFE' && fileName.toLowerCase().includes('nota')) {
+        scores[docType] += 25;
+        indicators[docType].push('Filename indicates invoice');
+      } else if (docType === 'RECIBO' && fileName.toLowerCase().includes('recibo')) {
+        scores[docType] += 25;
+        indicators[docType].push('Filename indicates receipt');
+      } else if (docType === 'BOLETO' && fileName.toLowerCase().includes('boleto')) {
+        scores[docType] += 25;
+        indicators[docType].push('Filename indicates bank slip');
+      }
+    });
+
+    // Find best match
+    const bestMatch = Object.entries(scores).reduce((best, [type, score]) => 
+      score > best.score ? { type: type as DocumentType, score } : best, 
+      { type: 'OUTROS' as DocumentType, score: 0 }
+    );
+
+    return {
+      type: bestMatch.type,
+      confidence: Math.min(bestMatch.score, 100),
+      indicators: indicators[bestMatch.type]
+    };
+  }
+
+  // SPECIALIZED PROMPTS BY DOCUMENT TYPE
+  private createSpecializedPrompt(documentType: DocumentType, ocrText: string, fileName: string): string {
+    const fileMetadata = this.extractFileMetadata(fileName);
+    
+    const baseContext = `
+ARQUIVO: ${fileName}
+TEXTO OCR: ${ocrText.length > 1500 ? ocrText.substring(0, 1500) + '...' : ocrText}
+METADADOS: ${JSON.stringify(fileMetadata, null, 2)}
+`;
+
+    switch (documentType) {
+      case 'DANFE':
+        return `Você é um especialista em análise de DANFE (Documento Auxiliar da Nota Fiscal Eletrônica) brasileira.
+
+${baseContext}
+
+INSTRUÇÕES CRÍTICAS:
+1. CNPJ do EMITENTE: Busque na seção "EMITENTE" ou próximo ao nome da empresa emissora
+2. CNPJ do DESTINATÁRIO: Busque na seção "DESTINATÁRIO" ou "REMETENTE"  
+3. DATAS: Distinga claramente:
+   - Data de Emissão: quando a NF foi emitida
+   - Data de Saída: quando produto saiu (pode ser igual à emissão)
+   - Data de Vencimento: para pagamento (pode não existir se à vista)
+4. PRODUTO: Mantenha descrição técnica completa (marca, modelo, especificações)
+5. VALORES: Validar que Quantidade × Valor Unitário = Valor Total
+6. CHAVE DE ACESSO: 44 dígitos da chave da NF-e
+
+VALIDAÇÕES OBRIGATÓRIAS:
+- CNPJs no formato XX.XXX.XXX/XXXX-XX
+- Datas no formato DD/MM/AAAA
+- Valores sempre com R$ e centavos
+- Descrição técnica detalhada, não genérica
+
+Retorne JSON com: valor, fornecedor, cnpj_emitente, cnpj_destinatario, data_emissao, data_saida, data_vencimento, descricao, categoria, chave_acesso, confidence`;
+
+      case 'RECIBO':
+        return `Você é um especialista em análise de recibos de pagamento brasileiros.
+
+${baseContext}
+
+INSTRUÇÕES ESPECÍFICAS:
+1. PAGADOR: Quem efetuou o pagamento (pode ser pessoa física ou jurídica)
+2. RECEBEDOR: Quem recebeu o pagamento
+3. VALOR: Conferir consistência entre valor numérico e por extenso
+4. FINALIDADE: Descrição do que foi pago (serviços, produtos, etc.)
+5. DATA: Data efetiva do pagamento
+6. FORMA DE PAGAMENTO: Dinheiro, PIX, transferência, etc.
+
+VALIDAÇÕES:
+- Valores consistentes entre numérico e extenso
+- Identificação clara de pagador vs recebedor
+- Data lógica (não futura, salvo casos especiais)
+
+Retorne JSON com: valor, pagador, recebedor, finalidade, data_pagamento, forma_pagamento, documento_pagador, confidence`;
+
+      case 'BOLETO':
+        return `Você é um especialista em análise de boletos bancários brasileiros.
+
+${baseContext}
+
+INSTRUÇÕES ESPECÍFICAS:
+1. CEDENTE: Favorecido/quem recebe o pagamento
+2. SACADO: Pagador/devedor
+3. VALOR: Valor original do boleto
+4. VENCIMENTO: Data limite para pagamento
+5. CÓDIGO DE BARRAS: Sequência numérica para pagamento
+6. JUROS/MULTA: Se aplicáveis após vencimento
+
+VALIDAÇÕES:
+- Linha digitável ou código de barras válidos
+- Data de vencimento lógica
+- Cálculo de juros/multa se houver
+
+Retorne JSON com: valor, cedente, sacado, data_vencimento, codigo_barras, linha_digitavel, valor_juros, valor_multa, confidence`;
+
+      case 'PIX':
+        return `Você é um especialista em análise de comprovantes PIX brasileiros.
+
+${baseContext}
+
+INSTRUÇÕES ESPECÍFICAS:
+1. REMETENTE: Quem enviou o PIX
+2. DESTINATÁRIO: Quem recebeu o PIX
+3. VALOR: Valor transferido
+4. DATA/HORA: Timestamp da transação
+5. ID TRANSAÇÃO: Identificador único da operação
+6. CHAVE PIX: Chave utilizada (CPF, CNPJ, email, telefone, aleatória)
+
+VALIDAÇÕES:
+- ID de transação válido
+- Chave PIX no formato correto
+- Data/hora consistente
+
+Retorne JSON com: valor, remetente, destinatario, data_transacao, hora_transacao, id_transacao, chave_pix, instituicao, confidence`;
+
+      default:
+        return this.buildAnalysisPrompt(ocrText, fileName);
+    }
+  }
+
+  // INTELLIGENT DATA VALIDATION SYSTEM
+  private validateExtractedData(data: any, classification: DocumentClassification): ValidationResult {
+    const errors: string[] = [];
+    const warnings: string[] = [];
+    const suggestions: string[] = [];
+    
+    const config = DOCUMENT_TYPE_CONFIGS[classification.type];
+
+    // Check required fields based on document type
+    config.requiredFields.forEach(field => {
+      if (!data[field] || data[field] === '' || data[field] === null) {
+        errors.push(`Campo obrigatório ausente: ${field}`);
+      }
+    });
+
+    // Document-specific validations
+    switch (classification.type) {
+      case 'DANFE':
+        this.validateDANFE(data, errors, warnings, suggestions);
+        break;
+      case 'RECIBO':
+        this.validateRecibo(data, errors, warnings, suggestions);
+        break;
+      case 'BOLETO':
+        this.validateBoleto(data, errors, warnings, suggestions);
+        break;
+      case 'PIX':
+        this.validatePIX(data, errors, warnings, suggestions);
+        break;
+    }
+
+    // General validations
+    this.validateGeneral(data, errors, warnings, suggestions);
+
+    const score = Math.max(0, 100 - (errors.length * 20) - (warnings.length * 10));
+    
+    return {
+      score,
+      status: errors.length === 0 ? (warnings.length === 0 ? 'VALID' : 'WARNING') : 'ERROR',
+      errors,
+      warnings,
+      suggestions,
+      autoFixes: this.generateAutoFixes(data, errors, warnings)
+    };
+  }
+
+  private validateDANFE(data: any, errors: string[], warnings: string[], suggestions: string[]) {
+    // CNPJ validation
+    if (data.cnpj_emitente && !/^\d{2}\.\d{3}\.\d{3}\/\d{4}-\d{2}$/.test(data.cnpj_emitente)) {
+      errors.push('CNPJ do emitente em formato inválido');
+    }
+    
+    // Chave de acesso validation
+    if (data.chave_acesso && data.chave_acesso.replace(/\D/g, '').length !== 44) {
+      errors.push('Chave de acesso deve ter 44 dígitos');
+    }
+
+    // Date logic validation
+    if (data.data_emissao && data.data_saida) {
+      const emissao = new Date(data.data_emissao.split('/').reverse().join('-'));
+      const saida = new Date(data.data_saida.split('/').reverse().join('-'));
+      
+      if (saida < emissao) {
+        warnings.push('Data de saída anterior à data de emissão');
+      }
+    }
+
+    suggestions.push('Verificar se fornecedor é o emitente da nota fiscal');
+  }
+
+  private validateRecibo(data: any, errors: string[], warnings: string[], suggestions: string[]) {
+    // Value consistency check
+    if (data.valor && !data.valor.includes('R$')) {
+      warnings.push('Valor deve incluir símbolo R$');
+    }
+
+    // Date logic
+    if (data.data_pagamento) {
+      const pagamento = new Date(data.data_pagamento.split('/').reverse().join('-'));
+      const today = new Date();
+      
+      if (pagamento > today) {
+        warnings.push('Data de pagamento é futura');
+      }
+    }
+
+    suggestions.push('Conferir se pagador e recebedor estão corretos');
+  }
+
+  private validateBoleto(data: any, errors: string[], warnings: string[], suggestions: string[]) {
+    // Barcode validation
+    if (data.codigo_barras && !/^\d{47,48}$/.test(data.codigo_barras.replace(/\s/g, ''))) {
+      errors.push('Código de barras deve ter 47 ou 48 dígitos');
+    }
+
+    // Due date validation
+    if (data.data_vencimento) {
+      const vencimento = new Date(data.data_vencimento.split('/').reverse().join('-'));
+      const today = new Date();
+      
+      if (vencimento < today && !data.valor_juros && !data.valor_multa) {
+        warnings.push('Boleto vencido pode ter juros e multa');
+      }
+    }
+  }
+
+  private validatePIX(data: any, errors: string[], warnings: string[], suggestions: string[]) {
+    // PIX key validation
+    if (data.chave_pix) {
+      const key = data.chave_pix.toString().toLowerCase();
+      const isCPF = /^\d{3}\.\d{3}\.\d{3}-\d{2}$/.test(key);
+      const isCNPJ = /^\d{2}\.\d{3}\.\d{3}\/\d{4}-\d{2}$/.test(key);
+      const isEmail = /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(key);
+      const isPhone = /^\+?5511\d{8,9}$/.test(key.replace(/\D/g, ''));
+      const isRandom = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/.test(key);
+      
+      if (!isCPF && !isCNPJ && !isEmail && !isPhone && !isRandom) {
+        warnings.push('Formato de chave PIX não reconhecido');
+      }
+    }
+
+    // Transaction ID validation
+    if (data.id_transacao && data.id_transacao.length < 10) {
+      warnings.push('ID de transação muito curto');
+    }
+  }
+
+  private validateGeneral(data: any, errors: string[], warnings: string[], suggestions: string[]) {
+    // Date format validation
+    const dateFields = ['data_pagamento', 'data_vencimento', 'data_emissao', 'data_saida', 'data_transacao'];
+    
+    dateFields.forEach(field => {
+      if (data[field] && !/^\d{2}\/\d{2}\/\d{4}$/.test(data[field])) {
+        errors.push(`${field} deve estar no formato DD/MM/AAAA`);
+      }
+    });
+
+    // Value format validation
+    if (data.valor && typeof data.valor === 'string') {
+      if (!data.valor.includes('R$')) {
+        warnings.push('Valor deve incluir símbolo monetário');
+      }
+      
+      if (!data.valor.includes(',')) {
+        suggestions.push('Verificar se valor inclui centavos');
+      }
+    }
+
+    // Confidence validation
+    if (data.confidence && (data.confidence < 50)) {
+      warnings.push('Baixa confiança na extração dos dados');
+    }
+  }
+
+  private generateAutoFixes(data: any, errors: string[], warnings: string[]): AutoFix[] {
+    const fixes: AutoFix[] = [];
+
+    // Auto-fix missing R$ symbol
+    if (data.valor && !data.valor.includes('R$') && /^\d+[,.]?\d*$/.test(data.valor)) {
+      fixes.push({
+        field: 'valor',
+        currentValue: data.valor,
+        suggestedValue: `R$ ${data.valor}`,
+        reason: 'Adicionar símbolo monetário'
+      });
+    }
+
+    // Auto-fix CNPJ format
+    if (data.cnpj_emitente && /^\d{14}$/.test(data.cnpj_emitente.replace(/\D/g, ''))) {
+      const digits = data.cnpj_emitente.replace(/\D/g, '');
+      const formatted = `${digits.substring(0,2)}.${digits.substring(2,5)}.${digits.substring(5,8)}/${digits.substring(8,12)}-${digits.substring(12,14)}`;
+      fixes.push({
+        field: 'cnpj_emitente',
+        currentValue: data.cnpj_emitente,
+        suggestedValue: formatted,
+        reason: 'Formatar CNPJ corretamente'
+      });
+    }
+
+    return fixes;
+  }
+
   async analyzeDocument(ocrText: string, fileName: string, documentId: string, tenantId: string): Promise<AIAnalysisResult> {
+    // FASE 1: CLASSIFICAÇÃO INTELIGENTE DO DOCUMENTO
+    const classification = this.classifyDocument(ocrText, fileName);
+    console.log(`📋 Documento classificado como: ${classification.type} (${classification.confidence.toFixed(1)}% confiança)`);
+    console.log(`🔍 Indicadores: ${classification.indicators.join(', ')}`);
+
     let enabledProviders = this.providers
       .filter(p => p.enabled)
       .sort((a, b) => a.priority - b.priority);
 
-    // ESTRATÉGIA 4: Seleção inteligente de provider
-    const shouldTryGLMFirst = this.shouldUseGLMForContent(ocrText, fileName);
+    // ESTRATÉGIA 4: Seleção inteligente de provider baseada no tipo de documento
+    const shouldTryGLMFirst = this.shouldUseGLMForContent(ocrText, fileName, classification.type);
     if (!shouldTryGLMFirst) {
-      console.log(`📋 Documento complexo detectado - priorizando OpenAI`);
+      console.log(`📋 Documento complexo detectado (${classification.type}) - priorizando OpenAI`);
       // Temporariamente inverter prioridades para documentos complexos
       const glmProvider = enabledProviders.find(p => p.name === 'glm');
       const openaiProvider = enabledProviders.find(p => p.name === 'openai');
@@ -181,10 +612,10 @@ class AIMultiProvider {
         const startTime = Date.now();
         
         if (provider.name === 'glm') {
-          // ESTRATÉGIA 3: Usar retry inteligente para GLM
-          result = await this.analyzeWithGLMRetry(ocrText, fileName);
+          // ESTRATÉGIA 3: Usar retry inteligente para GLM com prompt especializado
+          result = await this.analyzeWithGLMRetry(ocrText, fileName, classification);
         } else if (provider.name === 'openai') {
-          result = await this.analyzeWithOpenAI(ocrText, fileName);
+          result = await this.analyzeWithOpenAI(ocrText, fileName, classification);
         } else {
           throw new Error(`Provider desconhecido: ${provider.name}`);
         }
@@ -272,6 +703,18 @@ class AIMultiProvider {
         
         console.log(`📊 Stats atualizadas para ${provider.name}: ${provider.last30Days.totalRequests} requests, ${provider.last30Days.successRate.toFixed(1)}% sucesso`);
         
+        // FASE 3: VALIDAÇÃO INTELIGENTE DOS DADOS EXTRAÍDOS
+        const validationResult = this.validateExtractedData(result.extractedData, classification);
+        
+        // Adicionar informações de classificação e validação ao resultado
+        result.documentClassification = {
+          type: classification.type,
+          confidence: classification.confidence,
+          indicators: classification.indicators
+        };
+        
+        result.validationResults = validationResult;
+
         // Registrar no banco
         await this.logAiRun(documentId, tenantId, result);
         
@@ -335,16 +778,18 @@ class AIMultiProvider {
     }
   }
 
-  async analyzeWithGLM(ocrText: string, fileName: string): Promise<AIAnalysisResult> {
+  async analyzeWithGLM(ocrText: string, fileName: string, classification?: DocumentClassification): Promise<AIAnalysisResult> {
     const apiKey = process.env.GLM_API_KEY;
     if (!apiKey) {
       throw new Error('GLM API key not configured');
     }
 
-    // ESTRATÉGIA 2: Prompt adaptado para GLM
-    const prompt = this.shouldUseSimplifiedPrompt(ocrText) 
-      ? this.createSimplifiedGLMPrompt(ocrText, fileName)
-      : this.buildAnalysisPrompt(ocrText, fileName);
+    // ESTRATÉGIA 2: Prompt especializado baseado no tipo de documento
+    const prompt = classification 
+      ? this.createSpecializedPrompt(classification.type, ocrText, fileName)
+      : (this.shouldUseSimplifiedPrompt(ocrText) 
+         ? this.createSimplifiedGLMPrompt(ocrText, fileName)
+         : this.buildAnalysisPrompt(ocrText, fileName));
     
     try {
       const glmProvider = this.getProviderByName('glm');
@@ -480,8 +925,10 @@ class AIMultiProvider {
     }
   }
 
-  async analyzeWithOpenAI(ocrText: string, fileName: string): Promise<AIAnalysisResult> {
-    const prompt = this.buildAnalysisPrompt(ocrText, fileName);
+  async analyzeWithOpenAI(ocrText: string, fileName: string, classification?: DocumentClassification): Promise<AIAnalysisResult> {
+    const prompt = classification 
+      ? this.createSpecializedPrompt(classification.type, ocrText, fileName)
+      : this.buildAnalysisPrompt(ocrText, fileName);
     const modelToUse = this.getProviderByName('openai')?.model || "gpt-4o-mini";
     
     try {
@@ -653,26 +1100,38 @@ Exemplo: {"valor": "R$ 100,00", "fornecedor": "Empresa", "data_pagamento": "01/0
   }
 
   // ESTRATÉGIA 3: Retry inteligente com backoff
-  private async analyzeWithGLMRetry(ocrText: string, fileName: string, attempt = 1): Promise<AIAnalysisResult> {
+  private async analyzeWithGLMRetry(ocrText: string, fileName: string, classification?: DocumentClassification, attempt = 1): Promise<AIAnalysisResult> {
     try {
-      return await this.analyzeWithGLM(ocrText, fileName);
+      return await this.analyzeWithGLM(ocrText, fileName, classification);
     } catch (error: any) {
       if (attempt < 3 && (error.message?.includes('timeout') || error.message?.includes('network'))) {
         const delay = Math.pow(2, attempt) * 1000; // 2s, 4s, 8s
         console.log(`🔄 GLM retry attempt ${attempt + 1} in ${delay}ms...`);
         
         await new Promise(resolve => setTimeout(resolve, delay));
-        return this.analyzeWithGLMRetry(ocrText, fileName, attempt + 1);
+        return this.analyzeWithGLMRetry(ocrText, fileName, classification, attempt + 1);
       }
       throw error;
     }
   }
 
-  // ESTRATÉGIA 4: Fallback inteligente baseado em conteúdo
-  private shouldUseGLMForContent(ocrText: string, fileName: string): boolean {
+  // ESTRATÉGIA 4: Fallback inteligente baseado em conteúdo e tipo de documento
+  private shouldUseGLMForContent(ocrText: string, fileName: string, documentType?: DocumentType): boolean {
     // GLM funciona melhor com documentos mais simples
     const isSimpleDocument = ocrText.length < 1000 && fileName.includes('PG');
     const hasComplexTables = ocrText.includes('DANFE') || ocrText.includes('Tabela');
+    
+    // Baseado no tipo de documento classificado
+    if (documentType) {
+      const complexDocTypes: DocumentType[] = ['DANFE', 'BOLETO', 'CONTRATO'];
+      const simpleDocTypes: DocumentType[] = ['RECIBO', 'PIX'];
+      
+      if (complexDocTypes.includes(documentType)) {
+        return false; // Use OpenAI for complex documents
+      } else if (simpleDocTypes.includes(documentType)) {
+        return true;  // Use GLM for simple documents
+      }
+    }
     
     return isSimpleDocument && !hasComplexTables;
   }
@@ -1148,4 +1607,5 @@ Resposta apenas JSON, sem texto extra.`;
 }
 
 export const aiMultiProvider = new AIMultiProvider();
+export { AIMultiProvider as MultiProviderAI };
 export type { AIAnalysisResult, AIProvider };

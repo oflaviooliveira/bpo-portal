@@ -118,6 +118,35 @@ Portal de BPO Financeiro com OCR/IA multi-provider para processamento automátic
 - Analytics avançado: timeline, comparações GLM vs OpenAI, recomendações
 - UX simplificada: uma única fonte da verdade para gerenciamento de IA
 
+**SISTEMA INTELIGENTE DE CLASSIFICAÇÃO DE DOCUMENTOS (29/08/2025)**:
+✅ **Classificação Automática por Tipo**:
+- 8 tipos de documentos suportados: DANFE, RECIBO, BOLETO, PIX, CUPOM, FATURA, CONTRATO, OUTROS
+- Algoritmo de scoring baseado em keywords (40%), padrões estruturais (35%) e análise de nome (25%)
+- Indicadores de confiança com explicação detalhada dos critérios de classificação
+- Sistema de fallback inteligente para documentos não identificados
+
+✅ **Prompts Especializados por Tipo de Documento**:
+- Prompts específicos para cada tipo com instruções críticas contextuais
+- DANFE: Foco em CNPJ emitente vs destinatário, chaves de acesso, datas de emissão/saída/vencimento
+- RECIBO: Diferenciação pagador/recebedor, consistência valor numérico vs extenso
+- BOLETO: Validação código de barras, cálculo de juros/multa por vencimento
+- PIX: Validação chaves PIX (CPF/CNPJ/email/telefone/aleatória), IDs de transação
+- Instruções de validação específicas para cada formato brasileiro
+
+✅ **Sistema de Validação Inteligente**:
+- Validação em 3 níveis: campos obrigatórios, regras específicas por documento, validações gerais
+- Scoring automático: 100 pontos base - (erros × 20) - (avisos × 10)
+- Status categorizado: VALID, WARNING, ERROR com explicações detalhadas
+- Auto-correções automáticas: formatação CNPJ, adição símbolos monetários, padronização datas
+- Sugestões contextuais baseadas no tipo e conteúdo do documento
+
+✅ **Melhorias na Precisão de Extração**:
+- Seleção inteligente de provider baseada na complexidade do documento
+- Documentos complexos (DANFE, BOLETO, CONTRATO) priorizados para OpenAI
+- Documentos simples (RECIBO, PIX) podem usar GLM com maior eficiência
+- Redução significativa de erros de CNPJ, confusão de datas, e descrições genéricas
+- Sistema de feedback com indicadores visuais para facilitar correção manual
+
 **CORREÇÕES COMPLETAS SISTEMA GLM IMPLEMENTADAS (29/08/2025)**:
 ✅ **Diagnóstico e Correção de Timeout GLM**:
 - Detectado problema root: GLM API com timeout de conexão (>15s)
