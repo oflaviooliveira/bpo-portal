@@ -347,7 +347,10 @@ class AIMultiProvider {
       : this.buildAnalysisPrompt(ocrText, fileName);
     
     try {
-      console.log(`🔗 GLM API Request - Model: ${this.getProviderByName('glm')?.model || 'glm-4.5'}`);
+      const glmProvider = this.getProviderByName('glm');
+      const glmModel = glmProvider?.model || 'glm-4.5';
+      console.log(`🔗 GLM API Request - Model: ${glmModel}`);
+      console.log(`💰 GLM Expected Cost: $${glmProvider?.costPer1000 || 1.4}/1k tokens`);
       console.log(`📝 GLM Full prompt length: ${prompt.length} chars`);
       console.log(`📝 GLM Prompt preview: ${prompt.substring(0, 300)}...`);
       console.log(`📝 GLM Request payload size: ${JSON.stringify({ prompt: prompt.substring(0, 200) + '...' }).length} chars`);
@@ -370,7 +373,7 @@ class AIMultiProvider {
         },
         signal: controller.signal,
         body: JSON.stringify({
-          model: this.getProviderByName('glm')?.model || 'glm-4.5',
+          model: this.getProviderByName('glm')?.model || 'glm-4.5', // Modelo já logado acima
           messages: [
             {
               role: 'system',
@@ -427,7 +430,8 @@ class AIMultiProvider {
       }
       
       let aiResponse = data.choices[0].message.content;
-      console.log("🤖 GLM Response:", aiResponse);
+      const glmModelUsed = this.getProviderByName('glm')?.model || 'glm-4.5';
+      console.log(`🤖 GLM Response (${glmModelUsed}):`, aiResponse);
       console.log(`📏 GLM Response length: ${aiResponse ? aiResponse.length : 0} chars`);
       
       // Validar se resposta não está vazia
@@ -478,10 +482,14 @@ class AIMultiProvider {
 
   async analyzeWithOpenAI(ocrText: string, fileName: string): Promise<AIAnalysisResult> {
     const prompt = this.buildAnalysisPrompt(ocrText, fileName);
+    const modelToUse = this.getProviderByName('openai')?.model || "gpt-4o-mini";
     
     try {
+      const openaiProvider = this.getProviderByName('openai');
+      console.log(`🔗 OpenAI API Request - Model: ${modelToUse}`);
+      console.log(`💰 OpenAI Expected Cost: $${openaiProvider?.costPer1000 || 0.375}/1k tokens`);
       const response = await this.openai.chat.completions.create({
-        model: this.getProviderByName('openai')?.model || "gpt-4o-mini",
+        model: modelToUse,
         messages: [
           {
             role: "system",
@@ -502,7 +510,7 @@ class AIMultiProvider {
         throw new Error('No content in OpenAI response');
       }
 
-      console.log("🤖 OpenAI Response:", content);
+      console.log(`🤖 OpenAI Response (${modelToUse}):`, content);
 
       let extractedData;
       try {
