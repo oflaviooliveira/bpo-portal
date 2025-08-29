@@ -1,5 +1,5 @@
 import { sql } from "drizzle-orm";
-import { pgTable, text, varchar, uuid, timestamp, integer, decimal, jsonb, boolean } from "drizzle-orm/pg-core";
+import { pgTable, text, varchar, uuid, timestamp, integer, decimal, jsonb, boolean, real } from "drizzle-orm/pg-core";
 import { relations } from "drizzle-orm";
 import { createInsertSchema } from "drizzle-zod";
 import { z } from "zod";
@@ -168,7 +168,7 @@ export const aiRuns = pgTable("ai_runs", {
   tokensIn: integer("tokens_in").notNull(),
   tokensOut: integer("tokens_out").notNull(),
   costUsd: decimal("cost_usd", { precision: 10, scale: 6 }).notNull(),
-  confidence: integer("confidence").notNull(), // 0-100
+  confidence: real("confidence").notNull(), // 0-100 (aceita decimais)
   createdAt: timestamp("created_at").defaultNow(),
 });
 

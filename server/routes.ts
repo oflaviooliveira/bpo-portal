@@ -291,32 +291,59 @@ export async function registerRoutes(app: Express): Promise<Server> {
 
       // 3. Mapear dados extraídos para formato esperado pelo frontend
       let suggestions: any = {};
+      let completionRate = 0;
+      let filledFields: string[] = [];
+      
       if (aiResult && aiResult.success && aiResult.extractedData) {
         const data = aiResult.extractedData;
         
         console.log(`🔄 Mapeando dados IA:`, JSON.stringify(data, null, 2));
         
+        // Mapeamento inteligente baseado no tipo de documento
+        const isDANFE = data.cnpj_emitente && (data.documento?.includes('Nº') || data.documento?.includes('Série'));
+        
         suggestions = {
+          // Campos básicos sempre mapeados
           amount: data.valor || '',
           supplier: data.fornecedor || '',
           contraparte: data.contraparte || data.fornecedor || '',
-          // Para DANFE, use o CNPJ do emitente; caso contrário, use documento
-          documento: data.cnpj_emitente || data.documento || '',
           description: data.descricao || '',
-          dueDate: data.data_vencimento || '',
-          paymentDate: data.data_pagamento || data.data_emissao || '',
-
           category: data.categoria || '',
+          
+          // Mapeamento inteligente de documento e datas
+          documento: isDANFE ? data.cnpj_emitente : (data.documento || ''),
+          numeroNF: isDANFE ? data.documento : '', // Número da NF para DANFEs
+          cnpjEmitente: data.cnpj_emitente || '', // CNPJ separado
+          
+          // Mapeamento inteligente de datas com fallbacks
+          paymentDate: data.data_pagamento || data.data_emissao || data.data_saida || '',
+          dueDate: data.data_vencimento || (data.data_emissao && data.data_emissao !== data.data_saida ? data.data_emissao : ''),
+          issueDate: data.data_emissao || '',
+          exitDate: data.data_saida || '',
+          
+          // Campos adicionais extraídos
+          centerCost: data.centro_custo || '',
+          documentType: data.tipo_documento || '',
+          
+          // Confidence granular por campo
           confidence: {
-            amount: data.valor ? aiResult.confidence : 0,
-            supplier: data.fornecedor ? aiResult.confidence : 0,
-            description: data.descricao ? aiResult.confidence : 0,
-            dueDate: data.data_vencimento ? aiResult.confidence : 0,
-            paymentDate: data.data_pagamento ? aiResult.confidence : 0
+            amount: data.valor ? Math.round(aiResult.confidence) : 0,
+            supplier: data.fornecedor ? Math.round(aiResult.confidence) : 0,
+            description: data.descricao ? Math.round(aiResult.confidence) : 0,
+            documento: (data.cnpj_emitente || data.documento) ? Math.round(aiResult.confidence) : 0,
+            paymentDate: (data.data_pagamento || data.data_emissao) ? Math.round(aiResult.confidence) : 0,
+            dueDate: data.data_vencimento ? Math.round(aiResult.confidence) : 0
           }
         };
         
         console.log(`✅ Sugestões mapeadas:`, JSON.stringify(suggestions, null, 2));
+        
+        // Análise de completude dos dados
+        const totalFields = ['amount', 'supplier', 'documento', 'description', 'paymentDate', 'dueDate'];
+        const filledFields = totalFields.filter(field => suggestions[field] && suggestions[field] !== '');
+        const completionRate = Math.round((filledFields.length / totalFields.length) * 100);
+        
+        console.log(`📊 Taxa de preenchimento: ${completionRate}% (${filledFields.length}/${totalFields.length} campos)`);
       } else {
         console.log(`⚠️ IA não retornou dados válidos:`, aiResult);
       }
@@ -341,6 +368,8 @@ export async function registerRoutes(app: Express): Promise<Server> {
           extractedData: aiResult.extractedData || {},
           processingTime: aiResult.processingTime || 0,
           processingCost: aiResult.processingCost || 0,
+          completionRate,
+          filledFields,
           rawResponse: aiResult.rawResponse
         } : null,
         suggestions

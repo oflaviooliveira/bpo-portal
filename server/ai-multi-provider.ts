@@ -436,7 +436,11 @@ Retorne JSON com: valor, remetente, destinatario, data_transacao, hora_transacao
     // General validations
     this.validateGeneral(data, errors, warnings, suggestions);
 
-    const score = Math.max(0, 100 - (errors.length * 20) - (warnings.length * 10));
+    // Cálculo inteligente de score considerando dados extraídos
+    const extractedFieldsCount = Object.values(data).filter(v => v && v !== '' && v !== null).length;
+    const baseScore = Math.min(extractedFieldsCount * 15, 85); // Max 85 pontos por campos extraídos
+    const penaltyScore = (errors.length * 15) + (warnings.length * 5); // Penalidades reduzidas
+    const score = Math.max(baseScore - penaltyScore, 0);
     
     return {
       score,
