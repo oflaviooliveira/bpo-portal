@@ -344,7 +344,7 @@ class AIMultiProvider {
           messages: [
             {
               role: 'system',
-              content: 'Você é um especialista em análise de documentos financeiros brasileiros. Responda sempre em JSON válido.'
+              content: 'Você é um especialista em análise de documentos financeiros brasileiros. Responda sempre em JSON válido, sem markdown, sem explicações adicionais.'
             },
             {
               role: 'user', 
@@ -352,8 +352,10 @@ class AIMultiProvider {
             }
           ],
           temperature: 0.1,
-          max_tokens: 1000,
-          stream: false
+          max_tokens: 2000,
+          stream: false,
+          top_p: 0.7,
+          do_sample: true
         }),
       });
       
@@ -502,47 +504,33 @@ class AIMultiProvider {
     const fileData = this.extractFileMetadata(fileName);
     
     return `
-Você é um especialista em análise de documentos fiscais brasileiros com foco em PRECISÃO MÁXIMA.
+Analise este documento fiscal brasileiro e extraia os dados em formato JSON.
 
-ARQUIVO: ${fileName}
-TEXTO OCR: "${ocrText}"
+DOCUMENTO: ${fileName}
+TEXTO OCR: "${ocrText.substring(0, 1500)}${ocrText.length > 1500 ? '...' : ''}"
 
-METADADOS DO ARQUIVO (para validação cruzada):
-${JSON.stringify(fileData, null, 2)}
+DADOS DO ARQUIVO: ${JSON.stringify(fileData, null, 2)}
 
-PRIORIDADES DE ANÁLISE:
-1. SEMPRE priorize dados claros do nome do arquivo quando o OCR for incompleto
-2. Use o texto OCR para extrair detalhes adicionais (fornecedor, descrição)
-3. Valide valores monetários: se OCR difere muito do arquivo, use o arquivo
-4. Para datas: priorize datas estruturadas do nome do arquivo
+INSTRUÇÕES:
+- Extraia valor, fornecedor, datas, CNPJ, descrição
+- Use dados do arquivo para validar informações
+- Responda APENAS com JSON, sem explicações
+- Formato de data: DD/MM/AAAA
+- Formato de valor: R$ 0.000,00
 
-REGRAS DE EXTRAÇÃO:
-1. VALOR: Use formato "R$ X.XXX,XX" - priorize dados do arquivo se OCR for inconsistente
-2. DATAS: Formato "DD/MM/AAAA" - primeira data do arquivo = vencimento/processamento
-3. DESCRIÇÃO: Combine dados do arquivo + detalhes do OCR
-4. CATEGORIA: Mapeie baseado na descrição identificada
-5. CENTRO_CUSTO: Extraia códigos alfanuméricos do arquivo (ex: SRJ1, SP01)
-
-VALIDAÇÃO CRUZADA:
-- Se valor no arquivo = R$ 455,79 mas OCR sugere R$ 120,00 → use R$ 455,79
-- Se arquivo tem "Locação De Veículos" → categoria = "Transporte"
-- Se arquivo tem "PG" → status documento = "PAGO"
-
-RESPOSTA: JSON puro, sem markdown, sem explicações.
-
-TEMPLATE:
+RESPOSTA JSON:
 {
-  "valor": "R$ [valor_do_arquivo_ou_ocr]",
+  "valor": "R$ 0,00",
   "data_pagamento": "DD/MM/AAAA",
-  "data_vencimento": "DD/MM/AAAA",
-  "fornecedor": "[nome_completo_do_fornecedor]",
-  "descricao": "[descrição_arquivo + detalhes_ocr]",
-  "categoria": "[categoria_mapeada]",
-  "centro_custo": "[código_extraído]",
-  "documento": "[cnpj/cpf_se_encontrado]",
-  "cliente_fornecedor": "[destinatário_se_identificado]",
-  "observacoes": "[informações_relevantes]",
-  "confidence": [0-100]
+  "data_vencimento": "DD/MM/AAAA", 
+  "fornecedor": "Nome do Fornecedor",
+  "descricao": "Descrição do produto/serviço",
+  "categoria": "Categoria",
+  "centro_custo": "Código",
+  "documento": "CNPJ ou CPF",
+  "cliente_fornecedor": "Nome do cliente",
+  "observacoes": "Informações adicionais",
+  "confidence": 95
 }`;
   }
 
@@ -885,14 +873,24 @@ TEMPLATE:
     
     // Remove blocos de código JSON
     if (cleaned.includes('```json')) {
-      cleaned = cleaned.replace(/```json\s*/, '').replace(/```\s*$/, '');
+      cleaned = cleaned.replace(/```json\s*/gi, '').replace(/```\s*$/gi, '');
     }
     if (cleaned.includes('```')) {
-      cleaned = cleaned.replace(/```\s*/, '').replace(/```\s*$/, '');
+      cleaned = cleaned.replace(/```\s*/gi, '').replace(/```\s*$/gi, '');
     }
     
-    // Remove possíveis caracteres de escape extras
+    // Remove leading/trailing whitespace
     cleaned = cleaned.trim();
+    
+    // Try to find JSON content between braces if response has extra text
+    const jsonMatch = cleaned.match(/\{[\s\S]*\}/);
+    if (jsonMatch) {
+      cleaned = jsonMatch[0];
+    }
+    
+    // Remove common GLM response prefixes/suffixes
+    cleaned = cleaned.replace(/^.*?(?=\{)/s, ''); // Remove everything before first {
+    cleaned = cleaned.replace(/\}.*$/s, '}'); // Remove everything after last }
     
     return cleaned;
   }
