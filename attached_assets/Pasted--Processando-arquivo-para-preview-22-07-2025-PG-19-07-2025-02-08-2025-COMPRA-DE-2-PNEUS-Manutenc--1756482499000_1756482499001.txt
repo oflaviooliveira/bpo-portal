@@ -1,0 +1,72 @@
+🔍 Processando arquivo para preview: 22.07.2025_PG_19.07.2025_02.08.2025_COMPRA DE 2 PNEUS_ManutencÌ§aÌo de Veiculos_SRJ1_R$1.450,00.pdf
+📄 Iniciando extração de texto PDF: uploads/e48c296cf0b288f4683d4ef29235031e
+Warning: Indexing all PDF objects
+✅ Extração nativa bem-sucedida: 2342 caracteres
+🤖 Analisando documento com IA: 22.07.2025_PG_19.07.2025_02.08.2025_COMPRA DE 2 PNEUS_ManutencÌ§aÌo de Veiculos_SRJ1_R$1.450,00.pdf
+📝 Texto extraído (2342 chars): DANFE
+Documento Auxiliar da 
+Nota Fiscal Eletrônica
+AV MARIA DO CARMO, 1571
+POSTO LAVA TUCUNS
+CRUZ / CE
+62595-000
+(88) 9729-5739 - 
+0 - ENTRADA
+1 - SAÍDA
+CHAVE DE ACESSO
+Nº 645   
+Série 1 
+Consulta de...
+📋 Detectada nota fiscal - usando analisador especializado
+🔄 Usando AI Multi-Provider para análise...
+📋 Documento complexo detectado - priorizando OpenAI
+🤖 Tentando análise com openai...
+🤖 OpenAI Response: {
+  "valor": "R$ 1.450,00",
+  "data_pagamento": "19/07/2025",
+  "data_vencimento": "02/08/2025",
+  "fornecedor": "ROBSON PNEUS E AUTOPECAS LTDA",
+  "descricao": "COMPRA DE 2 PNEUS ManutencÌ§aÌo de Veiculos SRJ1",
+  "categoria": "Revenda de mercadorias com ST",
+  "centro_custo": "PG",
+  "documento": "CNPJ: 95.001.834/0001-34",
+  "cliente_fornecedor": "ECO EXPRESS SERVIÇOS SUSTENTÁVEIS LTDA",
+  "observacoes": "",
+  "confidence": 95
+}
+✅ Provider openai marked as ONLINE after successful analysis
+📊 Stats atualizadas para openai: 1 requests, 100.0% sucesso
+🤖 IA utilizada: openai
+🎯 Confiança: 95%
+💰 Custo: $0.464250
+⏱️ Tempo: 3520ms
+🔄 Mapeando dados IA: {
+  "valor": "R$ 1.450,00",
+  "data_pagamento": "19/07/2025",
+  "data_vencimento": "02/08/2025",
+  "fornecedor": "ROBSON PNEUS E AUTOPECAS LTDA",
+  "descricao": "COMPRA DE 2 PNEUS ManutencÌ§aÌo de Veiculos SRJ1",
+  "categoria": "Revenda de mercadorias com ST",
+  "centro_custo": "PG",
+  "documento": "CNPJ: 95.001.834/0001-34",
+  "cliente_fornecedor": "ECO EXPRESS SERVIÇOS SUSTENTÁVEIS LTDA",
+  "observacoes": "",
+  "confidence": 95
+}
+✅ Sugestões mapeadas: {
+  "amount": "R$ 1.450,00",
+  "supplier": "ROBSON PNEUS E AUTOPECAS LTDA",
+  "contraparte": "ROBSON PNEUS E AUTOPECAS LTDA",
+  "documento": "CNPJ: 95.001.834/0001-34",
+  "description": "COMPRA DE 2 PNEUS ManutencÌ§aÌo de Veiculos SRJ1",
+  "dueDate": "02/08/2025",
+  "paymentDate": "19/07/2025",
+  "category": "Revenda de mercadorias com ST",
+  "confidence": {
+    "amount": 95,
+    "supplier": 95,
+    "description": 95,
+    "dueDate": 95,
+    "paymentDate": 95
+  }
+}
