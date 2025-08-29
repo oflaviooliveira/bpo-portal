@@ -1,0 +1,336 @@
+🔍 Processando arquivo para preview: (OK) 12.08.2025-PG-COMPRA DE AGUA E DESCARTAVEL PARA GALPAIÌ_O-SMN1-R$49,02.jpeg
+🤖 Analisando documento com IA: (OK) 12.08.2025-PG-COMPRA DE AGUA E DESCARTAVEL PARA GALPAIÌ_O-SMN1-R$49,02.jpeg
+📝 Texto extraído (805 chars): PLANA á
+ea x AE
+A JECA
+WE
+D RES
+É. NE
+AS te
+Fr SS
+&S
+e FS
+vr system TA
+| SIT
+NFC-e à SÃO
+E De FP. Fontinele Coimbra Ne SEA
+Euro: LT 104 bea/000dnao! ad 22 926047? (SA
+A. tis CA Ns
+ata um vos pese viri...
+🔄 Usando AI Multi-Provider para análise...
+🤖 Tentando análise com glm...
+🔗 GLM API Request - Model: glm-4.5
+📝 GLM Full prompt length: 1823 chars
+📝 GLM Prompt preview: 
+Analise este documento fiscal brasileiro e extraia os dados em formato JSON.
+
+DOCUMENTO: (OK) 12.08.2025-PG-COMPRA DE AGUA E DESCARTAVEL PARA GALPAIÌ_O-SMN1-R$49,02.jpeg
+TEXTO OCR: "PLANA á
+ea x AE
+A JECA
+WE
+D RES
+É. NE
+AS te
+Fr SS
+&S
+e FS
+vr system TA
+| SIT
+NFC-e à SÃO
+E De FP. Fontinele Coimbra ...
+📝 GLM Request payload size: 223 chars
+⏰ Starting GLM request with 15s timeout...
+🔍 GLM Response status: 200 (11139ms)
+📊 GLM Response headers: {"connection":"keep-alive","content-encoding":"gzip","content-type":"application/json; charset=UTF-8","date":"Fri, 29 Aug 2025 15:41:50 GMT","server":"ZenZGA/2.4","strict-transport-security":"max-age=31536000; includeSubDomains","transfer-encoding":"chunked","vary":"Accept-Encoding, Origin, Access-Control-Request-Method, Access-Control-Request-Headers, Origin, Access-Control-Request-Method, Access-Control-Request-Headers","x-log-id":"20250829234139931184dddd8c46f0"}
+📦 GLM Raw response structure: [ 'choices', 'created', 'id', 'model', 'request_id', 'usage' ]
+🤖 GLM Response: ```json
+{
+  "valor": "R$ 49,02",
+  "fornecedor": "Fontinele Coimbra",
+  "data_pagamento": "12/08/2025",
+  "data_vencimento": null,
+  "descricao": "PG COMPRA DE AGUA E DESCARTAVEL PARA GALPAIO SMN1",
+  "categoria": "Suprimentos",
+  "centro_custo": "OK",
+  "documento": "NFC-e",
+  "confidence": 85
+}
+```
+📏 GLM Response length: 301 chars
+⚠️ Schema validation strict failed for glm, trying flexible validation...
+🔧 GLM response auto-corrected: {
+  valor: 'R$ 49,02',
+  fornecedor: 'Fontinele Coimbra',
+  data_pagamento: '12/08/2025',
+  descricao: 'PG COMPRA DE AGUA E DESCARTAVEL PARA GALPAIO SMN1',
+  categoria: 'Suprimentos',
+  centro_custo: 'OK',
+  documento: 'NFC-e',
+  confidence: 85
+}
+✅ Provider glm response auto-corrected successfully
+✅ Provider glm marked as ONLINE after successful analysis
+📊 Stats atualizadas para glm: 1 requests, 100.0% sucesso
+🤖 IA utilizada: glm
+🎯 Confiança: 85%
+💰 Custo: $0.739200
+⏱️ Tempo: 11145ms
+🔄 Mapeando dados IA: {
+  "valor": "R$ 49,02",
+  "data_pagamento": "12/08/2025",
+  "fornecedor": "Fontinele Coimbra",
+  "descricao": "PG COMPRA DE AGUA E DESCARTAVEL PARA GALPAIO SMN1",
+  "categoria": "Suprimentos",
+  "centro_custo": "OK",
+  "documento": "NFC-e",
+  "confidence": 85
+}
+✅ Sugestões mapeadas: {
+  "amount": "R$ 49,02",
+  "supplier": "Fontinele Coimbra",
+  "contraparte": "Fontinele Coimbra",
+  "documento": "NFC-e",
+  "description": "PG COMPRA DE AGUA E DESCARTAVEL PARA GALPAIO SMN1",
+  "dueDate": "",
+  "paymentDate": "12/08/2025",
+  "category": "Suprimentos",
+  "confidence": {
+    "amount": 85,
+    "supplier": 85,
+    "description": 85,
+    "dueDate": 0,
+    "paymentDate": 85
+  }
+}
+3:41:50 PM [express] POST /api/documents/process-file 200 in 14700ms :: {"success":true,"ocrText":"P…
+🔍 Processando arquivo para preview: 22.07.2025_PG_19.07.2025_02.08.2025_COMPRA DE 2 PNEUS_ManutencÌ§aÌo de Veiculos_SRJ1_R$1.450,00.pdf
+📄 Iniciando extração de texto PDF: uploads/df83f1ac5008c67850d496dff5d19daf
+✅ Extração nativa bem-sucedida: 2342 caracteres
+🤖 Analisando documento com IA: 22.07.2025_PG_19.07.2025_02.08.2025_COMPRA DE 2 PNEUS_ManutencÌ§aÌo de Veiculos_SRJ1_R$1.450,00.pdf
+📝 Texto extraído (2342 chars): DANFE
+Documento Auxiliar da 
+Nota Fiscal Eletrônica
+AV MARIA DO CARMO, 1571
+POSTO LAVA TUCUNS
+CRUZ / CE
+62595-000
+(88) 9729-5739 - 
+0 - ENTRADA
+1 - SAÍDA
+CHAVE DE ACESSO
+Nº 645   
+Série 1 
+Consulta de...
+📋 Detectada nota fiscal - usando analisador especializado
+🔄 Usando AI Multi-Provider para análise...
+📋 Documento complexo detectado - priorizando OpenAI
+🤖 Tentando análise com openai...
+🤖 OpenAI Response: {
+  "valor": "R$ 1.450,00",
+  "data_pagamento": "19/07/2025",
+  "data_vencimento": "02/08/2025",
+  "fornecedor": "ROBSON PNEUS E AUTOPECAS LTDA",
+  "descricao": "COMPRA DE 2 PNEUS ManutencÌ§aÌo de Veiculos SRJ1",
+  "categoria": "Revenda de mercadorias com ST",
+  "centro_custo": "PG",
+  "documento": "CNPJ: 95.001.834/0001-34",
+  "cliente_fornecedor": "ECO EXPRESS SERVIÇOS SUSTENTÁVEIS LTDA",
+  "observacoes": "",
+  "confidence": 95
+}
+✅ Provider openai marked as ONLINE after successful analysis
+📊 Stats atualizadas para openai: 2 requests, 100.0% sucesso
+🤖 IA utilizada: openai
+🎯 Confiança: 95%
+💰 Custo: $0.464250
+⏱️ Tempo: 5957ms
+🔄 Mapeando dados IA: {
+  "valor": "R$ 1.450,00",
+  "data_pagamento": "19/07/2025",
+  "data_vencimento": "02/08/2025",
+  "fornecedor": "ROBSON PNEUS E AUTOPECAS LTDA",
+  "descricao": "COMPRA DE 2 PNEUS ManutencÌ§aÌo de Veiculos SRJ1",
+  "categoria": "Revenda de mercadorias com ST",
+  "centro_custo": "PG",
+  "documento": "CNPJ: 95.001.834/0001-34",
+  "cliente_fornecedor": "ECO EXPRESS SERVIÇOS SUSTENTÁVEIS LTDA",
+  "observacoes": "",
+  "confidence": 95
+}
+✅ Sugestões mapeadas: {
+  "amount": "R$ 1.450,00",
+  "supplier": "ROBSON PNEUS E AUTOPECAS LTDA",
+  "contraparte": "ROBSON PNEUS E AUTOPECAS LTDA",
+  "documento": "CNPJ: 95.001.834/0001-34",
+  "description": "COMPRA DE 2 PNEUS ManutencÌ§aÌo de Veiculos SRJ1",
+  "dueDate": "02/08/2025",
+  "paymentDate": "19/07/2025",
+  "category": "Revenda de mercadorias com ST",
+  "confidence": {
+    "amount": 95,
+    "supplier": 95,
+    "description": 95,
+    "dueDate": 95,
+    "paymentDate": 95
+  }
+}
+3:42:22 PM [express] POST /api/documents/process-file 200 in 6189ms :: {"success":true,"ocrText":"DA…
+🔍 Processando arquivo para preview: (OK) 11.08.2025-PG-REEMBOLSO SERGIO ALEXSANDRO-IMPRESSAIÌ_O DE CONTRATOS-SRN1-R$81,00.jpeg
+🤖 Analisando documento com IA: (OK) 11.08.2025-PG-REEMBOLSO SERGIO ALEXSANDRO-IMPRESSAIÌ_O DE CONTRATOS-SRN1-R$81,00.jpeg
+📝 Texto extraído (310 chars): RECIBO DE PAGAMENTO
+Eu, Maria de Fatima Carvalho, inscrito(a) no CPF/CNPJ sob o nº 01747107476,
+residente/dono da empresa Creative, declaro para os devidos fins que recebi de
+Sergio Alexsandro, a quan...
+🔄 Usando AI Multi-Provider para análise...
+🤖 Tentando análise com glm...
+🔗 GLM API Request - Model: glm-4.5
+📝 GLM Full prompt length: 1344 chars
+📝 GLM Prompt preview: 
+Analise este documento fiscal brasileiro e extraia os dados em formato JSON.
+
+DOCUMENTO: (OK) 11.08.2025-PG-REEMBOLSO SERGIO ALEXSANDRO-IMPRESSAIÌ_O DE CONTRATOS-SRN1-R$81,00.jpeg
+TEXTO OCR: "RECIBO DE PAGAMENTO
+Eu, Maria de Fatima Carvalho, inscrito(a) no CPF/CNPJ sob o nº 01747107476,
+residente/...
+📝 GLM Request payload size: 221 chars
+⏰ Starting GLM request with 15s timeout...
+🕐 GLM timeout triggered after 15s
+🕐 GLM request timeout after 15s
+🔄 GLM retry attempt 2 in 2000ms...
+🔗 GLM API Request - Model: glm-4.5
+📝 GLM Full prompt length: 1344 chars
+📝 GLM Prompt preview: 
+Analise este documento fiscal brasileiro e extraia os dados em formato JSON.
+
+DOCUMENTO: (OK) 11.08.2025-PG-REEMBOLSO SERGIO ALEXSANDRO-IMPRESSAIÌ_O DE CONTRATOS-SRN1-R$81,00.jpeg
+TEXTO OCR: "RECIBO DE PAGAMENTO
+Eu, Maria de Fatima Carvalho, inscrito(a) no CPF/CNPJ sob o nº 01747107476,
+residente/...
+📝 GLM Request payload size: 221 chars
+⏰ Starting GLM request with 30s timeout...
+🔍 GLM Response status: 200 (18678ms)
+📊 GLM Response headers: {"connection":"keep-alive","content-encoding":"gzip","content-type":"application/json; charset=UTF-8","date":"Fri, 29 Aug 2025 15:43:10 GMT","server":"ZenZGA/2.4","strict-transport-security":"max-age=31536000; includeSubDomains","transfer-encoding":"chunked","vary":"Accept-Encoding, Origin, Access-Control-Request-Method, Access-Control-Request-Headers, Origin, Access-Control-Request-Method, Access-Control-Request-Headers","x-log-id":"20250829234252081107cbf88e497e"}
+📦 GLM Raw response structure: [ 'choices', 'created', 'id', 'model', 'request_id', 'usage' ]
+🤖 GLM Response: {
+  "valor": "R$ 81,00",
+  "fornecedor": "Maria de Fatima Carvalho",
+  "data_pagamento": "11/08/2025",
+  "data_vencimento": "",
+  "descricao": "90 folhas de impressão",
+  "categoria": "Serviços de Impressão",
+  "centro_custo": "OK",
+  "documento": "(OK) 11.08.2025-PG-REEMBOLSO SERGIO ALEXSANDRO-IMPRESSAIÌ_O DE CONTRATOS-SRN1-R$81,00.jpeg",
+  "confidence": 95
+}
+📏 GLM Response length: 363 chars
+⚠️ Schema validation strict failed for glm, trying flexible validation...
+🔧 GLM response auto-corrected: {
+  valor: 'R$ 81,00',
+  fornecedor: 'Maria de Fatima Carvalho',
+  data_pagamento: '11/08/2025',
+  data_vencimento: '',
+  descricao: '90 folhas de impressão',
+  categoria: 'Serviços de Impressão',
+  centro_custo: 'OK',
+  documento: '(OK) 11.08.2025-PG-REEMBOLSO SERGIO ALEXSANDRO-IMPRESSAIÌ\x80_O DE CONTRATOS-SRN1-R$81,00.jpeg',
+  confidence: 95
+}
+❌ Both validation attempts failed for glm: ZodError: [
+  {
+    "validation": "regex",
+    "code": "invalid_string",
+    "message": "Data deve estar no formato DD/MM/AAAA",
+    "path": [
+      "data_vencimento"
+    ]
+  }
+]
+    at get error [as error] (file:///home/runner/workspace/node_modules/zod/lib/index.mjs:587:31)
+    at ZodObject.parse (file:///home/runner/workspace/node_modules/zod/lib/index.mjs:663:22)
+    at AIMultiProvider.analyzeDocument (/home/runner/workspace/server/ai-multi-provider.ts:208:60)
+    at process.processTicksAndRejections (node:internal/process/task_queues:95:5)
+    at async DocumentAnalyzer.analyzeDocument (/home/runner/workspace/server/ai/document-analyzer.ts:82:24)
+    at async <anonymous> (/home/runner/workspace/server/routes.ts:276:22) {
+  issues: [
+    {
+      validation: 'regex',
+      code: 'invalid_string',
+      message: 'Data deve estar no formato DD/MM/AAAA',
+      path: [Array]
+    }
+  ],
+  addIssue: [Function (anonymous)],
+  addIssues: [Function (anonymous)],
+  errors: [
+    {
+      validation: 'regex',
+      code: 'invalid_string',
+      message: 'Data deve estar no formato DD/MM/AAAA',
+      path: [Array]
+    }
+  ]
+}
+🚨 Provider glm marked as ERROR (data validation failed)
+🤖 Tentando análise com openai (fallback)...
+🤖 OpenAI Response: {
+  "valor": "R$ 81,00",
+  "data_pagamento": "11/08/2025",
+  "data_vencimento": null,
+  "fornecedor": "Sergio Alexsandro",
+  "descricao": "90 folhas de impressão",
+  "categoria": "Impressão",
+  "centro_custo": "OK",
+  "documento": "01747107476",
+  "cliente_fornecedor": "Maria de Fatima Carvalho",
+  "observacoes": null,
+  "confidence": 95
+}
+⚠️ Schema validation strict failed for openai, trying flexible validation...
+🔧 GLM response auto-corrected: {
+  valor: 'R$ 81,00',
+  data_pagamento: '11/08/2025',
+  fornecedor: 'Sergio Alexsandro',
+  descricao: '90 folhas de impressão',
+  categoria: 'Impressão',
+  centro_custo: 'OK',
+  documento: '01747107476',
+  cliente_fornecedor: 'Maria de Fatima Carvalho',
+  confidence: 95
+}
+✅ Provider openai response auto-corrected successfully
+✅ Provider openai marked as ONLINE after successful analysis
+📊 Stats atualizadas para openai: 3 requests, 100.0% sucesso
+🤖 IA utilizada: openai
+🎯 Confiança: 95%
+💰 Custo: $0.231750
+⏱️ Tempo: 2862ms
+🔄 Fallback: invalid_response_format
+🔄 Mapeando dados IA: {
+  "valor": "R$ 81,00",
+  "data_pagamento": "11/08/2025",
+  "fornecedor": "Sergio Alexsandro",
+  "descricao": "90 folhas de impressão",
+  "categoria": "Impressão",
+  "centro_custo": "OK",
+  "documento": "01747107476",
+  "cliente_fornecedor": "Maria de Fatima Carvalho",
+  "confidence": 95
+}
+✅ Sugestões mapeadas: {
+  "amount": "R$ 81,00",
+  "supplier": "Sergio Alexsandro",
+  "contraparte": "Sergio Alexsandro",
+  "documento": "01747107476",
+  "description": "90 folhas de impressão",
+  "dueDate": "",
+  "paymentDate": "11/08/2025",
+  "category": "Impressão",
+  "confidence": {
+    "amount": 95,
+    "supplier": 95,
+    "description": 95,
+    "dueDate": 0,
+    "paymentDate": 95
+  }
+}
