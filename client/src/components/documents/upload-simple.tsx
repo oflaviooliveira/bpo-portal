@@ -24,6 +24,8 @@ const uploadSchema = z.object({
   notes: z.string().optional(),
   // Campos condicionais
   paymentDate: z.string().optional(),
+  competenceDate: z.string().optional(),
+  paidDate: z.string().optional(),
   dueDate: z.string().optional(),
   supplier: z.string().optional(),
   // Campos para boleto/NF
@@ -237,13 +239,25 @@ export function UploadDocument() {
 
           {/* Campos condicionais por tipo */}
           {documentType === "PAGO" && (
-            <div className="space-y-2">
-              <Label>Data de Pagamento</Label>
-              <Input
-                {...register("paymentDate")}
-                placeholder="DD/MM/AAAA"
-                data-testid="input-payment-date"
-              />
+            <div className="grid grid-cols-2 gap-4">
+              <div className="space-y-2">
+                <Label>Data de Competência *</Label>
+                <Input
+                  {...register("competenceDate")}
+                  type="date"
+                  data-testid="input-competence-date"
+                />
+                <p className="text-xs text-muted-foreground">Quando a despesa/receita pertence</p>
+              </div>
+              <div className="space-y-2">
+                <Label>Data de Pagamento *</Label>
+                <Input
+                  {...register("paidDate")}
+                  type="date"
+                  data-testid="input-paid-date"
+                />
+                <p className="text-xs text-muted-foreground">Data efetiva do pagamento</p>
+              </div>
             </div>
           )}
 

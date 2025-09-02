@@ -287,7 +287,7 @@ function getFieldConfigsForDocumentType(documentType: string) {
           {
             name: 'competenceDate',
             label: 'Data de Competência',
-            type: 'date' as const,
+            type: 'date',
             required: true,
             description: 'Quando a despesa/receita pertence',
             icon: <Calendar className="h-4 w-4" />
@@ -295,7 +295,7 @@ function getFieldConfigsForDocumentType(documentType: string) {
           {
             name: 'paidDate',
             label: 'Data de Pagamento',
-            type: 'date' as const,
+            type: 'date',
             required: true,
             description: 'Quando o pagamento foi efetuado',
             icon: <Calendar className="h-4 w-4" />
