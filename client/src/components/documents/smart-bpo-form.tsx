@@ -285,14 +285,15 @@ function getFieldConfigsForDocumentType(documentType: string) {
         mandatoryFields: [
           ...baseFields,
           {
-            name: 'dueDate',
-            label: 'Data de Vencimento',
+            name: 'competenceDate',
+            label: 'Data de Competência',
             type: 'date' as const,
             required: true,
-            description: 'Data original de vencimento do documento'
+            description: 'Quando a despesa/receita pertence',
+            icon: <Calendar className="h-4 w-4" />
           },
           {
-            name: 'paymentDate',
+            name: 'paidDate',
             label: 'Data de Pagamento',
             type: 'date' as const,
             required: true,
@@ -471,7 +472,7 @@ function getValidationsForDocumentType(documentType: string, values: any) {
 
   if (documentType === 'PAGO') {
     validations.push({
-      isValid: !!values.paymentDate,
+      isValid: !!values.paidDate,
       message: 'Data de Pagamento obrigatória para documentos pagos'
     });
   }

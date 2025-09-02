@@ -16,18 +16,39 @@ export function validateBrazilianDate(dateString: string): boolean {
          date.getFullYear() == parseInt(year);
 }
 
-// Validação de valores monetários R$ X,XX
-export const currencyRegex = /^R\$?\s?(\d{1,3}(?:\.\d{3})*),(\d{2})$/;
+// Validação de valores monetários flexível - suporta vários formatos brasileiros
+export const currencyRegex = /^R?\$?\s?[\d.,]+$/;
 
 export function validateCurrency(valueString: string): { isValid: boolean; value?: number } {
-  const match = valueString.match(currencyRegex);
-  if (!match) return { isValid: false };
+  if (!valueString || typeof valueString !== 'string') return { isValid: false };
   
-  const [, integerPart, decimalPart] = match;
-  const cleanInteger = integerPart.replace(/\./g, '');
-  const value = parseFloat(`${cleanInteger}.${decimalPart}`);
+  // Remover prefixos R$ e espaços
+  const cleanValue = valueString.replace(/^R?\$?\s*/, '').trim();
   
-  return { isValid: true, value };
+  // Aceitar vários formatos: 1450,00 | 1.450,00 | 1450.00 | 1,450.00
+  const brazilianFormat = /^(\d{1,3}(?:\.\d{3})*),(\d{2})$/.test(cleanValue);
+  const americanFormat = /^(\d{1,3}(?:,\d{3})*)\.\d{2}$/.test(cleanValue);
+  const simpleFormat = /^\d+[,.]?\d{0,2}$/.test(cleanValue);
+  
+  if (brazilianFormat || americanFormat || simpleFormat) {
+    try {
+      // Converter para formato decimal
+      let numericValue;
+      if (cleanValue.includes(',') && cleanValue.lastIndexOf(',') > cleanValue.lastIndexOf('.')) {
+        // Formato brasileiro: 1.450,00
+        numericValue = parseFloat(cleanValue.replace(/\./g, '').replace(',', '.'));
+      } else {
+        // Formato americano ou simples: 1,450.00 ou 1450.00
+        numericValue = parseFloat(cleanValue.replace(/,/g, ''));
+      }
+      
+      return { isValid: !isNaN(numericValue) && numericValue > 0, value: numericValue };
+    } catch {
+      return { isValid: false };
+    }
+  }
+  
+  return { isValid: false };
 }
 
 // Validação de CNPJ/CPF
@@ -341,11 +362,9 @@ export function performCrossValidation(
 // Schemas para validação específica por tipo de documento
 export const documentValidationSchemas = {
   PAGO: {
-    required: ['bankId', 'categoryId', 'costCenterId', 'amount', 'paymentDate'],
-    conditionalRequired: [
-      { fields: ['clientId', 'contraparteName'], condition: 'at_least_one' } // Cliente OU Contraparte
-    ],
-    optional: ['supplier', 'notes']
+    required: ['supplier', 'amount', 'competenceDate', 'paidDate'], // CORREÇÃO: apenas competência e pagamento obrigatórios
+    conditionalRequired: [],
+    optional: ['bankId', 'categoryId', 'costCenterId', 'notes', 'description']
   },
   AGENDADO: {
     required: ['bankId', 'categoryId', 'costCenterId', 'amount', 'dueDate'],
@@ -382,10 +401,13 @@ export function validateBusinessRules(
   const fieldNames: { [key: string]: string } = {
     'clientId': 'Cliente',
     'contraparteName': 'Contraparte',
+    'supplier': 'Fornecedor',
     'bankId': 'Banco',
     'categoryId': 'Categoria',
     'costCenterId': 'Centro de Custo',
     'amount': 'Valor',
+    'competenceDate': 'Data de Competência',
+    'paidDate': 'Data de Pagamento',
     'paymentDate': 'Data de Pagamento',
     'dueDate': 'Data de Vencimento',
     'payerDocument': 'Documento do Tomador',

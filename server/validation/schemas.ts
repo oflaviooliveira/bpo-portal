@@ -5,19 +5,36 @@ import { z } from 'zod';
  * Previne bugs e ataques durante desenvolvimento
  */
 
-// Validação de upload de documento
-export const documentUploadSchema = z.object({
+// Validação base para upload de documento
+const baseDocumentUploadSchema = z.object({
   documentType: z.enum(['PAGO', 'AGENDADO', 'EMITIR_BOLETO', 'EMITIR_NF'], {
     errorMap: () => ({ message: 'Tipo de documento inválido' })
   }),
   supplier: z.string().min(1, 'Fornecedor é obrigatório').max(255),
   description: z.string().max(1000, 'Descrição muito longa').optional(),
-  amount: z.string().regex(/^\d+[,.]?\d{0,2}$/, 'Valor inválido').optional(),
+  amount: z.string().regex(/^R?\$?\s?[\d.,]+$/, 'Valor inválido').optional(),
   competenceDate: z.string().regex(/^\d{2}\/\d{2}\/\d{4}$/, 'Data de competência inválida (DD/MM/AAAA)').optional(),
   dueDate: z.string().regex(/^\d{2}\/\d{2}\/\d{4}$/, 'Data de vencimento inválida (DD/MM/AAAA)').optional(),
   paidDate: z.string().regex(/^\d{2}\/\d{2}\/\d{4}$/, 'Data de pagamento inválida (DD/MM/AAAA)').optional(),
   notes: z.string().max(500, 'Observações muito longas').optional(),
 });
+
+// Validação condicional para documentos PAGO - apenas competenceDate e paidDate obrigatórios
+export const pagoDocumentUploadSchema = baseDocumentUploadSchema.extend({
+  competenceDate: z.string().regex(/^\d{2}\/\d{2}\/\d{4}$/, 'Data de competência é obrigatória para documentos PAGO (DD/MM/AAAA)'),
+  paidDate: z.string().regex(/^\d{2}\/\d{2}\/\d{4}$/, 'Data de pagamento é obrigatória para documentos PAGO (DD/MM/AAAA)'),
+});
+
+// Validação para outros tipos de documento - mantém validação atual
+export const defaultDocumentUploadSchema = baseDocumentUploadSchema;
+
+// Schema principal com validação condicional
+export const documentUploadSchema = z.discriminatedUnion('documentType', [
+  pagoDocumentUploadSchema.extend({ documentType: z.literal('PAGO') }),
+  defaultDocumentUploadSchema.extend({ documentType: z.literal('AGENDADO') }),
+  defaultDocumentUploadSchema.extend({ documentType: z.literal('EMITIR_BOLETO') }),
+  defaultDocumentUploadSchema.extend({ documentType: z.literal('EMITIR_NF') }),
+]);
 
 // Validação de login
 export const loginSchema = z.object({

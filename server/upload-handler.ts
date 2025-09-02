@@ -22,8 +22,10 @@ const uploadDocumentSchema = z.object({
   supplier: z.string().optional(), // Legacy field
   description: z.string().optional(),
   notes: z.string().optional(),
-  // Campos condicionais por tipo
+  // Campos condicionais por tipo  
+  competenceDate: z.string().optional(),
   paymentDate: z.string().optional(),
+  paidDate: z.string().optional(),
   dueDate: z.string().optional(),
   // Campos para emissão de boleto/NF
   payerDocument: z.string().optional(),
@@ -152,8 +154,9 @@ export class DocumentUploadHandler {
         amount: this.parseAmount(validatedData.amount || '') || '0',
         supplier: validatedData.supplier || validatedData.contraparteName,
         description: validatedData.description,
+        competenceDate: this.parseDate(validatedData.competenceDate || ''),
         dueDate: this.parseDate(validatedData.dueDate || ''),
-        paidDate: this.parseDate(validatedData.paymentDate || ''),
+        paidDate: this.parseDate(validatedData.paidDate || validatedData.paymentDate || ''),
         issuerData,
         instructions: validatedData.instructions,
         notes: validatedData.notes,
