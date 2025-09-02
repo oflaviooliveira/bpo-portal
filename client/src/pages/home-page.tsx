@@ -3,7 +3,7 @@ import { Sidebar } from "@/components/layout/sidebar";
 import { Header } from "@/components/layout/header";
 import { Dashboard } from "@/components/dashboard/dashboard";
 import { Inbox } from "@/components/documents/inbox";
-import { UploadEnhanced } from "@/components/documents/upload-enhanced";
+import { UploadBpo } from "@/components/documents/upload-bpo";
 import { Scheduled } from "@/components/documents/scheduled";
 import { Reconciliation } from "@/components/documents/reconciliation";
 import { Emission } from "@/components/documents/emission";
@@ -24,7 +24,7 @@ export default function HomePage() {
       case 'upload':
         return (
           <div className="p-6">
-            <UploadEnhanced />
+            <UploadBpo />
           </div>
         );
       case 'scheduled':

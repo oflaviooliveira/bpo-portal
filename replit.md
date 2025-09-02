@@ -199,6 +199,14 @@ Portal de BPO Financeiro com OCR/IA multi-provider para processamento automátic
 
 **RESULTADO APRIMORADO**: Sistema 100% transparente com precisão real no confidence
 
+**PROBLEMA DE ROTEAMENTO RESOLVIDO (02/09/2025)**:
+✅ **Causa Raiz Identificada**: Sistema tinha DUAS rotas de upload:
+- HOME (`/`): Usava `UploadEnhanced` (componente antigo com "Tipo de Solicitação")
+- DOCUMENTS (`/documents`): Usava `UploadBpo` (componente novo com "Tipo de Operação BPO")
+
+✅ **Correção Implementada**: HomePage agora usa `UploadBpo` em vez de `UploadEnhanced`
+✅ **Resultado**: Interface unificada com separação dados documento vs BPO reais funcionando
+
 **MELHORIAS DE ALTA PRIORIDADE IMPLEMENTADAS (28/08/2025)**:
 ✅ **Sistema Inteligente de Gestão de Inconsistências**:
 - SmartInconsistencyManager com lógica contextual por tipo de campo
