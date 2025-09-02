@@ -134,6 +134,7 @@ interface ProcessingState {
 
 export function UploadBpo() {
   console.log("🎯 UploadBpo component está sendo renderizado!");
+  console.log("🔄 Component UploadBpo carregado no DOM");
   
   const [selectedFile, setSelectedFile] = useState<File | null>(null);
   const [processingState, setProcessingState] = useState<ProcessingState>({ 
@@ -368,12 +369,15 @@ export function UploadBpo() {
 
   return (
     <div className="space-y-6">
-      {/* Header */}
+      {/* Header - NOVO COMPONENTE BPO */}
       <Card className="border-[#E40064]/20">
         <CardHeader className="bg-gradient-to-r from-[#E40064]/5 to-[#0B0E30]/5">
           <CardTitle className="flex items-center gap-2 text-[#0B0E30]">
             <CloudUpload className="h-5 w-5 text-[#E40064]" />
             Upload de Documentos BPO
+            <Badge variant="destructive" className="ml-2 text-xs bg-green-500">
+              NOVO SISTEMA
+            </Badge>
           </CardTitle>
         </CardHeader>
       </Card>

@@ -40,7 +40,7 @@ const uploadSchema = z.object({
 
 type UploadData = z.infer<typeof uploadSchema>;
 
-export function UploadDocument() {
+export function UploadDocumentOld() {
   const [selectedFile, setSelectedFile] = useState<File | null>(null);
   const [isProcessing, setIsProcessing] = useState(false);
   const { toast } = useToast();

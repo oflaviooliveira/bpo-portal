@@ -19,7 +19,7 @@ export function DocumentsPage() {
   const [activeTab, setActiveTab] = useState("upload");
 
   // Buscar documentos
-  const { data: documents = [] as any[], isLoading } = useQuery({
+  const { data: documents = [], isLoading } = useQuery<any[]>({
     queryKey: ["/api/documents"],
     refetchInterval: 5000, // Atualizar a cada 5 segundos para ver status
   });
@@ -62,7 +62,7 @@ export function DocumentsPage() {
         <h1 className="text-3xl font-bold">Documentos</h1>
         <div className="flex items-center gap-2 text-sm text-muted-foreground">
           <FileText className="h-4 w-4" />
-          {documents.length} documentos
+          {Array.isArray(documents) ? documents.length : 0} documentos
         </div>
       </div>
 
@@ -92,7 +92,7 @@ export function DocumentsPage() {
                 </div>
               </CardContent>
             </Card>
-          ) : documents.length === 0 ? (
+          ) : !Array.isArray(documents) || documents.length === 0 ? (
             <Card>
               <CardContent className="flex items-center justify-center py-8">
                 <div className="text-center">
@@ -113,7 +113,7 @@ export function DocumentsPage() {
             </Card>
           ) : (
             <div className="grid gap-4">
-              {documents.map((doc: any) => (
+              {Array.isArray(documents) && documents.map((doc: any) => (
                 <Card key={doc.id} data-testid={`card-document-${doc.id}`}>
                   <CardHeader className="pb-3">
                     <div className="flex items-start justify-between">
