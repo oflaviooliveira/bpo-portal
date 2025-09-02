@@ -133,6 +133,8 @@ interface ProcessingState {
 }
 
 export function UploadBpo() {
+  console.log("🎯 UploadBpo component está sendo renderizado!");
+  
   const [selectedFile, setSelectedFile] = useState<File | null>(null);
   const [processingState, setProcessingState] = useState<ProcessingState>({ 
     stage: 'ready', 
