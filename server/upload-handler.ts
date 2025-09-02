@@ -24,6 +24,8 @@ const uploadDocumentSchema = z.object({
   notes: z.string().optional(),
   // Campos condicionais por tipo  
   competenceDate: z.string().optional(),
+  realPaidDate: z.string().optional(),
+  scheduledDate: z.string().optional(),
   paymentDate: z.string().optional(),
   paidDate: z.string().optional(),
   dueDate: z.string().optional(),
@@ -154,9 +156,9 @@ export class DocumentUploadHandler {
         amount: this.parseAmount(validatedData.amount || '') || '0',
         supplier: validatedData.supplier || validatedData.contraparteName,
         description: validatedData.description,
-        // competenceDate: this.parseDate(validatedData.competenceDate || ''), // Removido temporariamente - campo não existe no schema DB
-        dueDate: this.parseDate(validatedData.dueDate || ''),
-        paidDate: this.parseDate(validatedData.paidDate || validatedData.paymentDate || ''),
+        competenceDate: this.parseDate(validatedData.competenceDate || ''),
+        dueDate: this.parseDate(validatedData.dueDate || validatedData.scheduledDate || ''),
+        paidDate: this.parseDate(validatedData.paidDate || validatedData.realPaidDate || validatedData.paymentDate || ''),
         issuerData,
         instructions: validatedData.instructions,
         notes: validatedData.notes,

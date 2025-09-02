@@ -1,6 +1,6 @@
 import React, { useState } from "react";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { UploadDocument } from "@/components/documents/upload-simple";
+import { UploadBpo } from "@/components/documents/upload-bpo";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { useQuery } from "@tanstack/react-query";
 import { Badge } from "@/components/ui/badge";
@@ -19,7 +19,7 @@ export function DocumentsPage() {
   const [activeTab, setActiveTab] = useState("upload");
 
   // Buscar documentos
-  const { data: documents = [], isLoading } = useQuery({
+  const { data: documents = [] as any[], isLoading } = useQuery({
     queryKey: ["/api/documents"],
     refetchInterval: 5000, // Atualizar a cada 5 segundos para ver status
   });
@@ -79,7 +79,7 @@ export function DocumentsPage() {
         </TabsList>
 
         <TabsContent value="upload" className="space-y-4">
-          <UploadDocument />
+          <UploadBpo />
         </TabsContent>
 
         <TabsContent value="list" className="space-y-4">
