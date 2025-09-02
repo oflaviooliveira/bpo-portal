@@ -187,59 +187,117 @@ export function UploadBpo() {
     onSuccess: (data) => {
       console.log("✅ Processamento IA concluído:", data);
       
-      // Mapear sugestões da IA
+      // Verificar se temos sugestões da API
+      if (!data.suggestions) {
+        console.log("⚠️ Nenhuma sugestão recebida da API");
+        setProcessingState({ 
+          stage: 'ready', 
+          message: 'Documento processado mas sem sugestões automáticas' 
+        });
+        return;
+      }
+      
+      console.log("🎯 Recebendo sugestões:", data.suggestions);
+      
+      // Mapear sugestões da IA usando estrutura correta
       const newSuggestions: DocumentSuggestion[] = [];
       
-      if (data.amount) {
+      if (data.suggestions.amount) {
         newSuggestions.push({
           field: "amount",
-          value: data.amount,
-          confidence: data.confidence?.amount || 95,
+          value: data.suggestions.amount,
+          confidence: data.suggestions.confidence?.amount || 95,
           source: "IA"
         });
+        form.setValue("amount", data.suggestions.amount);
+        console.log("💰 Valor preenchido:", data.suggestions.amount);
       }
       
-      if (data.supplier) {
+      if (data.suggestions.supplier || data.suggestions.contraparte) {
+        const supplierValue = data.suggestions.contraparte || data.suggestions.supplier;
         newSuggestions.push({
           field: "supplier", 
-          value: data.supplier,
-          confidence: data.confidence?.supplier || 95,
+          value: supplierValue,
+          confidence: data.suggestions.confidence?.supplier || 95,
           source: "IA"
         });
+        form.setValue("supplier", supplierValue);
+        console.log("🏢 Contraparte preenchida:", supplierValue);
       }
       
-      if (data.description) {
+      if (data.suggestions.description) {
         newSuggestions.push({
           field: "description",
-          value: data.description,
-          confidence: data.confidence?.description || 95,
+          value: data.suggestions.description,
+          confidence: data.suggestions.confidence?.description || 95,
           source: "IA"
         });
+        form.setValue("description", data.suggestions.description);
+        console.log("📝 Descrição preenchida:", data.suggestions.description);
       }
       
-      // Pré-preencher campos com sugestões
-      form.setValue("amount", data.amount || "");
-      form.setValue("supplier", data.supplier || "");
-      form.setValue("description", data.description || "");
+      // Converter datas brasileiras para formato ISO (YYYY-MM-DD)
+      const convertBRDateToISO = (brDate: string) => {
+        if (!brDate) return "";
+        try {
+          const [day, month, year] = brDate.split('/');
+          const convertedDate = `${year}-${month.padStart(2, '0')}-${day.padStart(2, '0')}`;
+          console.log(`📅 Conversão de data: ${brDate} → ${convertedDate}`);
+          return convertedDate;
+        } catch (error) {
+          console.log(`⚠️ Erro na conversão de data: ${brDate}`);
+          return "";
+        }
+      };
+      
+      // Mapear campos adicionais importantes
+      if (data.suggestions.documento) {
+        console.log("📄 Documento identificado:", data.suggestions.documento);
+      }
+      
+      if (data.suggestions.category) {
+        console.log("🏷️ Categoria sugerida:", data.suggestions.category);
+      }
+      
+      if (data.suggestions.centerCost) {
+        console.log("🏢 Centro de custo sugerido:", data.suggestions.centerCost);
+      }
+      
+      // Mapear datas do documento (separadas dos dados BPO reais)
+      if (data.suggestions.paymentDate) {
+        const convertedDate = convertBRDateToISO(data.suggestions.paymentDate);
+        console.log("💳 Data pagamento (documento):", data.suggestions.paymentDate, "→", convertedDate);
+      }
+      
+      if (data.suggestions.dueDate) {
+        const convertedDate = convertBRDateToISO(data.suggestions.dueDate);
+        console.log("📅 Data vencimento (documento):", data.suggestions.dueDate, "→", convertedDate);
+      }
+      
+      // IMPORTANTE: NÃO auto-preencher datas BPO - são dados operacionais reais
+      console.log("⚠️ NOTA: Datas do documento NÃO são preenchidas automaticamente nos campos BPO");
+      console.log("💡 Usuário deve confirmar as datas reais de operação manualmente");
       
       // Salvar metadados do documento para referência
       setDocumentMetadata({
-        documentDate: data.paymentDate || data.dueDate,
-        documentValue: data.amount,
+        documentDate: data.suggestions.paymentDate || data.suggestions.dueDate,
+        documentValue: data.suggestions.amount,
         ocrQuality: data.qualityMetadata?.ocrQuality,
-        confidence: data.confidence
+        confidence: data.suggestions.confidence
       });
       
       setSuggestions(newSuggestions);
       setProcessingState({ 
         stage: 'analyzed', 
-        message: `IA analisou o documento com ${Math.round((data.confidence?.amount || 95))}% de precisão` 
+        message: `IA analisou o documento com ${Math.round((data.suggestions.confidence?.amount || 95))}% de precisão` 
       });
       
       toast({
         title: "Documento processado com sucesso",
         description: `IA identificou ${newSuggestions.length} campos automaticamente`,
       });
+      
+      console.log("✅ Total de campos sugeridos:", newSuggestions.length);
     },
     onError: (error: any) => {
       console.error("❌ Erro no processamento IA:", error);
