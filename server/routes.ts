@@ -435,10 +435,10 @@ export async function registerRoutes(app: Express): Promise<Server> {
             dataSource,
             isFilenameData,
             ocrQuality: qualityMetadata.estimatedQuality,
-            isSystemPage: qualityAnalysis.isSystemPage,
-            isIncomplete: qualityAnalysis.isIncomplete,
-            characterCount: qualityAnalysis.characterCount,
-            hasMonetaryValues: qualityAnalysis.hasMonetaryValues
+            isSystemPage: qualityMetadata.isSystemPage || false,
+            isIncomplete: qualityMetadata.isIncomplete || false,
+            characterCount: qualityMetadata.characterCount || 0,
+            hasMonetaryValues: qualityMetadata.hasMonetaryValues || false
           },
 
           // Confidence granular por campo ajustado pela fonte
@@ -463,9 +463,9 @@ export async function registerRoutes(app: Express): Promise<Server> {
         console.log(`🔍 Fonte dos dados: ${dataSource}`);
         if (qualityMetadata) {
           console.log(`⚠️ Alertas de qualidade:`, {
-            isSystemPage: qualityAnalysis.isSystemPage,
-            isIncomplete: qualityAnalysis.isIncomplete,
-            ocrQuality: qualityAnalysis.estimatedQuality,
+            isSystemPage: qualityMetadata.isSystemPage,
+            isIncomplete: qualityMetadata.isIncomplete,
+            ocrQuality: qualityMetadata.estimatedQuality,
             adjustedConfidence: `${adjustedConfidence}% (${isFilenameData ? 'reduzido' : 'original'})`
           });
         }
@@ -1946,8 +1946,8 @@ export async function registerRoutes(app: Express): Promise<Server> {
 
       // Get recent AI activity (last 10 minutes)
       const recentActivity = await storage.getAiRuns(user.tenantId, {
-        dateFrom: new Date(Date.now() - 10 * 60 * 1000),
-        limit: 1
+        limit: 1,
+        dateFrom: new Date(Date.now() - 10 * 60 * 1000) 
       });
 
       res.json({
@@ -2091,8 +2091,8 @@ export async function registerRoutes(app: Express): Promise<Server> {
       dateFrom.setDate(dateFrom.getDate() - daysBack);
 
       let aiRuns = await storage.getAiRuns(user.tenantId, {
+        limit: 50000,
         dateFrom,
-        limit: 50000
       });
 
       if (provider) {
