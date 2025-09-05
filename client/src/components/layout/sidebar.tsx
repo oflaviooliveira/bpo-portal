@@ -13,7 +13,8 @@ import {
   Settings, 
   LogOut,
   Cpu,
-  BarChart3
+  BarChart3,
+  TrendingUp
 } from "lucide-react";
 
 interface SidebarProps {
@@ -27,6 +28,9 @@ export function Sidebar({ activeSection, onSectionChange }: SidebarProps) {
   const handleLogout = () => {
     logoutMutation.mutate();
   };
+
+  // Verificar se é admin global
+  const isGlobalAdmin = user?.tenantId === '00000000-0000-0000-0000-000000000001' && user?.role === 'ADMIN';
 
   const menuItems = [
     {
@@ -92,6 +96,20 @@ export function Sidebar({ activeSection, onSectionChange }: SidebarProps) {
       icon: Cpu,
       category: 'ADMINISTRAÇÃO',
     },
+    {
+      section: 'admin-dashboard',
+      label: 'Dashboard Admin',
+      icon: BarChart3,
+      category: 'ADMINISTRAÇÃO',
+      adminOnly: true,
+    },
+    {
+      section: 'admin-stats',
+      label: 'Estatísticas Globais',
+      icon: TrendingUp,
+      category: 'ADMINISTRAÇÃO',
+      adminOnly: true,
+    },
 
   ];
 
@@ -119,6 +137,7 @@ export function Sidebar({ activeSection, onSectionChange }: SidebarProps) {
             
             {menuItems
               .filter((item) => item.category === category)
+              .filter((item) => !item.adminOnly || isGlobalAdmin)
               .map((item) => {
                 const Icon = item.icon;
                 const isActive = activeSection === item.section;

@@ -10,8 +10,10 @@ import { Emission } from "@/components/documents/emission";
 import { Archived } from "@/components/documents/archived";
 import AIControlCenter from "@/pages/ai-control-center";
 import { ClientManagement } from "@/components/admin/client-management";
+import { AdminDashboardSidebar } from "@/components/admin/admin-dashboard-sidebar";
+import { AdminStatsSidebar } from "@/components/admin/admin-stats-sidebar";
 
-type Section = 'dashboard' | 'inbox' | 'upload' | 'scheduled' | 'reconciliation' | 'emission' | 'archived' | 'clients' | 'users' | 'ai-control';
+type Section = 'dashboard' | 'inbox' | 'upload' | 'scheduled' | 'reconciliation' | 'emission' | 'archived' | 'clients' | 'users' | 'ai-control' | 'admin-dashboard' | 'admin-stats';
 
 export default function HomePage() {
   const [activeSection, setActiveSection] = useState<Section>('dashboard');
@@ -51,6 +53,10 @@ export default function HomePage() {
             <AIControlCenter />
           </div>
         );
+      case 'admin-dashboard':
+        return <AdminDashboardSidebar />;
+      case 'admin-stats':
+        return <AdminStatsSidebar />;
       default:
         return <Dashboard />;
     }

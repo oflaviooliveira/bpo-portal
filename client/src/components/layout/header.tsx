@@ -1,9 +1,8 @@
 import { useAuth } from "@/hooks/use-auth";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
-import { Search, Bell, Shield } from "lucide-react";
+import { Search, Bell } from "lucide-react";
 import { useState } from "react";
-import { Link } from "wouter";
 
 interface HeaderProps {
   activeSection: string;
@@ -20,6 +19,9 @@ const sectionTitles: Record<string, string> = {
   clients: "Clientes",
   users: "Usuários",
   settings: "Configurações",
+  "admin-dashboard": "Dashboard Administrativo",
+  "admin-stats": "Estatísticas Globais",
+  "ai-control": "Centro de Controle IA",
 };
 
 export function Header({ activeSection }: HeaderProps) {
@@ -27,9 +29,6 @@ export function Header({ activeSection }: HeaderProps) {
   const [searchQuery, setSearchQuery] = useState("");
   
   const title = sectionTitles[activeSection] || "Dashboard";
-  
-  // Verificar se é admin global
-  const isGlobalAdmin = user?.tenantId === '00000000-0000-0000-0000-000000000001' && user?.role === 'ADMIN';
 
   return (
     <header className="bg-white border-b border-border px-6 py-4">
@@ -57,20 +56,6 @@ export function Header({ activeSection }: HeaderProps) {
             <Search className="absolute right-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400" />
           </div>
 
-          {/* Admin Panel Button - apenas para administradores globais */}
-          {isGlobalAdmin && (
-            <Link href="/admin">
-              <Button
-                variant="outline"
-                size="sm"
-                className="border-gquicks-primary text-gquicks-primary hover:bg-gquicks-primary hover:text-white"
-                data-testid="button-admin-panel"
-              >
-                <Shield className="w-4 h-4 mr-2" />
-                Painel Admin
-              </Button>
-            </Link>
-          )}
 
           {/* Notifications */}
           <Button
