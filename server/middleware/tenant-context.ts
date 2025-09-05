@@ -23,7 +23,6 @@ export async function tenantContextMiddleware(req: Request, res: Response, next:
     // Para usuários não autenticados, limpar contexto RLS
     try {
       await db.execute(sql.raw(`SET app.current_tenant = ''`));
-      await db.execute(sql.raw(`SET app.current_user = ''`));
     } catch (error) {
       console.error('❌ Erro ao limpar contexto RLS:', error);
     }
@@ -39,10 +38,9 @@ export async function tenantContextMiddleware(req: Request, res: Response, next:
 
   req.tenantContext = tenantContext;
 
-  // Configurar contexto RLS completo (tenant + user)
+  // Configurar contexto RLS (apenas tenant)
   try {
     await db.execute(sql.raw(`SET app.current_tenant = '${user.tenantId}'`));
-    await db.execute(sql.raw(`SET app.current_user = '${user.id}'`));
     console.log(`🔐 RLS Context: tenant=${user.tenantId}, user=${user.id}, role=${user.role}`);
   } catch (error) {
     console.error('❌ Erro ao configurar contexto RLS:', error);

@@ -11,7 +11,6 @@ export async function setRLSContext(req: Request, res: Response, next: NextFunct
     // Para usuários não autenticados, limpar contexto
     try {
       await db.execute(sql.raw(`SET app.current_tenant = ''`));
-      await db.execute(sql.raw(`SET app.current_user = ''`));
     } catch (error) {
       console.error('❌ Erro ao limpar contexto RLS:', error);
     }
@@ -21,9 +20,8 @@ export async function setRLSContext(req: Request, res: Response, next: NextFunct
   const user = req.user;
   
   try {
-    // Configurar contexto de tenant e usuário para RLS
+    // Configurar contexto de tenant para RLS
     await db.execute(sql.raw(`SET app.current_tenant = '${user.tenantId}'`));
-    await db.execute(sql.raw(`SET app.current_user = '${user.id}'`));
     
     console.log(`🔐 RLS Context: tenant=${user.tenantId}, user=${user.id}, role=${user.role}`);
   } catch (error) {
@@ -54,7 +52,6 @@ export async function setGlobalAdminContext(req: Request, res: Response, next: N
   try {
     // Para admins globais, permitir acesso a todos os tenants
     await db.execute(sql.raw(`SET app.current_tenant = ''`));
-    await db.execute(sql.raw(`SET app.current_user = '${user.id}'`));
     
     console.log(`🌐 Global Admin Context: user=${user.id}, unrestricted access`);
   } catch (error) {

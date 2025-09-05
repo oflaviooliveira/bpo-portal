@@ -233,9 +233,7 @@ async function main() {
   }
 }
 
-// Executar apenas se chamado diretamente
-if (require.main === module) {
-  main();
-}
+// Executar automaticamente
+main();
 
 export { validateTenantIsolation };
