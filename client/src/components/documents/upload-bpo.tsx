@@ -484,11 +484,25 @@ export function UploadBpo() {
       formData.append("file", selectedFile);
     }
 
-    // Adicionar todos os campos do formulário
+    // Mapear campos do frontend para backend
+    const fieldMapping: Record<string, string> = {
+      contraparteId: 'supplier',
+      realPaidDate: 'paidDate'
+    };
+
+    // Adicionar todos os campos do formulário com mapeamento correto
     Object.entries(data).forEach(([key, value]) => {
       if (value !== undefined && value !== "") {
-        formData.append(key, String(value));
+        const backendKey = fieldMapping[key] || key;
+        formData.append(backendKey, String(value));
       }
+    });
+
+    // Log para debugging
+    console.log("📤 Dados sendo enviados para o servidor:");
+    const formEntries = Array.from(formData.entries());
+    formEntries.forEach(([key, value]) => {
+      console.log(`  ${key}: ${value}`);
     });
 
     uploadMutation.mutate(formData);
