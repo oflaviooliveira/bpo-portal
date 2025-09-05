@@ -484,6 +484,24 @@ export function UploadBpo() {
       formData.append("file", selectedFile);
     }
 
+    // Função para converter datas para formato DD/MM/AAAA
+    const formatDateForServer = (dateStr: string) => {
+      if (!dateStr) return dateStr;
+      
+      // Se já está no formato DD/MM/AAAA, manter
+      if (dateStr.match(/^\d{2}\/\d{2}\/\d{4}$/)) {
+        return dateStr;
+      }
+      
+      // Se está no formato AAAA-MM-DD, converter para DD/MM/AAAA
+      if (dateStr.match(/^\d{4}-\d{2}-\d{2}$/)) {
+        const [year, month, day] = dateStr.split('-');
+        return `${day}/${month}/${year}`;
+      }
+      
+      return dateStr;
+    };
+
     // Mapear campos do frontend para backend
     const fieldMapping: Record<string, string> = {
       contraparteId: 'supplier',
@@ -494,7 +512,15 @@ export function UploadBpo() {
     Object.entries(data).forEach(([key, value]) => {
       if (value !== undefined && value !== "") {
         const backendKey = fieldMapping[key] || key;
-        formData.append(backendKey, String(value));
+        
+        // Converter formato de datas para DD/MM/AAAA
+        let finalValue = String(value);
+        if (key === 'competenceDate' || key === 'realPaidDate') {
+          finalValue = formatDateForServer(finalValue);
+          console.log(`📅 Convertendo data ${key}: ${value} → ${finalValue}`);
+        }
+        
+        formData.append(backendKey, finalValue);
       }
     });
 
