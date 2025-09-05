@@ -22,6 +22,7 @@ import { tenantContextMiddleware, validateTenantSlug, requireTenantContext } fro
 import { setGlobalAdminContext } from "./middleware/rls-context";
 import { listTenants, createTenant, toggleTenant, listTenantUsers, createTenantUser } from "./admin/tenant-admin";
 import { getDashboardStats } from "./admin/dashboard-stats";
+import { resetTenant, getTenantDetails, duplicateTenantConfig } from "./admin/tenant-actions";
 
 const advancedOcrProcessor = new AdvancedOcrProcessor(storage);
 const fileStorage = createFileStorage();
@@ -2579,6 +2580,15 @@ export async function registerRoutes(app: Express): Promise<Server> {
   
   // Ativar/desativar tenant (apenas ADMIN global)
   app.patch("/api/admin/tenants/:tenantId/toggle", setGlobalAdminContext, toggleTenant);
+  
+  // Detalhes de um tenant específico (apenas ADMIN global)
+  app.get("/api/admin/tenants/:tenantId/details", setGlobalAdminContext, getTenantDetails);
+  
+  // Reset de tenant (apenas ADMIN global) - AÇÃO DESTRUTIVA
+  app.post("/api/admin/tenants/:tenantId/reset", setGlobalAdminContext, resetTenant);
+  
+  // Duplicar configurações entre tenants (apenas ADMIN global)
+  app.post("/api/admin/tenants/:sourceTenantId/duplicate", setGlobalAdminContext, duplicateTenantConfig);
   
   // Listar usuários de um tenant específico (apenas ADMIN global)
   app.get("/api/admin/tenants/:tenantId/users", setGlobalAdminContext, listTenantUsers);
