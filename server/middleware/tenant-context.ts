@@ -1,5 +1,6 @@
 
 import { Request, Response, NextFunction } from 'express';
+import { sql } from 'drizzle-orm';
 import { db } from '../db';
 
 export interface TenantContext {
