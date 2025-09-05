@@ -21,6 +21,7 @@ import { AIDiagnostics } from "./ai-diagnostics";
 import { tenantContextMiddleware, validateTenantSlug, requireTenantContext } from "./middleware/tenant-context";
 import { setGlobalAdminContext } from "./middleware/rls-context";
 import { listTenants, createTenant, toggleTenant, listTenantUsers, createTenantUser } from "./admin/tenant-admin";
+import { getDashboardStats } from "./admin/dashboard-stats";
 
 const advancedOcrProcessor = new AdvancedOcrProcessor(storage);
 const fileStorage = createFileStorage();
@@ -2566,6 +2567,9 @@ export async function registerRoutes(app: Express): Promise<Server> {
   // ========================
   // ADMIN ROUTES - Multi-Tenant Management (CONTEXTO GLOBAL ADMIN)
   // ========================
+  
+  // Dashboard com estatísticas consolidadas (apenas ADMIN global)
+  app.get("/api/admin/dashboard/stats", setGlobalAdminContext, getDashboardStats);
   
   // Listar todos os tenants (apenas ADMIN global)
   app.get("/api/admin/tenants", setGlobalAdminContext, listTenants);
