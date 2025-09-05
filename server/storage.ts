@@ -10,6 +10,7 @@ import { eq, and, desc, count, sum, avg, inArray, gte, lte, lt, sql } from "driz
 import session from "express-session";
 import connectPg from "connect-pg-simple";
 import { pool } from "./db";
+import { secureDb } from "./db/secure-queries";
 
 const PostgresSessionStore = connectPg(session);
 
@@ -193,38 +194,32 @@ export class DatabaseStorage implements IStorage {
 
   // Contrapartes methods
   async getContrapartes(tenantId: string, filters?: { canBeClient?: boolean; canBeSupplier?: boolean }): Promise<Contraparte[]> {
-    let whereConditions = [eq(contrapartes.tenantId, tenantId), eq(contrapartes.isActive, true)];
+    let additionalFilters;
+    const conditions = [eq(contrapartes.isActive, true)];
     
     if (filters?.canBeClient !== undefined) {
-      whereConditions.push(eq(contrapartes.canBeClient, filters.canBeClient));
+      conditions.push(eq(contrapartes.canBeClient, filters.canBeClient));
     }
     
     if (filters?.canBeSupplier !== undefined) {
-      whereConditions.push(eq(contrapartes.canBeSupplier, filters.canBeSupplier));
+      conditions.push(eq(contrapartes.canBeSupplier, filters.canBeSupplier));
     }
     
-    return await db.select().from(contrapartes)
-      .where(and(...whereConditions))
-      .orderBy(contrapartes.name);
+    additionalFilters = conditions.length > 1 ? and(...conditions) : conditions[0];
+    return await secureDb.contrapartes.findMany(tenantId, additionalFilters);
   }
 
   async getContraparte(id: string, tenantId: string): Promise<Contraparte | undefined> {
-    const [contraparte] = await db.select().from(contrapartes)
-      .where(and(eq(contrapartes.id, id), eq(contrapartes.tenantId, tenantId)));
-    return contraparte || undefined;
+    return await secureDb.contrapartes.findById(tenantId, id);
   }
 
   async createContraparte(insertContraparte: InsertContraparte): Promise<Contraparte> {
-    const [contraparte] = await db.insert(contrapartes).values(insertContraparte).returning();
-    return contraparte;
+    return await secureDb.contrapartes.create(insertContraparte.tenantId, insertContraparte);
   }
 
   async updateContraparte(id: string, tenantId: string, updates: Partial<Contraparte>): Promise<Contraparte> {
-    const [updated] = await db.update(contrapartes)
-      .set({ ...updates, updatedAt: new Date() })
-      .where(and(eq(contrapartes.id, id), eq(contrapartes.tenantId, tenantId)))
-      .returning();
-    return updated;
+    const updateData = { ...updates, updatedAt: new Date() };
+    return await secureDb.contrapartes.update(tenantId, id, updateData);
   }
 
   async findOrCreateContraparte(name: string, tenantId: string, extraData?: Partial<InsertContraparte>): Promise<Contraparte> {
