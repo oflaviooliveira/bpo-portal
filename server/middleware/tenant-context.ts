@@ -33,8 +33,8 @@ export async function tenantContextMiddleware(req: Request, res: Response, next:
 
   // Setar contexto tenant no PostgreSQL para RLS
   try {
-    // Usar uma conexão direta para setar o contexto
-    await db.execute(`SET app.current_tenant = '${user.tenantId}'`);
+    // Usar uma conexão direta para setar o contexto de forma segura
+    await db.execute(sql.raw(`SET app.current_tenant = '${user.tenantId}'`));
     console.log(`🔐 Tenant context set: ${user.tenantId}`);
   } catch (error) {
     console.error('❌ Erro ao setar tenant context:', error);

@@ -9,7 +9,7 @@ async function setupMultiTenant() {
     // 1. Aplicar RLS no banco
     console.log('📊 Aplicando Row Level Security...');
     if (process.env.DATABASE_URL) {
-      execSync(`psql "${process.env.DATABASE_URL}" -f server/db/setup-rls.sql`, { stdio: 'inherit' });
+      execSync(`psql "${process.env.DATABASE_URL}" -f server/db/enable-rls.sql`, { stdio: 'inherit' });
       console.log('✅ RLS aplicado com sucesso');
     } else {
       console.log('⚠️ DATABASE_URL não encontrada, RLS não aplicado');

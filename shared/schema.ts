@@ -84,8 +84,7 @@ export const categories = pgTable("categories", {
   isActive: boolean("is_active").notNull().default(true),
   createdAt: timestamp("created_at").defaultNow(),
 }, (table) => ({
-  // Unique constraint por tenant para código e nome
-  uniqueCode: unique().on(table.tenantId, table.code),
+  // Unique constraint por tenant para nome
   uniqueName: unique().on(table.tenantId, table.name),
   // Índice para performance
   tenantIdx: index().on(table.tenantId),
@@ -100,8 +99,7 @@ export const costCenters = pgTable("cost_centers", {
   isActive: boolean("is_active").notNull().default(true),
   createdAt: timestamp("created_at").defaultNow(),
 }, (table) => ({
-  // Unique constraint por tenant para código e nome
-  uniqueCode: unique().on(table.tenantId, table.code),
+  // Unique constraint por tenant para nome
   uniqueName: unique().on(table.tenantId, table.name),
   // Índice para performance
   tenantIdx: index().on(table.tenantId),

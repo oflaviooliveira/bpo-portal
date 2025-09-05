@@ -20,23 +20,23 @@ import { Separator } from "@/components/ui/separator";
 const bpoUploadSchema = z.object({
   // Seleção de tipo
   documentType: z.enum(["PAGO", "AGENDADO", "EMITIR_BOLETO", "EMITIR_NF"]),
-  
+
   // Dados básicos sempre obrigatórios
   amount: z.string().min(1, "Valor é obrigatório"),
   contraparteId: z.string().min(1, "Contraparte é obrigatória"),
   description: z.string().min(1, "Descrição é obrigatória"),
-  
+
   // Dados condicionais por tipo
   competenceDate: z.string().optional(),
   realPaidDate: z.string().optional(),
   scheduledDate: z.string().optional(),
-  
+
   // Dados opcionais BPO
   bankId: z.string().optional(),
   categoryId: z.string().optional(),
   costCenterId: z.string().optional(),
   notes: z.string().optional(),
-  
+
   // Campos para boleto/NF
   payerDocument: z.string().optional(),
   payerName: z.string().optional(),
@@ -62,7 +62,7 @@ const bpoUploadSchema = z.object({
       });
     }
   }
-  
+
   if (data.documentType === "AGENDADO") {
     if (!data.scheduledDate) {
       ctx.addIssue({
@@ -79,7 +79,7 @@ const bpoUploadSchema = z.object({
       });
     }
   }
-  
+
   if (data.documentType === "EMITIR_BOLETO" || data.documentType === "EMITIR_NF") {
     const requiredFields = [
       { field: "payerDocument", name: "CNPJ/CPF do Tomador" },
@@ -87,7 +87,7 @@ const bpoUploadSchema = z.object({
       { field: "payerAddress", name: "Endereço" },
       { field: "payerEmail", name: "Email" }
     ];
-    
+
     requiredFields.forEach(({ field, name }) => {
       if (!data[field as keyof typeof data]) {
         ctx.addIssue({
@@ -97,7 +97,7 @@ const bpoUploadSchema = z.object({
         });
       }
     });
-    
+
     if (data.documentType === "EMITIR_NF") {
       if (!data.serviceCode) {
         ctx.addIssue({
@@ -134,7 +134,7 @@ interface ProcessingState {
 export function UploadBpo() {
   console.log("🎯 UploadBpo component está sendo renderizado!");
   console.log("🔄 Component UploadBpo carregado no DOM");
-  
+
   const [selectedFile, setSelectedFile] = useState<File | null>(null);
   const [processingState, setProcessingState] = useState<ProcessingState>({ 
     stage: 'ready', 
@@ -163,7 +163,7 @@ export function UploadBpo() {
   const { data: banks = [] as any[] } = useQuery({ queryKey: ["/api/banks"] });
   const { data: categories = [] as any[] } = useQuery({ queryKey: ["/api/categories"] });
   const { data: costCenters = [] as any[] } = useQuery({ queryKey: ["/api/cost-centers"] });
-  
+
   // Buscar contrapartes filtradas por tipo de documento
   const getContraparteFilters = () => {
     if (documentType === "PAGO" || documentType === "AGENDADO") {
@@ -172,7 +172,7 @@ export function UploadBpo() {
       return { canBeClient: true };
     }
   };
-  
+
   const { data: contrapartes = [] as any[] } = useQuery({
     queryKey: ["/api/contrapartes", documentType],
     queryFn: async () => {
@@ -181,7 +181,7 @@ export function UploadBpo() {
       Object.entries(filters).forEach(([key, value]) => {
         params.append(key, String(value));
       });
-      
+
       const response = await fetch(`/api/contrapartes?${params}`);
       if (!response.ok) throw new Error('Erro ao buscar contrapartes');
       return response.json();
@@ -193,21 +193,21 @@ export function UploadBpo() {
     mutationFn: async (file: File) => {
       const formData = new FormData();
       formData.append("file", file);
-      
+
       const response = await fetch("/api/documents/process-file", {
         method: "POST",
         body: formData,
       });
-      
+
       if (!response.ok) {
         throw new Error("Erro ao processar arquivo");
       }
-      
+
       return response.json();
     },
     onSuccess: (data) => {
       console.log("✅ Processamento IA concluído:", data);
-      
+
       // Verificar se temos sugestões da API
       if (!data.suggestions) {
         console.log("⚠️ Nenhuma sugestão recebida da API");
@@ -217,12 +217,12 @@ export function UploadBpo() {
         });
         return;
       }
-      
+
       console.log("🎯 Recebendo sugestões:", data.suggestions);
-      
+
       // Mapear sugestões da IA usando estrutura correta
       const newSuggestions: DocumentSuggestion[] = [];
-      
+
       if (data.suggestions.amount) {
         newSuggestions.push({
           field: "amount",
@@ -233,7 +233,7 @@ export function UploadBpo() {
         form.setValue("amount", data.suggestions.amount);
         console.log("💰 Valor preenchido:", data.suggestions.amount);
       }
-      
+
       if (data.suggestions.supplier || data.suggestions.contraparte) {
         const contraparteValue = data.suggestions.contraparte || data.suggestions.supplier;
         newSuggestions.push({
@@ -242,12 +242,12 @@ export function UploadBpo() {
           confidence: data.suggestions.confidence?.supplier || 95,
           source: "IA"
         });
-        
+
         // Buscar ou criar contraparte automaticamente
         findOrCreateContraparteFromAI(contraparteValue, data.suggestions.documento);
         console.log("🏢 Processando contraparte da IA:", contraparteValue);
       }
-      
+
       if (data.suggestions.description) {
         newSuggestions.push({
           field: "description",
@@ -258,7 +258,7 @@ export function UploadBpo() {
         form.setValue("description", data.suggestions.description);
         console.log("📝 Descrição preenchida:", data.suggestions.description);
       }
-      
+
       // Converter datas brasileiras para formato ISO (YYYY-MM-DD)
       const convertBRDateToISO = (brDate: string) => {
         if (!brDate) return "";
@@ -272,35 +272,35 @@ export function UploadBpo() {
           return "";
         }
       };
-      
+
       // Mapear campos adicionais importantes
       if (data.suggestions.documento) {
         console.log("📄 Documento identificado:", data.suggestions.documento);
       }
-      
+
       if (data.suggestions.category) {
         console.log("🏷️ Categoria sugerida:", data.suggestions.category);
       }
-      
+
       if (data.suggestions.centerCost) {
         console.log("🏢 Centro de custo sugerido:", data.suggestions.centerCost);
       }
-      
+
       // Mapear datas do documento (separadas dos dados BPO reais)
       if (data.suggestions.paymentDate) {
         const convertedDate = convertBRDateToISO(data.suggestions.paymentDate);
         console.log("💳 Data pagamento (documento):", data.suggestions.paymentDate, "→", convertedDate);
       }
-      
+
       if (data.suggestions.dueDate) {
         const convertedDate = convertBRDateToISO(data.suggestions.dueDate);
         console.log("📅 Data vencimento (documento):", data.suggestions.dueDate, "→", convertedDate);
       }
-      
+
       // IMPORTANTE: NÃO auto-preencher datas BPO - são dados operacionais reais
       console.log("⚠️ NOTA: Datas do documento NÃO são preenchidas automaticamente nos campos BPO");
       console.log("💡 Usuário deve confirmar as datas reais de operação manualmente");
-      
+
       // Salvar metadados do documento para referência
       setDocumentMetadata({
         documentDate: data.suggestions.paymentDate || data.suggestions.dueDate,
@@ -308,18 +308,18 @@ export function UploadBpo() {
         ocrQuality: data.qualityMetadata?.ocrQuality,
         confidence: data.suggestions.confidence
       });
-      
+
       setSuggestions(newSuggestions);
       setProcessingState({ 
         stage: 'analyzed', 
         message: `IA analisou o documento com ${Math.round((data.suggestions.confidence?.amount || 95))}% de precisão` 
       });
-      
+
       toast({
         title: "Documento processado com sucesso",
         description: `IA identificou ${newSuggestions.length} campos automaticamente`,
       });
-      
+
       console.log("✅ Total de campos sugeridos:", newSuggestions.length);
     },
     onError: (error: any) => {
@@ -328,7 +328,7 @@ export function UploadBpo() {
         stage: 'ready', 
         message: 'Erro no processamento. Preencha manualmente.' 
       });
-      
+
       toast({
         title: "Erro no processamento IA",
         description: "Preencha os campos manualmente",
@@ -345,17 +345,17 @@ export function UploadBpo() {
         c.name.toLowerCase().includes(name.toLowerCase()) || 
         name.toLowerCase().includes(c.name.toLowerCase())
       );
-      
+
       if (existingContraparte) {
         form.setValue("contraparteId", existingContraparte.id);
         console.log("✅ Contraparte existente encontrada:", existingContraparte.name);
         return;
       }
-      
+
       // Se não encontrou e temos documento, criar nova contraparte
       if (document) {
         const documentType = document.length === 14 ? 'CNPJ' : document.length === 11 ? 'CPF' : undefined;
-        
+
         const newContraparteData = {
           name,
           document,
@@ -363,22 +363,22 @@ export function UploadBpo() {
           canBeClient: true,
           canBeSupplier: true
         };
-        
+
         const response = await fetch('/api/contrapartes', {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify(newContraparteData)
         });
-        
+
         if (response.ok) {
           const newContraparte = await response.json();
           form.setValue("contraparteId", newContraparte.id);
-          
+
           // Invalidar cache para atualizar lista
           queryClient.invalidateQueries({ queryKey: ["/api/contrapartes"] });
-          
+
           console.log("✅ Nova contraparte criada:", newContraparte.name);
-          
+
           toast({
             title: "Nova contraparte criada",
             description: `${name} foi adicionado automaticamente`,
@@ -391,7 +391,7 @@ export function UploadBpo() {
       console.error("❌ Erro ao buscar/criar contraparte:", error);
     }
   };
-  
+
   // Mutation para upload final
   const uploadMutation = useMutation({
     mutationFn: async (formData: FormData) => {
@@ -399,36 +399,36 @@ export function UploadBpo() {
         method: "POST",
         body: formData,
       });
-      
+
       if (!response.ok) {
         const error = await response.json();
         throw new Error(error.message || 'Erro no upload');
       }
-      
+
       return response.json();
     },
     onSuccess: (data) => {
       console.log("✅ Upload BPO concluído:", data);
-      
+
       toast({
         title: "Documento enviado com sucesso",
         description: `Documento ${data.documentId} foi processado e está no fluxo BPO`,
       });
-      
+
       // Reset form
       form.reset();
       setSelectedFile(null);
       setSuggestions([]);
       setDocumentMetadata(null);
       setProcessingState({ stage: 'ready', message: 'Selecione um arquivo para começar' });
-      
+
       // Invalidar cache
       queryClient.invalidateQueries({ queryKey: ["/api/documents"] });
     },
     onError: (error: any) => {
       console.error("❌ Erro no upload BPO:", error);
       setProcessingState({ stage: 'analyzed', message: 'Erro no envio. Verifique os dados.' });
-      
+
       toast({
         title: "Erro no envio",
         description: error.message || "Verifique os campos obrigatórios",
@@ -460,11 +460,11 @@ export function UploadBpo() {
     setProcessingState({ stage: 'submitting', message: 'Enviando para BPO...' });
 
     const formData = new FormData();
-    
+
     if (selectedFile) {
       formData.append("file", selectedFile);
     }
-    
+
     // Adicionar todos os campos do formulário
     Object.entries(data).forEach(([key, value]) => {
       if (value !== undefined && value !== "") {
@@ -478,7 +478,7 @@ export function UploadBpo() {
   const getSuggestionBadge = (fieldName: string) => {
     const suggestion = suggestions.find(s => s.field === fieldName);
     if (!suggestion) return null;
-    
+
     return (
       <Badge variant="secondary" className="ml-2 text-xs bg-[#E40064]/10 text-[#E40064] border-[#E40064]/20">
         <Sparkles className="h-3 w-3 mr-1" />
@@ -486,7 +486,7 @@ export function UploadBpo() {
       </Badge>
     );
   };
-  
+
   // Função para obter o rótulo correto da contraparte
   const getContraparteLabel = () => {
     if (documentType === "PAGO" || documentType === "AGENDADO") {
@@ -527,7 +527,7 @@ export function UploadBpo() {
       </Card>
 
       <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-6">
-        
+
         {/* Seleção de Tipo */}
         <Card>
           <CardHeader>
@@ -596,7 +596,7 @@ export function UploadBpo() {
                   className="cursor-pointer"
                   data-testid="input-file"
                 />
-                
+
                 {selectedFile && (
                   <Alert>
                     <FileText className="h-4 w-4" />
@@ -621,7 +621,7 @@ export function UploadBpo() {
                     </AlertDescription>
                   </Alert>
                 )}
-                
+
                 <p className="text-sm text-gray-600">
                   {processingState.message}
                 </p>
@@ -640,9 +640,9 @@ export function UploadBpo() {
             </CardTitle>
           </CardHeader>
           <CardContent className="space-y-4">
-            
+
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-              
+
               {/* Valor */}
               <div className="space-y-2">
                 <Label className="flex items-center">
@@ -717,7 +717,7 @@ export function UploadBpo() {
               </CardTitle>
             </CardHeader>
             <CardContent className="space-y-4">
-              
+
               {documentType === "PAGO" && (
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                   <div className="space-y-2">
@@ -818,7 +818,7 @@ export function UploadBpo() {
               </CardTitle>
             </CardHeader>
             <CardContent className="space-y-4">
-              
+
               <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                 <div className="space-y-2">
                   <Label>CNPJ/CPF do Tomador *</Label>
@@ -911,9 +911,9 @@ export function UploadBpo() {
             </CardTitle>
           </CardHeader>
           <CardContent className="space-y-4">
-            
+
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-              
+
               {/* Categoria */}
               <div className="space-y-2">
                 <Label>Categoria</Label>

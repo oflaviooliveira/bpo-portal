@@ -85,13 +85,11 @@ export async function seedTenants() {
     await db.insert(categories).values([
       {
         tenantId: tenant1[0].id,
-        code: 'COMB',
         name: 'Combustível',
         description: 'Despesas com combustível',
       },
       {
         tenantId: tenant1[0].id,
-        code: 'MANUT',
         name: 'Manutenção',
         description: 'Manutenção de veículos',
       }
@@ -101,13 +99,11 @@ export async function seedTenants() {
     await db.insert(categories).values([
       {
         tenantId: tenant2[0].id,
-        code: 'COMB',
         name: 'Combustível',
         description: 'Despesas com combustível',
       },
       {
         tenantId: tenant2[0].id,
-        code: 'MANUT',
         name: 'Manutenção',
         description: 'Manutenção de veículos',
       }
@@ -119,13 +115,11 @@ export async function seedTenants() {
     await db.insert(costCenters).values([
       {
         tenantId: tenant1[0].id,
-        code: 'SRJ1',
         name: 'São João - Rota 1',
         description: 'Centro de custo rota SJ1',
       },
       {
         tenantId: tenant1[0].id,
-        code: 'SPR1',
         name: 'Santos - Rota 1',
         description: 'Centro de custo rota Santos',
       }
@@ -135,13 +129,11 @@ export async function seedTenants() {
     await db.insert(costCenters).values([
       {
         tenantId: tenant2[0].id,
-        code: 'RJ01',
         name: 'Rio - Operação 1',
         description: 'Centro de custo Rio',
       },
       {
         tenantId: tenant2[0].id,
-        code: 'SP01',
         name: 'São Paulo - Operação 1',
         description: 'Centro de custo SP',
       }
