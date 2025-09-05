@@ -24,8 +24,8 @@ const bpoUploadSchema = z.object({
   // Dados básicos sempre obrigatórios
   clientId: z.string().min(1, "Cliente é obrigatório"),
   amount: z.string().min(1, "Valor é obrigatório"),
-  supplier: z.string().min(1, "Fornecedor/Descrição é obrigatório"),
-  description: z.string().optional(),
+  contraparteId: z.string().min(1, "Contraparte é obrigatória"),
+  description: z.string().min(1, "Descrição é obrigatória"),
   
   // Dados condicionais por tipo
   competenceDate: z.string().optional(),
@@ -152,7 +152,7 @@ export function UploadBpo() {
       documentType: "PAGO",
       clientId: "",
       amount: "",
-      supplier: "",
+      contraparteId: "",
       description: "",
       notes: "",
     },
@@ -166,6 +166,30 @@ export function UploadBpo() {
   const { data: banks = [] as any[] } = useQuery({ queryKey: ["/api/banks"] });
   const { data: categories = [] as any[] } = useQuery({ queryKey: ["/api/categories"] });
   const { data: costCenters = [] as any[] } = useQuery({ queryKey: ["/api/cost-centers"] });
+  
+  // Buscar contrapartes filtradas por tipo de documento
+  const getContraparteFilters = () => {
+    if (documentType === "PAGO" || documentType === "AGENDADO") {
+      return { canBeSupplier: true };
+    } else {
+      return { canBeClient: true };
+    }
+  };
+  
+  const { data: contrapartes = [] as any[] } = useQuery({
+    queryKey: ["/api/contrapartes", documentType],
+    queryFn: async () => {
+      const filters = getContraparteFilters();
+      const params = new URLSearchParams();
+      Object.entries(filters).forEach(([key, value]) => {
+        params.append(key, String(value));
+      });
+      
+      const response = await fetch(`/api/contrapartes?${params}`);
+      if (!response.ok) throw new Error('Erro ao buscar contrapartes');
+      return response.json();
+    },
+  });
 
   // Mutation para processar arquivo com IA
   const processFileMutation = useMutation({
@@ -214,15 +238,17 @@ export function UploadBpo() {
       }
       
       if (data.suggestions.supplier || data.suggestions.contraparte) {
-        const supplierValue = data.suggestions.contraparte || data.suggestions.supplier;
+        const contraparteValue = data.suggestions.contraparte || data.suggestions.supplier;
         newSuggestions.push({
-          field: "supplier", 
-          value: supplierValue,
+          field: "contraparte", 
+          value: contraparteValue,
           confidence: data.suggestions.confidence?.supplier || 95,
           source: "IA"
         });
-        form.setValue("supplier", supplierValue);
-        console.log("🏢 Contraparte preenchida:", supplierValue);
+        
+        // Buscar ou criar contraparte automaticamente
+        findOrCreateContraparteFromAI(contraparteValue, data.suggestions.documento);
+        console.log("🏢 Processando contraparte da IA:", contraparteValue);
       }
       
       if (data.suggestions.description) {
@@ -314,6 +340,61 @@ export function UploadBpo() {
     },
   });
 
+  // Função para buscar ou criar contraparte automaticamente
+  const findOrCreateContraparteFromAI = async (name: string, document?: string) => {
+    try {
+      // Primeiro buscar contraparte existente por nome
+      const existingContraparte = contrapartes.find((c: any) => 
+        c.name.toLowerCase().includes(name.toLowerCase()) || 
+        name.toLowerCase().includes(c.name.toLowerCase())
+      );
+      
+      if (existingContraparte) {
+        form.setValue("contraparteId", existingContraparte.id);
+        console.log("✅ Contraparte existente encontrada:", existingContraparte.name);
+        return;
+      }
+      
+      // Se não encontrou e temos documento, criar nova contraparte
+      if (document) {
+        const documentType = document.length === 14 ? 'CNPJ' : document.length === 11 ? 'CPF' : undefined;
+        
+        const newContraparteData = {
+          name,
+          document,
+          documentType,
+          canBeClient: true,
+          canBeSupplier: true
+        };
+        
+        const response = await fetch('/api/contrapartes', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify(newContraparteData)
+        });
+        
+        if (response.ok) {
+          const newContraparte = await response.json();
+          form.setValue("contraparteId", newContraparte.id);
+          
+          // Invalidar cache para atualizar lista
+          queryClient.invalidateQueries({ queryKey: ["/api/contrapartes"] });
+          
+          console.log("✅ Nova contraparte criada:", newContraparte.name);
+          
+          toast({
+            title: "Nova contraparte criada",
+            description: `${name} foi adicionado automaticamente`,
+          });
+        }
+      } else {
+        console.log("⚠️ Contraparte não encontrada e sem documento para criar nova");
+      }
+    } catch (error) {
+      console.error("❌ Erro ao buscar/criar contraparte:", error);
+    }
+  };
+  
   // Mutation para upload final
   const uploadMutation = useMutation({
     mutationFn: async (formData: FormData) => {
@@ -408,6 +489,15 @@ export function UploadBpo() {
       </Badge>
     );
   };
+  
+  // Função para obter o rótulo correto da contraparte
+  const getContraparteLabel = () => {
+    if (documentType === "PAGO" || documentType === "AGENDADO") {
+      return "Fornecedor";
+    } else {
+      return "Cliente";
+    }
+  };
 
   const isFieldSuggested = (fieldName: string) => {
     return suggestions.some(s => s.field === fieldName);
@@ -420,7 +510,7 @@ export function UploadBpo() {
       documentType: currentValues.documentType,
       clientId: currentValues.clientId,
       amount: currentValues.amount,
-      supplier: currentValues.supplier,
+      contraparteId: currentValues.contraparteId,
       description: currentValues.description,
     });
   }, [documentType, form]);
@@ -594,20 +684,29 @@ export function UploadBpo() {
                 )}
               </div>
 
-              {/* Fornecedor */}
+              {/* Contraparte dinâmica */}
               <div className="space-y-2">
                 <Label className="flex items-center">
-                  Fornecedor/Descrição *
-                  {getSuggestionBadge('supplier')}
+                  {getContraparteLabel()} *
+                  {getSuggestionBadge('contraparte')}
                 </Label>
-                <Input
-                  {...form.register("supplier")}
-                  placeholder="Nome do fornecedor"
-                  className={isFieldSuggested('supplier') ? 'border-[#E40064]/30 bg-[#E40064]/5' : ''}
-                  data-testid="input-supplier"
-                />
-                {form.formState.errors.supplier && (
-                  <p className="text-sm text-red-500">{form.formState.errors.supplier.message}</p>
+                <Select onValueChange={(value) => form.setValue("contraparteId", value)}>
+                  <SelectTrigger 
+                    data-testid="select-contraparte"
+                    className={isFieldSuggested('contraparte') ? 'border-[#E40064]/30 bg-[#E40064]/5' : ''}
+                  >
+                    <SelectValue placeholder={`Selecione o ${getContraparteLabel().toLowerCase()}`} />
+                  </SelectTrigger>
+                  <SelectContent>
+                    {Array.isArray(contrapartes) && contrapartes.map((contraparte: any) => (
+                      <SelectItem key={contraparte.id} value={contraparte.id}>
+                        {contraparte.name} {contraparte.document && `(${contraparte.document})`}
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+                {form.formState.errors.contraparteId && (
+                  <p className="text-sm text-red-500">{form.formState.errors.contraparteId.message}</p>
                 )}
               </div>
             </div>
@@ -615,15 +714,18 @@ export function UploadBpo() {
             {/* Descrição */}
             <div className="space-y-2">
               <Label className="flex items-center">
-                Descrição
+                Descrição *
                 {getSuggestionBadge('description')}
               </Label>
               <Textarea
                 {...form.register("description")}
-                placeholder="Descrição detalhada"
+                placeholder="Descrição detalhada da transação"
                 className={isFieldSuggested('description') ? 'border-[#E40064]/30 bg-[#E40064]/5' : ''}
                 data-testid="textarea-description"
               />
+              {form.formState.errors.description && (
+                <p className="text-sm text-red-500">{form.formState.errors.description.message}</p>
+              )}
             </div>
           </CardContent>
         </Card>
