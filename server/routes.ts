@@ -435,10 +435,10 @@ export async function registerRoutes(app: Express): Promise<Server> {
             dataSource,
             isFilenameData,
             ocrQuality: qualityMetadata.estimatedQuality,
-            isSystemPage: qualityMetadata.isSystemPage,
-            isIncomplete: qualityMetadata.isIncomplete,
-            characterCount: qualityMetadata.characterCount,
-            hasMonetaryValues: qualityMetadata.hasMonetaryValues
+            isSystemPage: qualityAnalysis.isSystemPage,
+            isIncomplete: qualityAnalysis.isIncomplete,
+            characterCount: qualityAnalysis.characterCount,
+            hasMonetaryValues: qualityAnalysis.hasMonetaryValues
           },
 
           // Confidence granular por campo ajustado pela fonte
@@ -463,9 +463,9 @@ export async function registerRoutes(app: Express): Promise<Server> {
         console.log(`🔍 Fonte dos dados: ${dataSource}`);
         if (qualityMetadata) {
           console.log(`⚠️ Alertas de qualidade:`, {
-            isSystemPage: qualityMetadata.isSystemPage,
-            isIncomplete: qualityMetadata.isIncomplete,
-            ocrQuality: qualityMetadata.estimatedQuality,
+            isSystemPage: qualityAnalysis.isSystemPage,
+            isIncomplete: qualityAnalysis.isIncomplete,
+            ocrQuality: qualityAnalysis.estimatedQuality,
             adjustedConfidence: `${adjustedConfidence}% (${isFilenameData ? 'reduzido' : 'original'})`
           });
         }

@@ -15,7 +15,7 @@ export async function apiRequest(
   // Don't add Content-Type for FormData - browser will set it with boundary
   const isFormData = body instanceof FormData;
   const headers: Record<string, string> = {};
-  
+
   if (!isFormData && body) {
     headers["Content-Type"] = "application/json";
   }
@@ -63,3 +63,14 @@ export const queryClient = new QueryClient({
     },
   },
 });
+
+// Helper para construir URLs com tenant slug
+export function buildTenantUrl(path: string, tenantSlug = 'demo') {
+  return `/${tenantSlug}/api${path}`;
+}
+
+// Helper para obter tenant slug do contexto (temporário)
+export function getCurrentTenantSlug() {
+  // TODO: Implementar contexto de tenant no React
+  return 'acme-log'; // Default para testes
+}
