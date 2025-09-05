@@ -1,0 +1,65 @@
+PROMPT PARA ASSISTANT CORRIGIR TUDO
+**CORREÇÃO URGENTE: ERROS DE SCHEMA E FINALIZAÇÃO MULTI-TENANT**
+## ERRO CRÍTICO 1: Corrigir Schema TypeScript
+**Arquivo:** `shared/schema.ts`
+**Problema:** Linhas 88 e 104 referenciam campo `code` que não existe nas tabelas `categories` e `costCenters`.
+**Correção:** 
+- Remover todas as referências a `table.code` nos unique constraints
+- Manter apenas `uniqueName: unique().on(table.tenantId, table.name)` 
+- OU adicionar campo `code` nas tabelas se necessário
+## ERRO CRÍTICO 2: Schema de Validação do Formulário
+**Arquivo:** `client/src/components/documents/upload-bpo.tsx`
+**Verificar e corrigir:**
+- Schema bpoUploadSchema ainda pode ter `clientId` 
+- Remover completamente se existir
+- Ajustar defaultValues do form
+## IMPLEMENTAÇÃO 3: Ativar RLS PostgreSQL
+**Criar arquivo:** `server/db/enable-rls.sql`
+**Conteúdo:**
+```sql
+-- Ativar RLS em todas as tabelas com tenant_id
+ALTER TABLE contrapartes ENABLE ROW LEVEL SECURITY;
+ALTER TABLE clients ENABLE ROW LEVEL SECURITY;
+ALTER TABLE categories ENABLE ROW LEVEL SECURITY;
+ALTER TABLE cost_centers ENABLE ROW LEVEL SECURITY;
+ALTER TABLE documents ENABLE ROW LEVEL SECURITY;
+ALTER TABLE document_logs ENABLE ROW LEVEL SECURITY;
+ALTER TABLE ai_runs ENABLE ROW LEVEL SECURITY;
+ALTER TABLE ocr_metrics ENABLE ROW LEVEL SECURITY;
+ALTER TABLE document_inconsistencies ENABLE ROW LEVEL SECURITY;
+-- Criar políticas para contrapartes (exemplo)
+CREATE POLICY p_contrapartes_select ON contrapartes
+  FOR SELECT USING (tenant_id::text = current_setting('app.current_tenant', true));
+CREATE POLICY p_contrapartes_insert ON contrapartes  
+  FOR INSERT WITH CHECK (tenant_id::text = current_setting('app.current_tenant', true));
+CREATE POLICY p_contrapartes_update ON contrapartes
+  FOR UPDATE USING (tenant_id::text = current_setting('app.current_tenant', true));
+CREATE POLICY p_contrapartes_delete ON contrapartes
+  FOR DELETE USING (tenant_id::text = current_setting('app.current_tenant', true));
+-- Repetir políticas similares para todas as outras tabelas com tenant_id
+Executar: Criar função que executa este SQL via db.execute()
+
+IMPLEMENTAÇÃO 4: Seeds Demo
+Criar arquivo: server/scripts/seed-tenants.ts
+
+Conteúdo: Script que cria 2 tenants demo com dados isolados
+
+IMPLEMENTAÇÃO 5: Teste de Isolamento
+Criar arquivo: server/tests/multi-tenant.test.ts
+
+Validar: Usuário de um tenant não vê dados de outro tenant
+
+ORDEM DE EXECUÇÃO:
+✅ PRIMEIRO: Corrigir erros do schema TypeScript
+✅ SEGUNDO: Corrigir schema de validação do formulário
+✅ TERCEIRO: Executar npm run db:push --force para sincronizar
+✅ QUARTO: Implementar e executar RLS SQL
+✅ QUINTO: Criar seeds demo
+✅ SEXTO: Testar isolamento
+CRITÉRIO DE SUCESSO:
+❌ Nenhum erro LSP/TypeScript
+❌ Formulário funciona sem campo Cliente
+❌ RLS ativo (queries filtradas automaticamente)
+❌ Seeds criam dados isolados por tenant
+❌ Testes de isolamento passam
+EXECUTE TODAS ESSAS CORREÇÕES AGORA NA ORDEM INDICADA.
