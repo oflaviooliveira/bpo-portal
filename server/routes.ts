@@ -2563,23 +2563,23 @@ export async function registerRoutes(app: Express): Promise<Server> {
   });
 
   // ========================
-  // ADMIN ROUTES - Multi-Tenant Management
+  // ADMIN ROUTES - Multi-Tenant Management (SEM TENANT CONTEXT - Global Access)
   // ========================
   
   // Listar todos os tenants (apenas ADMIN global)
-  app.get("/api/admin/tenants", ...authorize(["ADMIN"]), listTenants);
+  app.get("/api/admin/tenants", isAuthenticated, requireRole("ADMIN"), listTenants);
   
   // Criar novo tenant (apenas ADMIN global)
-  app.post("/api/admin/tenants", ...authorize(["ADMIN"]), createTenant);
+  app.post("/api/admin/tenants", isAuthenticated, requireRole("ADMIN"), createTenant);
   
   // Ativar/desativar tenant (apenas ADMIN global)
-  app.patch("/api/admin/tenants/:tenantId/toggle", ...authorize(["ADMIN"]), toggleTenant);
+  app.patch("/api/admin/tenants/:tenantId/toggle", isAuthenticated, requireRole("ADMIN"), toggleTenant);
   
   // Listar usuários de um tenant específico (apenas ADMIN global)
-  app.get("/api/admin/tenants/:tenantId/users", ...authorize(["ADMIN"]), listTenantUsers);
+  app.get("/api/admin/tenants/:tenantId/users", isAuthenticated, requireRole("ADMIN"), listTenantUsers);
   
   // Criar usuário para um tenant específico (apenas ADMIN global)
-  app.post("/api/admin/tenants/:tenantId/users", ...authorize(["ADMIN"]), createTenantUser);
+  app.post("/api/admin/tenants/:tenantId/users", isAuthenticated, requireRole("ADMIN"), createTenantUser);
 
   const httpServer = createServer(app);
   return httpServer;

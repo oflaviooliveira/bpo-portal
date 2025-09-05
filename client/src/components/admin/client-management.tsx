@@ -87,8 +87,11 @@ export function ClientManagement() {
   const { data: tenants, isLoading: isLoadingTenants } = useQuery({
     queryKey: ['/api/admin/tenants'],
     queryFn: async () => {
-      const response = await apiRequest('/api/admin/tenants');
-      return response as Tenant[];
+      const response = await fetch('/api/admin/tenants');
+      if (!response.ok) {
+        throw new Error('Failed to fetch tenants');
+      }
+      return await response.json() as Tenant[];
     }
   });
 
@@ -96,8 +99,11 @@ export function ClientManagement() {
   const { data: tenantUsers, isLoading: isLoadingUsers } = useQuery({
     queryKey: ['/api/admin/tenants', selectedTenant?.id, 'users'],
     queryFn: async () => {
-      const response = await apiRequest(`/api/admin/tenants/${selectedTenant?.id}/users`);
-      return response as TenantUser[];
+      const response = await fetch(`/api/admin/tenants/${selectedTenant?.id}/users`);
+      if (!response.ok) {
+        throw new Error('Failed to fetch tenant users');
+      }
+      return await response.json() as TenantUser[];
     },
     enabled: !!selectedTenant?.id
   });
