@@ -22,7 +22,6 @@ const bpoUploadSchema = z.object({
   documentType: z.enum(["PAGO", "AGENDADO", "EMITIR_BOLETO", "EMITIR_NF"]),
   
   // Dados básicos sempre obrigatórios
-  clientId: z.string().min(1, "Cliente é obrigatório"),
   amount: z.string().min(1, "Valor é obrigatório"),
   contraparteId: z.string().min(1, "Contraparte é obrigatória"),
   description: z.string().min(1, "Descrição é obrigatória"),
@@ -150,7 +149,6 @@ export function UploadBpo() {
     resolver: zodResolver(bpoUploadSchema),
     defaultValues: {
       documentType: "PAGO",
-      clientId: "",
       amount: "",
       contraparteId: "",
       description: "",
@@ -162,7 +160,6 @@ export function UploadBpo() {
   const needsDocument = documentType === "PAGO" || documentType === "AGENDADO";
 
   // Buscar dados do sistema
-  const { data: clients = [] as any[] } = useQuery({ queryKey: ["/api/clients"] });
   const { data: banks = [] as any[] } = useQuery({ queryKey: ["/api/banks"] });
   const { data: categories = [] as any[] } = useQuery({ queryKey: ["/api/categories"] });
   const { data: costCenters = [] as any[] } = useQuery({ queryKey: ["/api/cost-centers"] });
@@ -508,7 +505,6 @@ export function UploadBpo() {
     const currentValues = form.getValues();
     form.reset({
       documentType: currentValues.documentType,
-      clientId: currentValues.clientId,
       amount: currentValues.amount,
       contraparteId: currentValues.contraparteId,
       description: currentValues.description,
@@ -645,26 +641,6 @@ export function UploadBpo() {
           </CardHeader>
           <CardContent className="space-y-4">
             
-            {/* Cliente */}
-            <div className="space-y-2">
-              <Label>Cliente *</Label>
-              <Select onValueChange={(value) => form.setValue("clientId", value)}>
-                <SelectTrigger data-testid="select-client">
-                  <SelectValue placeholder="Selecione o cliente" />
-                </SelectTrigger>
-                <SelectContent>
-                  {Array.isArray(clients) && clients.map((client: any) => (
-                    <SelectItem key={client.id} value={client.id}>
-                      {client.name}
-                    </SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
-              {form.formState.errors.clientId && (
-                <p className="text-sm text-red-500">{form.formState.errors.clientId.message}</p>
-              )}
-            </div>
-
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
               
               {/* Valor */}
