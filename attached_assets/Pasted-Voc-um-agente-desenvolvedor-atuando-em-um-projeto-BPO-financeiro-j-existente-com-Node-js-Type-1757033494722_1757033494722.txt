@@ -1,0 +1,193 @@
+Você é um agente desenvolvedor atuando em um projeto BPO financeiro já existente, com Node.js + TypeScript + Express, Prisma (PostgreSQL) no backend, e React 18 + Vite + Tailwind + shadcn/ui no frontend.
+Objetivo: Implementar multi-tenancy: cada cliente (tenant) tem dados totalmente isolados (Fornecedores, Clientes, Centros de Custo, Categorias, documentos, etc.). Use RLS no PostgreSQL + tenant_id em todas as tabelas de negócio + middleware de contexto + seeds por tenant. Não quebre endpoints já existentes.
+
+Regras gerais
+
+Adotar modelo: banco único + coluna tenant_id + RLS.
+
+Toda tabela de negócio terá tenant_id (FK tenants.id) e índices.
+
+Unicidades passam a ser compostas por tenant_id (ex.: UNIQUE(tenant_id, cnpj)).
+
+Toda query deve ser automaticamente filtrada por tenant_id via middleware + RLS.
+
+Nunca aceitar tenantId vindo do cliente; derive do contexto autenticado (membership).
+
+Manter compatibilidade com o que já existe (rotas, tipos e contratos de resposta).
+
+Entidades novas/ajustes (Prisma)
+
+Implemente/ajuste o schema Prisma conforme abaixo (adapte nomes/paths conforme o projeto):
+
+Tenant { id, name, slug, createdAt, updatedAt }
+
+User { id, email, name, createdAt, updatedAt, memberships }
+
+Membership { id, userId, tenantId, role: enum[ADMIN|GERENTE|OPERADOR|CLIENTE] }
+
+@@unique([userId, tenantId]), @@index([tenantId])
+
+Ajustar tabelas de negócio existentes para incluir tenantId:
+
+Supplier { tenantId, name, cnpj?, ...; @@unique([tenantId, cnpj]), @@index([tenantId]) }
+
+Customer { tenantId, name, cnpj?, ...; @@unique([tenantId, cnpj]), @@index([tenantId]) }
+
+CostCenter { tenantId, code, name, ...; @@unique([tenantId, code]), @@index([tenantId]) }
+
+Category { tenantId, code, name, kind, parentId? ...; @@unique([tenantId, code]), @@index([tenantId]) }
+
+Outras tabelas operacionais relevantes (ex.: documents, ocr_runs, transactions, contracts) também recebem tenantId + índices.
+
+Importante: Atualize todas as FKs para incluir/validar correspondência de tenantId pai/filho.
+
+Migração de banco (SQL + Prisma Migrate)
+
+Criar migration para:
+
+Tabela tenants.
+
+Tabela memberships.
+
+Adicionar tenant_id às tabelas existentes.
+
+Ajustar constraints únicas para incluir tenant_id.
+
+Criar índices em tenant_id.
+
+Ativar RLS e políticas por tabela:
+
+ALTER TABLE <tabela> ENABLE ROW LEVEL SECURITY;
+
+Política de leitura/escrita por tenant usando current_setting('app.current_tenant').
+
+Exemplo (replicar em todas as tabelas com tenant_id):
+
+CREATE POLICY p_<tabela>_select ON <tabela>
+USING (tenant_id = current_setting('app.current_tenant')::text);
+
+CREATE POLICY p_<tabela>_insert ON <tabela>
+FOR INSERT
+WITH CHECK (tenant_id = current_setting('app.current_tenant')::text);
+
+CREATE POLICY p_<tabela>_update ON <tabela>
+FOR UPDATE
+USING (tenant_id = current_setting('app.current_tenant')::text)
+WITH CHECK (tenant_id = current_setting('app.current_tenant')::text);
+
+
+No pool de conexão, sempre executar SET app.current_tenant = $1 com o tenantId do usuário logado.
+
+Backend – middleware e guardas
+
+Criar middleware em server/middleware/tenantContext.ts:
+
+Ler usuário autenticado (JWT/session) → obter memberships.
+
+Determinar tenantId ativo (se houver seleção de slug na rota, apenas validar que pertence ao usuário; segurança vem do contexto, não do slug).
+
+Setar req.context = { userId, tenantId, role }.
+
+Na conexão com o banco (pg/prisma), executar SET app.current_tenant = $tenantId no início de cada request (ou via hook).
+
+Criar guardas RBAC simples por rota (ADMIN/GERENTE com mais permissões; OPERADOR limitado; CLIENTE leitura e ações específicas).
+
+Backend – serviços/rotas
+
+Atualizar todos os repositórios/serviços para não aceitar tenantId do cliente.
+
+Garantir que create/update injetam tenantId do contexto.
+
+Rotas exemplo (mantendo contratos existentes):
+
+GET /api/:tenantSlug/suppliers → lista do tenant do contexto (paginada).
+
+POST /api/:tenantSlug/suppliers → cria supplier (server injeta tenantId).
+
+PUT /api/:tenantSlug/suppliers/:id → update validando tenant.
+
+DELETE /api/:tenantSlug/suppliers/:id → soft delete validando tenant.
+
+Aplicar o mesmo padrão a customers, cost-centers, categories e entidades operacionais.
+
+Seeds por tenant
+
+Script server/scripts/seedTenants.ts:
+
+Criar 2 tenants demo (acme-log, beta-cargo).
+
+Criar usuários e memberships (um ADMIN por tenant).
+
+Pre-popular Categories (plano de contas base) e CostCenters (exemplos) por tenant.
+
+Seeds devem ser idempotentes (não duplicar em reexecuções).
+
+Frontend
+
+Manter rotas com /:tenantSlug/... para fins de UX/SEO.
+
+O token de sessão já contém tenantId ativo; não enviar tenantId manualmente em payloads.
+
+Atualizar fetchers/hooks para não depender de tenantId do cliente.
+
+Views de cadastro/listagem (Fornecedores/Clientes/CCs/Categorias) funcionam sem alterações visuais significativas.
+
+Testes de isolamento
+
+Criar testes automatizados (Jest ou Vitest) em server/tests/multitenant.spec.ts:
+
+Usuário do tenant A não enxerga/altera dados do tenant B (RLS deve bloquear).
+
+CRUD completo dentro do mesmo tenant, respeitando RBAC.
+
+Adicionar testes de unicidade por tenant (cnpj/code).
+
+Documentação rápida (README trecho)
+
+Como rodar migrações, seeds e iniciar o server.
+
+Como alternar o tenantSlug no frontend (apenas visual).
+
+Observação de segurança: filtragem real ocorre via SET app.current_tenant + RLS.
+
+Entregáveis (precisos)
+
+Prisma schema atualizado com Tenant, Membership e tenantId em tabelas de negócio + constraints e índices.
+
+Migrations geradas + SQL RLS aplicado para todas as tabelas com tenant_id.
+
+Middleware tenantContext.ts + integração para SET app.current_tenant.
+
+Guards RBAC reutilizáveis.
+
+Atualização das rotas/services (suppliers, customers, cost-centers, categories, e operacionais).
+
+Seeds por tenant idempotentes.
+
+Testes automatizados cobrindo isolamento e unicidades.
+
+README com passos de execução.
+
+Critérios de aceite
+
+Queries sem tenantId explícito do cliente e com contexto + RLS funcionando.
+
+Usuário do tenant A não acessa dados do tenant B, mesmo via SQL direto por bug de código.
+
+UNIQUE respeita o escopo do tenant (ex.: mesmo CNPJ pode existir em tenants diferentes).
+
+Nenhuma quebra de contrato de API para consumidores atuais.
+
+Seeds rodam quantas vezes forem necessárias sem duplicar.
+
+Comandos esperados (exemplos)
+
+npx prisma migrate dev --name multitenancy_bootstrap
+
+ts-node server/scripts/seedTenants.ts
+
+pnpm test ou npm run test
+
+Start backend/frontend conforme scripts já existentes.
+
+Implemente tudo acima agora, ajustando os nomes de arquivos/pastas ao padrão atual do repositório. Se algum arquivo ainda não existir, crie-o com o conteúdo mínimo funcional. Garanta lint e types sem erros.

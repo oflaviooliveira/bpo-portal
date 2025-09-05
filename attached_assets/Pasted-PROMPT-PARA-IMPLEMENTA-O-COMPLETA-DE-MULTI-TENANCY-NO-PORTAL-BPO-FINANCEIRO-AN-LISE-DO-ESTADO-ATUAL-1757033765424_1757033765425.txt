@@ -1,0 +1,215 @@
+PROMPT PARA IMPLEMENTAÇÃO COMPLETA DE MULTI-TENANCY NO PORTAL BPO FINANCEIRO
+ANÁLISE DO ESTADO ATUAL
+✅ JÁ IMPLEMENTADO:
+
+Schema Drizzle com tabelas tenants, users com tenantId
+Todas as tabelas de negócio já têm tenantId (contrapartes, clients, categories, costCenters, documents)
+Sistema de autenticação com RBAC (ADMIN, GERENTE, OPERADOR, CLIENTE)
+Interface IStorage com métodos que aceitam tenantId
+Sistema de contrapartes unificado com canBeClient/canBeSupplier
+❌ FALTANDO IMPLEMENTAR:
+
+RLS (Row Level Security) no PostgreSQL
+Middleware tenant context - SET app.current_tenant
+Constraints únicas compostas por tenantId
+Correção do formulário (remover campo Cliente)
+Seeds por tenant
+Testes de isolamento
+TAREFAS ESPECÍFICAS A IMPLEMENTAR
+1. CORREÇÃO IMEDIATA DO FORMULÁRIO
+Arquivo: client/src/components/documents/upload-bpo.tsx
+
+Remover:
+
+Campo "Cliente" completo do JSX (linhas ~648-666)
+clientId do schema de validação
+clients query desnecessária
+clientId dos defaultValues e reset do form
+Manter apenas:
+
+Campo dinâmico de contraparte (Fornecedor/Cliente baseado no documentType)
+Lógica getContraparteLabel() que já funciona corretamente
+2. IMPLEMENTAR RLS NO POSTGRESQL
+Criar arquivo: server/db/setup-rls.sql
+
+-- Ativar RLS em todas as tabelas com tenant_id
+ALTER TABLE users ENABLE ROW LEVEL SECURITY;
+ALTER TABLE contrapartes ENABLE ROW LEVEL SECURITY;
+ALTER TABLE clients ENABLE ROW LEVEL SECURITY;
+ALTER TABLE categories ENABLE ROW LEVEL SECURITY;
+ALTER TABLE cost_centers ENABLE ROW LEVEL SECURITY;
+ALTER TABLE documents ENABLE ROW LEVEL SECURITY;
+ALTER TABLE document_logs ENABLE ROW LEVEL SECURITY;
+ALTER TABLE ai_runs ENABLE ROW LEVEL SECURITY;
+ALTER TABLE ocr_metrics ENABLE ROW LEVEL SECURITY;
+ALTER TABLE document_inconsistencies ENABLE ROW LEVEL SECURITY;
+-- Políticas para cada tabela (exemplo para contrapartes)
+CREATE POLICY p_contrapartes_select ON contrapartes
+  FOR SELECT USING (tenant_id = current_setting('app.current_tenant')::uuid);
+CREATE POLICY p_contrapartes_insert ON contrapartes
+  FOR INSERT WITH CHECK (tenant_id = current_setting('app.current_tenant')::uuid);
+-- Repetir para todas as tabelas com tenant_id
+3. MIDDLEWARE TENANT CONTEXT
+Criar arquivo: server/middleware/tenant-context.ts
+
+import { Request, Response, NextFunction } from 'express';
+import { pool } from '../db';
+export interface TenantContext {
+  userId: string;
+  tenantId: string;
+  role: string;
+}
+declare global {
+  namespace Express {
+    interface Request {
+      tenantContext?: TenantContext;
+    }
+  }
+}
+export async function tenantContextMiddleware(req: Request, res: Response, next: NextFunction) {
+  if (!req.isAuthenticated()) {
+    return next();
+  }
+  const user = req.user!;
+  const tenantContext: TenantContext = {
+    userId: user.id,
+    tenantId: user.tenantId,
+    role: user.role,
+  };
+  req.tenantContext = tenantContext;
+  // Setar contexto tenant no PostgreSQL para RLS
+  try {
+    const client = await pool.connect();
+    await client.query('SET app.current_tenant = $1', [user.tenantId]);
+    client.release();
+  } catch (error) {
+    console.error('Erro ao setar tenant context:', error);
+  }
+  next();
+}
+Integrar no server/routes.ts:
+
+import { tenantContextMiddleware } from './middleware/tenant-context';
+// Adicionar antes das rotas protegidas
+app.use(tenantContextMiddleware);
+4. CONSTRAINTS ÚNICOS COMPOSTOS
+Atualizar shared/schema.ts:
+
+// Adicionar indices únicos compostos
+export const contrapartes = pgTable("contrapartes", {
+  // ... campos existentes
+}, (table) => ({
+  // Unique constraint por tenant
+  uniqueDocument: unique().on(table.tenantId, table.document),
+  // Índice para performance
+  tenantIdx: index().on(table.tenantId),
+}));
+// Aplicar o mesmo padrão para:
+// - categories (tenantId + name)
+// - costCenters (tenantId + name)
+// - users (tenantId + username)
+5. SEEDS POR TENANT
+Criar arquivo: server/scripts/seed-tenants.ts
+
+import { db } from '../db';
+import { tenants, users, contrapartes, categories, costCenters } from '@shared/schema';
+export async function seedTenants() {
+  // Criar tenants demo
+  const tenant1 = await db.insert(tenants).values({
+    name: 'ACME Logística',
+    slug: 'acme-log',
+  }).returning();
+  const tenant2 = await db.insert(tenants).values({
+    name: 'Beta Transportes',
+    slug: 'beta-cargo',
+  }).returning();
+  // Criar usuários admin para cada tenant
+  await db.insert(users).values([
+    {
+      username: 'admin@acme',
+      email: 'admin@acme-log.com',
+      tenantId: tenant1[0].id,
+      role: 'ADMIN',
+      // ... outros campos
+    },
+    {
+      username: 'admin@beta',
+      email: 'admin@beta-cargo.com', 
+      tenantId: tenant2[0].id,
+      role: 'ADMIN',
+      // ... outros campos
+    }
+  ]);
+  // Criar contrapartes demo por tenant
+  // Criar categorias base por tenant
+  // Criar centros de custo por tenant
+}
+6. ROTAS COM TENANT SLUG
+Atualizar server/routes.ts:
+
+// Padrão de rotas: /api/:tenantSlug/resource
+app.get('/api/:tenantSlug/contrapartes', 
+  validateTenantSlug,
+  isAuthenticated, 
+  async (req, res) => {
+    const { tenantId } = req.tenantContext!;
+    const contrapartes = await storage.getContrapartes(tenantId);
+    res.json(contrapartes);
+  }
+);
+function validateTenantSlug(req: Request, res: Response, next: NextFunction) {
+  const { tenantSlug } = req.params;
+  const userTenantId = req.tenantContext?.tenantId;
+  
+  // Validar se user pertence ao tenant do slug
+  // Implementar verificação de segurança
+  next();
+}
+7. FRONTEND COM TENANT AWARENESS
+Atualizar client/src/App.tsx:
+
+// Rotas com tenant slug
+<Route path="/:tenantSlug" component={HomePage} />
+<Route path="/:tenantSlug/documents" component={DocumentsPage} />
+<Route path="/:tenantSlug/settings" component={SettingsPage} />
+// Hook para extrair tenant do URL
+function useTenantSlug() {
+  const [location] = useLocation();
+  const tenantSlug = location.split('/')[1];
+  return tenantSlug;
+}
+8. TESTES DE ISOLAMENTO
+Criar arquivo: server/tests/multi-tenant.spec.ts
+
+describe('Multi-tenant Isolation', () => {
+  test('User from tenant A cannot access tenant B data', async () => {
+    // Testar RLS está funcionando
+    // Usuário tenant A tenta acessar dados tenant B
+    // Deve retornar vazio ou erro
+  });
+  test('Same CNPJ can exist in different tenants', async () => {
+    // Testar unique constraints por tenant
+  });
+  test('RBAC works correctly per tenant', async () => {
+    // Testar ADMIN só vê dados do seu tenant
+  });
+});
+COMANDOS DE EXECUÇÃO
+# 1. Aplicar RLS no banco
+psql $DATABASE_URL -f server/db/setup-rls.sql
+# 2. Sincronizar schema atualizado
+npm run db:push --force
+# 3. Executar seeds
+npm run seed:tenants
+# 4. Executar testes
+npm test
+# 5. Iniciar aplicação
+npm run dev
+CRITÉRIOS DE ACEITE
+✅ Campo Cliente removido do formulário de upload
+✅ RLS ativo - queries automaticamente filtradas por tenant
+✅ Constraints únicos respeitam escopo do tenant
+✅ Seeds executam sem erros e criam dados isolados
+✅ Testes passam - isolamento entre tenants funciona
+✅ Rotas funcionam com pattern /:tenantSlug/...
+✅ Nenhuma quebra de compatibilidade com código existente
