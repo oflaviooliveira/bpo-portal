@@ -401,8 +401,18 @@ export function UploadBpo() {
       });
 
       if (!response.ok) {
-        const error = await response.json();
-        throw new Error(error.message || 'Erro no upload');
+        const errorData = await response.json();
+        console.log("🔍 Detalhes completos do erro do servidor:", errorData);
+        
+        // Criar mensagem detalhada se houver details
+        if (errorData.details && Array.isArray(errorData.details)) {
+          const fieldErrors = errorData.details.map((detail: any) => 
+            `• ${detail.field}: ${detail.message}`
+          ).join('\n');
+          throw new Error(`${errorData.error}\n\nCampos com problema:\n${fieldErrors}`);
+        }
+        
+        throw new Error(errorData.message || errorData.error || 'Erro no upload');
       }
 
       return response.json();
@@ -429,11 +439,20 @@ export function UploadBpo() {
       console.error("❌ Erro no upload BPO:", error);
       setProcessingState({ stage: 'analyzed', message: 'Erro no envio. Verifique os dados.' });
 
+      // Melhorar exibição da mensagem de erro
+      const errorMessage = error.message || "Verifique os campos obrigatórios";
+      const isDetailedError = errorMessage.includes('Campos com problema:');
+      
       toast({
         title: "Erro no envio",
-        description: error.message || "Verifique os campos obrigatórios",
+        description: isDetailedError 
+          ? errorMessage.split('\n').slice(0, 3).join('\n') + (errorMessage.split('\n').length > 3 ? '\n...' : '')
+          : errorMessage,
         variant: "destructive",
       });
+
+      // Log detalhado para debugging
+      console.log("📋 Mensagem de erro completa:", errorMessage);
     },
   });
 

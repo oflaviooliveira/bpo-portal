@@ -1,0 +1,44 @@
+🔄 Component UploadBpo carregado no DOM
+❌ Erro no upload BPO: 
+Error {}
+
+at t.value (https://25fd9d59-c143-431a-a29f-114646967772-00-3rktq1czjd3gu.riker.replit.dev/__replco/static/devtools/eruda/3.2.3/eruda.js:2:17465)
+at new t (https://25fd9d59-c143-431a-a29f-114646967772-00-3rktq1czjd3gu.riker.replit.dev/__replco/static/devtools/eruda/3.2.3/eruda.js:2:12630)
+at t.value (https://25fd9d59-c143-431a-a29f-114646967772-00-3rktq1czjd3gu.riker.replit.dev/__replco/static/devtools/eruda/3.2.3/eruda.js:2:32766)
+at https://25fd9d59-c143-431a-a29f-114646967772-00-3rktq1czjd3gu.riker.replit.dev/__replco/static/devtools/eruda/3.2.3/eruda.js:2:34400
+🎯 UploadBpo component está sendo renderizado!
+🔄 Component UploadBpo carregado no DOM
+🎯 UploadBpo component está sendo renderizado!
+🔄 Component UploadBpo carregado no DOM
+🎯 UploadBpo component está sendo renderizado!
+🔄 Component UploadBpo carregado no DOM
+🎯 UploadBpo component está sendo renderizado!
+🔄 Component UploadBpo carregado no DOM
+❌ Erro no upload BPO: 
+Error {}
+message: "Erro no upload"
+stack: "Error: Erro no upload↵ at Object.mutationFn (https://25fd9d59-c143-431a-a29f-114646967772-00-3rktq1czjd3gu.riker.replit.dev/src/components/documents/upload-bpo.tsx:338:15)"
+get stack: ƒ ()
+set stack: ƒ ()
+[[Prototype]]: Object
+
+🎯 UploadBpo component está sendo renderizado!
+🔄 Component UploadBpo carregado no DOM
+🎯 UploadBpo component está sendo renderizado!
+🔄 Component UploadBpo carregado no DOM
+🎯 UploadBpo component está sendo renderizado!
+🔄 Component UploadBpo carregado no DOM
+🎯 UploadBpo component está sendo renderizado!
+🔄 Component UploadBpo carregado no DOM
+❌ Erro no upload BPO: 
+Error {}
+message: "Erro no upload"
+stack: "Error: Erro no upload↵ at Object.mutationFn (https://25fd9d59-c143-431a-a29f-114646967772-00-3rktq1czjd3gu.riker.replit.dev/src/components/documents/upload-bpo.tsx:338:15)"
+get stack: ƒ ()
+set stack: ƒ ()
+[[Prototype]]: Object
+
+🎯 UploadBpo component está sendo renderizado!
+🔄 Component UploadBpo carregado no DOM
+🎯 UploadBpo component está sendo renderizado!
+🔄 Component UploadBpo carregado no DOM
