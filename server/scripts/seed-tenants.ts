@@ -23,17 +23,21 @@ export async function seedTenants() {
     await db.insert(users).values([
       {
         username: 'admin@acme',
+        password: '$2b$10$demo.password.hash.for.testing.purposes.only',
         email: 'admin@acme-log.com',
+        firstName: 'Administrador',
+        lastName: 'ACME',
         tenantId: tenant1[0].id,
         role: 'ADMIN',
-        name: 'Administrador ACME',
       },
       {
         username: 'admin@beta',
+        password: '$2b$10$demo.password.hash.for.testing.purposes.only',
         email: 'admin@beta-cargo.com',
+        firstName: 'Administrador',
+        lastName: 'Beta',
         tenantId: tenant2[0].id,
         role: 'ADMIN',
-        name: 'Administrador Beta',
       }
     ]);
 
@@ -150,11 +154,10 @@ export async function seedTenants() {
 }
 
 // Se executado diretamente
-if (require.main === module) {
-  seedTenants()
-    .then(() => process.exit(0))
-    .catch((error) => {
-      console.error(error);
-      process.exit(1);
-    });
-}
+// Auto-execute when run directly  
+seedTenants()
+  .then(() => process.exit(0))
+  .catch((error) => {
+    console.error(error);
+    process.exit(1);
+  });
