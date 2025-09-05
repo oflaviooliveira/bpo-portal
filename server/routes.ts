@@ -19,6 +19,7 @@ import { FileValidator } from "./storage/interface";
 import { registerFileRoutes } from "./routes/files";
 import { AIDiagnostics } from "./ai-diagnostics";
 import { tenantContextMiddleware, validateTenantSlug, requireTenantContext } from "./middleware/tenant-context";
+import { listTenants, createTenant, toggleTenant, listTenantUsers, createTenantUser } from "./admin/tenant-admin";
 
 const advancedOcrProcessor = new AdvancedOcrProcessor(storage);
 const fileStorage = createFileStorage();
@@ -2560,6 +2561,25 @@ export async function registerRoutes(app: Express): Promise<Server> {
       res.status(500).json({ error: "Failed to get AI diagnostics" });
     }
   });
+
+  // ========================
+  // ADMIN ROUTES - Multi-Tenant Management
+  // ========================
+  
+  // Listar todos os tenants (apenas ADMIN global)
+  app.get("/api/admin/tenants", ...authorize(["ADMIN"]), listTenants);
+  
+  // Criar novo tenant (apenas ADMIN global)
+  app.post("/api/admin/tenants", ...authorize(["ADMIN"]), createTenant);
+  
+  // Ativar/desativar tenant (apenas ADMIN global)
+  app.patch("/api/admin/tenants/:tenantId/toggle", ...authorize(["ADMIN"]), toggleTenant);
+  
+  // Listar usuários de um tenant específico (apenas ADMIN global)
+  app.get("/api/admin/tenants/:tenantId/users", ...authorize(["ADMIN"]), listTenantUsers);
+  
+  // Criar usuário para um tenant específico (apenas ADMIN global)
+  app.post("/api/admin/tenants/:tenantId/users", ...authorize(["ADMIN"]), createTenantUser);
 
   const httpServer = createServer(app);
   return httpServer;

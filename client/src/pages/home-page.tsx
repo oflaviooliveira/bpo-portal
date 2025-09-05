@@ -9,6 +9,7 @@ import { Reconciliation } from "@/components/documents/reconciliation";
 import { Emission } from "@/components/documents/emission";
 import { Archived } from "@/components/documents/archived";
 import AIControlCenter from "@/pages/ai-control-center";
+import { ClientManagement } from "@/components/admin/client-management";
 
 type Section = 'dashboard' | 'inbox' | 'upload' | 'scheduled' | 'reconciliation' | 'emission' | 'archived' | 'clients' | 'users' | 'ai-control';
 
@@ -36,12 +37,7 @@ export default function HomePage() {
       case 'archived':
         return <Archived />;
       case 'clients':
-        return (
-          <div className="p-6">
-            <h2 className="font-gilroy font-bold text-2xl text-foreground mb-4">Clientes</h2>
-            <p className="text-muted-foreground">Funcionalidade em desenvolvimento</p>
-          </div>
-        );
+        return <ClientManagement />;
       case 'users':
         return (
           <div className="p-6">

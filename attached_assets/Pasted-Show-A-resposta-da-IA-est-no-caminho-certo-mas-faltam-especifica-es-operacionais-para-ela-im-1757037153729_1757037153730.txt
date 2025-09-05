@@ -1,0 +1,176 @@
+Show! A resposta da IA está no caminho certo, mas faltam **especificações operacionais** para ela implementar sem lacunas. Abaixo vai um **checklist do que completar** e um **bloco pronto para colar** no Replit (delta do prompt) com tudo que ainda não foi explicitado: migração de dados, RLS completa, middleware, seeds, testes, storage e exportações (Conta Azul).
+
+---
+
+## O que falta esclarecer (e pedir para implementar)
+
+1. **Modelo de tenancy (decisão final)**
+
+   * Banco único PostgreSQL + `tenant_id` em **todas** as tabelas de negócio + **RLS** por tenant.
+   * `tenant_id` = `UUID` (FK `tenants.id`). **Nunca** aceitar pelo body/query; sempre do contexto autenticado.
+
+2. **Entidades e constraints**
+
+   * Tabelas: `tenants`, `memberships (userId, tenantId, role)`.
+   * Ajustar existentes (ex.: `suppliers`, `customers`, `cost_centers`, `categories`, `documents`, `ocr_runs`, `transactions`, `contracts`, `ai_runs`, `ocr_results`) para incluir `tenantId`.
+   * **Unicidade por tenant**: `UNIQUE(tenant_id, cnpj)`; `UNIQUE(tenant_id, code)` etc.
+   * **FKs cruzadas validando tenant** (pai e filho com mesmo `tenant_id`).
+
+3. **RLS de verdade (com sessão)**
+
+   * Ativar RLS em todas as tabelas com `tenant_id`.
+   * Políticas `SELECT/INSERT/UPDATE/DELETE` usando `current_setting('app.current_tenant')`.
+   * No pool/conexão: `SET app.current_tenant = $tenantId` a cada request autenticado.
+
+4. **Middleware de contexto (backend)**
+
+   * Extrair `userId` do JWT.
+   * Resolver **tenant ativo** via `memberships` (e optional `tenantSlug` só para validar/UX).
+   * Injetar `req.context = { userId, tenantId, role }`.
+   * Hook do Prisma/pg para dar o `SET app.current_tenant`.
+
+5. **Migração de dados (zero-downtime)**
+
+   * Criar `tenants` e mapear dados atuais para **um tenant “legacy”** (ou mapeamento por empresa, se já existir).
+   * Backfill: preencher `tenant_id` nas linhas existentes (via regras: por `companyId`/pasta/slug).
+   * Adicionar constraints **apenas após** backfill.
+   * Migrar storage: mover/renomear arquivos para `tenants/{tenantId}/...` (criar job idempotente).
+   * Feature flag `MULTITENANCY_ENFORCED=true` para ativar RLS depois dos testes.
+
+6. **Seeds por tenant**
+
+   * Script idempotente para: categorias padrão (plano de contas) e centros de custo base **por tenant**.
+   * Suporte a **templates globais** (ex.: `category_templates`) para clonar no onboarding.
+
+7. **RBAC e rotas**
+
+   * Roles: `ADMIN`, `GERENTE`, `OPERADOR`, `CLIENTE`.
+   * Guards por rota; soft-delete com `deletedAt`.
+   * Rotas mantêm `/:tenantSlug/...` (decorativo), mas segurança = contexto + RLS.
+
+8. **Exportações e integrações**
+
+   * Toda exportação (ex.: **Conta Azul**) deve **forçar escopo por tenant**.
+   * Logs/telemetria com `tenantId` (auditoria, billing, limites).
+
+9. **Testes de isolamento e regressão**
+
+   * Testes autom.: criar **2 tenants** e provar que A não vê B (RLS).
+   * Testar unicidade por tenant, RBAC, seeds, exportações, e upload/ocr dentro do tenant.
+
+10. **Observabilidade e limites**
+
+    * `tenantId` em logs, métricas, tracing.
+    * Limites por tenant (tamanho de upload, custo IA mensal, etc.).
+
+---
+
+## 🔧 BLOCO “DELTA” — cole no Agente do Replit
+
+> Complemento ao prompt atual, focado no que falta implementar.
+
+```
+# DELTA DE IMPLEMENTAÇÃO MULTI-TENANT (COMPLETO)
+
+## Decisão Arquitetural
+- Modelo definitivo: PostgreSQL único + coluna tenant_id (UUID) em TODAS as tabelas de negócio + RLS.
+- Sessão define o tenant via `SET app.current_tenant = $tenantId` por request autenticado.
+
+## Schema e Constraints (Prisma + SQL)
+1) Criar tabelas:
+- tenants(id UUID pk, name, slug unique, createdAt, updatedAt)
+- memberships(id, userId fk, tenantId fk, role enum[ADMIN,GERENTE,OPERADOR,CLIENTE])
+  - UNIQUE(userId, tenantId), INDEX(tenantId)
+
+2) Adicionar `tenantId UUID not null` em tabelas:
+- suppliers, customers, cost_centers, categories, documents, ocr_runs, transactions, contracts, ai_runs, ocr_results, ...
+- Criar índices: INDEX(tenantId)
+- Alterar unicidades:
+  - suppliers: UNIQUE(tenantId, cnpj)
+  - customers: UNIQUE(tenantId, cnpj)
+  - cost_centers: UNIQUE(tenantId, code)
+  - categories: UNIQUE(tenantId, code)
+- Ajustar FKs para validar que filho e pai compartilham o MESMO tenantId (constraint com trigger/checagem ou via camada de serviço).
+
+## RLS (replicar para todas as tabelas com tenant_id)
+ALTER TABLE <tabela> ENABLE ROW LEVEL SECURITY;
+
+CREATE POLICY p_<tabela>_select ON <tabela>
+USING (tenant_id = current_setting('app.current_tenant')::uuid);
+
+CREATE POLICY p_<tabela>_insert ON <tabela>
+FOR INSERT
+WITH CHECK (tenant_id = current_setting('app.current_tenant')::uuid);
+
+CREATE POLICY p_<tabela>_update ON <tabela>
+FOR UPDATE
+USING (tenant_id = current_setting('app.current_tenant')::uuid)
+WITH CHECK (tenant_id = current_setting('app.current_tenant')::uuid);
+
+CREATE POLICY p_<tabela>_delete ON <tabela>
+FOR DELETE
+USING (tenant_id = current_setting('app.current_tenant')::uuid);
+
+## Middleware/Contexto (Express + Prisma/pg)
+- Middleware `tenantContext`:
+  - A partir do JWT, obter userId e memberships.
+  - Determinar tenant ativo. Se houver `:tenantSlug` na rota, APENAS validar que corresponde a um tenant do usuário.
+  - Definir req.context = { userId, tenantId, role }.
+  - Antes de cada query, executar `SET app.current_tenant = $tenantId`.
+- Proibir uso de tenantId vindo do cliente (body/query). Se chegar, ignorar.
+
+## Migração de Dados (zero-downtime)
+- Criar tenant "legacy" (ou um por empresa se já existir esse conceito).
+- Backfill: UPDATE <tabela> SET tenant_id = <regra de mapeamento> WHERE tenant_id IS NULL;
+- Só depois criar UNIQUEs compostas e habilitar RLS.
+- Storage: mover arquivos para `tenants/{tenantId}/{yyyy}/{mm}/{documentId}/...` (job idempotente).
+- Feature flag `MULTITENANCY_ENFORCED=true` para ligar RLS ao final.
+
+## Seeds por Tenant
+- Script idempotente:
+  - cria 2 tenants demo (acme-log, beta-cargo) + um ADMIN para cada
+  - clona `category_templates` e `cost_center_templates` para o tenant novo
+- Reexecutável sem duplicar.
+
+## Rotas e RBAC
+- Manter rotas `/:tenantSlug/...` (UX), mas segurança = contexto+RLS.
+- Guards por papel:
+  - ADMIN/GERENTE: CRUD completo
+  - OPERADOR: CRUD parcial (sem apagar base)
+  - CLIENTE: leitura + ações específicas (upload, consulta)
+- Soft delete via `deletedAt`.
+
+## Exportações/Integrações
+- Toda exportação (ex.: Conta Azul) obrigatoriamente filtra por `tenantId` do contexto.
+- Logs/telemetria incluem tenantId. Criar métricas por tenant (uploads, tokens IA, custo).
+
+## Testes Automatizados
+- Teste de isolamento com 2 tenants: usuário do A não lê/modifica B (RLS bloqueia).
+- Testar unicidades por tenant (cnpj/code), RBAC, seeds, upload/ocr dentro do tenant, e exportações.
+- Adicionar testes de regressão para endpoints já existentes (contratos mantidos).
+
+## Entrega
+- Prisma schema + migrations + SQL RLS.
+- Middleware `tenantContext` e integração de sessão (SET app.current_tenant).
+- Atualização dos services/repos para NUNCA receber tenantId do cliente.
+- Seeds idempotentes.
+- Testes passando (CI).
+- README: passos de migração e toggle `MULTITENANCY_ENFORCED`.
+```
+
+---
+
+## Plano rápido de migração (passo a passo)
+
+1. **Criar schema** (`tenants`, `memberships`) e **coluna `tenant_id`** nas tabelas.
+2. **Backfill** `tenant_id` para dados atuais (regra de mapeamento).
+3. Ajustar **unicidades e FKs** para incluir `tenant_id`.
+4. Implementar **middleware** + `SET app.current_tenant`.
+5. Aplicar **RLS** (com feature flag desligada em prod até passar nos testes).
+6. Migrar **storage** para namespace por tenant.
+7. Rodar **seeds** por tenant e **testes** de isolamento.
+8. Ligar `MULTITENANCY_ENFORCED=true` e monitorar.
+
+---
+
+Se quiser, eu também te preparo o **patch SQL de RLS gerado para cada tabela** e um **exemplo de backfill** com estratégias de mapeamento (por slug, pasta ou `companyId`) — é só dizer quais tabelas existem hoje no teu banco.
