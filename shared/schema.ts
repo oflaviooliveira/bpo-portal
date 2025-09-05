@@ -1,5 +1,5 @@
 import { sql } from "drizzle-orm";
-import { pgTable, text, varchar, uuid, timestamp, integer, decimal, jsonb, boolean, real } from "drizzle-orm/pg-core";
+import { pgTable, text, varchar, uuid, timestamp, integer, decimal, jsonb, boolean, real, unique, index } from "drizzle-orm/pg-core";
 import { relations } from "drizzle-orm";
 import { createInsertSchema } from "drizzle-zod";
 import { z } from "zod";
@@ -17,7 +17,13 @@ export const users = pgTable("users", {
   isActive: boolean("is_active").notNull().default(true),
   createdAt: timestamp("created_at").defaultNow(),
   updatedAt: timestamp("updated_at").defaultNow(),
-});
+}, (table) => ({
+  // Unique constraint por tenant para username e email
+  uniqueUsername: unique().on(table.tenantId, table.username),
+  uniqueEmail: unique().on(table.tenantId, table.email),
+  // Índice para performance
+  tenantIdx: index().on(table.tenantId),
+}));
 
 // Tenants table for multi-tenant support
 export const tenants = pgTable("tenants", {
@@ -41,7 +47,12 @@ export const contrapartes = pgTable("contrapartes", {
   isActive: boolean("is_active").notNull().default(true),
   createdAt: timestamp("created_at").defaultNow(),
   updatedAt: timestamp("updated_at").defaultNow(),
-});
+}, (table) => ({
+  // Unique constraint por tenant para documento
+  uniqueDocument: unique().on(table.tenantId, table.document),
+  // Índice para performance
+  tenantIdx: index().on(table.tenantId),
+}));
 
 // Legacy Clients table (manter por compatibilidade temporária)
 export const clients = pgTable("clients", {
@@ -72,7 +83,13 @@ export const categories = pgTable("categories", {
   description: text("description"),
   isActive: boolean("is_active").notNull().default(true),
   createdAt: timestamp("created_at").defaultNow(),
-});
+}, (table) => ({
+  // Unique constraint por tenant para código e nome
+  uniqueCode: unique().on(table.tenantId, table.code),
+  uniqueName: unique().on(table.tenantId, table.name),
+  // Índice para performance
+  tenantIdx: index().on(table.tenantId),
+}));
 
 // Cost centers
 export const costCenters = pgTable("cost_centers", {
@@ -82,61 +99,67 @@ export const costCenters = pgTable("cost_centers", {
   description: text("description"),
   isActive: boolean("is_active").notNull().default(true),
   createdAt: timestamp("created_at").defaultNow(),
-});
+}, (table) => ({
+  // Unique constraint por tenant para código e nome
+  uniqueCode: unique().on(table.tenantId, table.code),
+  uniqueName: unique().on(table.tenantId, table.name),
+  // Índice para performance
+  tenantIdx: index().on(table.tenantId),
+}));
 
 // Documents table - main entity  
 export const documents = pgTable("documents", {
   id: uuid("id").primaryKey().default(sql`gen_random_uuid()`),
   tenantId: uuid("tenant_id").notNull(),
-  
+
   // Nova estrutura com contrapartes unificadas
   contraparteId: uuid("contraparte_id"), // FK para contrapartes table
   relationshipType: varchar("relationship_type", { length: 20 }), // CLIENT ou SUPPLIER (calculado automaticamente)
-  
+
   // Campos legacy (manter por compatibilidade)
   clientId: uuid("client_id"), // Manter para migração gradual
-  
+
   bankId: uuid("bank_id"),
   categoryId: uuid("category_id"),
   costCenterId: uuid("cost_center_id"),
-  
+
   // Document info
   fileName: varchar("file_name", { length: 500 }).notNull(),
   originalName: varchar("original_name", { length: 500 }).notNull(),
   fileSize: integer("file_size").notNull(),
   mimeType: varchar("mime_type", { length: 100 }).notNull(),
   filePath: text("file_path").notNull(),
-  
+
   // Business data - Tipos conforme PRD
   documentType: varchar("document_type", { length: 50 }).notNull(), // PAGO, AGENDADO, EMITIR_BOLETO, EMITIR_NF
   amount: decimal("amount", { precision: 15, scale: 2 }),
   supplier: varchar("supplier", { length: 255 }), // LEGACY: Nome do fornecedor/cliente (ex: Uber, Posto Shell)
   description: text("description"), // Descrição detalhada (ex: Corrida 01/05 - Centro ao Aeroporto)
-  
+
   // Datas obrigatórias para BPO
   competenceDate: timestamp("competence_date"), // Data de Competência (quando a despesa/receita pertence)
   dueDate: timestamp("due_date"), // Data de Vencimento
   paidDate: timestamp("paid_date"), // Data de Pagamento (se aplicável)
-  
+
   // Campos específicos para emissão de boletos/NF
   issuerData: jsonb("issuer_data"), // Dados do tomador para boletos/NF
   instructions: text("instructions"), // Instruções específicas
-  
+
   // Processing status - Estados conforme PRD Wave 1
   status: varchar("status", { length: 50 }).notNull().default("RECEBIDO"), // RECEBIDO, VALIDANDO, PENDENTE_REVISAO, PAGO_A_CONCILIAR, AGENDADO, A_PAGAR_HOJE, AGUARDANDO_RECEBIMENTO, EM_CONCILIACAO, ARQUIVADO
-  
+
   // OCR and AI results
   ocrText: text("ocr_text"),
   ocrConfidence: decimal("ocr_confidence", { precision: 5, scale: 2 }),
   aiAnalysis: jsonb("ai_analysis"), // Structured data from AI
   aiProvider: varchar("ai_provider", { length: 50 }), // GLM, GPT, etc
-  
+
   // Validation
   validationErrors: jsonb("validation_errors"),
   isValidated: boolean("is_validated").notNull().default(false),
   validatedBy: uuid("validated_by"),
   validatedAt: timestamp("validated_at"),
-  
+
   // Metadata
   notes: text("notes"), // Observações (opcional)
   isReadyForBpo: boolean("is_ready_for_bpo").notNull().default(false), // Flag para indicar se todos os campos obrigatórios estão preenchidos

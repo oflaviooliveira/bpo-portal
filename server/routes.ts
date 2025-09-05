@@ -18,6 +18,7 @@ import { createFileStorage } from "./storage/local-storage";
 import { FileValidator } from "./storage/interface";
 import { registerFileRoutes } from "./routes/files";
 import { AIDiagnostics } from "./ai-diagnostics";
+import { tenantContextMiddleware, validateTenantSlug, requireTenantContext } from "./middleware/tenant-context";
 
 const advancedOcrProcessor = new AdvancedOcrProcessor(storage);
 const fileStorage = createFileStorage();
@@ -48,10 +49,10 @@ const upload = multer({
  */
 function analyzeOcrQuality(text: string) {
   const characterCount = text.length;
-  
+
   // Detectar valores monetários
   const hasMonetaryValues = /R\$\s*\d+[.,]\d{2}|valor|total|preço|custo/i.test(text);
-  
+
   // Detectar páginas de sistema
   const systemIndicators = [
     'Sistema de Administração', 'https://', 'Login', 'Acesso', 'Portal', 
@@ -60,11 +61,11 @@ function analyzeOcrQuality(text: string) {
   const isSystemPage = systemIndicators.some(indicator => 
     text.toLowerCase().includes(indicator.toLowerCase())
   );
-  
+
   // Detectar documentos incompletos
   let isIncomplete = false;
   let estimatedQuality: 'HIGH' | 'MEDIUM' | 'LOW' | 'CRITICAL' = 'HIGH';
-  
+
   if (characterCount < 100) {
     isIncomplete = true;
     estimatedQuality = 'CRITICAL';
@@ -77,13 +78,13 @@ function analyzeOcrQuality(text: string) {
   } else if (characterCount < 500) {
     estimatedQuality = 'MEDIUM';
   }
-  
+
   // Se tem valores monetários mas pouco texto, pode ser um recibo simples válido
   if (hasMonetaryValues && characterCount >= 100) {
     estimatedQuality = characterCount > 300 ? 'HIGH' : 'MEDIUM';
     isIncomplete = false;
   }
-  
+
   return {
     isIncomplete,
     isSystemPage,
@@ -119,10 +120,13 @@ const uploadDocumentSchema = z.object({
 export async function registerRoutes(app: Express): Promise<Server> {
   // Setup authentication
   await setupAuth(app);
-  
+
+  // Aplicar middleware tenant context globalmente para rotas autenticadas
+  app.use(tenantContextMiddleware);
+
   // Setup file serving routes with storage interface
   registerFileRoutes(app);
-  
+
   // Setup status transitions - Wave 1
   setupStatusTransitions();
 
@@ -146,7 +150,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
         canBeClient: req.query.canBeClient === 'true' ? true : undefined,
         canBeSupplier: req.query.canBeSupplier === 'true' ? true : undefined
       };
-      
+
       const contrapartes = await storage.getContrapartes(tenantId, filters);
       res.json(contrapartes);
     } catch (error) {
@@ -159,7 +163,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
     try {
       const tenantId = req.user?.tenantId!;
       const contraparteData = { ...req.body, tenantId };
-      
+
       const newContraparte = await storage.createContraparte(contraparteData);
       res.status(201).json(newContraparte);
     } catch (error) {
@@ -172,14 +176,14 @@ export async function registerRoutes(app: Express): Promise<Server> {
   app.get("/api/clients", ...authorize(["ADMIN", "GERENTE", "OPERADOR", "CLIENTE"]), async (req, res) => {
     try {
       const user = req.user!;
-      
+
       // Cliente só vê seus próprios dados
       if (user.role === 'CLIENTE') {
         const client = await storage.getClient(user.id, user.tenantId);
         res.json(client ? [client] : []);
         return;
       }
-      
+
       // TODO: Operador só vê clientes designados (implementar user_clients)
       const clients = await storage.getClients(user.tenantId);
       res.json(clients);
@@ -233,12 +237,12 @@ export async function registerRoutes(app: Express): Promise<Server> {
         documentType: req.query.documentType as string,
         clientId: req.query.clientId as string,
       };
-      
+
       // Cliente só vê seus documentos (já filtrado no middleware)
       if (user.role === 'CLIENTE') {
         filters.clientId = user.id;
       }
-      
+
       // Remove undefined filters
       Object.keys(filters).forEach(key => 
         filters[key as keyof typeof filters] === undefined && 
@@ -266,7 +270,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
       // Validação aprimorada do arquivo
       const fileBuffer = await fs.readFile(file.path);
       const validation = await FileValidator.validateFile(fileBuffer, file.originalname, file.mimetype);
-      
+
       if (!validation.isValid) {
         // Limpar arquivo temporário
         await fs.unlink(file.path).catch(() => {});
@@ -281,7 +285,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
       // Import processors
       const { PdfTextExtractor } = await import("./ocr/pdf-extractor");
       const { DocumentAnalyzer } = await import("./ai/document-analyzer");
-      
+
       const pdfExtractor = new PdfTextExtractor();
       const documentAnalyzer = new DocumentAnalyzer();
 
@@ -298,7 +302,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
           const worker = await createWorker('por');
           const { data: { text, confidence } } = await worker.recognize(file.path);
           await worker.terminate();
-          
+
           ocrResult = {
             success: true,
             text: text.trim(),
@@ -306,12 +310,12 @@ export async function registerRoutes(app: Express): Promise<Server> {
             confidence: Math.round(confidence)
           };
         }
-        
+
         // NOVA FUNCIONALIDADE: Análise de qualidade integrada ao OCR básico
         if (ocrResult.success && ocrResult.text) {
           const qualityAnalysis = analyzeOcrQuality(ocrResult.text);
           ocrResult.metadata = { qualityFlags: qualityAnalysis };
-          
+
           console.log(`🔍 Análise de qualidade OCR:`);
           console.log(`   📏 Caracteres: ${qualityAnalysis.characterCount}`);
           console.log(`   🔍 Qualidade: ${qualityAnalysis.estimatedQuality}`);
@@ -319,7 +323,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
           console.log(`   🖥️ Página de sistema: ${qualityAnalysis.isSystemPage ? 'Sim' : 'Não'}`);
           console.log(`   ⚠️ Incompleto: ${qualityAnalysis.isIncomplete ? 'Sim' : 'Não'}`);
         }
-        
+
       } catch (error) {
         console.warn("⚠️ Erro no OCR:", error);
         ocrResult = {
@@ -335,19 +339,19 @@ export async function registerRoutes(app: Express): Promise<Server> {
         try {
           console.log(`🤖 Analisando documento com IA: ${file.originalname}`);
           console.log(`📝 Texto extraído (${ocrResult.text.length} chars): ${ocrResult.text.substring(0, 100)}...`);
-          
+
           // DEBUG EXTREMO: Log do texto completo que será enviado para IA
           console.log(`\n🔍 ===== TEXTO COMPLETO ENVIADO PARA IA =====`);
           console.log(ocrResult.text);
           console.log(`🔍 ===== FIM DO TEXTO ===== (${ocrResult.text.length} chars)\n`);
-          
+
           // Gerar UUID temporário válido para a análise
           const { randomUUID } = await import('crypto');
           const tempDocId = randomUUID();
-          
+
           // Integrar flags de qualidade com IA
           const documentQualityFlags = ocrResult?.metadata?.qualityFlags;
-          
+
           aiResult = await documentAnalyzer.analyzeDocument(
             ocrResult.text, 
             file.originalname,
@@ -370,26 +374,12 @@ export async function registerRoutes(app: Express): Promise<Server> {
       let suggestions: any = {};
       let completionRate = 0;
       let filledFields: string[] = [];
-      
+
       if (aiResult && aiResult.success && aiResult.extractedData) {
         const data = aiResult.extractedData;
-        
+
         console.log(`🔄 Mapeando dados IA:`, JSON.stringify(data, null, 2));
-        
-        // Debug ultra-detalhado
-        console.log(`🔍 TODOS OS CAMPOS EXTRAÍDOS:`, {
-          valor: data.valor,
-          fornecedor: data.fornecedor,
-          cnpj_emitente: data.cnpj_emitente,
-          data_emissao: data.data_emissao,
-          data_saida: data.data_saida,
-          data_vencimento: data.data_vencimento,
-          documento: data.documento,
-          descricao: data.descricao,
-          categoria: data.categoria,
-          centro_custo: data.centro_custo
-        });
-        
+
         // Debug específico para campos perdidos
         console.log(`💰 VALOR EXTRAÍDO:`, data.valor || 'VAZIO');
         console.log(`📋 CNPJ EXTRAÍDO:`, data.cnpj_emitente || 'VAZIO');
@@ -398,16 +388,16 @@ export async function registerRoutes(app: Express): Promise<Server> {
           saida: data.data_saida || 'VAZIO', 
           vencimento: data.data_vencimento || 'VAZIO'
         });
-        
+
         // Mapeamento inteligente baseado no tipo de documento
         const isDANFE = !!(data.cnpj_emitente || data.data_emissao || data.chave_acesso);
         console.log(`🎯 isDANFE detectado:`, isDANFE);
-        
+
         // NOVA FUNCIONALIDADE: Sistema de transparência de fontes de dados
         const dataSource = data.data_source || 'OCR';
         const isFilenameData = dataSource.includes('FILENAME');
         const adjustedConfidence = isFilenameData ? Math.round(aiResult.confidence * 0.7) : Math.round(aiResult.confidence);
-        
+
         // Garantir que flags de qualidade estão disponíveis no escopo correto
         const qualityMetadata = ocrResult?.metadata?.qualityFlags || {
           estimatedQuality: 'UNKNOWN',
@@ -416,7 +406,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
           characterCount: 0,
           hasMonetaryValues: false
         };
-        
+
         suggestions = {
           // Campos básicos sempre mapeados
           amount: data.valor || '',
@@ -424,22 +414,22 @@ export async function registerRoutes(app: Express): Promise<Server> {
           contraparte: data.contraparte || data.fornecedor || '',
           description: data.descricao || '',
           category: data.categoria || '',
-          
+
           // Mapeamento inteligente de documento e datas
           documento: isDANFE ? (data.cnpj_emitente || '') : (data.documento || ''),
           numeroNF: isDANFE ? (data.documento || '') : '', // Número da NF para DANFEs
           cnpjEmitente: data.cnpj_emitente || '', // CNPJ sempre disponível
-          
+
           // Mapeamento inteligente de datas com fallbacks múltiplos
           paymentDate: data.data_pagamento || data.data_emissao || data.data_saida || '',
           dueDate: data.data_vencimento || '',
           issueDate: data.data_emissao || '',
           exitDate: data.data_saida || '',
-          
+
           // Campos adicionais extraídos
           centerCost: data.centro_custo || '',
           documentType: data.tipo_documento || '',
-          
+
           // NOVA FUNCIONALIDADE: Metadata de qualidade e fonte
           qualityMetadata: {
             dataSource,
@@ -450,7 +440,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
             characterCount: qualityMetadata.characterCount,
             hasMonetaryValues: qualityMetadata.hasMonetaryValues
           },
-          
+
           // Confidence granular por campo ajustado pela fonte
           confidence: {
             amount: data.valor ? adjustedConfidence : 0,
@@ -461,14 +451,14 @@ export async function registerRoutes(app: Express): Promise<Server> {
             dueDate: data.data_vencimento ? adjustedConfidence : 0
           }
         };
-        
+
         console.log(`✅ Sugestões mapeadas:`, JSON.stringify(suggestions, null, 2));
-        
+
         // NOVA FUNCIONALIDADE: Análise avançada de qualidade
         const totalFields = ['amount', 'supplier', 'documento', 'description', 'paymentDate', 'dueDate'];
         const filledFields = totalFields.filter(field => suggestions[field] && suggestions[field] !== '');
         const completionRate = Math.round((filledFields.length / totalFields.length) * 100);
-        
+
         console.log(`📊 Taxa de preenchimento: ${completionRate}% (${filledFields.length}/${totalFields.length} campos)`);
         console.log(`🔍 Fonte dos dados: ${dataSource}`);
         if (qualityMetadata) {
@@ -534,7 +524,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
       // Validação aprimorada do arquivo
       const fileBuffer = await fs.readFile(file.path);
       const validation = await FileValidator.validateFile(fileBuffer, file.originalname, file.mimetype);
-      
+
       if (!validation.isValid) {
         // Limpar arquivo temporário
         await fs.unlink(file.path).catch(() => {});
@@ -547,7 +537,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
       // Usar o handler de upload estruturado
       const { uploadHandler } = await import("./upload-handler");
       const result = await uploadHandler.processUpload(file, req.body, user);
-      
+
       if (result.success) {
         res.json({
           message: result.message,
@@ -572,15 +562,15 @@ export async function registerRoutes(app: Express): Promise<Server> {
     try {
       const user = req.user!;
       const documentId = req.params.id;
-      
+
       // Validate UUID format
       const uuidRegex = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
       if (!uuidRegex.test(documentId)) {
         return res.status(400).json({ error: "ID de documento inválido" });
       }
-      
+
       const document = await storage.getDocument(documentId, user.tenantId);
-      
+
       if (!document) {
         return res.status(404).json({ error: "Documento não encontrado" });
       }
@@ -703,7 +693,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
     try {
       const user = req.user!;
       const documentId = req.params.id;
-      
+
       const document = await storage.getDocument(documentId, user.tenantId);
       if (!document) {
         return res.status(404).json({ error: "Documento não encontrado" });
@@ -730,7 +720,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
     try {
       const user = req.user!;
       const documentId = req.params.id;
-      
+
       const document = await storage.getDocument(documentId, user.tenantId);
       if (!document) {
         return res.status(404).json({ error: "Documento não encontrado" });
@@ -760,7 +750,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
     try {
       const user = req.user!;
       const documentId = req.params.id;
-      
+
       const document = await storage.getDocument(documentId, user.tenantId);
       if (!document) {
         return res.status(404).json({ error: "Documento não encontrado" });
@@ -804,7 +794,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
     try {
       const user = req.user!;
       const documentId = req.params.id;
-      
+
       const document = await storage.getDocument(documentId, user.tenantId);
       if (!document) {
         return res.status(404).json({ error: "Documento não encontrado" });
@@ -854,7 +844,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
 
         // Process with advanced OCR
         const result = await advancedOcrProcessor.processDocument(mockFile as any, documentId, user.tenantId);
-        
+
         if (result.success) {
           await storage.createDocumentLog({
             documentId: document.id,
@@ -987,7 +977,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
   app.get("/api/categories", ...authorize(["ADMIN", "GERENTE", "OPERADOR", "CLIENTE"]), async (req, res) => {
     try {
       const user = req.user!;
-      
+
       // Mock categories para desenvolvimento
       const mockCategories = [
         { id: "cat-1", name: "Combustível", description: "Gastos com combustível e transporte" },
@@ -999,7 +989,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
         { id: "cat-7", name: "Marketing e Publicidade", description: "Campanhas e material promocional" },
         { id: "cat-8", name: "Telefonia e Internet", description: "Serviços de telecomunicações" }
       ];
-      
+
       res.json(mockCategories);
     } catch (error) {
       console.error("Get categories error:", error);
@@ -1045,7 +1035,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
   app.get("/api/cost-centers", isAuthenticated, async (req, res) => {
     try {
       const user = req.user!;
-      
+
       // Mock cost centers para desenvolvimento
       const mockCostCenters = [
         { id: "cc-1", name: "Administrativo", code: "ADM", description: "Centro administrativo geral" },
@@ -1057,7 +1047,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
         { id: "cc-7", name: "Marketing", code: "MKT", description: "Marketing e comunicação" },
         { id: "cc-8", name: "Logística", code: "LOG", description: "Logística e transporte" }
       ];
-      
+
       res.json(mockCostCenters);
     } catch (error) {
       console.error("Get cost centers error:", error);
@@ -1128,12 +1118,12 @@ export async function registerRoutes(app: Express): Promise<Server> {
 
         res.setHeader("Content-Type", "text/csv");
         res.setHeader("Content-Disposition", `attachment; filename="documentos-${Date.now()}.csv"`);
-        
+
         const csvHeader = "ID,Nome do Arquivo,Status,Tipo,Valor,Vencimento,Data de Criação,Confiança OCR,Provider IA\n";
         const csvRows = csvData.map(row => 
           Object.values(row).map(val => `"${val}"`).join(",")
         ).join("\n");
-        
+
         res.send(csvHeader + csvRows);
       } else {
         // Return JSON for ZIP processing on client
@@ -1151,7 +1141,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
     try {
       const user = req.user!;
       const documentId = req.params.id;
-      
+
       // Verificar se documento pertence ao tenant
       const document = await storage.getDocument(documentId, user.tenantId);
       if (!document) {
@@ -1170,7 +1160,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
     try {
       const user = req.user!;
       const documentId = req.params.id;
-      
+
       // Verificar se documento pertence ao tenant
       const document = await storage.getDocument(documentId, user.tenantId);
       if (!document) {
@@ -1225,7 +1215,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
           suggestions.amount = `R$ ${numValue.toFixed(2).replace('.', ',')}`;
           confidence.amount = 0.95;
         }
-        
+
         if (filenameAnalysis.parsed.date) {
           const [day, month, year] = filenameAnalysis.parsed.date.split('.');
           suggestions.dueDate = `${year}-${month.padStart(2, '0')}-${day.padStart(2, '0')}`;
@@ -1233,7 +1223,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
           confidence.dueDate = 0.90;
           confidence.paymentDate = 0.90;
         }
-        
+
         if (filenameAnalysis.parsed.description) {
           suggestions.supplier = filenameAnalysis.parsed.description;
           confidence.supplier = 0.85;
@@ -1244,7 +1234,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
       if (ocrResult.success && ocrResult.text) {
         // Extrair valores do texto OCR usando regex simples
         const text = ocrResult.text;
-        
+
         // Buscar valores monetários
         if (!suggestions.amount) {
           const valueRegex = /(?:R\$|RS|VALOR|TOTAL)[\s:]*(\d{1,3}(?:\.\d{3})*,\d{2})/gi;
@@ -1254,7 +1244,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
             confidence.amount = 0.70;
           }
         }
-        
+
         // Buscar datas
         if (!suggestions.dueDate) {
           const dateRegex = /(?:VENCIMENTO|VENCE|DUE)[\s:]*(\d{1,2}\/\d{1,2}\/\d{4})/gi;
@@ -1266,7 +1256,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
             confidence.dueDate = 0.65;
           }
         }
-        
+
         // Buscar fornecedor/empresa
         if (!suggestions.supplier) {
           const supplierRegex = /(?:FORNECEDOR|EMPRESA|CNPJ)[\s:]*([A-Z\s]{3,30})/gi;
@@ -1276,7 +1266,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
             confidence.supplier = 0.60;
           }
         }
-        
+
         // Buscar descrição do serviço/produto
         if (!suggestions.description) {
           const descRegex = /(?:DESCRIÇÃO|PRODUTO|SERVIÇO|HISTÓRICO)[\s:]*([A-Za-z0-9\s\-\/]{5,50})/gi;
@@ -1310,7 +1300,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
 
     } catch (error) {
       console.error("❌ Erro no processamento do arquivo:", error);
-      
+
       if (req.file) {
         try {
           await fs.unlink(req.file.path);
@@ -1318,7 +1308,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
           console.log("⚠️ Erro ao limpar arquivo após falha:", cleanupError);
         }
       }
-      
+
       res.status(500).json({ 
         error: "Erro interno no processamento",
         details: error instanceof Error ? error.message : "Erro desconhecido"
@@ -1331,7 +1321,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
     try {
       const user = req.user!;
       const documentId = req.params.id;
-      
+
       // Verificar se documento pertence ao tenant
       const document = await storage.getDocument(documentId, user.tenantId);
       if (!document) {
@@ -1339,9 +1329,9 @@ export async function registerRoutes(app: Express): Promise<Server> {
       }
 
       console.log(`🔄 Reprocessando documento: ${document.originalName}`);
-      
+
       const result = await documentProcessor.processDocument(documentId, user.tenantId);
-      
+
       res.json({
         success: result.success,
         status: result.status,
@@ -1360,21 +1350,21 @@ export async function registerRoutes(app: Express): Promise<Server> {
   app.get("/api/debug/last-document", isAuthenticated, async (req, res) => {
     try {
       const user = req.user!;
-      
+
       // Buscar último documento do tenant
       const documents = await storage.getDocuments(user.tenantId);
       const lastDoc = documents[0];
-      
+
       if (!lastDoc) {
         return res.json({ message: "Nenhum documento encontrado" });
       }
-      
+
       // Buscar análises IA do documento (simulado)
       const aiRuns: any[] = [];
-      
+
       // Buscar inconsistências 
       const inconsistencies = await storage.getDocumentInconsistencies(lastDoc.id);
-      
+
       res.json({
         document: {
           id: lastDoc.id,
@@ -1399,7 +1389,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
           filenameValue: inc.filenameValue
         }))
       });
-      
+
     } catch (error) {
       console.error("Debug last document error:", error);
       res.status(500).json({ error: "Erro ao buscar dados de debug" });
@@ -1411,15 +1401,15 @@ export async function registerRoutes(app: Express): Promise<Server> {
     try {
       const user = req.user!;
       const { dateFrom, dateTo } = req.query;
-      
+
       // Buscar dados reais das tabelas de IA
       const last30Days = new Date();
       last30Days.setDate(last30Days.getDate() - 30);
-      
+
       const aiRuns = await storage.getAiRuns(user.tenantId, {
         dateFrom: last30Days
       });
-      
+
       const stats = {
         totalRuns: aiRuns.length,
         averageProcessingTime: aiRuns.length > 0 
@@ -1453,21 +1443,21 @@ export async function registerRoutes(app: Express): Promise<Server> {
     try {
       const user = req.user!;
       const { priority, sortBy = 'createdAt', sortOrder = 'desc', status, documentType } = req.query;
-      
+
       let statusFilter = ["RECEBIDO", "VALIDANDO", "PENDENTE_REVISAO"];
-      
+
       // Override status filter if specific status requested
       if (status && status !== 'all') {
         statusFilter = [status as string];
       }
-      
+
       // Build filters object
       const filters: any = { status: statusFilter };
-      
+
       if (documentType && documentType !== 'all') {
         filters.documentType = documentType as string;
       }
-      
+
       if (priority === 'urgent') {
         const tomorrow = new Date();
         tomorrow.setDate(tomorrow.getDate() + 1);
@@ -1475,19 +1465,19 @@ export async function registerRoutes(app: Express): Promise<Server> {
       }
 
       const documents = await storage.getDocuments(user.tenantId, filters);
-      
+
       // Sort documents
       const sortedDocuments = documents.sort((a, b) => {
         const aValue = sortBy === 'createdAt' ? a.createdAt : a.originalName;
         const bValue = sortBy === 'createdAt' ? b.createdAt : b.originalName;
-        
+
         if (sortOrder === 'desc') {
           return (aValue || '') > (bValue || '') ? -1 : 1;
         } else {
           return (aValue || '') < (bValue || '') ? -1 : 1;
         }
       });
-      
+
       // Enhanced stats for dashboard
       const stats = {
         total: documents.length,
@@ -1515,20 +1505,20 @@ export async function registerRoutes(app: Express): Promise<Server> {
     try {
       const user = req.user!;
       const { filter = "all" } = req.query;
-      
+
       let statusFilter = ["AGENDADO", "A_PAGAR_HOJE", "AGUARDANDO_RECEBIMENTO"];
       const documents = await storage.getDocuments(user.tenantId, { status: statusFilter });
-      
+
       // Enhanced filtering with stats
       const today = new Date();
       today.setHours(0, 0, 0, 0);
-      
+
       const filtered = documents.filter(doc => {
         if (!doc.dueDate) return filter === "all";
-        
+
         const dueDate = new Date(doc.dueDate);
         dueDate.setHours(0, 0, 0, 0);
-        
+
         switch (filter) {
           case "today":
             return dueDate.getTime() === today.getTime();
@@ -1573,13 +1563,13 @@ export async function registerRoutes(app: Express): Promise<Server> {
     try {
       const user = req.user!;
       const { bankId, clientId } = req.query;
-      
+
       const filters: any = { status: ["PAGO_A_CONCILIAR", "EM_CONCILIACAO"] };
       if (bankId) filters.bankId = bankId;
       if (clientId) filters.clientId = clientId;
-      
+
       const documents = await storage.getDocuments(user.tenantId, filters);
-      
+
       // Stats for reconciliation panel
       const stats = {
         total: documents.length,
@@ -1600,15 +1590,15 @@ export async function registerRoutes(app: Express): Promise<Server> {
     try {
       const user = req.user!;
       const { search, clientId, bankId, dateFrom, dateTo } = req.query;
-      
+
       const filters: any = { status: ["ARQUIVADO"] };
       if (clientId) filters.clientId = clientId;
       if (bankId) filters.bankId = bankId;
       if (dateFrom) filters.dateFrom = new Date(dateFrom as string);
       if (dateTo) filters.dateTo = new Date(dateTo as string);
-      
+
       let documents = await storage.getDocuments(user.tenantId, filters);
-      
+
       // Advanced search by filename or notes
       if (search) {
         const searchTerm = (search as string).toLowerCase();
@@ -1644,7 +1634,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
       today.setHours(0, 0, 0, 0);
       const tomorrow = new Date(today);
       tomorrow.setDate(tomorrow.getDate() + 1);
-      
+
       const documents = await storage.getDocuments(user.tenantId, { 
         status: ["AGENDADO", "A_PAGAR_HOJE"],
         dueDateFrom: today,
@@ -1663,7 +1653,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
       const today = new Date();
       const next7Days = new Date(today);
       next7Days.setDate(next7Days.getDate() + 7);
-      
+
       const documents = await storage.getDocuments(user.tenantId, { 
         status: ["AGENDADO"],
         dueDateFrom: today,
@@ -1681,7 +1671,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
       const user = req.user!;
       const today = new Date();
       today.setHours(0, 0, 0, 0);
-      
+
       const documents = await storage.getDocuments(user.tenantId, { 
         status: ["AGENDADO", "A_PAGAR_HOJE"],
         dueDateTo: today,
@@ -1728,13 +1718,13 @@ export async function registerRoutes(app: Express): Promise<Server> {
     try {
       const { documentId } = req.params;
       const user = req.user!;
-      
+
       // Verificar se documento pertence ao tenant do usuário
       const document = await storage.getDocument(documentId, user.tenantId);
       if (!document) {
         return res.status(404).json({ error: "Documento não encontrado" });
       }
-      
+
       const metrics = await storage.getOcrMetricsByDocument(documentId);
       res.json(metrics);
     } catch (error) {
@@ -1748,11 +1738,11 @@ export async function registerRoutes(app: Express): Promise<Server> {
     try {
       const user = req.user!;
       const daysBack = parseInt(req.query.days as string) || 30;
-      
+
       const { AdvancedOcrProcessor } = await import("./ocr-processor-advanced");
       const advancedProcessor = new AdvancedOcrProcessor(storage);
       const stats = await advancedProcessor.getProcessingStats(user.tenantId, daysBack);
-      
+
       res.json(stats);
     } catch (error) {
       console.error("OCR performance error:", error);
@@ -1778,17 +1768,17 @@ export async function registerRoutes(app: Express): Promise<Server> {
       const user = req.user!;
       const { aiMultiProvider } = await import("./ai-multi-provider");
       const providers = aiMultiProvider.getProviders();
-      
+
       // Get AI usage metrics for the tenant
       const last30Days = new Date();
       last30Days.setDate(last30Days.getDate() - 30);
-      
+
       const aiRuns = await storage.getAiRuns(user.tenantId, {
         dateFrom: last30Days
       });
-      
+
       const recentRuns = aiRuns;
-      
+
       // Calculate metrics by provider
       const metrics = providers.map(provider => {
         // Mapear variações do nome do provider
@@ -1802,7 +1792,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
         const successRate = providerRuns.length > 0 
           ? (providerRuns.filter(run => (run.confidence || 0) > 80).length / providerRuns.length) * 100 
           : 0;
-        
+
         return {
           ...provider,
           last30Days: {
@@ -1870,14 +1860,14 @@ export async function registerRoutes(app: Express): Promise<Server> {
   app.post('/api/ai-control/update-model', ...authorize(["ADMIN", "GERENTE"]), async (req, res) => {
     try {
       const { providerName, modelId } = req.body;
-      
+
       if (!providerName || !modelId) {
         return res.status(400).json({ error: 'Provider name and model ID are required' });
       }
 
       const { aiMultiProvider } = await import("./ai-multi-provider");
       const success = aiMultiProvider.updateProviderModel(providerName, modelId);
-      
+
       if (!success) {
         return res.status(400).json({ error: 'Invalid provider or model' });
       }
@@ -1900,7 +1890,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
       const { providerName, config } = req.body;
       const { aiMultiProvider } = await import("./ai-multi-provider");
       const success = aiMultiProvider.updateProviderConfig(providerName, config);
-      
+
       if (success) {
         res.json({ success: true, providerName, config });
       } else {
@@ -1930,7 +1920,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
       const { aiMultiProvider } = await import("./ai-multi-provider");
       const metrics = aiMultiProvider.getProviderMetrics();
       const comparison = aiMultiProvider.getProviderComparison();
-      
+
       res.json({
         metrics,
         comparison,
@@ -1953,13 +1943,13 @@ export async function registerRoutes(app: Express): Promise<Server> {
       const providers = aiMultiProvider.getProviders();
       const user = req.user!;
       const now = new Date();
-      
+
       // Get recent AI activity (last 10 minutes)
       const recentActivity = await storage.getAiRuns(user.tenantId, {
         dateFrom: new Date(Date.now() - 10 * 60 * 1000),
         limit: 1
       });
-      
+
       res.json({
         providers: providers.map(p => ({
           name: p.name,
@@ -1995,13 +1985,13 @@ export async function registerRoutes(app: Express): Promise<Server> {
     try {
       const { enabled } = req.body;
       const { aiMultiProvider } = await import("./ai-multi-provider");
-      
+
       if (enabled) {
         aiMultiProvider.enableEmergencyMode();
       } else {
         aiMultiProvider.disableEmergencyMode();
       }
-      
+
       res.json({ success: true, emergencyMode: enabled });
     } catch (error) {
       console.error("AI emergency mode error:", error);
@@ -2014,9 +2004,9 @@ export async function registerRoutes(app: Express): Promise<Server> {
     try {
       const { providerName } = req.body;
       const { aiMultiProvider } = await import("./ai-multi-provider");
-      
+
       aiMultiProvider.resetProviderStatus(providerName);
-      
+
       res.json({ success: true, provider: providerName, status: "reset" });
     } catch (error) {
       console.error("AI reset provider error:", error);
@@ -2029,7 +2019,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
     try {
       const { aiMultiProvider } = await import("./ai-multi-provider");
       const detailedStatus = aiMultiProvider.getDetailedStatus();
-      
+
       res.json({ providers: detailedStatus });
     } catch (error) {
       console.error("AI detailed status error:", error);
@@ -2042,7 +2032,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
     try {
       const user = req.user!;
       const limit = parseInt(req.query.limit as string) || 10;
-      
+
       const aiRuns = await storage.getAiRuns(user.tenantId, {
         limit,
         dateFrom: new Date(Date.now() - 24 * 60 * 60 * 1000) // Last 24h
@@ -2095,20 +2085,20 @@ export async function registerRoutes(app: Express): Promise<Server> {
     try {
       const user = req.user!;
       const { period = '30', provider } = req.query;
-      
+
       const daysBack = parseInt(period as string);
       const dateFrom = new Date();
       dateFrom.setDate(dateFrom.getDate() - daysBack);
-      
+
       let aiRuns = await storage.getAiRuns(user.tenantId, {
         dateFrom,
         limit: 50000
       });
-      
+
       if (provider) {
         aiRuns = aiRuns.filter(run => run.providerUsed === provider);
       }
-      
+
       // Group by day for timeline chart
       const timeline = [];
       for (let i = daysBack - 1; i >= 0; i--) {
@@ -2116,12 +2106,12 @@ export async function registerRoutes(app: Express): Promise<Server> {
         date.setDate(date.getDate() - i);
         const dayStart = new Date(date.getFullYear(), date.getMonth(), date.getDate());
         const dayEnd = new Date(dayStart.getTime() + 24 * 60 * 60 * 1000);
-        
+
         const dayRuns = aiRuns.filter(run => {
           const runDate = new Date(run.createdAt || new Date());
           return runDate >= dayStart && runDate < dayEnd;
         });
-        
+
         timeline.push({
           date: dayStart.toISOString().split('T')[0],
           requests: dayRuns.length,
@@ -2133,7 +2123,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
           errorCount: dayRuns.filter(run => (run.confidence || 0) <= 80).length
         });
       }
-      
+
       // Provider comparison
       const providerStats = Object.entries(
         aiRuns.reduce((acc, run) => {
@@ -2162,7 +2152,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
         avgResponseTime: Math.round(stats.totalResponseTime / stats.requests),
         successRate: parseFloat(((stats.successCount / stats.requests) * 100).toFixed(1))
       }));
-      
+
       res.json({
         timeline,
         providerStats,
@@ -2188,10 +2178,10 @@ export async function registerRoutes(app: Express): Promise<Server> {
     try {
       const { name } = req.params;
       const { priority, costPer1000 } = req.body;
-      
+
       const { aiMultiProvider } = await import("./ai-multi-provider");
       const success = aiMultiProvider.updateProviderConfig(name, { priority, costPer1000 });
-      
+
       if (success) {
         res.json({ success: true, message: "Configuração atualizada" });
       } else {
@@ -2236,21 +2226,21 @@ export async function registerRoutes(app: Express): Promise<Server> {
             newStatus = "CLASSIFICADO";
           }
           break;
-        
+
         case "schedule":
           if (dueDate) {
             updates.dueDate = new Date(dueDate);
             newStatus = "AGENDADO";
           }
           break;
-        
+
         case "revise":
           newStatus = "PENDENTE_REVISAO";
           if (notes) {
             updates.notes = notes;
           }
           break;
-        
+
         default:
           return res.status(400).json({ error: "Ação inválida" });
       }
@@ -2266,27 +2256,27 @@ export async function registerRoutes(app: Express): Promise<Server> {
   });
 
   // FASE 3: Endpoints de ações operacionais avançadas
-  
+
   // Ação em lote para documentos
   app.post("/api/documents/batch-action", isAuthenticated, async (req, res) => {
     try {
       const user = req.user!;
       const { documentIds, action, actionData } = req.body;
-      
+
       if (!Array.isArray(documentIds) || documentIds.length === 0) {
         return res.status(400).json({ error: "Lista de documentos é obrigatória" });
       }
-      
+
       const results = [];
-      
+
       for (const documentId of documentIds) {
         try {
           const document = await storage.getDocument(documentId, user.tenantId);
           if (!document) continue;
-          
+
           let updates = {};
           let logAction = action.toUpperCase();
-          
+
           switch (action) {
             case "approve":
               updates = { status: "CLASSIFICADO", reviewedBy: user.id, reviewedAt: new Date() };
@@ -2302,9 +2292,9 @@ export async function registerRoutes(app: Express): Promise<Server> {
               logAction = "REASSIGN";
               break;
           }
-          
+
           await storage.updateDocument(documentId, user.tenantId, updates);
-          
+
           await storage.createDocumentLog({
             documentId,
             action: logAction,
@@ -2312,13 +2302,13 @@ export async function registerRoutes(app: Express): Promise<Server> {
             details: { action, actionData },
             userId: user.id,
           });
-          
+
           results.push({ documentId, success: true });
         } catch (error) {
           results.push({ documentId, success: false, error: error instanceof Error ? error.message : "Erro desconhecido" });
         }
       }
-      
+
       res.json({ results });
     } catch (error) {
       console.error("Batch action error:", error);
@@ -2340,9 +2330,9 @@ export async function registerRoutes(app: Express): Promise<Server> {
         hasConflicts,
         text
       } = req.body;
-      
+
       let documents = await storage.getDocuments(user.tenantId, {});
-      
+
       // Aplicar filtros
       if (dateRange?.start || dateRange?.end) {
         documents = documents.filter(doc => {
@@ -2352,7 +2342,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
           return true;
         });
       }
-      
+
       if (amountRange?.min || amountRange?.max) {
         documents = documents.filter(doc => {
           if (!doc.amount) return false;
@@ -2362,29 +2352,29 @@ export async function registerRoutes(app: Express): Promise<Server> {
           return true;
         });
       }
-      
+
       if (statuses && statuses.length > 0) {
         documents = documents.filter(doc => statuses.includes(doc.status));
       }
-      
+
       if (types && types.length > 0) {
         documents = documents.filter(doc => types.includes(doc.documentType));
       }
-      
+
       if (clientIds && clientIds.length > 0) {
         documents = documents.filter(doc => clientIds.includes(doc.clientId));
       }
-      
+
       if (bankIds && bankIds.length > 0) {
         documents = documents.filter(doc => bankIds.includes(doc.bankId));
       }
-      
+
       if (hasConflicts === true) {
         documents = documents.filter(doc => 
           doc.status === "PENDENTE_REVISAO"
         );
       }
-      
+
       if (text) {
         const searchText = text.toLowerCase();
         documents = documents.filter(doc => 
@@ -2393,7 +2383,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
           (doc.ocrText && doc.ocrText.toLowerCase().includes(searchText))
         );
       }
-      
+
       res.json(documents);
     } catch (error) {
       console.error("Advanced search error:", error);
@@ -2402,7 +2392,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
   });
 
   // FASE 2: Routes para painéis operacionais conforme PRD
-  
+
   // Painel Agendados - Filtros: Hoje, Próximos 7 dias, Atrasados
   app.get("/api/documents/scheduled/today", isAuthenticated, async (req, res) => {
     try {
@@ -2411,13 +2401,13 @@ export async function registerRoutes(app: Express): Promise<Server> {
       today.setHours(0, 0, 0, 0);
       const tomorrow = new Date(today);
       tomorrow.setDate(tomorrow.getDate() + 1);
-      
+
       const documents = await storage.getDocuments(user.tenantId, {
         status: ["AGENDADO", "A_PAGAR_HOJE"],
         dueDateFrom: today,
         dueDateTo: tomorrow,
       });
-      
+
       res.json(documents);
     } catch (error) {
       console.error("Get today scheduled error:", error);
@@ -2431,13 +2421,13 @@ export async function registerRoutes(app: Express): Promise<Server> {
       const today = new Date();
       const next7Days = new Date(today);
       next7Days.setDate(next7Days.getDate() + 7);
-      
+
       const documents = await storage.getDocuments(user.tenantId, {
         status: ["AGENDADO"],
         dueDateFrom: today,
         dueDateTo: next7Days,
       });
-      
+
       res.json(documents);
     } catch (error) {
       console.error("Get next 7 days scheduled error:", error);
@@ -2449,12 +2439,12 @@ export async function registerRoutes(app: Express): Promise<Server> {
     try {
       const user = req.user!;
       const today = new Date();
-      
+
       const documents = await storage.getDocuments(user.tenantId, {
         status: ["AGENDADO", "A_PAGAR_HOJE"],
         dueDateTo: today,
       });
-      
+
       res.json(documents);
     } catch (error) {
       console.error("Get overdue scheduled error:", error);
@@ -2469,7 +2459,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
       const documents = await storage.getDocuments(user.tenantId, {
         status: ["PAGO_A_CONCILIAR", "EM_CONCILIACAO"],
       });
-      
+
       res.json(documents);
     } catch (error) {
       console.error("Get reconciliation documents error:", error);
@@ -2485,7 +2475,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
         documentType: ["EMITIR_BOLETO"],
         status: ["RECEBIDO", "VALIDANDO", "AGUARDANDO_RECEBIMENTO"],
       });
-      
+
       res.json(documents);
     } catch (error) {
       console.error("Get boleto documents error:", error);
@@ -2500,7 +2490,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
         documentType: ["EMITIR_NF"],
         status: ["RECEBIDO", "VALIDANDO", "AGUARDANDO_RECEBIMENTO"],
       });
-      
+
       res.json(documents);
     } catch (error) {
       console.error("Get NF documents error:", error);
@@ -2513,7 +2503,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
     try {
       const health = await aiDiagnostics.getHealthReport();
       const isHealthy = health.summary.downProviders === 0;
-      
+
       res.status(isHealthy ? 200 : 503).json({
         status: isHealthy ? 'healthy' : 'degraded',
         timestamp: health.timestamp,
@@ -2538,7 +2528,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
       // Verificar se pelo menos um provedor está funcionando
       const health = await aiDiagnostics.getHealthReport();
       const hasHealthyProvider = health.providers.some(p => p.status === 'healthy');
-      
+
       if (hasHealthyProvider) {
         res.status(200).json({
           status: 'ready',
