@@ -19,6 +19,7 @@ import { FileValidator } from "./storage/interface";
 import { registerFileRoutes } from "./routes/files";
 import { AIDiagnostics } from "./ai-diagnostics";
 import { tenantContextMiddleware, validateTenantSlug, requireTenantContext } from "./middleware/tenant-context";
+import { setGlobalAdminContext } from "./middleware/rls-context";
 import { listTenants, createTenant, toggleTenant, listTenantUsers, createTenantUser } from "./admin/tenant-admin";
 
 const advancedOcrProcessor = new AdvancedOcrProcessor(storage);
@@ -2563,23 +2564,23 @@ export async function registerRoutes(app: Express): Promise<Server> {
   });
 
   // ========================
-  // ADMIN ROUTES - Multi-Tenant Management (SEM TENANT CONTEXT - Global Access)
+  // ADMIN ROUTES - Multi-Tenant Management (CONTEXTO GLOBAL ADMIN)
   // ========================
   
   // Listar todos os tenants (apenas ADMIN global)
-  app.get("/api/admin/tenants", isAuthenticated, requireRole("ADMIN"), listTenants);
+  app.get("/api/admin/tenants", setGlobalAdminContext, listTenants);
   
   // Criar novo tenant (apenas ADMIN global)
-  app.post("/api/admin/tenants", isAuthenticated, requireRole("ADMIN"), createTenant);
+  app.post("/api/admin/tenants", setGlobalAdminContext, createTenant);
   
   // Ativar/desativar tenant (apenas ADMIN global)
-  app.patch("/api/admin/tenants/:tenantId/toggle", isAuthenticated, requireRole("ADMIN"), toggleTenant);
+  app.patch("/api/admin/tenants/:tenantId/toggle", setGlobalAdminContext, toggleTenant);
   
   // Listar usuários de um tenant específico (apenas ADMIN global)
-  app.get("/api/admin/tenants/:tenantId/users", isAuthenticated, requireRole("ADMIN"), listTenantUsers);
+  app.get("/api/admin/tenants/:tenantId/users", setGlobalAdminContext, listTenantUsers);
   
   // Criar usuário para um tenant específico (apenas ADMIN global)
-  app.post("/api/admin/tenants/:tenantId/users", isAuthenticated, requireRole("ADMIN"), createTenantUser);
+  app.post("/api/admin/tenants/:tenantId/users", setGlobalAdminContext, createTenantUser);
 
   const httpServer = createServer(app);
   return httpServer;

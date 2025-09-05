@@ -20,6 +20,13 @@ declare global {
 
 export async function tenantContextMiddleware(req: Request, res: Response, next: NextFunction) {
   if (!req.isAuthenticated() || !req.user) {
+    // Para usuários não autenticados, limpar contexto RLS
+    try {
+      await db.execute(sql.raw(`SET app.current_tenant = ''`));
+      await db.execute(sql.raw(`SET app.current_user = ''`));
+    } catch (error) {
+      console.error('❌ Erro ao limpar contexto RLS:', error);
+    }
     return next();
   }
 
@@ -32,13 +39,16 @@ export async function tenantContextMiddleware(req: Request, res: Response, next:
 
   req.tenantContext = tenantContext;
 
-  // Setar contexto tenant no PostgreSQL para RLS
+  // Configurar contexto RLS completo (tenant + user)
   try {
-    // Usar uma conexão direta para setar o contexto de forma segura
     await db.execute(sql.raw(`SET app.current_tenant = '${user.tenantId}'`));
-    console.log(`🔐 Tenant context set: ${user.tenantId}`);
+    await db.execute(sql.raw(`SET app.current_user = '${user.id}'`));
+    console.log(`🔐 RLS Context: tenant=${user.tenantId}, user=${user.id}, role=${user.role}`);
   } catch (error) {
-    console.error('❌ Erro ao setar tenant context:', error);
+    console.error('❌ Erro ao configurar contexto RLS:', error);
+    return res.status(500).json({ 
+      error: 'Erro interno - contexto de segurança não configurado' 
+    });
   }
 
   next();
