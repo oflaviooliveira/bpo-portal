@@ -23,7 +23,7 @@ import { ClientFornecedores } from "@/components/client/client-fornecedores";
 import { ClientCategorias } from "@/components/client/client-categorias";
 import { ClientCentrosCusto } from "@/components/client/client-centros-custo";
 
-type Section = 'dashboard' | 'inbox' | 'upload' | 'scheduled' | 'reconciliation' | 'emission' | 'archived' | 'clients' | 'team-management' | 'ai-control' | 'admin-dashboard' | 'admin-stats' | 'settings' | 'documents' | 'reports' | 'fornecedores' | 'categorias' | 'centros-custo';
+type Section = 'dashboard' | 'inbox' | 'upload' | 'scheduled' | 'reconciliation' | 'emission' | 'archived' | 'clients' | 'team-management' | 'ai-control' | 'admin-dashboard' | 'admin-stats' | 'settings' | 'documents' | 'reports' | 'fornecedores' | 'categorias' | 'centros-custo' | 'ocr-performance' | 'ai-analytics';
 
 export default function HomePage() {
   const { user } = useAuth();
@@ -73,6 +73,32 @@ export default function HomePage() {
         return <AdminDashboardSidebar />;
       case 'admin-stats':
         return <AdminStatsSidebar />;
+      case 'inbox':
+        return <Inbox />;
+      case 'scheduled':
+        return <Scheduled />;
+      case 'reconciliation':
+        return <Reconciliation />;
+      case 'archived':
+        return <Archived />;
+      case 'ocr-performance':
+        return (
+          <div className="p-6">
+            <div className="text-center">
+              <h1 className="text-2xl font-bold text-foreground mb-4">Performance OCR</h1>
+              <p className="text-muted-foreground">Métricas e análise de performance do sistema OCR em desenvolvimento...</p>
+            </div>
+          </div>
+        );
+      case 'ai-analytics':
+        return (
+          <div className="p-6">
+            <div className="text-center">
+              <h1 className="text-2xl font-bold text-foreground mb-4">AI Analytics</h1>
+              <p className="text-muted-foreground">Dashboard de analytics de IA em desenvolvimento...</p>
+            </div>
+          </div>
+        );
       case 'ai-control':
         return (
           <div className="p-6">

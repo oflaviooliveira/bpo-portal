@@ -15,7 +15,11 @@ import {
   LogOut,
   Cpu,
   BarChart3,
-  TrendingUp
+  TrendingUp,
+  Activity,
+  Zap,
+  Clock,
+  RefreshCw
 } from "lucide-react";
 
 interface SidebarProps {
@@ -99,6 +103,42 @@ export function Sidebar({ activeSection, onSectionChange }: SidebarProps) {
       label: 'Relatórios da Plataforma',
       icon: TrendingUp,
       category: 'ANALYTICS',
+    },
+    {
+      section: 'inbox',
+      label: 'Inbox Operacional',
+      icon: Inbox,
+      category: 'OPERAÇÕES',
+    },
+    {
+      section: 'scheduled',
+      label: 'Agendamentos',
+      icon: Calendar,
+      category: 'OPERAÇÕES',
+    },
+    {
+      section: 'reconciliation',
+      label: 'Conciliação',
+      icon: Scale,
+      category: 'OPERAÇÕES',
+    },
+    {
+      section: 'archived',
+      label: 'Arquivados',
+      icon: Archive,
+      category: 'OPERAÇÕES',
+    },
+    {
+      section: 'ocr-performance',
+      label: 'Performance OCR',
+      icon: Activity,
+      category: 'MONITORAMENTO',
+    },
+    {
+      section: 'ai-analytics',
+      label: 'AI Analytics',
+      icon: Zap,
+      category: 'MONITORAMENTO',
     },
     {
       section: 'ai-control',
