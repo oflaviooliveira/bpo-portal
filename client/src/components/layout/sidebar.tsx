@@ -80,7 +80,7 @@ export function Sidebar({ activeSection, onSectionChange }: SidebarProps) {
     },
     {
       section: 'clients',
-      label: 'Portfólio de Clientes BPO',
+      label: 'Portfólio de Clientes',
       icon: Building,
       category: 'PAINEL EXECUTIVO',
     },
