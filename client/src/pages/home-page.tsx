@@ -18,6 +18,7 @@ import { useAuth } from "@/hooks/use-auth";
 import { ClientDashboard } from "@/components/client/client-dashboard";
 import { ClientDocuments } from "@/components/client/client-documents"; 
 import { ClientReports } from "@/components/client/client-reports";
+import { ClientSettings } from "@/components/client/client-settings";
 
 type Section = 'dashboard' | 'inbox' | 'upload' | 'scheduled' | 'reconciliation' | 'emission' | 'archived' | 'clients' | 'team-management' | 'ai-control' | 'admin-dashboard' | 'admin-stats' | 'settings' | 'documents' | 'reports';
 
@@ -45,7 +46,7 @@ export default function HomePage() {
         case 'reports':
           return <ClientReports />;
         case 'settings':
-          return <Settings />;
+          return <ClientSettings />;
         default:
           return <ClientDashboard />;
       }
