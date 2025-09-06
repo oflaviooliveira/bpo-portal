@@ -10,6 +10,7 @@ import { Emission } from "@/components/documents/emission";
 import { Archived } from "@/components/documents/archived";
 import AIControlCenter from "@/pages/ai-control-center";
 import { ClientManagement } from "@/components/admin/client-management";
+import { TeamManagement } from "@/components/admin/team-management";
 import { AdminDashboardSidebar } from "@/components/admin/admin-dashboard-sidebar";
 import { AdminStatsSidebar } from "@/components/admin/admin-stats-sidebar";
 
@@ -41,7 +42,7 @@ export default function HomePage() {
       case 'clients':
         return <ClientManagement />;
       case 'team-management':
-        return <ClientManagement />; // Vamos usar o mesmo componente mas com foco na equipe Gquicks
+        return <TeamManagement />;
       case 'ai-control':
         return (
           <div className="p-6">

@@ -637,12 +637,11 @@ export function ClientManagement() {
 
       <Tabs defaultValue="tenants" className="space-y-4">
         <TabsList>
-          <TabsTrigger value="tenants">📋 Empresas Clientes</TabsTrigger>
+          <TabsTrigger value="tenants">🏢 Empresas Clientes</TabsTrigger>
           <TabsTrigger value="users" disabled={!selectedTenant}>
             {selectedTenant ? `👥 Equipe - ${selectedTenant.name}` : '👥 Selecione um Cliente'}
           </TabsTrigger>
-          <TabsTrigger value="global-users">🏢 Equipe Gquicks</TabsTrigger>
-          <TabsTrigger value="user-management">⚙️ Configurações</TabsTrigger>
+          <TabsTrigger value="user-management">⚙️ Configurações de Perfis</TabsTrigger>
         </TabsList>
 
         <TabsContent value="tenants" className="space-y-4">
