@@ -176,8 +176,10 @@ export async function createTenant(req: Request, res: Response) {
     }
 
     console.log(`✅ Centros de custo padrão criados para tenant ${newTenant.name}`);
+    console.log(`🎯 TENANT CRIADO COM SUCESSO - ID: ${newTenant.id}, NAME: ${newTenant.name}, SLUG: ${newTenant.slug}`);
 
     res.status(201).json({
+      success: true,
       message: 'Tenant criado com sucesso',
       tenant: newTenant,
       admin: {
@@ -186,18 +188,23 @@ export async function createTenant(req: Request, res: Response) {
         email: adminUser.email,
         firstName: adminUser.firstName,
         lastName: adminUser.lastName,
+        role: adminUser.role
       },
     });
   } catch (error) {
     if (error instanceof z.ZodError) {
+      console.error('❌ Erro de validação ao criar tenant:', error.errors);
       return res.status(400).json({
         error: 'Dados inválidos',
-        details: error.errors,
+        details: error.errors.map(e => `${e.path.join('.')}: ${e.message}`).join(', '),
       });
     }
 
     console.error('❌ Erro ao criar tenant:', error);
-    res.status(500).json({ error: 'Erro interno do servidor' });
+    res.status(500).json({ 
+      error: 'Erro interno do servidor',
+      details: error instanceof Error ? error.message : 'Erro desconhecido'
+    });
   }
 }
 

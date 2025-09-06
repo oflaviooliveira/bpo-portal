@@ -147,12 +147,21 @@ export function ClientManagement() {
 
   // Mutation para criar tenant
   const createTenantMutation = useMutation({
-    mutationFn: async (data: CreateTenantForm) => 
-      await fetch('/api/admin/tenants', {
+    mutationFn: async (data: CreateTenantForm) => {
+      const response = await fetch('/api/admin/tenants', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify(data)
-      }).then(res => res.json()),
+      });
+      
+      const result = await response.json();
+      
+      if (!response.ok) {
+        throw new Error(result.error || `Erro ${response.status}: ${response.statusText}`);
+      }
+      
+      return result;
+    },
     onSuccess: () => {
       showNotification(
         'Cliente BPO Criado!',
