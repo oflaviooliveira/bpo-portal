@@ -122,9 +122,14 @@ export function Settings() {
       
       // Criar URL do arquivo e salvar no localStorage
       const fileUrl = URL.createObjectURL(file);
+      console.log('💾 Settings - Salvando logo no localStorage:', fileUrl.substring(0, 50) + '...');
       localStorage.setItem('company-logo', fileUrl);
+      console.log('✅ Settings - Logo salva no localStorage!');
       
       setCompanyData({ ...companyData, logo: file });
+      
+      // Forçar atualização da sidebar
+      window.dispatchEvent(new Event('logo-updated'));
       
       toast({
         title: "Logo carregada",

@@ -37,9 +37,41 @@ export function Sidebar({ activeSection, onSectionChange }: SidebarProps) {
   // Carregar logo da empresa das configurações
   useEffect(() => {
     const savedLogo = localStorage.getItem('company-logo');
+    console.log('🔍 Sidebar - Logo salva no localStorage:', savedLogo ? 'SIM' : 'NÃO');
     if (savedLogo) {
+      console.log('✅ Sidebar - Carregando logo:', savedLogo.substring(0, 50) + '...');
       setCompanyLogo(savedLogo);
+    } else {
+      console.log('❌ Sidebar - Nenhuma logo encontrada no localStorage');
     }
+  }, []);
+
+  // Escutar mudanças no localStorage
+  useEffect(() => {
+    const handleStorageChange = (e: StorageEvent) => {
+      if (e.key === 'company-logo') {
+        console.log('🔄 Sidebar - Logo atualizada via storage event');
+        const newLogo = e.newValue;
+        setCompanyLogo(newLogo);
+      }
+    };
+
+    const handleLogoUpdate = () => {
+      console.log('🔄 Sidebar - Evento logo-updated recebido');
+      const savedLogo = localStorage.getItem('company-logo');
+      if (savedLogo) {
+        console.log('✅ Sidebar - Atualizando logo:', savedLogo.substring(0, 50) + '...');
+        setCompanyLogo(savedLogo);
+      }
+    };
+
+    window.addEventListener('storage', handleStorageChange);
+    window.addEventListener('logo-updated', handleLogoUpdate);
+    
+    return () => {
+      window.removeEventListener('storage', handleStorageChange);
+      window.removeEventListener('logo-updated', handleLogoUpdate);
+    };
   }, []);
 
   const menuItems = [
