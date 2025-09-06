@@ -1,1 +1,0 @@
-Execute as correções com exatidão e corrigindo todos os erros que encontrar apos analise profunda nos documentos e codigos.

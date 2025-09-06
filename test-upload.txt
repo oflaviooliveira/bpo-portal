@@ -1,5 +1,0 @@
-Documento de teste para verificar upload
-Tipo: PAGO
-Valor: R$ 120,00
-Data: 24/07/2025
-Fornecedor: Teste Sistema

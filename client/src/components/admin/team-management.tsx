@@ -133,21 +133,12 @@ export function TeamManagement() {
   const { data: gquicksUsers, isLoading, error } = useQuery({
     queryKey: ['/api/admin/users/global'],
     queryFn: async () => {
-      console.log('🔍 Fetching team users...');
       const response = await apiRequest('GET', '/api/admin/users/global');
       const data = await response.json() as GquicksUser[];
-      console.log('📋 Team users received:', data);
       return data;
     },
     staleTime: 30000, // Cache por 30 segundos
     refetchOnWindowFocus: false,
-  });
-
-  console.log('🏠 TeamManagement render:', { 
-    gquicksUsers, 
-    isLoading, 
-    error,
-    usersCount: gquicksUsers?.length 
   });
 
   // Mutation para criar usuário da equipe
