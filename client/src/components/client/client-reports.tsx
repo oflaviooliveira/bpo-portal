@@ -15,7 +15,7 @@ export function ClientReports() {
   });
 
   const { data: stats } = useQuery({
-    queryKey: ['/api/dashboard/stats'],
+    queryKey: ['/api/client/dashboard/stats'],
   });
 
   // Filtrar documentos por período

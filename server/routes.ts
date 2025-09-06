@@ -134,14 +134,26 @@ export async function registerRoutes(app: Express): Promise<Server> {
   // Setup status transitions - Wave 1
   setupStatusTransitions();
 
-  // Dashboard stats - Wave 1 RBAC
-  app.get("/api/dashboard/stats", ...authorize(["ADMIN", "GERENTE", "OPERADOR"]), async (req, res) => {
+  // Dashboard stats - SUPER_ADMIN apenas
+  app.get("/api/dashboard/stats", ...authorize(["SUPER_ADMIN"]), async (req, res) => {
     try {
       const user = req.user!;
       const stats = await storage.getDashboardStats(user.tenantId);
       res.json(stats);
     } catch (error) {
       console.error("Dashboard stats error:", error);
+      res.status(500).json({ error: "Erro ao carregar estatísticas" });
+    }
+  });
+
+  // Dashboard stats específico para clientes - só dados do próprio tenant
+  app.get("/api/client/dashboard/stats", ...authorize(["CLIENT_USER"], true), async (req, res) => {
+    try {
+      const user = req.user!;
+      const stats = await storage.getDashboardStats(user.tenantId);
+      res.json(stats);
+    } catch (error) {
+      console.error("Client dashboard stats error:", error);
       res.status(500).json({ error: "Erro ao carregar estatísticas" });
     }
   });
@@ -233,7 +245,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
   });
 
   // Get documents with filters - Wave 1 RBAC + Scoping + Validação
-  app.get("/api/documents", ...authorize(["ADMIN", "GERENTE", "OPERADOR", "CLIENTE"], true), validateQuery(listDocumentsQuerySchema), async (req, res) => {
+  app.get("/api/documents", ...authorize(["SUPER_ADMIN", "CLIENT_USER"], true), validateQuery(listDocumentsQuerySchema), async (req, res) => {
     try {
       const user = req.user!;
       const filters = {
@@ -243,7 +255,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
       };
 
       // Cliente só vê seus documentos (já filtrado no middleware)
-      if (user.role === 'CLIENTE') {
+      if (user.role === 'CLIENT_USER') {
         filters.clientId = user.id;
       }
 
@@ -262,7 +274,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
   });
 
   // Process file for OCR + AI analysis endpoint (for preview) + Validação aprimorada
-  app.post("/api/documents/process-file", ...authorize(["ADMIN", "GERENTE", "OPERADOR", "CLIENTE"], true), upload.single('file'), async (req, res) => {
+  app.post("/api/documents/process-file", ...authorize(["SUPER_ADMIN", "CLIENT_USER"], true), upload.single('file'), async (req, res) => {
     try {
       const user = req.user!;
       const file = req.file;

@@ -5,7 +5,7 @@ import { cn } from "@/lib/utils";
 
 export function ClientDashboard() {
   const { data: stats } = useQuery({
-    queryKey: ['/api/dashboard/stats'],
+    queryKey: ['/api/client/dashboard/stats'],
   });
 
   const { data: documents } = useQuery({
