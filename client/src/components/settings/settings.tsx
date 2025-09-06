@@ -54,17 +54,9 @@ export function Settings() {
   useEffect(() => {
     const savedLogo = localStorage.getItem('company-logo');
     if (savedLogo) {
-      // Criar um preview da logo salva
-      fetch(savedLogo)
-        .then(res => res.blob())
-        .then(blob => {
-          const file = new File([blob], 'logo.png', { type: blob.type });
-          setCompanyData(prev => ({ ...prev, logo: file }));
-        })
-        .catch(() => {
-          // Se falhar ao carregar, logo foi removida do localStorage
-          localStorage.removeItem('company-logo');
-        });
+      // Simplesmente marcar que existe uma logo (sem tentar recriar o File)
+      // O preview será mostrado usando a URL do localStorage
+      setCompanyData(prev => ({ ...prev, logo: new File([], 'logo-loaded') }));
     }
   }, []);
 
@@ -202,11 +194,19 @@ export function Settings() {
                 <div className="flex items-center space-x-4">
                   <div className="w-20 h-20 border-2 border-dashed border-muted-foreground rounded-lg flex items-center justify-center bg-muted">
                     {companyData.logo ? (
-                      <img 
-                        src={URL.createObjectURL(companyData.logo)} 
-                        alt="Logo" 
-                        className="w-full h-full object-contain rounded"
-                      />
+                      companyData.logo.size > 0 ? (
+                        <img 
+                          src={URL.createObjectURL(companyData.logo)} 
+                          alt="Logo" 
+                          className="w-full h-full object-contain rounded"
+                        />
+                      ) : (
+                        <img 
+                          src={localStorage.getItem('company-logo') || ''} 
+                          alt="Logo" 
+                          className="w-full h-full object-contain rounded"
+                        />
+                      )
                     ) : (
                       <Upload className="w-8 h-8 text-muted-foreground" />
                     )}
