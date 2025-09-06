@@ -9,7 +9,7 @@ import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Switch } from '@/components/ui/switch';
-import { UserPlus, Users, Crown, Shield, Settings, Activity } from 'lucide-react';
+import { UserPlus, Users, Crown, Shield, Settings, Activity, Edit, Key, Search, Filter } from 'lucide-react';
 import { ConfirmDialog } from '@/components/ui/confirm-dialog';
 import { NotificationDialog } from '@/components/ui/notification-dialog';
 
@@ -22,6 +22,19 @@ interface GquicksUser {
   role: 'ADMIN' | 'GERENTE' | 'OPERADOR';
   isActive: boolean;
   createdAt: string;
+  updatedAt?: string;
+}
+
+interface EditUserForm {
+  firstName: string;
+  lastName: string;
+  email: string;
+  role: 'GERENTE' | 'OPERADOR';
+}
+
+interface ResetPasswordForm {
+  newPassword: string;
+  confirmPassword: string;
 }
 
 interface CreateUserForm {
@@ -35,9 +48,13 @@ interface CreateUserForm {
 
 export function TeamManagement() {
   const [isCreateUserOpen, setIsCreateUserOpen] = useState(false);
+  const [isEditUserOpen, setIsEditUserOpen] = useState(false);
+  const [isResetPasswordOpen, setIsResetPasswordOpen] = useState(false);
   const [isConfirmDialogOpen, setIsConfirmDialogOpen] = useState(false);
   const [isNotificationOpen, setIsNotificationOpen] = useState(false);
   const [selectedUser, setSelectedUser] = useState<GquicksUser | null>(null);
+  const [searchTerm, setSearchTerm] = useState('');
+  const [roleFilter, setRoleFilter] = useState<string>('ALL');
   const [confirmAction, setConfirmAction] = useState<() => void>(() => {});
   const [notificationData, setNotificationData] = useState({
     title: '',
@@ -52,6 +69,18 @@ export function TeamManagement() {
     username: '',
     password: '',
     role: 'OPERADOR'
+  });
+
+  const [editForm, setEditForm] = useState<EditUserForm>({
+    firstName: '',
+    lastName: '',
+    email: '',
+    role: 'OPERADOR'
+  });
+
+  const [resetPasswordForm, setResetPasswordForm] = useState<ResetPasswordForm>({
+    newPassword: '',
+    confirmPassword: ''
   });
 
   const queryClient = useQueryClient();
@@ -124,6 +153,65 @@ export function TeamManagement() {
     }
   });
 
+  // Mutation para editar usuário
+  const editUserMutation = useMutation({
+    mutationFn: async (data: EditUserForm & { userId: string }) => {
+      const { userId, ...updateData } = data;
+      const response = await fetch(`/api/admin/users/${userId}`, {
+        method: 'PUT',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(updateData)
+      });
+      if (!response.ok) throw new Error('Failed to update user');
+      return response.json();
+    },
+    onSuccess: () => {
+      showNotification(
+        'Colaborador Atualizado!',
+        'As informações do colaborador foram atualizadas com sucesso.',
+        'success'
+      );
+      setIsEditUserOpen(false);
+      queryClient.invalidateQueries({ queryKey: ['/api/admin/users/global'] });
+    },
+    onError: (error: any) => {
+      showNotification(
+        'Erro ao Atualizar',
+        error.message || 'Não foi possível atualizar o colaborador.',
+        'error'
+      );
+    }
+  });
+
+  // Mutation para reset de senha
+  const resetPasswordMutation = useMutation({
+    mutationFn: async (data: { userId: string; newPassword: string }) => {
+      const response = await fetch(`/api/admin/users/${data.userId}/reset-password`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ newPassword: data.newPassword })
+      });
+      if (!response.ok) throw new Error('Failed to reset password');
+      return response.json();
+    },
+    onSuccess: () => {
+      showNotification(
+        'Senha Resetada!',
+        'A nova senha foi definida com sucesso.',
+        'success'
+      );
+      setIsResetPasswordOpen(false);
+      setResetPasswordForm({ newPassword: '', confirmPassword: '' });
+    },
+    onError: (error: any) => {
+      showNotification(
+        'Erro ao Resetar Senha',
+        error.message || 'Não foi possível resetar a senha.',
+        'error'
+      );
+    }
+  });
+
   const handleToggleUserStatus = (user: GquicksUser) => {
     const newStatus = !user.isActive;
     const action = newStatus ? 'ativar' : 'desativar';
@@ -138,6 +226,64 @@ export function TeamManagement() {
     });
     setIsConfirmDialogOpen(true);
   };
+
+  const handleEditUser = (user: GquicksUser) => {
+    setSelectedUser(user);
+    setEditForm({
+      firstName: user.firstName,
+      lastName: user.lastName,
+      email: user.email,
+      role: user.role as 'GERENTE' | 'OPERADOR'
+    });
+    setIsEditUserOpen(true);
+  };
+
+  const handleResetPassword = (user: GquicksUser) => {
+    setSelectedUser(user);
+    setResetPasswordForm({ newPassword: '', confirmPassword: '' });
+    setIsResetPasswordOpen(true);
+  };
+
+  const handleEditSubmit = () => {
+    if (selectedUser) {
+      editUserMutation.mutate({
+        userId: selectedUser.id,
+        ...editForm
+      });
+    }
+  };
+
+  const handleResetPasswordSubmit = () => {
+    if (resetPasswordForm.newPassword !== resetPasswordForm.confirmPassword) {
+      showNotification('Erro', 'As senhas não coincidem', 'error');
+      return;
+    }
+
+    if (resetPasswordForm.newPassword.length < 6) {
+      showNotification('Erro', 'A senha deve ter pelo menos 6 caracteres', 'error');
+      return;
+    }
+
+    if (selectedUser) {
+      resetPasswordMutation.mutate({
+        userId: selectedUser.id,
+        newPassword: resetPasswordForm.newPassword
+      });
+    }
+  };
+
+  // Filtrar usuários por busca e função
+  const filteredUsers = gquicksUsers?.filter(user => {
+    const matchesSearch = 
+      user.firstName.toLowerCase().includes(searchTerm.toLowerCase()) ||
+      user.lastName.toLowerCase().includes(searchTerm.toLowerCase()) ||
+      user.email.toLowerCase().includes(searchTerm.toLowerCase()) ||
+      user.username.toLowerCase().includes(searchTerm.toLowerCase());
+    
+    const matchesRole = roleFilter === 'ALL' || user.role === roleFilter;
+    
+    return matchesSearch && matchesRole;
+  }) || [];
 
   const getRoleBadgeColor = (role: string) => {
     switch (role) {
@@ -331,6 +477,46 @@ export function TeamManagement() {
         </Card>
       </div>
 
+      {/* Controles de Busca e Filtros */}
+      <Card>
+        <CardContent className="p-4">
+          <div className="flex flex-col sm:flex-row gap-4">
+            <div className="flex-1">
+              <div className="relative">
+                <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-gray-400" />
+                <Input
+                  placeholder="Buscar por nome, email ou usuário..."
+                  value={searchTerm}
+                  onChange={(e) => setSearchTerm(e.target.value)}
+                  className="pl-10"
+                />
+              </div>
+            </div>
+            
+            <div className="flex items-center gap-2">
+              <Filter className="h-4 w-4 text-gray-500" />
+              <Select value={roleFilter} onValueChange={setRoleFilter}>
+                <SelectTrigger className="w-40">
+                  <SelectValue />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="ALL">Todas as Funções</SelectItem>
+                  <SelectItem value="ADMIN">Admin</SelectItem>
+                  <SelectItem value="GERENTE">Gerente</SelectItem>
+                  <SelectItem value="OPERADOR">Operador</SelectItem>
+                </SelectContent>
+              </Select>
+            </div>
+          </div>
+          
+          {filteredUsers.length !== gquicksUsers?.length && (
+            <div className="mt-3 text-sm text-gray-600">
+              Mostrando {filteredUsers.length} de {gquicksUsers?.length || 0} colaboradores
+            </div>
+          )}
+        </CardContent>
+      </Card>
+
       {/* Team Table */}
       <Card>
         <CardHeader>
@@ -352,7 +538,7 @@ export function TeamManagement() {
               </TableRow>
             </TableHeader>
             <TableBody>
-              {gquicksUsers?.map((user) => {
+              {filteredUsers.map((user) => {
                 const RoleIcon = getRoleIcon(user.role);
                 return (
                   <TableRow key={user.id}>
@@ -388,10 +574,31 @@ export function TeamManagement() {
                     <TableCell>{new Date(user.createdAt).toLocaleDateString('pt-BR')}</TableCell>
                     <TableCell>
                       <div className="flex space-x-2">
-                        {user.role === 'ADMIN' && (
+                        {user.role === 'ADMIN' ? (
                           <Badge variant="outline" className="text-gquicks-primary border-gquicks-primary">
                             CEO & Fundador
                           </Badge>
+                        ) : (
+                          <>
+                            <Button
+                              size="sm"
+                              variant="outline"
+                              onClick={() => handleEditUser(user)}
+                              className="h-8"
+                            >
+                              <Edit className="w-3 h-3 mr-1" />
+                              Editar
+                            </Button>
+                            <Button
+                              size="sm"
+                              variant="outline"
+                              onClick={() => handleResetPassword(user)}
+                              className="h-8 text-orange-600 border-orange-600 hover:bg-orange-600 hover:text-white"
+                            >
+                              <Key className="w-3 h-3 mr-1" />
+                              Reset
+                            </Button>
+                          </>
                         )}
                       </div>
                     </TableCell>
@@ -423,6 +630,141 @@ export function TeamManagement() {
         description={notificationData.description}
         type={notificationData.type}
       />
+
+      {/* Modal de Edição de Usuário */}
+      <Dialog open={isEditUserOpen} onOpenChange={setIsEditUserOpen}>
+        <DialogContent className="max-w-md">
+          <DialogHeader>
+            <DialogTitle>Editar Colaborador</DialogTitle>
+            <DialogDescription>
+              Atualize as informações do colaborador {selectedUser?.firstName} {selectedUser?.lastName}
+            </DialogDescription>
+          </DialogHeader>
+          
+          <div className="space-y-4">
+            <div className="grid grid-cols-2 gap-3">
+              <div>
+                <Label htmlFor="editFirstName">Nome</Label>
+                <Input
+                  id="editFirstName"
+                  value={editForm.firstName}
+                  onChange={(e) => setEditForm(prev => ({ ...prev, firstName: e.target.value }))}
+                  placeholder="João"
+                />
+              </div>
+              
+              <div>
+                <Label htmlFor="editLastName">Sobrenome</Label>
+                <Input
+                  id="editLastName"
+                  value={editForm.lastName}
+                  onChange={(e) => setEditForm(prev => ({ ...prev, lastName: e.target.value }))}
+                  placeholder="Silva"
+                />
+              </div>
+            </div>
+            
+            <div>
+              <Label htmlFor="editEmail">E-mail</Label>
+              <Input
+                id="editEmail"
+                type="email"
+                value={editForm.email}
+                onChange={(e) => setEditForm(prev => ({ ...prev, email: e.target.value }))}
+                placeholder="joao@gquicks.com"
+              />
+            </div>
+            
+            <div>
+              <Label htmlFor="editRole">Função</Label>
+              <Select value={editForm.role} onValueChange={(value) => setEditForm(prev => ({ ...prev, role: value as 'GERENTE' | 'OPERADOR' }))}>
+                <SelectTrigger>
+                  <SelectValue />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="GERENTE">Gerente</SelectItem>
+                  <SelectItem value="OPERADOR">Operador</SelectItem>
+                </SelectContent>
+              </Select>
+            </div>
+            
+            <div className="flex gap-2">
+              <Button
+                variant="outline"
+                onClick={() => setIsEditUserOpen(false)}
+                className="flex-1"
+              >
+                Cancelar
+              </Button>
+              <Button 
+                onClick={handleEditSubmit}
+                disabled={editUserMutation.isPending}
+                className="flex-1 bg-gquicks-primary hover:bg-gquicks-primary/90"
+              >
+                {editUserMutation.isPending ? 'Salvando...' : 'Salvar Alterações'}
+              </Button>
+            </div>
+          </div>
+        </DialogContent>
+      </Dialog>
+
+      {/* Modal de Reset de Senha */}
+      <Dialog open={isResetPasswordOpen} onOpenChange={setIsResetPasswordOpen}>
+        <DialogContent className="max-w-md">
+          <DialogHeader>
+            <DialogTitle>Resetar Senha</DialogTitle>
+            <DialogDescription>
+              Defina uma nova senha para {selectedUser?.firstName} {selectedUser?.lastName}
+            </DialogDescription>
+          </DialogHeader>
+          
+          <div className="space-y-4">
+            <div>
+              <Label htmlFor="newPassword">Nova Senha</Label>
+              <Input
+                id="newPassword"
+                type="password"
+                value={resetPasswordForm.newPassword}
+                onChange={(e) => setResetPasswordForm(prev => ({ ...prev, newPassword: e.target.value }))}
+                placeholder="••••••••"
+              />
+            </div>
+            
+            <div>
+              <Label htmlFor="confirmPassword">Confirmar Senha</Label>
+              <Input
+                id="confirmPassword"
+                type="password"
+                value={resetPasswordForm.confirmPassword}
+                onChange={(e) => setResetPasswordForm(prev => ({ ...prev, confirmPassword: e.target.value }))}
+                placeholder="••••••••"
+              />
+            </div>
+            
+            {resetPasswordForm.newPassword && resetPasswordForm.confirmPassword && 
+             resetPasswordForm.newPassword !== resetPasswordForm.confirmPassword && (
+              <p className="text-sm text-red-600">As senhas não coincidem</p>
+            )}
+            
+            <div className="flex gap-2">
+              <Button
+                variant="outline"
+                onClick={() => setIsResetPasswordOpen(false)}
+                className="flex-1"
+              >
+                Cancelar
+              </Button>
+              <Button 
+                onClick={handleResetPasswordSubmit}
+                disabled={resetPasswordMutation.isPending || resetPasswordForm.newPassword !== resetPasswordForm.confirmPassword}
+                className="flex-1 bg-orange-600 hover:bg-orange-700"
+              >
+                {resetPasswordMutation.isPending ? 'Resetando...' : 'Resetar Senha'}
+              </Button>
+            </div>
+          </div>
+        </DialogContent>
+      </Dialog>
     </div>
   );
 }
