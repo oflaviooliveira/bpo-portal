@@ -91,6 +91,44 @@ export function TeamManagement() {
     setIsNotificationOpen(true);
   };
 
+  // Função para processar erros de validação do backend
+  const parseValidationError = (error: any): string => {
+    // Se o erro tem uma estrutura de validação do Zod
+    if (error.message && error.message.includes('{"error":"Dados inválidos"')) {
+      try {
+        // Extrair o JSON do erro
+        const errorMatch = error.message.match(/\{.*\}/);
+        if (errorMatch) {
+          const errorData = JSON.parse(errorMatch[0]);
+          if (errorData.details && Array.isArray(errorData.details)) {
+            // Mapear os erros para mensagens amigáveis
+            const messages = errorData.details.map((detail: any) => {
+              const field = detail.path?.[0] || 'campo';
+              const fieldNameMap: { [key: string]: string } = {
+                firstName: 'Nome',
+                lastName: 'Sobrenome', 
+                email: 'E-mail',
+                username: 'Nome de usuário',
+                password: 'Senha',
+                role: 'Função',
+                newPassword: 'Nova senha'
+              };
+              const fieldName = fieldNameMap[field] || field;
+              
+              return `${fieldName}: ${detail.message}`;
+            });
+            return messages.join('\n');
+          }
+        }
+      } catch (e) {
+        // Se não conseguir fazer o parse, usar a mensagem original
+      }
+    }
+    
+    // Fallback para outros tipos de erro
+    return error.message || 'Erro desconhecido';
+  };
+
   // Query para listar usuários da equipe Gquicks
   const { data: gquicksUsers, isLoading } = useQuery({
     queryKey: ['/api/admin/users/global'],
@@ -125,9 +163,10 @@ export function TeamManagement() {
       queryClient.invalidateQueries({ queryKey: ['/api/admin/users/global'] });
     },
     onError: (error: any) => {
+      const errorMessage = parseValidationError(error);
       showNotification(
         'Erro ao Criar Usuário',
-        error.message || 'Não foi possível adicionar o membro à equipe.',
+        errorMessage,
         'error'
       );
     }
@@ -161,9 +200,10 @@ export function TeamManagement() {
       queryClient.invalidateQueries({ queryKey: ['/api/admin/users/global'] });
     },
     onError: (error: any) => {
+      const errorMessage = parseValidationError(error);
       showNotification(
         'Erro ao Atualizar',
-        error.message || 'Não foi possível atualizar o colaborador.',
+        errorMessage,
         'error'
       );
     }
@@ -185,9 +225,10 @@ export function TeamManagement() {
       setResetPasswordForm({ newPassword: '', confirmPassword: '' });
     },
     onError: (error: any) => {
+      const errorMessage = parseValidationError(error);
       showNotification(
         'Erro ao Resetar Senha',
-        error.message || 'Não foi possível resetar a senha.',
+        errorMessage,
         'error'
       );
     }

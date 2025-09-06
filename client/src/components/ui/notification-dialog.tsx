@@ -68,7 +68,7 @@ export function NotificationDialog({
               {title}
             </AlertDialogTitle>
           </div>
-          <AlertDialogDescription className="text-muted-foreground ml-9">
+          <AlertDialogDescription className="text-muted-foreground ml-9 whitespace-pre-line">
             {description}
           </AlertDialogDescription>
         </AlertDialogHeader>
