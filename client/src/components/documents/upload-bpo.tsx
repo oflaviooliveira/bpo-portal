@@ -365,29 +365,49 @@ export function UploadBpo() {
         return;
       }
 
-      // Se não encontrou, verificar se temos dados suficientes para sugerir cadastro
-      if (name && name.length > 2 && document && document !== "CNPJ não informado") {
-        const cleanDocument = document.replace(/[^\d]/g, '');
-        const documentType = cleanDocument.length === 14 ? 'PJ' : cleanDocument.length === 11 ? 'PF' : null;
+      // Se não encontrou e temos um nome válido, sempre mostrar modal para confirmação
+      if (name && name.trim().length > 1) {
+        console.log("🚀 Novo fornecedor detectado, abrindo modal para confirmação...");
         
-        if (documentType) {
-          console.log("🚀 Novo fornecedor detectado, abrindo modal...");
-          
-          setAutoSupplierModal({
-            open: true,
-            detectedSupplier: {
-              name,
-              document: cleanDocument,
-              type: documentType,
-              confidence: confidence || 90,
-              source: `Documento processado com IA`
-            }
-          });
-          return;
+        // Processar documento se disponível
+        let cleanDocument = '';
+        let detectedType: 'PF' | 'PJ' = 'PJ'; // Default para PJ
+        
+        if (document && document !== "CNPJ não informado" && document !== "CNPJ não disponível") {
+          cleanDocument = document.replace(/[^\d]/g, '');
+          if (cleanDocument.length === 11) {
+            detectedType = 'PF';
+          } else if (cleanDocument.length === 14) {
+            detectedType = 'PJ';
+          }
         }
+
+        // Lista de fornecedores conhecidos para maior confiança
+        const fornecedoresConhecidos = [
+          'uber', 'ifood', '99', 'rappi', 'amazon', 'mercado livre', 'americanas',
+          'magazine luiza', 'shopee', 'aliexpress', 'netflix', 'spotify', 
+          'google', 'microsoft', 'apple', 'samsung', 'dell', 'hp',
+          'correios', 'sedex', 'dhl', 'fedex', 'loggi'
+        ];
+
+        const isKnownSupplier = fornecedoresConhecidos.some(known => 
+          name.toLowerCase().includes(known) || known.includes(name.toLowerCase())
+        );
+
+        setAutoSupplierModal({
+          open: true,
+          detectedSupplier: {
+            name: name.trim(),
+            document: cleanDocument,
+            type: detectedType,
+            confidence: confidence || (isKnownSupplier ? 95 : 80),
+            source: isKnownSupplier ? 'Fornecedor conhecido detectado' : 'Novo fornecedor detectado no documento'
+          }
+        });
+        return;
       }
 
-      console.log("⚠️ Fornecedor não encontrado e dados insuficientes para cadastro automático");
+      console.log("⚠️ Nome de fornecedor inválido ou muito curto:", name);
     } catch (error) {
       console.error("❌ Erro na detecção de fornecedor:", error);
     }
