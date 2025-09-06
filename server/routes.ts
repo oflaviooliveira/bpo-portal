@@ -194,7 +194,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
   });
 
   // Get clients - Wave 1 RBAC (Legacy)
-  app.get("/api/clients", ...authorize(["ADMIN", "GERENTE", "OPERADOR", "CLIENTE"]), async (req, res) => {
+  app.get("/api/clients", ...authorize(["SUPER_ADMIN", "CLIENT_USER"], true), async (req, res) => {
     try {
       const user = req.user!;
 
@@ -638,7 +638,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
   });
 
   // Update document - Wave 1 RBAC
-  app.patch("/api/documents/:id", ...authorize(["ADMIN", "GERENTE", "OPERADOR"], true), async (req, res) => {
+  app.patch("/api/documents/:id", ...authorize(["SUPER_ADMIN", "CLIENT_USER"], true), async (req, res) => {
     try {
       const user = req.user!;
       const documentId = req.params.id;
@@ -663,7 +663,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
   });
 
   // Bulk delete documents - Wave 1 RBAC
-  app.delete("/api/documents/bulk-delete", ...authorize(["ADMIN", "GERENTE", "OPERADOR"], true), async (req, res) => {
+  app.delete("/api/documents/bulk-delete", ...authorize(["SUPER_ADMIN"], true), async (req, res) => {
     try {
       const user = req.user!;
       const { documentIds } = req.body;
@@ -710,7 +710,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
   });
 
   // Status transition endpoint - Wave 1 Business Logic
-  app.post("/api/documents/:id/transition", ...authorize(["ADMIN", "GERENTE", "OPERADOR"]), async (req, res) => {
+  app.post("/api/documents/:id/transition", ...authorize(["SUPER_ADMIN"]), async (req, res) => {
     try {
       const user = req.user!;
       const documentId = req.params.id;
@@ -744,7 +744,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
   });
 
   // Get valid next states for document - Wave 1
-  app.get("/api/documents/:id/next-states", ...authorize(["ADMIN", "GERENTE", "OPERADOR"]), async (req, res) => {
+  app.get("/api/documents/:id/next-states", ...authorize(["SUPER_ADMIN"]), async (req, res) => {
     try {
       const user = req.user!;
       const documentId = req.params.id;
@@ -845,7 +845,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
   });
 
   // Document reprocess endpoint - NEW
-  app.post("/api/documents/:id/reprocess", ...authorize(["ADMIN", "GERENTE", "OPERADOR"]), async (req, res) => {
+  app.post("/api/documents/:id/reprocess", ...authorize(["SUPER_ADMIN"]), async (req, res) => {
     try {
       const user = req.user!;
       const documentId = req.params.id;
@@ -963,7 +963,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
   });
 
   // BPO Data endpoint - Salvar campos obrigatórios
-  app.patch("/api/documents/:id/bpo-data", ...authorize(["ADMIN", "GERENTE", "OPERADOR"]), async (req, res) => {
+  app.patch("/api/documents/:id/bpo-data", ...authorize(["SUPER_ADMIN"]), async (req, res) => {
     try {
       const user = req.user!;
       const documentId = req.params.id;
