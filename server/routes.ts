@@ -249,6 +249,40 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
+  // Create category
+  app.post("/api/categories", ...authorize(["SUPER_ADMIN", "CLIENT_USER"], true), async (req, res) => {
+    try {
+      const tenantId = req.user?.tenantId!;
+      const categoryData = { 
+        ...req.body, 
+        tenantId
+      };
+
+      const newCategory = await storage.createCategory(categoryData);
+      res.status(201).json(newCategory);
+    } catch (error) {
+      console.error("Create category error:", error);
+      res.status(500).json({ error: "Erro ao criar categoria" });
+    }
+  });
+
+  // Create cost center
+  app.post("/api/cost-centers", ...authorize(["SUPER_ADMIN", "CLIENT_USER"], true), async (req, res) => {
+    try {
+      const tenantId = req.user?.tenantId!;
+      const costCenterData = { 
+        ...req.body, 
+        tenantId
+      };
+
+      const newCostCenter = await storage.createCostCenter(costCenterData);
+      res.status(201).json(newCostCenter);
+    } catch (error) {
+      console.error("Create cost center error:", error);
+      res.status(500).json({ error: "Erro ao criar centro de custo" });
+    }
+  });
+
   // Get documents with filters - Wave 1 RBAC + Scoping + Validação
   app.get("/api/documents", ...authorize(["SUPER_ADMIN", "CLIENT_USER"], true), validateQuery(listDocumentsQuerySchema), async (req, res) => {
     try {
