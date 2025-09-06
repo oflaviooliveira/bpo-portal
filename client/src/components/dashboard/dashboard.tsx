@@ -2,15 +2,29 @@ import { KpiCards } from "./kpi-cards";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { useQuery } from "@tanstack/react-query";
-import { CheckCircle, Clock, AlertTriangle, Upload } from "lucide-react";
+import { useAuth } from "@/hooks/use-auth";
+import { CheckCircle, Clock, AlertTriangle, Upload, Crown, TrendingUp, Users, Building2 } from "lucide-react";
 
 export function Dashboard() {
+  const { user } = useAuth();
+  const isGlobalAdmin = user?.tenantId === '00000000-0000-0000-0000-000000000001' && user?.role === 'ADMIN';
+  
   const { data: stats, isLoading } = useQuery({
     queryKey: ["/api/dashboard/stats"],
   });
 
   const { data: documents } = useQuery({
     queryKey: ["/api/documents"],
+  });
+
+  const { data: tenants } = useQuery({
+    queryKey: ['/api/admin/tenants'],
+    queryFn: async () => {
+      const response = await fetch('/api/admin/tenants');
+      if (!response.ok) throw new Error('Failed to fetch tenants');
+      return await response.json();
+    },
+    enabled: isGlobalAdmin
   });
 
   const recentDocuments = Array.isArray(documents) ? documents.slice(0, 5) : [];
@@ -68,6 +82,55 @@ export function Dashboard() {
 
   return (
     <div className="p-6 space-y-8">
+      {/* Executive Overview - Only for CEO */}
+      {isGlobalAdmin && (
+        <div className="bg-gradient-to-r from-gquicks-primary/10 via-purple-600/10 to-blue-600/10 rounded-xl p-6 border border-gquicks-primary/20">
+          <div className="flex items-center space-x-3 mb-4">
+            <Crown className="w-6 h-6 text-gquicks-primary" />
+            <h2 className="font-gilroy font-bold text-xl text-foreground">Painel Executivo Gquicks</h2>
+          </div>
+          
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+            <div className="bg-white/70 rounded-lg p-4 border border-white/20">
+              <div className="flex items-center space-x-3">
+                <Building2 className="w-8 h-8 text-gquicks-primary" />
+                <div>
+                  <p className="text-sm font-medium text-gray-600">Portfólio BPO</p>
+                  <p className="text-2xl font-bold text-gquicks-primary">{tenants?.length || 0}</p>
+                  <p className="text-xs text-gray-500">empresas clientes</p>
+                </div>
+              </div>
+            </div>
+            
+            <div className="bg-white/70 rounded-lg p-4 border border-white/20">
+              <div className="flex items-center space-x-3">
+                <Users className="w-8 h-8 text-blue-600" />
+                <div>
+                  <p className="text-sm font-medium text-gray-600">Equipe Total</p>
+                  <p className="text-2xl font-bold text-blue-600">
+                    {tenants?.reduce((total, tenant) => total + (tenant._count?.users || 0), 0) || 0}
+                  </p>
+                  <p className="text-xs text-gray-500">usuários ativos</p>
+                </div>
+              </div>
+            </div>
+            
+            <div className="bg-white/70 rounded-lg p-4 border border-white/20">
+              <div className="flex items-center space-x-3">
+                <TrendingUp className="w-8 h-8 text-green-600" />
+                <div>
+                  <p className="text-sm font-medium text-gray-600">Operações</p>
+                  <p className="text-2xl font-bold text-green-600">
+                    {tenants?.reduce((total, tenant) => total + (tenant._count?.documents || 0), 0) || 0}
+                  </p>
+                  <p className="text-xs text-gray-500">docs processados</p>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
+
       {/* KPI Cards */}
       <KpiCards stats={stats} />
 
