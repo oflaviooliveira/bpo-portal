@@ -312,7 +312,7 @@ export function Archived() {
                           className="text-blue-600 border-blue-600 hover:bg-blue-600 hover:text-white"
                           data-testid={`button-download-${doc.id}`}
                         >
-                          <Download className="w-4 h-4 mr-1" />
+                          <Archive className="w-4 h-4 mr-1" />
                           Baixar
                         </Button>
                       </div>
