@@ -567,7 +567,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
   });
 
   // Upload and process document - Wave 1 RBAC + Validação aprimorada
-  app.post("/api/documents/upload", ...authorize(["ADMIN", "GERENTE", "OPERADOR", "CLIENTE"], true), upload.single('file'), validateBody(documentUploadSchema), async (req, res) => {
+  app.post("/api/documents/upload", ...authorize(["SUPER_ADMIN", "CLIENT_USER"], true), upload.single('file'), validateBody(documentUploadSchema), async (req, res) => {
     try {
       const user = req.user!;
       const file = req.file;
@@ -1029,7 +1029,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
   });
 
   // Categories routes - Wave 1 RBAC
-  app.get("/api/categories", ...authorize(["ADMIN", "GERENTE", "OPERADOR", "CLIENTE"]), async (req, res) => {
+  app.get("/api/categories", ...authorize(["SUPER_ADMIN", "CLIENT_USER"], true), async (req, res) => {
     try {
       const user = req.user!;
 
