@@ -3,14 +3,18 @@ import { useQuery } from "@tanstack/react-query";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { FileText, Search, Filter, Download, Eye } from "lucide-react";
+import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
+import { FileText, Search, Filter, Download, Eye, X } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
+import { DocumentPreview } from "./document-preview";
 
 export function ClientDocuments() {
   const [searchTerm, setSearchTerm] = useState("");
   const [statusFilter, setStatusFilter] = useState("all");
   const [typeFilter, setTypeFilter] = useState("all");
+  const [selectedDocument, setSelectedDocument] = useState<any>(null);
+  const [previewOpen, setPreviewOpen] = useState(false);
 
   const { data: documents, isLoading } = useQuery({
     queryKey: ['/api/documents'],
@@ -181,7 +185,15 @@ export function ClientDocuments() {
                       </span>
                       
                       <div className="flex items-center space-x-1">
-                        <Button variant="ghost" size="sm" data-testid={`button-view-${doc.id}`}>
+                        <Button 
+                          variant="ghost" 
+                          size="sm" 
+                          data-testid={`button-view-${doc.id}`}
+                          onClick={() => {
+                            setSelectedDocument(doc);
+                            setPreviewOpen(true);
+                          }}
+                        >
                           <Eye className="h-4 w-4" />
                         </Button>
                         <Button variant="ghost" size="sm" data-testid={`button-download-${doc.id}`}>
@@ -226,6 +238,30 @@ export function ClientDocuments() {
           )}
         </CardContent>
       </Card>
+
+      {/* Document Preview Dialog */}
+      <Dialog open={previewOpen} onOpenChange={setPreviewOpen}>
+        <DialogContent className="max-w-7xl max-h-[90vh] overflow-hidden">
+          <DialogHeader className="flex flex-row items-center justify-between">
+            <DialogTitle className="flex items-center gap-2">
+              <FileText className="h-5 w-5" />
+              {selectedDocument?.originalName}
+            </DialogTitle>
+            <Button
+              variant="ghost"
+              size="sm"
+              onClick={() => setPreviewOpen(false)}
+              className="h-6 w-6 p-0"
+            >
+              <X className="h-4 w-4" />
+            </Button>
+          </DialogHeader>
+          
+          {selectedDocument && (
+            <DocumentPreview document={selectedDocument} />
+          )}
+        </DialogContent>
+      </Dialog>
     </div>
   );
 }
