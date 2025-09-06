@@ -46,7 +46,6 @@ export function Sidebar({ activeSection, onSectionChange }: SidebarProps) {
   useEffect(() => {
     const handleStorageChange = (e: StorageEvent) => {
       if (e.key === 'company-logo') {
-        console.log('🔄 Sidebar - Logo atualizada via storage event');
         const newLogo = e.newValue;
         setCompanyLogo(newLogo);
       }
@@ -79,7 +78,6 @@ export function Sidebar({ activeSection, onSectionChange }: SidebarProps) {
       section: 'inbox',
       label: 'Inbox',
       icon: Inbox,
-      badge: '12',
       category: 'OPERAÇÕES',
     },
     {
@@ -92,8 +90,6 @@ export function Sidebar({ activeSection, onSectionChange }: SidebarProps) {
       section: 'scheduled',
       label: 'Agendados',
       icon: Calendar,
-      badge: '5',
-      badgeColor: 'bg-orange-500',
       category: 'OPERAÇÕES',
     },
     {
@@ -212,12 +208,12 @@ export function Sidebar({ activeSection, onSectionChange }: SidebarProps) {
                   >
                     <Icon className="w-5 h-5" />
                     <span className="flex-1">{item.label}</span>
-                    {item.badge && (
+                    {(item as any).badge && (
                       <span className={cn(
                         "text-white text-xs rounded-full px-2 py-1 ml-auto",
-                        item.badgeColor || "bg-gquicks-primary"
+                        (item as any).badgeColor || "bg-gquicks-primary"
                       )}>
-                        {item.badge}
+                        {(item as any).badge}
                       </span>
                     )}
                   </button>

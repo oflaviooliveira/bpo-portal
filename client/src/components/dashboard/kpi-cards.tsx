@@ -23,9 +23,9 @@ export function KpiCards({ stats }: KpiCardsProps) {
   const kpiCards = [
     {
       title: "Receita Processada",
-      value: formatCurrency(stats?.totalAmount || 2309.68),
-      change: "+12% em relação ao mês anterior",
-      trend: "up",
+      value: stats?.totalAmount ? formatCurrency(stats.totalAmount) : "R$ 0,00",
+      change: stats?.totalAmount ? "+12% em relação ao mês anterior" : "Nenhuma transação ainda",
+      trend: stats?.totalAmount ? "up" : "neutral",
       icon: TrendingUp,
       iconBg: "bg-green-100",
       iconColor: "text-green-600",
@@ -33,9 +33,9 @@ export function KpiCards({ stats }: KpiCardsProps) {
     },
     {
       title: "Documentos Processados",
-      value: (stats?.totalDocuments || 1247).toLocaleString('pt-BR'),
-      change: `Taxa de automação: ${stats?.avgProcessingTime || 94}%`,
-      trend: "up",
+      value: stats?.totalDocuments ? stats.totalDocuments.toLocaleString('pt-BR') : "0",
+      change: stats?.avgProcessingTime ? `Taxa de automação: ${stats.avgProcessingTime}%` : "Nenhum documento processado",
+      trend: stats?.totalDocuments ? "up" : "neutral",
       icon: BarChart3,
       iconBg: "bg-blue-100",
       iconColor: "text-blue-600",
@@ -43,9 +43,9 @@ export function KpiCards({ stats }: KpiCardsProps) {
     },
     {
       title: "Processados Hoje",
-      value: (stats?.processedToday || 156).toString(),
-      change: "+8% em relação a ontem",
-      trend: "up",
+      value: stats?.processedToday ? stats.processedToday.toString() : "0",
+      change: stats?.processedToday ? "+8% em relação a ontem" : "Nenhum processamento hoje",
+      trend: stats?.processedToday ? "up" : "neutral",
       icon: TrendingUp,
       iconBg: "bg-purple-100",
       iconColor: "text-purple-600",
@@ -53,9 +53,9 @@ export function KpiCards({ stats }: KpiCardsProps) {
     },
     {
       title: "Pendências Ativas",
-      value: (stats?.pendingReview || 17).toString(),
-      change: "Requer atenção",
-      trend: "warning",
+      value: stats?.pendingReview ? stats.pendingReview.toString() : "0",
+      change: stats?.pendingReview ? "Requer atenção" : "Nenhuma pendência",
+      trend: stats?.pendingReview ? "warning" : "neutral",
       icon: AlertTriangle,
       iconBg: "bg-red-100",
       iconColor: "text-gquicks-primary",
@@ -67,8 +67,8 @@ export function KpiCards({ stats }: KpiCardsProps) {
     <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
       {kpiCards.map((kpi) => {
         const Icon = kpi.icon;
-        const trendIcon = kpi.trend === "up" ? TrendingUp : kpi.trend === "down" ? TrendingDown : AlertTriangle;
-        const trendColor = kpi.trend === "up" ? "text-green-600" : kpi.trend === "down" ? "text-orange-600" : "text-gquicks-primary";
+        const trendIcon = kpi.trend === "up" ? TrendingUp : kpi.trend === "down" ? TrendingDown : kpi.trend === "warning" ? AlertTriangle : TrendingUp;
+        const trendColor = kpi.trend === "up" ? "text-green-600" : kpi.trend === "down" ? "text-orange-600" : kpi.trend === "warning" ? "text-gquicks-primary" : "text-gray-500";
 
         return (
           <Card key={kpi.testId} className="card-hover" data-testid={kpi.testId}>
