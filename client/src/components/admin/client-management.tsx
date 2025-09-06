@@ -250,6 +250,40 @@ export function ClientManagement() {
     }
   });
 
+  // Mutation para toggle de status do usuário
+  const toggleUserStatusMutation = useMutation({
+    mutationFn: async (data: { userId: string; isActive: boolean }) => {
+      const response = await fetch(`/api/admin/users/${data.userId}`, {
+        method: 'PUT',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ isActive: data.isActive }),
+      });
+
+      if (!response.ok) {
+        const errorData = await response.json();
+        throw new Error(errorData.error || 'Erro ao alterar status do usuário');
+      }
+
+      return response.json();
+    },
+    onSuccess: () => {
+      toast({
+        title: "Status alterado",
+        description: "Status do usuário alterado com sucesso.",
+        variant: "default"
+      });
+      queryClient.invalidateQueries({ queryKey: ['/api/admin/users/global'] });
+      queryClient.invalidateQueries({ queryKey: ['/api/admin/tenants', selectedTenant?.id, 'users'] });
+    },
+    onError: (error: Error) => {
+      toast({
+        title: "Erro ao alterar status",
+        description: error.message,
+        variant: "destructive"
+      });
+    }
+  });
+
   // Mutation para reset de senha
   const resetPasswordMutation = useMutation({
     mutationFn: async (data: { userId: string; newPassword: string }) => {
@@ -343,6 +377,18 @@ export function ClientManagement() {
       userId: selectedUser.id,
       newPassword: resetPasswordForm.newPassword
     });
+  };
+
+  const handleToggleUserStatus = (user: TenantUser) => {
+    const newStatus = !user.isActive;
+    const action = newStatus ? 'ativar' : 'desativar';
+    
+    if (window.confirm(`Tem certeza que deseja ${action} o usuário ${user.firstName} ${user.lastName}?`)) {
+      toggleUserStatusMutation.mutate({
+        userId: user.id,
+        isActive: newStatus
+      });
+    }
   };
 
   const generateSlug = (name: string) => {
@@ -894,6 +940,18 @@ export function ClientManagement() {
                               data-testid={`button-reset-password-${user.id}`}
                             >
                               Reset Senha
+                            </Button>
+                            <Button
+                              size="sm"
+                              variant="outline"
+                              className={user.isActive ? 
+                                "text-red-600 border-red-600 hover:bg-red-600 hover:text-white" : 
+                                "text-green-600 border-green-600 hover:bg-green-600 hover:text-white"
+                              }
+                              onClick={() => handleToggleUserStatus(user)}
+                              data-testid={`button-toggle-user-${user.id}`}
+                            >
+                              {user.isActive ? 'Desativar' : 'Ativar'}
                             </Button>
                           </div>
                         </TableCell>
