@@ -71,6 +71,12 @@ export function ClientManagement() {
   const [isResetPasswordDialogOpen, setIsResetPasswordDialogOpen] = useState(false);
   const [isConfirmDialogOpen, setIsConfirmDialogOpen] = useState(false);
   const [confirmAction, setConfirmAction] = useState<() => void>(() => {});
+  const [isNotificationOpen, setIsNotificationOpen] = useState(false);
+  const [notificationData, setNotificationData] = useState({
+    title: '',
+    description: '',
+    type: 'success' as 'success' | 'error' | 'warning' | 'info'
+  });
   const [createForm, setCreateForm] = useState<CreateTenantForm>({
     name: '',
     slug: '',
@@ -95,6 +101,11 @@ export function ClientManagement() {
   });
 
   const { toast } = useToast();
+
+  const showNotification = (title: string, description: string, type: 'success' | 'error' | 'warning' | 'info' = 'success') => {
+    setNotificationData({ title, description, type });
+    setIsNotificationOpen(true);
+  };
   const queryClient = useQueryClient();
 
   // Query para listar todos os usuários globalmente
@@ -143,10 +154,11 @@ export function ClientManagement() {
         body: JSON.stringify(data)
       }).then(res => res.json()),
     onSuccess: () => {
-      toast({
-        title: "Cliente criado com sucesso",
-        description: "O novo cliente foi criado e configurado automaticamente.",
-      });
+      showNotification(
+        'Cliente BPO Criado!',
+        'Nova empresa cliente foi adicionada com sucesso ao seu portfólio.',
+        'success'
+      );
       setIsCreateModalOpen(false);
       setCreateForm({
         name: '',
@@ -160,11 +172,11 @@ export function ClientManagement() {
       queryClient.invalidateQueries({ queryKey: ['/api/admin/tenants'] });
     },
     onError: (error: any) => {
-      toast({
-        title: "Erro ao criar cliente",
-        description: error.message || "Verifique os dados e tente novamente",
-        variant: "destructive",
-      });
+      showNotification(
+        'Erro ao Criar Cliente',
+        error.message || 'Não foi possível criar o novo cliente BPO. Verifique os dados e tente novamente.',
+        'error'
+      );
     }
   });
 
@@ -177,10 +189,11 @@ export function ClientManagement() {
         body: JSON.stringify(data)
       }).then(res => res.json()),
     onSuccess: () => {
-      toast({
-        title: "Usuário criado com sucesso",
-        description: "O novo usuário foi adicionado ao cliente.",
-      });
+      showNotification(
+        'Usuário Criado!',
+        `Novo membro foi adicionado à equipe de ${selectedTenant?.name}.`,
+        'success'
+      );
       setIsCreateUserModalOpen(false);
       setCreateUserForm({
         firstName: '',
@@ -1192,6 +1205,15 @@ export function ClientManagement() {
         confirmText={selectedUser?.isActive ? 'Desativar' : 'Ativar'}
         variant={selectedUser?.isActive ? 'destructive' : 'default'}
         loading={toggleUserStatusMutation.isPending}
+      />
+
+      {/* Modal de Notificação */}
+      <NotificationDialog
+        isOpen={isNotificationOpen}
+        onClose={() => setIsNotificationOpen(false)}
+        title={notificationData.title}
+        description={notificationData.description}
+        type={notificationData.type}
       />
     </div>
   );
