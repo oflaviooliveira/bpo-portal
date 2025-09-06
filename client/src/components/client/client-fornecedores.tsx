@@ -38,9 +38,8 @@ export function ClientFornecedores() {
   const queryClient = useQueryClient();
 
   const form = useForm<FornecedorFormData>({
-    resolver: zodResolver(fornecedorSchema),
     defaultValues: {
-      type: 'PF',
+      type: 'PF' as const,
       document: '',
       name: '',
     },

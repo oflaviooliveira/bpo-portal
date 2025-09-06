@@ -36,7 +36,6 @@ export function ClientCategorias() {
   const queryClient = useQueryClient();
 
   const form = useForm<CategoriaFormData>({
-    resolver: zodResolver(categoriaSchema),
     defaultValues: {
       name: '',
       description: '',

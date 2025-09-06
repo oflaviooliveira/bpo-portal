@@ -38,7 +38,6 @@ export function ClientCentrosCusto() {
   const queryClient = useQueryClient();
 
   const form = useForm<CentroCustoFormData>({
-    resolver: zodResolver(centroCustoSchema),
     defaultValues: {
       name: '',
       code: '',

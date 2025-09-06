@@ -7,33 +7,9 @@ import { ClientDocuments } from "@/components/client/client-documents";
 import { ClientReports } from "@/components/client/client-reports";
 import { ClientSettings } from "@/components/client/client-settings";
 
-// Componentes temporários para substituir os que faltam
-const ClientFornecedores = () => (
-  <div className="p-6">
-    <div className="text-center">
-      <h1 className="text-2xl font-bold text-foreground mb-4">Fornecedores</h1>
-      <p className="text-muted-foreground">Gestão de fornecedores em desenvolvimento...</p>
-    </div>
-  </div>
-);
-
-const ClientCategorias = () => (
-  <div className="p-6">
-    <div className="text-center">
-      <h1 className="text-2xl font-bold text-foreground mb-4">Categorias</h1>
-      <p className="text-muted-foreground">Gestão de categorias em desenvolvimento...</p>
-    </div>
-  </div>
-);
-
-const ClientCentrosCusto = () => (
-  <div className="p-6">
-    <div className="text-center">
-      <h1 className="text-2xl font-bold text-foreground mb-4">Centros de Custo</h1>
-      <p className="text-muted-foreground">Gestão de centros de custo em desenvolvimento...</p>
-    </div>
-  </div>
-);
+import { ClientFornecedores } from "@/components/client/client-fornecedores";
+import { ClientCategorias } from "@/components/client/client-categorias";
+import { ClientCentrosCusto } from "@/components/client/client-centros-custo";
 
 type ClientSection = 'dashboard' | 'upload' | 'documents' | 'fornecedores' | 'categorias' | 'centros-custo' | 'reports' | 'settings';
 
