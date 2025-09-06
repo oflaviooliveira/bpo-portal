@@ -6,7 +6,7 @@ import { Input } from "@/components/ui/input";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Alert, AlertDescription } from "@/components/ui/alert";
 import { Badge } from "@/components/ui/badge";
-import { Building, User, Zap, CheckCircle, AlertTriangle, Info } from "lucide-react";
+import { Building, User, Zap, CheckCircle, AlertTriangle, Info, Eye, FileText } from "lucide-react";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { useMutation, useQueryClient } from "@tanstack/react-query";
@@ -36,6 +36,7 @@ interface AutoSupplierModalProps {
   detectedSupplier: DetectedSupplier;
   onSupplierCreated: (supplier: any) => void;
   onSkip: () => void;
+  documentFile?: File;
 }
 
 export function AutoSupplierModal({ 
@@ -43,9 +44,11 @@ export function AutoSupplierModal({
   onOpenChange, 
   detectedSupplier, 
   onSupplierCreated,
-  onSkip 
+  onSkip,
+  documentFile 
 }: AutoSupplierModalProps) {
   const [action, setAction] = useState<'create' | 'skip' | null>(null);
+  const [showPreview, setShowPreview] = useState(false);
   const { toast } = useToast();
   const queryClient = useQueryClient();
 
@@ -138,18 +141,34 @@ export function AutoSupplierModal({
 
           {/* Preview */}
           <div className="border rounded-lg p-3 bg-gray-50">
-            <div className="flex items-center gap-3 mb-3">
-              {detectedSupplier.type === 'PF' ? (
-                <User className="h-5 w-5 text-blue-600" />
-              ) : (
-                <Building className="h-5 w-5 text-blue-600" />
-              )}
-              <div>
-                <div className="font-medium">{detectedSupplier.name}</div>
-                <div className="text-sm text-gray-600">
-                  {detectedSupplier.type === 'PF' ? 'Pessoa Física' : 'Pessoa Jurídica'}
+            <div className="flex items-center justify-between mb-3">
+              <div className="flex items-center gap-3">
+                {detectedSupplier.type === 'PF' ? (
+                  <User className="h-5 w-5 text-blue-600" />
+                ) : (
+                  <Building className="h-5 w-5 text-blue-600" />
+                )}
+                <div>
+                  <div className="font-medium">{detectedSupplier.name}</div>
+                  <div className="text-sm text-gray-600">
+                    {detectedSupplier.type === 'PF' ? 'Pessoa Física' : 'Pessoa Jurídica'}
+                  </div>
                 </div>
               </div>
+              
+              {/* Botão Ver Documento */}
+              {documentFile && (
+                <Button
+                  type="button"
+                  variant="outline"
+                  size="sm"
+                  onClick={() => setShowPreview(true)}
+                  className="flex items-center gap-2"
+                >
+                  <Eye className="h-4 w-4" />
+                  Ver
+                </Button>
+              )}
             </div>
             
             <div className="text-sm">
@@ -244,6 +263,37 @@ export function AutoSupplierModal({
           </Form>
         </div>
       </DialogContent>
+
+      {/* Modal de Pré-visualização do Documento */}
+      <Dialog open={showPreview} onOpenChange={setShowPreview}>
+        <DialogContent className="max-w-6xl h-[90vh] flex flex-col">
+          <DialogHeader className="flex-shrink-0">
+            <DialogTitle className="flex items-center gap-2">
+              <FileText className="h-5 w-5" />
+              Documento - {documentFile?.name}
+            </DialogTitle>
+          </DialogHeader>
+          <div className="flex-1 overflow-hidden flex items-center justify-center">
+            {documentFile && (
+              <div className="w-full h-full flex items-center justify-center border border-gray-300 rounded-lg bg-gray-50">
+                {documentFile.type === 'application/pdf' ? (
+                  <iframe
+                    src={URL.createObjectURL(documentFile)}
+                    className="w-full h-full rounded-lg"
+                    title="Visualização do documento"
+                  />
+                ) : (
+                  <img
+                    src={URL.createObjectURL(documentFile)}
+                    alt="Documento"
+                    className="max-w-full max-h-full object-contain rounded-lg shadow-lg"
+                  />
+                )}
+              </div>
+            )}
+          </div>
+        </DialogContent>
+      </Dialog>
     </Dialog>
   );
 }
