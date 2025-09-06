@@ -1,0 +1,23 @@
+Cannot read properties of null (reading 'replace')
+Cannot read properties of null (reading 'replace')
+The above error occurred in the <ClientFornecedores> component:
+
+    at ClientFornecedores (https://25fd9d59-c143-431a-a29f-114646967772-00-3rktq1czjd3gu.riker.replit.dev/src/components/client/client-fornecedores.tsx:40:27)
+    at main
+    at div
+    at div
+    at ClientLayout (https://25fd9d59-c143-431a-a29f-114646967772-00-3rktq1czjd3gu.riker.replit.dev/src/layouts/ClientLayout.tsx:31:45)
+    at SharedDataProvider (https://25fd9d59-c143-431a-a29f-114646967772-00-3rktq1czjd3gu.riker.replit.dev/src/providers/SharedDataProvider.tsx:22:38)
+    at HomePage (https://25fd9d59-c143-431a-a29f-114646967772-00-3rktq1czjd3gu.riker.replit.dev/src/pages/home-page.tsx:24:20)
+    at ProtectedRoute (https://25fd9d59-c143-431a-a29f-114646967772-00-3rktq1czjd3gu.riker.replit.dev/src/lib/protected-route.tsx:22:3)
+    at Switch (https://25fd9d59-c143-431a-a29f-114646967772-00-3rktq1czjd3gu.riker.replit.dev/@fs/home/runner/workspace/node_modules/.vite/deps/wouter.js?v=65e44fcf:379:17)
+    at Router
+    at Provider (https://25fd9d59-c143-431a-a29f-114646967772-00-3rktq1czjd3gu.riker.replit.dev/@fs/home/runner/workspace/node_modules/.vite/deps/chunk-PLT6GTVM.js?v=65e44fcf:38:15)
+    at TooltipProvider (https://25fd9d59-c143-431a-a29f-114646967772-00-3rktq1czjd3gu.riker.replit.dev/@fs/home/runner/workspace/node_modules/.vite/deps/@radix-ui_react-tooltip.js?v=65e44fcf:66:5)
+    at AuthProvider (https://25fd9d59-c143-431a-a29f-114646967772-00-3rktq1czjd3gu.riker.replit.dev/src/hooks/use-auth.tsx:26:32)
+    at QueryClientProvider (https://25fd9d59-c143-431a-a29f-114646967772-00-3rktq1czjd3gu.riker.replit.dev/@fs/home/runner/workspace/node_modules/.vite/deps/@tanstack_react-query.js?v=65e44fcf:2805:3)
+    at App
+
+Consider adding an error boundary to your tree to customize error handling behavior.
+Visit https://reactjs.org/link/error-boundaries to learn more about error boundaries.
+Cannot read properties of null (reading 'replace')

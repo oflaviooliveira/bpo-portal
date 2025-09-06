@@ -76,7 +76,8 @@ export function ClientFornecedores() {
     createMutation.mutate(data);
   };
 
-  const formatDocument = (doc: string, type: 'PF' | 'PJ') => {
+  const formatDocument = (doc: string | null | undefined, type: 'PF' | 'PJ') => {
+    if (!doc) return '';
     if (type === 'PF') {
       return doc.replace(/(\d{3})(\d{3})(\d{3})(\d{2})/, '$1.$2.$3-$4');
     } else {
@@ -86,8 +87,8 @@ export function ClientFornecedores() {
 
   const filteredFornecedores = Array.isArray(fornecedores) 
     ? fornecedores.filter((fornecedor: Fornecedor) =>
-        fornecedor.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
-        fornecedor.document.includes(searchTerm)
+        (fornecedor.name || '').toLowerCase().includes(searchTerm.toLowerCase()) ||
+        (fornecedor.document || '').includes(searchTerm)
       )
     : [];
 
