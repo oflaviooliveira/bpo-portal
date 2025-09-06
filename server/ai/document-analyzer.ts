@@ -110,17 +110,42 @@ export class DocumentAnalyzer {
           false // não executar automaticamente, apenas sugerir
         );
 
-        // Enriquecer dados extraídos com informações de fornecedor
+        // 🎯 PRIORIZAÇÃO INTELIGENTE DE FORNECEDOR
         const enrichedData = { ...aiResult.extractedData };
         
-        if (supplierResult.supplierName && !enrichedData.fornecedor) {
-          enrichedData.fornecedor = supplierResult.supplierName;
-          console.log(`✅ Fornecedor auto-detectado: ${supplierResult.supplierName}`);
+        // PRIORIDADE 1: Dados extraídos pela IA (cedente, emitente, etc.)
+        let finalSupplierName = enrichedData.fornecedor;
+        let finalSupplierDoc = enrichedData.documento;
+        
+        // Para boletos: priorizar cedente sobre outros campos
+        if (aiResult.extractedData.cedente) {
+          finalSupplierName = aiResult.extractedData.cedente;
+          console.log(`🏦 Cedente detectado como fornecedor: ${finalSupplierName}`);
         }
         
-        if (supplierResult.supplierDocument && !enrichedData.documento) {
-          enrichedData.documento = supplierResult.supplierDocument;
+        // Para DANFEs: priorizar emitente
+        if (aiResult.extractedData.cnpj_emitente) {
+          finalSupplierDoc = aiResult.extractedData.cnpj_emitente;
+          console.log(`📋 CNPJ emitente priorizado: ${finalSupplierDoc}`);
+        }
+        
+        // PRIORIDADE 2: Auto-detecção se IA não encontrou
+        if (!finalSupplierName && supplierResult.supplierName) {
+          finalSupplierName = supplierResult.supplierName;
+          console.log(`🔍 Fornecedor auto-detectado: ${supplierResult.supplierName}`);
+        }
+        
+        if (!finalSupplierDoc && supplierResult.supplierDocument) {
+          finalSupplierDoc = supplierResult.supplierDocument;
           console.log(`📄 Documento auto-detectado: ${supplierResult.supplierDocument}`);
+        }
+        
+        // Aplicar dados finais
+        if (finalSupplierName) {
+          enrichedData.fornecedor = finalSupplierName;
+        }
+        if (finalSupplierDoc) {
+          enrichedData.documento = finalSupplierDoc;
         }
 
         // Log detalhado da auto-sugestão
