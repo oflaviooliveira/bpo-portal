@@ -519,10 +519,11 @@ FOQUE ESPECIFICAMENTE na seção do BOLETO para extração de dados de pagamento
 
 💰 INSTRUÇÕES CRÍTICAS PARA BOLETO:
 
-🏢 CEDENTE (FAVORECIDO):
-- Empresa/pessoa que receberá o pagamento
-- Geralmente aparece como "CEDENTE:" ou "BENEFICIÁRIO:"
-- EXEMPLO: "PORTO SEGURO CIA DE SEGUROS GERAIS"
+🏢 BENEFICIÁRIO/CEDENTE (FAVORECIDO):
+- Empresa/pessoa que receberá o pagamento (PRIORIDADE MÁXIMA)
+- Procure em ordem: "BENEFICIÁRIO:", "CEDENTE:", "FAVORECIDO:"
+- EXEMPLO: "PORTO SEGURO CIA DE SEGUROS GERAIS", "TEAMGUIDE", "SOMPO SEGUROS S.A."
+- ⚡ IMPORTANTE: BENEFICIÁRIO = quem recebe o dinheiro = FORNECEDOR
 
 👤 SACADO (PAGADOR):
 - Quem deve pagar o boleto
@@ -568,6 +569,7 @@ ${boletoData.section.text.substring(0, 500)}...
 RETORNE JSON COM DADOS EXATOS DO BOLETO:
 {
   "valor": "R$ [VALOR_EXATO]",
+  "beneficiario": "[NOME_BENEFICIÁRIO_COMPLETO]",
   "cedente": "[NOME_CEDENTE_COMPLETO]",
   "sacado": "[NOME_SACADO_COMPLETO]",
   "data_vencimento": "[DD/MM/AAAA]",

@@ -113,18 +113,33 @@ export class DocumentAnalyzer {
         // 🎯 PRIORIZAÇÃO INTELIGENTE DE FORNECEDOR
         const enrichedData = { ...aiResult.extractedData };
         
-        // PRIORIDADE 1: Dados extraídos pela IA (cedente, emitente, etc.)
+        // 🎯 PRIORIZAÇÃO INTELIGENTE COMPLETA PARA BOLETOS
         let finalSupplierName = enrichedData.fornecedor;
         let finalSupplierDoc = enrichedData.documento;
         
-        // Para boletos: priorizar cedente sobre outros campos
-        if (aiResult.extractedData.cedente) {
+        // PRIORIDADE MÁXIMA: Beneficiário em boletos (quem recebe o pagamento)
+        if (aiResult.extractedData.beneficiario) {
+          finalSupplierName = aiResult.extractedData.beneficiario;
+          console.log(`💰 BENEFICIÁRIO detectado como fornecedor: ${finalSupplierName}`);
+        }
+        
+        // PRIORIDADE ALTA: Cedente em boletos (alternativa ao beneficiário)
+        if (!finalSupplierName && aiResult.extractedData.cedente) {
           finalSupplierName = aiResult.extractedData.cedente;
           console.log(`🏦 Cedente detectado como fornecedor: ${finalSupplierName}`);
         }
         
-        // Para DANFEs: priorizar emitente
-        if (aiResult.extractedData.cnpj_emitente) {
+        // Para DANFEs: priorizar emitente se não há beneficiário/cedente
+        if (!finalSupplierName && aiResult.extractedData.emitente) {
+          finalSupplierName = aiResult.extractedData.emitente;
+          console.log(`🏢 Emitente detectado como fornecedor: ${finalSupplierName}`);
+        }
+        
+        // CNPJ: Priorizar CNPJ do beneficiário, depois emitente
+        if (aiResult.extractedData.cnpj_beneficiario) {
+          finalSupplierDoc = aiResult.extractedData.cnpj_beneficiario;
+          console.log(`📋 CNPJ beneficiário priorizado: ${finalSupplierDoc}`);
+        } else if (aiResult.extractedData.cnpj_emitente) {
           finalSupplierDoc = aiResult.extractedData.cnpj_emitente;
           console.log(`📋 CNPJ emitente priorizado: ${finalSupplierDoc}`);
         }
