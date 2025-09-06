@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -49,6 +49,24 @@ export function Settings() {
     state: "",
     logo: null as File | null
   });
+
+  // Carregar logo salva quando componente montar
+  useEffect(() => {
+    const savedLogo = localStorage.getItem('company-logo');
+    if (savedLogo) {
+      // Criar um preview da logo salva
+      fetch(savedLogo)
+        .then(res => res.blob())
+        .then(blob => {
+          const file = new File([blob], 'logo.png', { type: blob.type });
+          setCompanyData(prev => ({ ...prev, logo: file }));
+        })
+        .catch(() => {
+          // Se falhar ao carregar, logo foi removida do localStorage
+          localStorage.removeItem('company-logo');
+        });
+    }
+  }, []);
 
   const [systemPrefs, setSystemPrefs] = useState({
     timezone: "America/Sao_Paulo",
@@ -109,7 +127,17 @@ export function Settings() {
         });
         return;
       }
+      
+      // Criar URL do arquivo e salvar no localStorage
+      const fileUrl = URL.createObjectURL(file);
+      localStorage.setItem('company-logo', fileUrl);
+      
       setCompanyData({ ...companyData, logo: file });
+      
+      toast({
+        title: "Logo carregada",
+        description: "Logo salva com sucesso! Verifique a sidebar.",
+      });
     }
   };
 

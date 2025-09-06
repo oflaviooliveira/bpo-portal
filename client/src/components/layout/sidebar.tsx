@@ -1,5 +1,6 @@
 import { useAuth } from "@/hooks/use-auth";
 import { cn } from "@/lib/utils";
+import { useState, useEffect } from "react";
 import { 
   LayoutDashboard, 
   Inbox, 
@@ -24,6 +25,7 @@ interface SidebarProps {
 
 export function Sidebar({ activeSection, onSectionChange }: SidebarProps) {
   const { user, logoutMutation } = useAuth();
+  const [companyLogo, setCompanyLogo] = useState<string | null>(null);
 
   const handleLogout = () => {
     logoutMutation.mutate();
@@ -31,6 +33,14 @@ export function Sidebar({ activeSection, onSectionChange }: SidebarProps) {
 
   // Verificar se é admin global
   const isGlobalAdmin = user?.tenantId === '00000000-0000-0000-0000-000000000001' && user?.role === 'ADMIN';
+
+  // Carregar logo da empresa das configurações
+  useEffect(() => {
+    const savedLogo = localStorage.getItem('company-logo');
+    if (savedLogo) {
+      setCompanyLogo(savedLogo);
+    }
+  }, []);
 
   const menuItems = [
     {
@@ -121,9 +131,19 @@ export function Sidebar({ activeSection, onSectionChange }: SidebarProps) {
       {/* Logo & CEO Status */}
       <div className="p-6 border-b border-gray-700">
         <div className="flex items-center space-x-3 mb-3">
-          <div className="w-8 h-8 bg-gquicks-primary rounded-lg flex items-center justify-center">
-            <span className="text-white font-gilroy font-bold text-lg">G</span>
-          </div>
+          {companyLogo ? (
+            <div className="w-8 h-8 rounded-lg overflow-hidden bg-white/10 flex items-center justify-center">
+              <img 
+                src={companyLogo} 
+                alt="Logo Gquicks" 
+                className="w-full h-full object-contain"
+              />
+            </div>
+          ) : (
+            <div className="w-8 h-8 bg-gquicks-primary rounded-lg flex items-center justify-center">
+              <span className="text-white font-gilroy font-bold text-lg">G</span>
+            </div>
+          )}
           <span className="text-white font-gilroy font-bold text-xl">gquicks</span>
         </div>
         {isGlobalAdmin && (
