@@ -22,7 +22,7 @@ const createUserSchema = z.object({
   email: z.string().email('Email inválido'),
   username: z.string().min(1, 'Nome de usuário é obrigatório'),
   password: z.string().min(6, 'Senha deve ter pelo menos 6 caracteres'),
-  role: z.enum(['ADMIN', 'GERENTE', 'OPERADOR', 'CLIENTE']),
+  role: z.enum(['SUPER_ADMIN', 'CLIENT_USER']),
 });
 
 /**
@@ -136,7 +136,7 @@ export async function createTenant(req: Request, res: Response) {
         email: validatedData.adminEmail,
         firstName: validatedData.adminFirstName,
         lastName: validatedData.adminLastName,
-        role: 'ADMIN',
+        role: 'CLIENT_USER',
         isActive: true,
       })
       .returning();

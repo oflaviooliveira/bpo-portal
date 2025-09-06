@@ -92,7 +92,7 @@ export function ClientManagement() {
     email: '',
     username: '',
     password: '',
-    role: 'OPERADOR'
+    role: 'CLIENT_USER'
   });
   const [editUserForm, setEditUserForm] = useState<Partial<TenantUser>>({});
   const [resetPasswordForm, setResetPasswordForm] = useState({
@@ -215,7 +215,7 @@ export function ClientManagement() {
         email: '',
         username: '',
         password: '',
-        role: 'OPERADOR'
+        role: 'CLIENT_USER'
       });
       queryClient.invalidateQueries({ queryKey: ['/api/admin/tenants', selectedTenant?.id, 'users'] });
     },

@@ -31,8 +31,9 @@ export function Sidebar({ activeSection, onSectionChange }: SidebarProps) {
     logoutMutation.mutate();
   };
 
-  // Verificar se é admin global
-  const isGlobalAdmin = user?.tenantId === '00000000-0000-0000-0000-000000000001' && user?.role === 'ADMIN';
+  // Verificar papel do usuário
+  const isSuperAdmin = user?.role === 'SUPER_ADMIN';
+  const isClientUser = user?.role === 'CLIENT_USER';
 
   // Carregar logo da empresa das configurações
   useEffect(() => {
@@ -67,7 +68,8 @@ export function Sidebar({ activeSection, onSectionChange }: SidebarProps) {
     };
   }, []);
 
-  const menuItems = [
+  // Menus específicos por papel
+  const superAdminMenuItems = [
     {
       section: 'dashboard',
       label: 'Visão Geral da Plataforma',
@@ -75,44 +77,8 @@ export function Sidebar({ activeSection, onSectionChange }: SidebarProps) {
       category: 'PAINEL EXECUTIVO',
     },
     {
-      section: 'inbox',
-      label: 'Inbox',
-      icon: Inbox,
-      category: 'OPERAÇÕES',
-    },
-    {
-      section: 'upload',
-      label: 'Upload Documentos',
-      icon: Upload,
-      category: 'OPERAÇÕES',
-    },
-    {
-      section: 'scheduled',
-      label: 'Agendados',
-      icon: Calendar,
-      category: 'OPERAÇÕES',
-    },
-    {
-      section: 'reconciliation',
-      label: 'Conciliação',
-      icon: Scale,
-      category: 'OPERAÇÕES',
-    },
-    {
-      section: 'emission',
-      label: 'Emissão',
-      icon: FileText,
-      category: 'OPERAÇÕES',
-    },
-    {
-      section: 'archived',
-      label: 'Arquivados',
-      icon: Archive,
-      category: 'OPERAÇÕES',
-    },
-    {
       section: 'clients',
-      label: 'Portfólio de Clientes',
+      label: 'Portfólio de Clientes BPO',
       icon: Building,
       category: 'PAINEL EXECUTIVO',
     },
@@ -121,7 +87,18 @@ export function Sidebar({ activeSection, onSectionChange }: SidebarProps) {
       label: 'Minha Equipe Operacional',
       icon: Users,
       category: 'PAINEL EXECUTIVO',
-      adminOnly: true,
+    },
+    {
+      section: 'admin-dashboard',
+      label: 'Analytics Executivo',
+      icon: BarChart3,
+      category: 'ANALYTICS',
+    },
+    {
+      section: 'admin-stats',
+      label: 'Relatórios da Plataforma',
+      icon: TrendingUp,
+      category: 'ANALYTICS',
     },
     {
       section: 'ai-control',
@@ -130,23 +107,51 @@ export function Sidebar({ activeSection, onSectionChange }: SidebarProps) {
       category: 'CONFIGURAÇÕES',
     },
     {
-      section: 'admin-dashboard',
-      label: 'Analytics Executivo',
-      icon: BarChart3,
+      section: 'settings',
+      label: 'Configurações',
+      icon: Settings,
       category: 'CONFIGURAÇÕES',
-      adminOnly: true,
     },
-    {
-      section: 'admin-stats',
-      label: 'Relatórios da Plataforma',
-      icon: TrendingUp,
-      category: 'CONFIGURAÇÕES',
-      adminOnly: true,
-    },
-
   ];
 
-  const categories = ['PAINEL EXECUTIVO', 'OPERAÇÕES', 'CONFIGURAÇÕES'];
+  const clientUserMenuItems = [
+    {
+      section: 'dashboard',
+      label: 'Meu Painel',
+      icon: LayoutDashboard,
+      category: 'PRINCIPAL',
+    },
+    {
+      section: 'upload',
+      label: 'Enviar Documentos',
+      icon: Upload,
+      category: 'PRINCIPAL',
+    },
+    {
+      section: 'documents',
+      label: 'Meus Documentos',
+      icon: FileText,
+      category: 'PRINCIPAL',
+    },
+    {
+      section: 'reports',
+      label: 'Relatórios',
+      icon: BarChart3,
+      category: 'PRINCIPAL',
+    },
+    {
+      section: 'settings',
+      label: 'Configurações',
+      icon: Settings,
+      category: 'PRINCIPAL',
+    },
+  ];
+
+  const menuItems = isSuperAdmin ? superAdminMenuItems : clientUserMenuItems;
+
+  const categories = isSuperAdmin 
+    ? ['PAINEL EXECUTIVO', 'ANALYTICS', 'CONFIGURAÇÕES']
+    : ['PRINCIPAL'];
 
   return (
     <div className="bg-gquicks-secondary w-64 flex flex-col">
@@ -171,10 +176,16 @@ export function Sidebar({ activeSection, onSectionChange }: SidebarProps) {
             </div>
           )}
         </div>
-        {isGlobalAdmin && (
+        {isSuperAdmin && (
           <div className="bg-gradient-to-r from-gquicks-primary/20 to-purple-600/20 p-2 rounded-lg border border-gquicks-primary/30">
             <p className="text-xs text-gray-300 font-medium">CEO & Fundador</p>
             <p className="text-sm text-white font-semibold">Painel Executivo</p>
+          </div>
+        )}
+        {isClientUser && (
+          <div className="bg-gradient-to-r from-blue-500/20 to-green-600/20 p-2 rounded-lg border border-blue-500/30">
+            <p className="text-xs text-gray-300 font-medium">Cliente BPO</p>
+            <p className="text-sm text-white font-semibold">Painel Simplificado</p>
           </div>
         )}
       </div>
@@ -189,7 +200,6 @@ export function Sidebar({ activeSection, onSectionChange }: SidebarProps) {
             
             {menuItems
               .filter((item) => item.category === category)
-              .filter((item) => !item.adminOnly || isGlobalAdmin)
               .map((item) => {
                 const Icon = item.icon;
                 const isActive = activeSection === item.section;
@@ -222,16 +232,6 @@ export function Sidebar({ activeSection, onSectionChange }: SidebarProps) {
           </div>
         ))}
 
-        {/* Settings */}
-        <div className="pt-4 border-t border-gray-700 mt-6">
-          <button
-            onClick={() => onSectionChange('settings')}
-            className="w-full flex items-center space-x-3 px-4 py-3 rounded-lg text-gray-300 hover:bg-gray-700 hover:text-white transition-colors"
-          >
-            <Settings className="w-5 h-5" />
-            <span>Configurações</span>
-          </button>
-        </div>
       </nav>
 
       {/* User Profile */}
