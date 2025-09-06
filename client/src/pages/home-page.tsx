@@ -13,8 +13,9 @@ import { ClientManagement } from "@/components/admin/client-management";
 import { TeamManagement } from "@/components/admin/team-management";
 import { AdminDashboardSidebar } from "@/components/admin/admin-dashboard-sidebar";
 import { AdminStatsSidebar } from "@/components/admin/admin-stats-sidebar";
+import { Settings } from "@/components/settings/settings";
 
-type Section = 'dashboard' | 'inbox' | 'upload' | 'scheduled' | 'reconciliation' | 'emission' | 'archived' | 'clients' | 'team-management' | 'ai-control' | 'admin-dashboard' | 'admin-stats';
+type Section = 'dashboard' | 'inbox' | 'upload' | 'scheduled' | 'reconciliation' | 'emission' | 'archived' | 'clients' | 'team-management' | 'ai-control' | 'admin-dashboard' | 'admin-stats' | 'settings';
 
 export default function HomePage() {
   const [activeSection, setActiveSection] = useState<Section>('dashboard');
@@ -53,6 +54,8 @@ export default function HomePage() {
         return <AdminDashboardSidebar />;
       case 'admin-stats':
         return <AdminStatsSidebar />;
+      case 'settings':
+        return <Settings />;
       default:
         return <Dashboard />;
     }
