@@ -208,7 +208,7 @@ export function Sidebar({ activeSection, onSectionChange }: SidebarProps) {
   const menuItems = isSuperAdmin ? superAdminMenuItems : clientUserMenuItems;
 
   const categories = isSuperAdmin 
-    ? ['PAINEL EXECUTIVO', 'ANALYTICS', 'CONFIGURAÇÕES']
+    ? ['PAINEL EXECUTIVO', 'ANALYTICS', 'OPERAÇÕES', 'MONITORAMENTO', 'CONFIGURAÇÕES']
     : ['PRINCIPAL', 'CADASTROS', 'RELATÓRIOS', 'CONFIGURAÇÕES'];
 
   return (

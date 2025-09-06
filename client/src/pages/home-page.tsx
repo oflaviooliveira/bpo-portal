@@ -19,9 +19,10 @@ import { ClientDashboard } from "@/components/client/client-dashboard";
 import { ClientDocuments } from "@/components/client/client-documents"; 
 import { ClientReports } from "@/components/client/client-reports";
 import { ClientSettings } from "@/components/client/client-settings";
-import { ClientFornecedores } from "@/components/client/client-fornecedores";
-import { ClientCategorias } from "@/components/client/client-categorias";
-import { ClientCentrosCusto } from "@/components/client/client-centros-custo";
+// Importações comentadas temporariamente para evitar erros
+// import { ClientFornecedores } from "@/components/client/client-fornecedores";
+// import { ClientCategorias } from "@/components/client/client-categorias";
+// import { ClientCentrosCusto } from "@/components/client/client-centros-custo";
 
 type Section = 'dashboard' | 'inbox' | 'upload' | 'scheduled' | 'reconciliation' | 'emission' | 'archived' | 'clients' | 'team-management' | 'ai-control' | 'admin-dashboard' | 'admin-stats' | 'settings' | 'documents' | 'reports' | 'fornecedores' | 'categorias' | 'centros-custo' | 'ocr-performance' | 'ai-analytics';
 
@@ -47,11 +48,11 @@ export default function HomePage() {
         case 'documents':
           return <ClientDocuments />;
         case 'fornecedores':
-          return <ClientFornecedores />;
+          return <ClientDashboard />; // Temporariamente redirecionado
         case 'categorias':
-          return <ClientCategorias />;
+          return <ClientDashboard />; // Temporariamente redirecionado
         case 'centros-custo':
-          return <ClientCentrosCusto />;
+          return <ClientDashboard />; // Temporariamente redirecionado
         case 'reports':
           return <ClientReports />;
         case 'settings':
