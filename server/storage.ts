@@ -350,7 +350,6 @@ export class DatabaseStorage implements IStorage {
     bankId?: string | string[];
     overdue?: boolean;
   } = {}): Promise<Document[]> {
-    console.log("🔍 Storage.getDocuments called with:", { tenantId, filters });
     const conditions = [eq(documents.tenantId, tenantId)];
 
     if (filters.status) {

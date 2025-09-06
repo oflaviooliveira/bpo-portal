@@ -45,7 +45,7 @@ export async function setGlobalAdminContext(req: Request, res: Response, next: N
 
   const user = req.user;
   
-  if (user.role !== 'ADMIN') {
+  if (user.role !== 'ADMIN' && user.role !== 'SUPER_ADMIN') {
     return res.status(403).json({ error: 'Admin access required' });
   }
 

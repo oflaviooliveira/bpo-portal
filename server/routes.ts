@@ -287,13 +287,6 @@ export async function registerRoutes(app: Express): Promise<Server> {
   app.get("/api/documents", ...authorize(["SUPER_ADMIN", "CLIENT_USER"], true), validateQuery(listDocumentsQuerySchema), async (req, res) => {
     try {
       const user = req.user!;
-      console.log("🔍 GET /api/documents - User info:", { 
-        id: user.id, 
-        tenantId: user.tenantId, 
-        role: user.role 
-      });
-      console.log("🔍 Query params:", req.query);
-      
       const filters: any = {
         status: req.query.status as string,
         documentType: req.query.documentType as string,
@@ -305,26 +298,13 @@ export async function registerRoutes(app: Express): Promise<Server> {
         filters.createdBy = user.id;
       }
 
-      console.log("🔍 Filters before cleanup:", filters);
-
       // Remove undefined filters
       Object.keys(filters).forEach(key => 
         filters[key as keyof typeof filters] === undefined && 
         delete filters[key as keyof typeof filters]
       );
 
-      console.log("🔍 Final filters:", filters);
-
       const documents = await storage.getDocuments(user.tenantId, filters);
-      console.log("🔍 Documents returned:", documents.length);
-      console.log("🔍 First document (if any):", documents[0] ? {
-        id: documents[0].id,
-        fileName: documents[0].fileName,
-        createdBy: documents[0].createdBy,
-        tenantId: documents[0].tenantId,
-        status: documents[0].status
-      } : "None");
-
       res.json(documents);
     } catch (error) {
       console.error("Get documents error:", error);
