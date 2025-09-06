@@ -438,7 +438,9 @@ export async function updateUser(req: Request, res: Response) {
  */
 export async function createGquicksUser(req: Request, res: Response) {
   try {
+    console.log('📝 Dados recebidos para criação de usuário Gquicks:', JSON.stringify(req.body, null, 2));
     const validatedData = createUserSchema.parse(req.body);
+    console.log('✅ Dados validados com sucesso:', JSON.stringify(validatedData, null, 2));
     const gquicksTenantId = '00000000-0000-0000-0000-000000000001';
 
     // Verificar se email/username já existe globalmente
@@ -543,6 +545,53 @@ export async function resetUserPassword(req: Request, res: Response) {
     });
   } catch (error) {
     console.error('❌ Erro ao resetar senha:', error);
+    res.status(500).json({ error: 'Erro interno do servidor' });
+  }
+}
+
+/**
+ * Toggle do status ativo/inativo de um usuário
+ */
+export async function toggleUserStatus(req: Request, res: Response) {
+  try {
+    const { userId } = req.params;
+    const { isActive } = req.body;
+
+    console.log(`🔄 Toggle status do usuário ${userId} para ${isActive ? 'ATIVO' : 'INATIVO'}`);
+
+    // Verificar se usuário existe
+    const [existingUser] = await db
+      .select()
+      .from(users)
+      .where(eq(users.id, userId))
+      .limit(1);
+
+    if (!existingUser) {
+      return res.status(404).json({ error: 'Usuário não encontrado' });
+    }
+
+    // Atualizar status
+    const [updatedUser] = await db
+      .update(users)
+      .set({
+        isActive,
+        updatedAt: new Date(),
+      })
+      .where(eq(users.id, userId))
+      .returning({
+        id: users.id,
+        username: users.username,
+        isActive: users.isActive,
+      });
+
+    console.log(`✅ Status do usuário ${updatedUser.username} alterado para ${updatedUser.isActive ? 'ATIVO' : 'INATIVO'}`);
+
+    res.json({
+      message: `Usuário ${updatedUser.isActive ? 'ativado' : 'desativado'} com sucesso`,
+      user: updatedUser,
+    });
+  } catch (error) {
+    console.error('❌ Erro ao alterar status do usuário:', error);
     res.status(500).json({ error: 'Erro interno do servidor' });
   }
 }
