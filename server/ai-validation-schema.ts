@@ -17,6 +17,17 @@ export const aiAnalysisResponseSchema = z.object({
   chave_acesso: z.string().optional(),
   cliente_fornecedor: z.string().optional(),
   observacoes: z.string().optional(),
+  // 🏦 CAMPOS ESPECÍFICOS PARA BOLETOS
+  beneficiario: z.string().optional(),
+  cedente: z.string().optional(),
+  sacado: z.string().optional(),
+  cnpj_beneficiario: z.string().optional(),
+  codigo_barras: z.string().optional(),
+  linha_digitavel: z.string().optional(),
+  nosso_numero: z.string().optional(),
+  banco: z.string().optional(),
+  agencia: z.string().optional(),
+  conta: z.string().optional(),
   confidence: z.union([
     z.number(),
     z.string().transform(val => {
