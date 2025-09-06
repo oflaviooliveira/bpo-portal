@@ -413,14 +413,19 @@ VOCÊ É UM EXPERT EM DANFE. SUA MISSÃO É EXTRAIR DADOS REAIS E NUMÉRICOS.
 - EXEMPLO: Se vê "1.450,00", retorne exatamente "R$ 1.450,00"
 - ❌ JAMAIS retorne texto genérico como "VALOR TOTAL DA NOTA"
 
-🏢 FORNECEDOR (EMITENTE - TOPO):
-- Nome da empresa no TOPO do documento
-- EXEMPLO: "ROBSON PNEUS E AUTOPECAS LTDA"
+🏢 FORNECEDOR (EMITENTE - TOPO DO DOCUMENTO):
+- PRIORIDADE MÁXIMA: Nome da empresa no TOPO/CABEÇALHO
+- Aparece como "RAZÃO SOCIAL:" ou primeira linha da empresa
+- EXEMPLO: "ROBSON PNEUS E AUTOPECAS LTDA", "SOMPO SEGUROS S.A."
+- ATENÇÃO: EMITENTE = FORNECEDOR (quem emite a nota)
+- ❌ NÃO confundir com DESTINATÁRIO (quem recebe a mercadoria)
 
-📋 CNPJ DO EMITENTE:
-- CNPJ na seção do emitente (TOPO do documento)
+📋 CNPJ DO EMITENTE (DOCUMENTO DO FORNECEDOR):
+- CNPJ na seção do emitente (TOPO do documento, junto com o nome)
 - FORMATO: XX.XXX.XXX/XXXX-XX
-- PROCURE especificamente por padrões tipo: "58.950.018/0001-34"
+- PROCURE especificamente por: "CNPJ:" seguido de números
+- EXEMPLO: "58.950.018/0001-34" ou "07.526.557/0001-00"
+- ⚡ CRÍTICO: Use SEMPRE o CNPJ do EMITENTE, nunca do destinatário
 
 📅 DATAS ESPECÍFICAS:
 - DATA DE EMISSÃO: procure "DATA DE EMISSÃO" seguido de DD/MM/AAAA
@@ -452,24 +457,47 @@ RETORNE JSON COM DADOS REAIS (números exatos, não textos):
 }`;
 
       case 'RECIBO':
-        return `Você é um especialista em análise de recibos de pagamento brasileiros.
+        return `📋 ESPECIALISTA RECIBO - EXTRAÇÃO FOCADA EM FORNECEDOR
 
 ${baseContext}
 
-INSTRUÇÕES ESPECÍFICAS:
-1. PAGADOR: Quem efetuou o pagamento (pode ser pessoa física ou jurídica)
-2. RECEBEDOR: Quem recebeu o pagamento
-3. VALOR: Conferir consistência entre valor numérico e por extenso
-4. FINALIDADE: Descrição do que foi pago (serviços, produtos, etc.)
-5. DATA: Data efetiva do pagamento
-6. FORMA DE PAGAMENTO: Dinheiro, PIX, transferência, etc.
+🎯 INSTRUÇÕES ESPECÍFICAS PARA RECIBO:
 
-VALIDAÇÕES:
-- Valores consistentes entre numérico e extenso
-- Identificação clara de pagador vs recebedor
-- Data lógica (não futura, salvo casos especiais)
+🏢 FORNECEDOR (RECEBEDOR):
+- PRIORIDADE: Identifique quem RECEBEU o pagamento
+- Procure seções: "RECEBIDO DE:", "RECEBEDOR:", ou nome/assinatura no final
+- EXEMPLO: "JOÃO SILVA SERVIÇOS ME", "MARIA CONSULTORIA LTDA"
+- ⚡ ATENÇÃO: RECEBEDOR = FORNECEDOR (quem prestou o serviço)
 
-Retorne JSON com: valor, pagador, recebedor, finalidade, data_pagamento, forma_pagamento, documento_pagador, confidence`;
+👤 PAGADOR (CLIENTE):
+- Quem efetuou o pagamento (pode ser pessoa física ou jurídica)
+- Procure: "RECEBI DE:", "PAGADOR:", ou início do recibo
+- Inclua CPF/CNPJ se disponível
+
+💰 VALOR E FINALIDADE:
+- Conferir consistência entre valor numérico e por extenso
+- FINALIDADE: Descrição específica do serviço/produto
+- EXEMPLO: "Consultoria em contabilidade", "Serviços de manutenção"
+
+📅 DATA E FORMA DE PAGAMENTO:
+- DATA: Data efetiva do pagamento (DD/MM/AAAA)
+- FORMA: Dinheiro, PIX, transferência, cheque, etc.
+
+📋 DOCUMENTO DO FORNECEDOR:
+- CPF ou CNPJ do recebedor (fornecedor)
+- Procure na assinatura ou dados do recebedor
+
+RETORNE JSON COM DADOS EXATOS:
+{
+  "valor": "R$ [VALOR_EXATO]",
+  "fornecedor": "[NOME_RECEBEDOR_COMPLETO]",
+  "pagador": "[NOME_PAGADOR]",
+  "documento": "[CPF_OU_CNPJ_RECEBEDOR]",
+  "finalidade": "[DESCRIÇÃO_ESPECÍFICA]",
+  "data_pagamento": "[DD/MM/AAAA]",
+  "forma_pagamento": "[FORMA_PAGAMENTO]",
+  "confidence": 85
+}`;
 
       case 'BOLETO':
         return `🏦 ESPECIALISTA BOLETO - EXTRAÇÃO FOCADA EM PAGAMENTO
