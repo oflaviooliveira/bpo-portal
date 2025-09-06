@@ -162,10 +162,11 @@ export function ClientManagement() {
       
       return result;
     },
-    onSuccess: () => {
+    onSuccess: (data) => {
+      console.log('✅ Tenant criado com sucesso:', data);
       showNotification(
         'Cliente BPO Criado!',
-        'Nova empresa cliente foi adicionada com sucesso ao seu portfólio.',
+        `${data.tenant?.name || 'Nova empresa'} foi adicionada com sucesso ao seu portfólio.`,
         'success'
       );
       setIsCreateModalOpen(false);
@@ -178,9 +179,13 @@ export function ClientManagement() {
         adminUsername: '',
         adminPassword: ''
       });
-      queryClient.invalidateQueries({ queryKey: ['/api/admin/tenants'] });
+      // Invalidar cache com delay para garantir que o servidor processou
+      setTimeout(() => {
+        queryClient.invalidateQueries({ queryKey: ['/api/admin/tenants'] });
+      }, 500);
     },
     onError: (error: any) => {
+      console.error('❌ Erro ao criar tenant:', error);
       showNotification(
         'Erro ao Criar Cliente',
         error.message || 'Não foi possível criar o novo cliente BPO. Verifique os dados e tente novamente.',

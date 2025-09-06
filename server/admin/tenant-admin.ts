@@ -82,6 +82,13 @@ export async function listTenants(req: Request, res: Response) {
  */
 export async function createTenant(req: Request, res: Response) {
   try {
+    console.log('🔄 Iniciando criação de tenant com dados:', { 
+      name: req.body.name, 
+      slug: req.body.slug, 
+      adminEmail: req.body.adminEmail,
+      adminUsername: req.body.adminUsername 
+    });
+    
     const validatedData = createTenantSchema.parse(req.body);
 
     // Verificar se slug já existe
