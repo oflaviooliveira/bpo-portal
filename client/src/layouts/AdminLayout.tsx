@@ -12,8 +12,9 @@ import { TeamManagement } from "@/components/admin/team-management";
 import { AdminDashboardSidebar } from "@/components/admin/admin-dashboard-sidebar";
 import { AdminStatsSidebar } from "@/components/admin/admin-stats-sidebar";
 import { Settings } from "@/components/settings/settings";
+import { UploadBpo } from "@/components/documents/upload-bpo";
 
-type AdminSection = 'dashboard' | 'inbox' | 'scheduled' | 'reconciliation' | 'archived' | 'clients' | 'team-management' | 'ai-control' | 'admin-dashboard' | 'admin-stats' | 'settings' | 'ocr-performance' | 'ai-analytics';
+type AdminSection = 'dashboard' | 'upload' | 'inbox' | 'scheduled' | 'reconciliation' | 'archived' | 'clients' | 'team-management' | 'ai-control' | 'admin-dashboard' | 'admin-stats' | 'settings' | 'ocr-performance' | 'ai-analytics';
 
 export function AdminLayout() {
   const [activeSection, setActiveSection] = useState<AdminSection>('dashboard');
@@ -22,6 +23,16 @@ export function AdminLayout() {
     switch (activeSection) {
       case 'dashboard':
         return <Dashboard />;
+      case 'upload':
+        return (
+          <div className="p-6">
+            <div className="mb-6">
+              <h1 className="text-2xl font-bold text-foreground mb-2">Upload Administrativo</h1>
+              <p className="text-muted-foreground">Processamento de documentos via painel administrativo</p>
+            </div>
+            <UploadBpo />
+          </div>
+        );
       case 'clients':
         return <ClientManagement />;
       case 'team-management':
