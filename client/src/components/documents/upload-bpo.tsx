@@ -15,6 +15,7 @@ import { useToast } from "@/hooks/use-toast";
 import { CloudUpload, Upload as UploadIcon, FileText, Calendar, DollarSign, Building2, Sparkles, AlertTriangle, CheckCircle2 } from "lucide-react";
 import { Alert, AlertDescription } from "@/components/ui/alert";
 import { Separator } from "@/components/ui/separator";
+import { AutoSupplierModal } from "@/components/client/auto-supplier-modal";
 
 // Schema de validação inteligente
 const bpoUploadSchema = z.object({
@@ -145,6 +146,18 @@ export function UploadBpo() {
   const { toast } = useToast();
   const queryClient = useQueryClient();
 
+  // Estado para auto-detecção de fornecedor
+  const [autoSupplierModal, setAutoSupplierModal] = useState<{
+    open: boolean;
+    detectedSupplier?: {
+      name: string;
+      document: string;
+      type: 'PF' | 'PJ';
+      confidence: number;
+      source: string;
+    };
+  }>({ open: false });
+
   const form = useForm<BpoUploadData>({
     resolver: zodResolver(bpoUploadSchema),
     defaultValues: {
@@ -174,16 +187,10 @@ export function UploadBpo() {
   };
 
   const { data: contrapartes = [] as any[] } = useQuery({
-    queryKey: ["/api/contrapartes", documentType],
+    queryKey: ["/api/fornecedores", documentType],
     queryFn: async () => {
-      const filters = getContraparteFilters();
-      const params = new URLSearchParams();
-      Object.entries(filters).forEach(([key, value]) => {
-        params.append(key, String(value));
-      });
-
-      const response = await fetch(`/api/contrapartes?${params}`);
-      if (!response.ok) throw new Error('Erro ao buscar contrapartes');
+      const response = await fetch(`/api/fornecedores`);
+      if (!response.ok) throw new Error('Erro ao buscar fornecedores');
       return response.json();
     },
   });
@@ -243,9 +250,13 @@ export function UploadBpo() {
           source: "IA"
         });
 
-        // Buscar ou criar contraparte automaticamente
-        findOrCreateContraparteFromAI(contraparteValue, data.suggestions.documento);
-        console.log("🏢 Processando contraparte da IA:", contraparteValue);
+        // Detectar e processar fornecedor inteligentemente
+        detectAndHandleSupplier(
+          contraparteValue, 
+          data.suggestions.documento,
+          data.suggestions.confidence?.supplier || 95
+        );
+        console.log("🏢 Processando fornecedor da IA:", contraparteValue);
       }
 
       if (data.suggestions.description) {
@@ -337,59 +348,64 @@ export function UploadBpo() {
     },
   });
 
-  // Função para buscar ou criar contraparte automaticamente
-  const findOrCreateContraparteFromAI = async (name: string, document?: string) => {
+  // Função de detecção inteligente de fornecedor
+  const detectAndHandleSupplier = async (name: string, document?: string, confidence?: number) => {
     try {
-      // Primeiro buscar contraparte existente por nome
-      const existingContraparte = contrapartes.find((c: any) => 
+      console.log("🔍 Detectando fornecedor:", name, document);
+      
+      // Primeiro buscar fornecedor existente por nome
+      const existingFornecedor = contrapartes.find((c: any) => 
         c.name.toLowerCase().includes(name.toLowerCase()) || 
         name.toLowerCase().includes(c.name.toLowerCase())
       );
 
-      if (existingContraparte) {
-        form.setValue("contraparteId", existingContraparte.id);
-        console.log("✅ Contraparte existente encontrada:", existingContraparte.name);
+      if (existingFornecedor) {
+        form.setValue("contraparteId", existingFornecedor.id);
+        console.log("✅ Fornecedor existente encontrado:", existingFornecedor.name);
         return;
       }
 
-      // Se não encontrou e temos documento, criar nova contraparte
-      if (document) {
-        const documentType = document.length === 14 ? 'CNPJ' : document.length === 11 ? 'CPF' : undefined;
-
-        const newContraparteData = {
-          name,
-          document,
-          documentType,
-          canBeClient: true,
-          canBeSupplier: true
-        };
-
-        const response = await fetch('/api/contrapartes', {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify(newContraparteData)
-        });
-
-        if (response.ok) {
-          const newContraparte = await response.json();
-          form.setValue("contraparteId", newContraparte.id);
-
-          // Invalidar cache para atualizar lista
-          queryClient.invalidateQueries({ queryKey: ["/api/contrapartes"] });
-
-          console.log("✅ Nova contraparte criada:", newContraparte.name);
-
-          toast({
-            title: "Nova contraparte criada",
-            description: `${name} foi adicionado automaticamente`,
+      // Se não encontrou, verificar se temos dados suficientes para sugerir cadastro
+      if (name && name.length > 2 && document && document !== "CNPJ não informado") {
+        const cleanDocument = document.replace(/[^\d]/g, '');
+        const documentType = cleanDocument.length === 14 ? 'PJ' : cleanDocument.length === 11 ? 'PF' : null;
+        
+        if (documentType) {
+          console.log("🚀 Novo fornecedor detectado, abrindo modal...");
+          
+          setAutoSupplierModal({
+            open: true,
+            detectedSupplier: {
+              name,
+              document: cleanDocument,
+              type: documentType,
+              confidence: confidence || 90,
+              source: `Documento processado com IA`
+            }
           });
+          return;
         }
-      } else {
-        console.log("⚠️ Contraparte não encontrada e sem documento para criar nova");
       }
+
+      console.log("⚠️ Fornecedor não encontrado e dados insuficientes para cadastro automático");
     } catch (error) {
-      console.error("❌ Erro ao buscar/criar contraparte:", error);
+      console.error("❌ Erro na detecção de fornecedor:", error);
     }
+  };
+
+  // Handlers do modal
+  const handleSupplierCreated = (newSupplier: any) => {
+    form.setValue("contraparteId", newSupplier.id);
+    queryClient.invalidateQueries({ queryKey: ["/api/fornecedores"] });
+    
+    toast({
+      title: "Fornecedor cadastrado",
+      description: `${newSupplier.name} foi adicionado com sucesso`,
+    });
+  };
+
+  const handleSupplierSkip = () => {
+    console.log("🔄 Usuário pulou o cadastro automático de fornecedor");
   };
 
   // Mutation para upload final
@@ -1045,6 +1061,17 @@ export function UploadBpo() {
         </Card>
 
       </form>
+
+      {/* Modal de Auto-detecção de Fornecedor */}
+      {autoSupplierModal.detectedSupplier && (
+        <AutoSupplierModal
+          open={autoSupplierModal.open}
+          onOpenChange={(open) => setAutoSupplierModal({ ...autoSupplierModal, open })}
+          detectedSupplier={autoSupplierModal.detectedSupplier}
+          onSupplierCreated={handleSupplierCreated}
+          onSkip={handleSupplierSkip}
+        />
+      )}
     </div>
   );
 }
