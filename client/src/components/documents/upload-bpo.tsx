@@ -1145,7 +1145,7 @@ export function UploadBpo() {
           detectedSupplier={autoSupplierModal.detectedSupplier}
           onSupplierCreated={handleSupplierCreated}
           onSkip={handleSupplierSkip}
-          documentFile={selectedFile}
+          documentFile={selectedFile || undefined}
         />
       )}
 
