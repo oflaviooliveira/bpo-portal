@@ -13,6 +13,8 @@ import { Switch } from '@/components/ui/switch';
 import { useToast } from '@/hooks/use-toast';
 import { apiRequest } from '@/lib/queryClient';
 import { Plus, Building2, Users, Settings, Eye, UserPlus, Calendar, TrendingUp, Activity } from 'lucide-react';
+import { ConfirmDialog } from '@/components/ui/confirm-dialog';
+import { NotificationDialog } from '@/components/ui/notification-dialog';
 
 interface Tenant {
   id: string;
@@ -67,6 +69,8 @@ export function ClientManagement() {
   const [selectedUser, setSelectedUser] = useState<TenantUser | null>(null);
   const [isEditUserDialogOpen, setIsEditUserDialogOpen] = useState(false);
   const [isResetPasswordDialogOpen, setIsResetPasswordDialogOpen] = useState(false);
+  const [isConfirmDialogOpen, setIsConfirmDialogOpen] = useState(false);
+  const [confirmAction, setConfirmAction] = useState<() => void>(() => {});
   const [createForm, setCreateForm] = useState<CreateTenantForm>({
     name: '',
     slug: '',
@@ -383,12 +387,15 @@ export function ClientManagement() {
     const newStatus = !user.isActive;
     const action = newStatus ? 'ativar' : 'desativar';
     
-    if (window.confirm(`Tem certeza que deseja ${action} o usuário ${user.firstName} ${user.lastName}?`)) {
+    setSelectedUser(user);
+    setConfirmAction(() => () => {
       toggleUserStatusMutation.mutate({
         userId: user.id,
         isActive: newStatus
       });
-    }
+      setIsConfirmDialogOpen(false);
+    });
+    setIsConfirmDialogOpen(true);
   };
 
   const generateSlug = (name: string) => {
@@ -1174,6 +1181,18 @@ export function ClientManagement() {
           </div>
         </DialogContent>
       </Dialog>
+
+      {/* Modal de Confirmação */}
+      <ConfirmDialog
+        isOpen={isConfirmDialogOpen}
+        onClose={() => setIsConfirmDialogOpen(false)}
+        onConfirm={confirmAction}
+        title={`${selectedUser?.isActive ? 'Desativar' : 'Ativar'} Usuário`}
+        description={`Tem certeza que deseja ${selectedUser?.isActive ? 'desativar' : 'ativar'} o usuário ${selectedUser?.firstName} ${selectedUser?.lastName}?`}
+        confirmText={selectedUser?.isActive ? 'Desativar' : 'Ativar'}
+        variant={selectedUser?.isActive ? 'destructive' : 'default'}
+        loading={toggleUserStatusMutation.isPending}
+      />
     </div>
   );
 }
