@@ -572,7 +572,7 @@ export function ClientManagement() {
             <div className="flex items-center space-x-2">
               <Building2 className="h-5 w-5 text-gquicks-primary" />
               <div>
-                <p className="text-sm font-medium">Total de Clientes</p>
+                <p className="text-sm font-medium">Clientes BPO</p>
                 <p className="text-2xl font-bold">{tenants?.length || 0}</p>
               </div>
             </div>
@@ -584,7 +584,7 @@ export function ClientManagement() {
             <div className="flex items-center space-x-2">
               <Users className="h-5 w-5 text-blue-500" />
               <div>
-                <p className="text-sm font-medium">Usuários Ativos</p>
+                <p className="text-sm font-medium">Total de Usuários</p>
                 <p className="text-2xl font-bold">
                   {tenants?.reduce((total: number, tenant: Tenant) => total + (tenant._count?.users || 0), 0) || 0}
                 </p>
@@ -612,7 +612,7 @@ export function ClientManagement() {
             <div className="flex items-center space-x-2">
               <Calendar className="h-5 w-5 text-purple-500" />
               <div>
-                <p className="text-sm font-medium">Clientes Ativos</p>
+                <p className="text-sm font-medium">Empresas Ativas</p>
                 <p className="text-2xl font-bold">
                   {tenants?.filter((tenant: Tenant) => tenant.isActive).length || 0}
                 </p>
@@ -624,20 +624,20 @@ export function ClientManagement() {
 
       <Tabs defaultValue="tenants" className="space-y-4">
         <TabsList>
-          <TabsTrigger value="tenants">Clientes</TabsTrigger>
+          <TabsTrigger value="tenants">Meus Clientes BPO</TabsTrigger>
           <TabsTrigger value="users" disabled={!selectedTenant}>
-            {selectedTenant ? `Usuários - ${selectedTenant.name}` : 'Usuários do Cliente'}
+            {selectedTenant ? `Equipe - ${selectedTenant.name}` : 'Equipe do Cliente'}
           </TabsTrigger>
-          <TabsTrigger value="global-users">Usuários Globais</TabsTrigger>
+          <TabsTrigger value="global-users">Minha Equipe Gquicks</TabsTrigger>
           <TabsTrigger value="user-management">Gestão de Perfis</TabsTrigger>
         </TabsList>
 
         <TabsContent value="tenants" className="space-y-4">
           <Card>
             <CardHeader>
-              <CardTitle>Lista de Clientes</CardTitle>
+              <CardTitle>Meus Clientes BPO</CardTitle>
               <CardDescription>
-                Gerencie todos os clientes do BPO
+                Empresas que contrataram os serviços de BPO Financeiro da Gquicks
               </CardDescription>
             </CardHeader>
             <CardContent>
@@ -711,8 +711,8 @@ export function ClientManagement() {
             <>
               <div className="flex justify-between items-center">
                 <div>
-                  <h3 className="font-gilroy font-bold text-xl">Usuários - {selectedTenant.name}</h3>
-                  <p className="text-muted-foreground">Gerencie os usuários deste cliente</p>
+                  <h3 className="font-gilroy font-bold text-xl">Equipe - {selectedTenant.name}</h3>
+                  <p className="text-muted-foreground">Gerencie a equipe desta empresa cliente</p>
                 </div>
                 
                 <Dialog open={isCreateUserModalOpen} onOpenChange={setIsCreateUserModalOpen}>
