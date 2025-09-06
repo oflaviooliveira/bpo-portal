@@ -1,6 +1,8 @@
 import OpenAI from "openai";
 import { storage } from "./storage";
 import { aiAnalysisResponseSchema, autoCorrectJsonResponse, normalizeValue, normalizeDate, type AiAnalysisResponse } from "./ai-validation-schema";
+import { DocumentSegmentAnalyzer, type MultiDocumentAnalysis } from "./ai/document-segment-analyzer";
+import { BoletoDetector, type BoletoDetectionResult } from "./ai/boleto-detector";
 
 // Document classification types
 export type DocumentType = 'DANFE' | 'RECIBO' | 'BOLETO' | 'PIX' | 'CUPOM' | 'FATURA' | 'CONTRATO' | 'OUTROS';
@@ -9,6 +11,11 @@ interface DocumentClassification {
   type: DocumentType;
   confidence: number;
   indicators: string[];
+  isComposite?: boolean;
+  secondaryType?: DocumentType;
+  boletoDetection?: BoletoDetectionResult;
+  segmentAnalysis?: MultiDocumentAnalysis;
+  processingStrategy?: 'SINGLE' | 'COMPOSITE_PRIORITY_BOLETO' | 'COMPOSITE_PRIORITY_PRIMARY';
 }
 
 interface DocumentTypeConfig {
@@ -233,8 +240,88 @@ class AIMultiProvider {
     apiKey: process.env.OPENAI_API_KEY || ""
   });
 
-  // INTELLIGENT DOCUMENT CLASSIFICATION SYSTEM
+  // INTELLIGENT MULTI-DOCUMENT CLASSIFICATION SYSTEM
   private classifyDocument(ocrText: string, fileName: string): DocumentClassification {
+    console.log('🔍 Iniciando classificação inteligente multi-documento...');
+    
+    // ETAPA 1: Detecção especializada de boleto
+    const boletoDetection = BoletoDetector.detectBoleto(ocrText);
+    console.log(`💰 Detecção boleto: ${boletoDetection.isBoleto ? 'SIM' : 'NÃO'} (${boletoDetection.confidence}% confiança)`);
+    if (boletoDetection.isBoleto) {
+      console.log(`📋 Indicadores boleto: ${boletoDetection.indicators.join(', ')}`);
+    }
+
+    // ETAPA 2: Análise de segmentos do documento
+    const segmentAnalysis = DocumentSegmentAnalyzer.analyzeDocumentSegments(ocrText);
+    console.log(`📄 Análise segmentos: ${segmentAnalysis.segments.length} segmento(s) detectado(s)`);
+    console.log(`🎯 Tipo primário: ${segmentAnalysis.primaryType}, Prioridade: ${segmentAnalysis.priority}`);
+    
+    // ETAPA 3: Classificação tradicional como fallback
+    const traditionalClassification = this.performTraditionalClassification(ocrText, fileName);
+
+    // ETAPA 4: Decisão inteligente baseada nas análises
+    if (boletoDetection.isBoleto && boletoDetection.confidence >= 60) {
+      // CASO 1: Boleto detectado com alta confiança
+      if (segmentAnalysis.segments.length > 1) {
+        const nonBoletoSegment = segmentAnalysis.segments.find(s => s.type !== 'BOLETO');
+        console.log(`🔄 DOCUMENTO COMPOSTO: BOLETO + ${nonBoletoSegment?.type || 'OUTROS'} detectado`);
+        
+        return {
+          type: 'BOLETO', // PRIORIZAR BOLETO para agendamento
+          confidence: boletoDetection.confidence,
+          indicators: boletoDetection.indicators,
+          isComposite: true,
+          secondaryType: nonBoletoSegment?.type as DocumentType || 'OUTROS',
+          boletoDetection,
+          segmentAnalysis,
+          processingStrategy: 'COMPOSITE_PRIORITY_BOLETO'
+        };
+      } else {
+        console.log(`💰 BOLETO ÚNICO detectado`);
+        return {
+          type: 'BOLETO',
+          confidence: boletoDetection.confidence,
+          indicators: boletoDetection.indicators,
+          isComposite: false,
+          boletoDetection,
+          segmentAnalysis,
+          processingStrategy: 'SINGLE'
+        };
+      }
+    }
+
+    // CASO 2: Múltiplos segmentos sem boleto dominante
+    if (segmentAnalysis.segments.length > 1 && segmentAnalysis.priority === 'PRIMARY') {
+      const primarySegment = segmentAnalysis.segments[0];
+      const secondarySegment = segmentAnalysis.segments[1];
+      
+      console.log(`📑 DOCUMENTO COMPOSTO SEM BOLETO: ${primarySegment.type} + ${secondarySegment.type}`);
+      
+      return {
+        type: primarySegment.type as DocumentType,
+        confidence: primarySegment.confidence,
+        indicators: primarySegment.indicators,
+        isComposite: true,
+        secondaryType: secondarySegment.type as DocumentType,
+        boletoDetection,
+        segmentAnalysis,
+        processingStrategy: 'COMPOSITE_PRIORITY_PRIMARY'
+      };
+    }
+
+    // CASO 3: Documento único - usar análise tradicional
+    console.log(`📄 DOCUMENTO ÚNICO: ${traditionalClassification.type}`);
+    return {
+      ...traditionalClassification,
+      isComposite: false,
+      boletoDetection,
+      segmentAnalysis,
+      processingStrategy: 'SINGLE'
+    };
+  }
+
+  // Classificação tradicional como backup
+  private performTraditionalClassification(ocrText: string, fileName: string): DocumentClassification {
     const scores: Record<DocumentType, number> = {
       DANFE: 0, RECIBO: 0, BOLETO: 0, PIX: 0, 
       CUPOM: 0, FATURA: 0, CONTRATO: 0, OUTROS: 0
