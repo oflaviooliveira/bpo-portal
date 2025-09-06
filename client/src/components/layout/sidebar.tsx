@@ -37,12 +37,8 @@ export function Sidebar({ activeSection, onSectionChange }: SidebarProps) {
   // Carregar logo da empresa das configurações
   useEffect(() => {
     const savedLogo = localStorage.getItem('company-logo');
-    console.log('🔍 Sidebar - Logo salva no localStorage:', savedLogo ? 'SIM' : 'NÃO');
     if (savedLogo) {
-      console.log('✅ Sidebar - Carregando logo:', savedLogo.substring(0, 50) + '...');
       setCompanyLogo(savedLogo);
-    } else {
-      console.log('❌ Sidebar - Nenhuma logo encontrada no localStorage');
     }
   }, []);
 
@@ -57,10 +53,8 @@ export function Sidebar({ activeSection, onSectionChange }: SidebarProps) {
     };
 
     const handleLogoUpdate = () => {
-      console.log('🔄 Sidebar - Evento logo-updated recebido');
       const savedLogo = localStorage.getItem('company-logo');
       if (savedLogo) {
-        console.log('✅ Sidebar - Atualizando logo:', savedLogo.substring(0, 50) + '...');
         setCompanyLogo(savedLogo);
       }
     };
