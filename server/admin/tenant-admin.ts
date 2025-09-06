@@ -364,6 +364,7 @@ export async function listGlobalUsers(req: Request, res: Response) {
       })
       .from(users)
       .innerJoin(tenants, eq(tenants.id, users.tenantId))
+      .where(eq(users.tenantId, '00000000-0000-0000-0000-000000000001')) // Filtrar apenas usuários Gquicks
       .orderBy(users.createdAt);
 
     console.log(`📋 Listando ${allUsers.length} usuários globalmente`);
