@@ -1,7 +1,7 @@
 import { Request, Response } from 'express';
 import { db } from '../db';
 import { tenants, users, contrapartes, categories, costCenters, documents } from '@shared/schema';
-import { eq, count, sql, or } from 'drizzle-orm';
+import { eq, count, sql, or, not } from 'drizzle-orm';
 import { hashPassword } from '../auth';
 import { z } from 'zod';
 
@@ -30,6 +30,7 @@ const createUserSchema = z.object({
  */
 export async function listTenants(req: Request, res: Response) {
   try {
+    // Listar apenas tenants que são clientes BPO (excluir Gquicks administrativo)
     const tenantsList = await db.select({
       id: tenants.id,
       name: tenants.name,
@@ -37,7 +38,8 @@ export async function listTenants(req: Request, res: Response) {
       isActive: tenants.isActive,
       createdAt: tenants.createdAt,
       updatedAt: tenants.updatedAt,
-    }).from(tenants);
+    }).from(tenants)
+    .where(not(eq(tenants.slug, 'gquicks'))); // Excluir Gquicks administrativo
 
     // Buscar estatísticas para cada tenant
     const tenantsWithStats = await Promise.all(
