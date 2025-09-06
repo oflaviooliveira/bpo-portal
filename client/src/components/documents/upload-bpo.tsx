@@ -1112,30 +1112,28 @@ export function UploadBpo() {
 
       {/* Modal de Visualização de Documento */}
       <Dialog open={documentPreviewModal} onOpenChange={setDocumentPreviewModal}>
-        <DialogContent className="max-w-4xl h-[80vh]">
-          <DialogHeader>
+        <DialogContent className="max-w-6xl h-[90vh] flex flex-col">
+          <DialogHeader className="flex-shrink-0">
             <DialogTitle className="flex items-center gap-2">
               <FileText className="h-5 w-5" />
               {selectedFile?.name}
             </DialogTitle>
           </DialogHeader>
-          <div className="flex-1 overflow-hidden">
+          <div className="flex-1 overflow-hidden flex items-center justify-center">
             {selectedFile && (
-              <div className="h-full border border-gray-300 rounded-lg">
+              <div className="w-full h-full flex items-center justify-center border border-gray-300 rounded-lg bg-gray-50">
                 {selectedFile.type === 'application/pdf' ? (
                   <iframe
                     src={URL.createObjectURL(selectedFile)}
-                    className="w-full h-full"
+                    className="w-full h-full rounded-lg"
                     title="Visualização do documento"
                   />
                 ) : (
-                  <div className="p-4 h-full flex items-center justify-center">
-                    <img
-                      src={URL.createObjectURL(selectedFile)}
-                      alt="Documento"
-                      className="max-w-full max-h-full object-contain"
-                    />
-                  </div>
+                  <img
+                    src={URL.createObjectURL(selectedFile)}
+                    alt="Documento"
+                    className="max-w-full max-h-full object-contain rounded-lg shadow-lg"
+                  />
                 )}
               </div>
             )}
