@@ -287,7 +287,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
   app.get("/api/documents", ...authorize(["SUPER_ADMIN", "CLIENT_USER"], true), validateQuery(listDocumentsQuerySchema), async (req, res) => {
     try {
       const user = req.user!;
-      const filters = {
+      const filters: any = {
         status: req.query.status as string,
         documentType: req.query.documentType as string,
         clientId: req.query.clientId as string,
@@ -295,7 +295,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
 
       // Cliente só vê seus documentos (já filtrado no middleware)
       if (user.role === 'CLIENT_USER') {
-        filters.clientId = user.id;
+        filters.createdBy = user.id;
       }
 
       // Remove undefined filters

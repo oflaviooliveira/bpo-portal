@@ -341,6 +341,7 @@ export class DatabaseStorage implements IStorage {
   async getDocuments(tenantId: string, filters: {
     status?: string | string[];
     clientId?: string | string[];
+    createdBy?: string | string[];
     dateFrom?: Date;
     dateTo?: Date;
     dueDateFrom?: Date;
@@ -375,6 +376,17 @@ export class DatabaseStorage implements IStorage {
         }
       } else {
         conditions.push(eq(documents.clientId, filters.clientId));
+      }
+    }
+
+    if (filters.createdBy && filters.createdBy !== '') {
+      if (Array.isArray(filters.createdBy)) {
+        const validIds = filters.createdBy.filter(id => id && id !== '');
+        if (validIds.length > 0) {
+          conditions.push(inArray(documents.createdBy, validIds));
+        }
+      } else {
+        conditions.push(eq(documents.createdBy, filters.createdBy));
       }
     }
 
