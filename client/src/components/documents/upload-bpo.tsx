@@ -356,7 +356,17 @@ export function UploadBpo() {
   const detectAndHandleSupplier = async (name: string, document?: string, confidence?: number) => {
     try {
       console.log("🔍 Detectando fornecedor:", name, document);
+      console.log("📋 Total de fornecedores disponíveis:", contrapartes.length);
+      console.log("📋 Lista de fornecedores:", contrapartes.map((c: any) => ({ id: c.id, name: c.name })));
       
+      // Aguardar um momento para garantir que os dados estão carregados
+      if (!contrapartes || contrapartes.length === 0) {
+        console.log("⏳ Aguardando carregamento dos fornecedores...");
+        // Aguardar 1 segundo e tentar novamente
+        setTimeout(() => detectAndHandleSupplier(name, document, confidence), 1000);
+        return;
+      }
+
       // Primeiro buscar fornecedor existente por nome
       const existingFornecedor = contrapartes.find((c: any) => 
         c.name.toLowerCase().includes(name.toLowerCase()) || 
@@ -364,8 +374,36 @@ export function UploadBpo() {
       );
 
       if (existingFornecedor) {
-        form.setValue("contraparteId", existingFornecedor.id);
-        console.log("✅ Fornecedor existente encontrado:", existingFornecedor.name);
+        console.log("✅ Fornecedor existente encontrado:", existingFornecedor.name, "ID:", existingFornecedor.id);
+        console.log("🔄 Preenchendo campo contraparteId...");
+        
+        // Preencher o campo com força
+        form.setValue("contraparteId", existingFornecedor.id, { 
+          shouldValidate: true, 
+          shouldDirty: true,
+          shouldTouch: true 
+        });
+        
+        // Forçar re-render do formulário
+        form.trigger("contraparteId");
+        
+        // Verificar se foi preenchido após um delay
+        setTimeout(() => {
+          const currentValue = form.getValues("contraparteId");
+          console.log("🔍 Valor atual do campo contraparteId:", currentValue);
+          if (currentValue !== existingFornecedor.id) {
+            console.log("⚠️ Campo não foi preenchido, forçando novamente...");
+            form.setValue("contraparteId", existingFornecedor.id, { 
+              shouldValidate: true, 
+              shouldDirty: true,
+              shouldTouch: true 
+            });
+            form.trigger("contraparteId");
+          } else {
+            console.log("✅ Campo contraparteId preenchido com sucesso!");
+          }
+        }, 500);
+        
         return;
       }
 
