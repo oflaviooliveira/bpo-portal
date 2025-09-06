@@ -35,9 +35,9 @@ export function Sidebar({ activeSection, onSectionChange }: SidebarProps) {
   const menuItems = [
     {
       section: 'dashboard',
-      label: 'Dashboard',
+      label: 'Visão Geral da Plataforma',
       icon: LayoutDashboard,
-      category: 'PRINCIPAL',
+      category: 'PAINEL EXECUTIVO',
     },
     {
       section: 'inbox',
@@ -80,45 +80,58 @@ export function Sidebar({ activeSection, onSectionChange }: SidebarProps) {
     },
     {
       section: 'clients',
-      label: 'Meus Clientes BPO',
+      label: 'Portfólio de Clientes BPO',
       icon: Building,
-      category: 'GESTÃO GQUICKS',
+      category: 'PAINEL EXECUTIVO',
+    },
+    {
+      section: 'team-management',
+      label: 'Minha Equipe Operacional',
+      icon: Users,
+      category: 'PAINEL EXECUTIVO',
+      adminOnly: true,
     },
     {
       section: 'ai-control',
       label: 'Centro de Controle IA',
       icon: Cpu,
-      category: 'GESTÃO GQUICKS',
+      category: 'CONFIGURAÇÕES',
     },
     {
       section: 'admin-dashboard',
-      label: 'Dashboard Gquicks',
+      label: 'Analytics Executivo',
       icon: BarChart3,
-      category: 'GESTÃO GQUICKS',
+      category: 'CONFIGURAÇÕES',
       adminOnly: true,
     },
     {
       section: 'admin-stats',
-      label: 'Estatísticas da Plataforma',
+      label: 'Relatórios da Plataforma',
       icon: TrendingUp,
-      category: 'GESTÃO GQUICKS',
+      category: 'CONFIGURAÇÕES',
       adminOnly: true,
     },
 
   ];
 
-  const categories = ['PRINCIPAL', 'OPERAÇÕES', 'GESTÃO GQUICKS'];
+  const categories = ['PAINEL EXECUTIVO', 'OPERAÇÕES', 'CONFIGURAÇÕES'];
 
   return (
     <div className="bg-gquicks-secondary w-64 flex flex-col">
-      {/* Logo */}
+      {/* Logo & CEO Status */}
       <div className="p-6 border-b border-gray-700">
-        <div className="flex items-center space-x-3">
+        <div className="flex items-center space-x-3 mb-3">
           <div className="w-8 h-8 bg-gquicks-primary rounded-lg flex items-center justify-center">
             <span className="text-white font-gilroy font-bold text-lg">G</span>
           </div>
           <span className="text-white font-gilroy font-bold text-xl">gquicks</span>
         </div>
+        {isGlobalAdmin && (
+          <div className="bg-gradient-to-r from-gquicks-primary/20 to-purple-600/20 p-2 rounded-lg border border-gquicks-primary/30">
+            <p className="text-xs text-gray-300 font-medium">CEO & Fundador</p>
+            <p className="text-sm text-white font-semibold">Painel Executivo</p>
+          </div>
+        )}
       </div>
 
       {/* Navigation */}
