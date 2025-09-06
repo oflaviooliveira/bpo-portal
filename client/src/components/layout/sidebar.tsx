@@ -105,6 +105,12 @@ export function Sidebar({ activeSection, onSectionChange }: SidebarProps) {
       category: 'ANALYTICS',
     },
     {
+      section: 'upload',
+      label: 'Upload Administrativo',
+      icon: Upload,
+      category: 'OPERAÇÕES',
+    },
+    {
       section: 'inbox',
       label: 'Inbox Operacional',
       icon: Inbox,
