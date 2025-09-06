@@ -9,7 +9,7 @@ import { useToast } from "@/hooks/use-toast";
 import { useAuth } from "@/hooks/use-auth";
 import { User, Lock, Bell, Mail, Phone, Building } from "lucide-react";
 import { Switch } from "@/components/ui/switch";
-import { apiRequest } from "@/lib/query-client";
+import { queryClient } from "@/lib/query-client";
 
 interface UserSettings {
   firstName: string;
@@ -53,10 +53,15 @@ export function ClientSettings() {
 
   // Mutation para atualizar dados pessoais
   const updatePersonalMutation = useMutation({
-    mutationFn: (data: any) => apiRequest('/api/user/profile', {
-      method: 'PATCH',
-      body: JSON.stringify(data),
-    }),
+    mutationFn: async (data: any) => {
+      const response = await fetch('/api/user/profile', {
+        method: 'PATCH',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(data),
+      });
+      if (!response.ok) throw new Error('Failed to update profile');
+      return response.json();
+    },
     onSuccess: () => {
       toast({
         title: "Dados atualizados",
@@ -75,10 +80,15 @@ export function ClientSettings() {
 
   // Mutation para alterar senha
   const changePasswordMutation = useMutation({
-    mutationFn: (data: any) => apiRequest('/api/user/password', {
-      method: 'PATCH',
-      body: JSON.stringify(data),
-    }),
+    mutationFn: async (data: any) => {
+      const response = await fetch('/api/user/password', {
+        method: 'PATCH',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(data),
+      });
+      if (!response.ok) throw new Error('Failed to change password');
+      return response.json();
+    },
     onSuccess: () => {
       toast({
         title: "Senha alterada",
@@ -101,10 +111,15 @@ export function ClientSettings() {
 
   // Mutation para atualizar preferências de notificação
   const updateNotificationsMutation = useMutation({
-    mutationFn: (data: any) => apiRequest('/api/user/notifications', {
-      method: 'PATCH',
-      body: JSON.stringify(data),
-    }),
+    mutationFn: async (data: any) => {
+      const response = await fetch('/api/user/notifications', {
+        method: 'PATCH',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(data),
+      });
+      if (!response.ok) throw new Error('Failed to update notifications');
+      return response.json();
+    },
     onSuccess: () => {
       toast({
         title: "Preferências salvas",

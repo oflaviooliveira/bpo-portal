@@ -16,7 +16,7 @@ export function ClientDocuments() {
     queryKey: ['/api/documents'],
   });
 
-  const filteredDocuments = documents?.filter((doc: any) => {
+  const filteredDocuments = (documents as any[])?.filter((doc: any) => {
     const matchesSearch = doc.originalName?.toLowerCase().includes(searchTerm.toLowerCase()) ||
                          doc.extractedData?.razao_social?.toLowerCase().includes(searchTerm.toLowerCase());
     const matchesStatus = statusFilter === "all" || doc.status === statusFilter;

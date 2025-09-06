@@ -12,33 +12,33 @@ export function ClientDashboard() {
     queryKey: ['/api/documents'],
   });
 
-  const recentDocuments = documents?.slice(0, 5) || [];
+  const recentDocuments = (documents as any[])?.slice(0, 5) || [];
 
   const cards = [
     {
       title: "Total de Documentos",
-      value: stats?.totalDocuments || 0,
+      value: (stats as any)?.totalDocuments || 0,
       description: "Documentos enviados",
       icon: FileText,
       color: "bg-blue-500",
     },
     {
       title: "Em Processamento",
-      value: stats?.pendingReview || 0,
+      value: (stats as any)?.pendingReview || 0,
       description: "Aguardando análise",
       icon: Clock,
       color: "bg-yellow-500",
     },
     {
       title: "Processados",
-      value: (stats?.totalDocuments || 0) - (stats?.pendingReview || 0),
+      value: ((stats as any)?.totalDocuments || 0) - ((stats as any)?.pendingReview || 0),
       description: "Documentos finalizados",
       icon: CheckCircle,
       color: "bg-green-500",
     },
     {
       title: "Requer Atenção",
-      value: stats?.inconsistentDocuments || 0,
+      value: (stats as any)?.inconsistentDocuments || 0,
       description: "Documentos com problemas",
       icon: AlertCircle,
       color: "bg-red-500",

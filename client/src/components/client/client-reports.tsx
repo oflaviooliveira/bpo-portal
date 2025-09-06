@@ -19,7 +19,7 @@ export function ClientReports() {
   });
 
   // Filtrar documentos por período
-  const filteredDocuments = documents?.filter((doc: any) => {
+  const filteredDocuments = (documents as any[])?.filter((doc: any) => {
     const docDate = new Date(doc.createdAt);
     const periodDays = parseInt(selectedPeriod);
     const cutoffDate = new Date();
