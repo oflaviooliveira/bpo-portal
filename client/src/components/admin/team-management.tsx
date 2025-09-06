@@ -1,5 +1,6 @@
 import React, { useState } from 'react';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
+import { apiRequest } from '@/lib/queryClient';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -103,12 +104,7 @@ export function TeamManagement() {
   // Mutation para criar usuário da equipe
   const createUserMutation = useMutation({
     mutationFn: async (data: CreateUserForm) => {
-      const response = await fetch('/api/admin/users/gquicks', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify(data)
-      });
-      if (!response.ok) throw new Error('Failed to create user');
+      const response = await apiRequest('POST', '/api/admin/users/gquicks', data);
       return response.json();
     },
     onSuccess: () => {
@@ -140,12 +136,7 @@ export function TeamManagement() {
   // Mutation para toggle status
   const toggleUserStatusMutation = useMutation({
     mutationFn: async ({ userId, isActive }: { userId: string; isActive: boolean }) => {
-      const response = await fetch(`/api/admin/users/${userId}/toggle-status`, {
-        method: 'PATCH',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ isActive })
-      });
-      if (!response.ok) throw new Error('Failed to toggle user status');
+      const response = await apiRequest('PATCH', `/api/admin/users/${userId}/toggle-status`, { isActive });
       return response.json();
     },
     onSuccess: () => {
@@ -157,12 +148,7 @@ export function TeamManagement() {
   const editUserMutation = useMutation({
     mutationFn: async (data: EditUserForm & { userId: string }) => {
       const { userId, ...updateData } = data;
-      const response = await fetch(`/api/admin/users/${userId}`, {
-        method: 'PUT',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify(updateData)
-      });
-      if (!response.ok) throw new Error('Failed to update user');
+      const response = await apiRequest('PUT', `/api/admin/users/${userId}`, updateData);
       return response.json();
     },
     onSuccess: () => {
@@ -186,12 +172,7 @@ export function TeamManagement() {
   // Mutation para reset de senha
   const resetPasswordMutation = useMutation({
     mutationFn: async (data: { userId: string; newPassword: string }) => {
-      const response = await fetch(`/api/admin/users/${data.userId}/reset-password`, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ newPassword: data.newPassword })
-      });
-      if (!response.ok) throw new Error('Failed to reset password');
+      const response = await apiRequest('POST', `/api/admin/users/${data.userId}/reset-password`, { newPassword: data.newPassword });
       return response.json();
     },
     onSuccess: () => {
