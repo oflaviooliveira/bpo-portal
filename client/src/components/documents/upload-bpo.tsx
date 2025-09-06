@@ -11,6 +11,7 @@ import { Textarea } from "@/components/ui/textarea";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
 import { Badge } from "@/components/ui/badge";
+import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { useToast } from "@/hooks/use-toast";
 import { CloudUpload, Upload as UploadIcon, FileText, Calendar, DollarSign, Building2, Sparkles, AlertTriangle, CheckCircle2 } from "lucide-react";
 import { Alert, AlertDescription } from "@/components/ui/alert";
@@ -157,6 +158,9 @@ export function UploadBpo() {
       source: string;
     };
   }>({ open: false });
+
+  // Estado para visualização de documento
+  const [documentPreviewModal, setDocumentPreviewModal] = useState(false);
 
   const form = useForm<BpoUploadData>({
     resolver: zodResolver(bpoUploadSchema),
@@ -697,21 +701,34 @@ export function UploadBpo() {
                     <FileText className="h-4 w-4" />
                     <AlertDescription>
                       <div className="flex items-center justify-between">
-                        <span>
-                          {selectedFile.name} ({Math.round(selectedFile.size/1024)}KB)
-                        </span>
-                        {processingState.stage === 'processing' && (
-                          <Badge variant="outline">
-                            <Sparkles className="h-3 w-3 mr-1 animate-spin" />
-                            Processando...
-                          </Badge>
-                        )}
-                        {processingState.stage === 'analyzed' && (
-                          <Badge variant="default" className="bg-green-500">
-                            <CheckCircle2 className="h-3 w-3 mr-1" />
-                            Analisado
-                          </Badge>
-                        )}
+                        <div className="flex items-center gap-2">
+                          <span>
+                            {selectedFile.name} ({Math.round(selectedFile.size/1024)}KB)
+                          </span>
+                          <Button
+                            variant="outline"
+                            size="sm"
+                            onClick={() => setDocumentPreviewModal(true)}
+                            className="h-6 px-2 text-xs"
+                            data-testid="button-view-document"
+                          >
+                            👁️ Ver
+                          </Button>
+                        </div>
+                        <div className="flex items-center gap-2">
+                          {processingState.stage === 'processing' && (
+                            <Badge variant="outline">
+                              <Sparkles className="h-3 w-3 mr-1 animate-spin" />
+                              Processando...
+                            </Badge>
+                          )}
+                          {processingState.stage === 'analyzed' && (
+                            <Badge variant="default" className="bg-green-500">
+                              <CheckCircle2 className="h-3 w-3 mr-1" />
+                              Analisado
+                            </Badge>
+                          )}
+                        </div>
                       </div>
                     </AlertDescription>
                   </Alert>
@@ -1092,6 +1109,39 @@ export function UploadBpo() {
           onSkip={handleSupplierSkip}
         />
       )}
+
+      {/* Modal de Visualização de Documento */}
+      <Dialog open={documentPreviewModal} onOpenChange={setDocumentPreviewModal}>
+        <DialogContent className="max-w-4xl h-[80vh]">
+          <DialogHeader>
+            <DialogTitle className="flex items-center gap-2">
+              <FileText className="h-5 w-5" />
+              {selectedFile?.name}
+            </DialogTitle>
+          </DialogHeader>
+          <div className="flex-1 overflow-hidden">
+            {selectedFile && (
+              <div className="h-full border border-gray-300 rounded-lg">
+                {selectedFile.type === 'application/pdf' ? (
+                  <iframe
+                    src={URL.createObjectURL(selectedFile)}
+                    className="w-full h-full"
+                    title="Visualização do documento"
+                  />
+                ) : (
+                  <div className="p-4 h-full flex items-center justify-center">
+                    <img
+                      src={URL.createObjectURL(selectedFile)}
+                      alt="Documento"
+                      className="max-w-full max-h-full object-contain"
+                    />
+                  </div>
+                )}
+              </div>
+            )}
+          </div>
+        </DialogContent>
+      </Dialog>
     </div>
   );
 }
