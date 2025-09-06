@@ -14,46 +14,61 @@ import { TeamManagement } from "@/components/admin/team-management";
 import { AdminDashboardSidebar } from "@/components/admin/admin-dashboard-sidebar";
 import { AdminStatsSidebar } from "@/components/admin/admin-stats-sidebar";
 import { Settings } from "@/components/settings/settings";
+import { useAuth } from "@/hooks/use-auth";
+import { ClientDashboard } from "@/components/client/client-dashboard";
+import { ClientDocuments } from "@/components/client/client-documents"; 
+import { ClientReports } from "@/components/client/client-reports";
 
-type Section = 'dashboard' | 'inbox' | 'upload' | 'scheduled' | 'reconciliation' | 'emission' | 'archived' | 'clients' | 'team-management' | 'ai-control' | 'admin-dashboard' | 'admin-stats' | 'settings';
+type Section = 'dashboard' | 'inbox' | 'upload' | 'scheduled' | 'reconciliation' | 'emission' | 'archived' | 'clients' | 'team-management' | 'ai-control' | 'admin-dashboard' | 'admin-stats' | 'settings' | 'documents' | 'reports';
 
 export default function HomePage() {
+  const { user } = useAuth();
   const [activeSection, setActiveSection] = useState<Section>('dashboard');
+  
+  const isSuperAdmin = user?.role === 'SUPER_ADMIN';
+  const isClientUser = user?.role === 'CLIENT_USER';
 
   const renderContent = () => {
+    // Para CLIENT_USER - interface simplificada
+    if (isClientUser) {
+      switch (activeSection) {
+        case 'dashboard':
+          return <ClientDashboard />;
+        case 'upload':
+          return (
+            <div className="p-6">
+              <UploadBpo />
+            </div>
+          );
+        case 'documents':
+          return <ClientDocuments />;
+        case 'reports':
+          return <ClientReports />;
+        case 'settings':
+          return <Settings />;
+        default:
+          return <ClientDashboard />;
+      }
+    }
+
+    // Para SUPER_ADMIN - interface completa
     switch (activeSection) {
       case 'dashboard':
         return <Dashboard />;
-      case 'inbox':
-        return <Inbox />;
-      case 'upload':
-        return (
-          <div className="p-6">
-            <UploadBpo />
-          </div>
-        );
-      case 'scheduled':
-        return <Scheduled />;
-      case 'reconciliation':
-        return <Reconciliation />;
-      case 'emission':
-        return <Emission />;
-      case 'archived':
-        return <Archived />;
       case 'clients':
         return <ClientManagement />;
       case 'team-management':
         return <TeamManagement />;
+      case 'admin-dashboard':
+        return <AdminDashboardSidebar />;
+      case 'admin-stats':
+        return <AdminStatsSidebar />;
       case 'ai-control':
         return (
           <div className="p-6">
             <AIControlCenter />
           </div>
         );
-      case 'admin-dashboard':
-        return <AdminDashboardSidebar />;
-      case 'admin-stats':
-        return <AdminStatsSidebar />;
       case 'settings':
         return <Settings />;
       default:
