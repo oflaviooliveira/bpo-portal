@@ -130,21 +130,24 @@ export function Sidebar({ activeSection, onSectionChange }: SidebarProps) {
     <div className="bg-gquicks-secondary w-64 flex flex-col">
       {/* Logo & CEO Status */}
       <div className="p-6 border-b border-gray-700">
-        <div className="flex items-center space-x-3 mb-3">
+        <div className="flex items-center mb-3">
           {companyLogo ? (
-            <div className="w-8 h-8 rounded-lg overflow-hidden bg-white/10 flex items-center justify-center">
+            <div className="flex items-center">
               <img 
                 src={companyLogo} 
                 alt="Logo Gquicks" 
-                className="w-full h-full object-contain"
+                className="h-8 w-auto object-contain"
+                style={{ maxWidth: '200px' }}
               />
             </div>
           ) : (
-            <div className="w-8 h-8 bg-gquicks-primary rounded-lg flex items-center justify-center">
-              <span className="text-white font-gilroy font-bold text-lg">G</span>
+            <div className="flex items-center space-x-3">
+              <div className="w-8 h-8 bg-gquicks-primary rounded-lg flex items-center justify-center">
+                <span className="text-white font-gilroy font-bold text-lg">G</span>
+              </div>
+              <span className="text-white font-gilroy font-bold text-xl">gquicks</span>
             </div>
           )}
-          <span className="text-white font-gilroy font-bold text-xl">gquicks</span>
         </div>
         {isGlobalAdmin && (
           <div className="bg-gradient-to-r from-gquicks-primary/20 to-purple-600/20 p-2 rounded-lg border border-gquicks-primary/30">
