@@ -20,7 +20,7 @@ import { registerFileRoutes } from "./routes/files";
 import { AIDiagnostics } from "./ai-diagnostics";
 import { tenantContextMiddleware, validateTenantSlug, requireTenantContext } from "./middleware/tenant-context";
 import { setGlobalAdminContext } from "./middleware/rls-context";
-import { listTenants, createTenant, toggleTenant, listTenantUsers, createTenantUser } from "./admin/tenant-admin";
+import { listTenants, createTenant, toggleTenant, listTenantUsers, createTenantUser, listGlobalUsers, updateUser, resetUserPassword } from "./admin/tenant-admin";
 import { getDashboardStats } from "./admin/dashboard-stats";
 import { resetTenant, getTenantDetails, duplicateTenantConfig } from "./admin/tenant-actions";
 
@@ -2595,6 +2595,15 @@ export async function registerRoutes(app: Express): Promise<Server> {
   
   // Criar usuário para um tenant específico (apenas ADMIN global)
   app.post("/api/admin/tenants/:tenantId/users", setGlobalAdminContext, createTenantUser);
+  
+  // Listar todos os usuários do sistema (apenas ADMIN global)
+  app.get("/api/admin/users/global", setGlobalAdminContext, listGlobalUsers);
+  
+  // Editar usuário específico (apenas ADMIN global)
+  app.put("/api/admin/users/:userId", setGlobalAdminContext, updateUser);
+  
+  // Reset de senha de usuário (apenas ADMIN global)
+  app.post("/api/admin/users/:userId/reset-password", setGlobalAdminContext, resetUserPassword);
 
   const httpServer = createServer(app);
   return httpServer;

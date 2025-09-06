@@ -13,7 +13,7 @@ import {
   TableHeader, 
   TableRow 
 } from "@/components/ui/table";
-import { Search, Download, Archive, RefreshCw, Calendar, Filter } from "lucide-react";
+import { Search, Archive, RefreshCw, Calendar, Filter } from "lucide-react";
 
 const statusConfig = {
   ARQUIVADO: { label: "Arquivado", className: "bg-gray-100 text-gray-800" },
@@ -84,15 +84,7 @@ export function Archived() {
     return true;
   }) || [];
 
-  const handleExportCSV = () => {
-    // TODO: Implementar exportação CSV
-    console.log("Exportando CSV...");
-  };
-
-  const handleExportZIP = () => {
-    // TODO: Implementar exportação ZIP
-    console.log("Exportando ZIP...");
-  };
+  // Removed non-functional export handlers
 
   const clearFilters = () => {
     setSearchTerm("");
@@ -120,36 +112,16 @@ export function Archived() {
       <div className="flex items-center justify-between mb-6">
         <div>
           <h2 className="font-gilroy font-bold text-2xl text-foreground">Documentos Arquivados</h2>
-          <p className="text-muted-foreground">Histórico completo com busca avançada e exportação</p>
+          <p className="text-muted-foreground">Histórico completo com busca avançada</p>
         </div>
-        <div className="flex space-x-3">
-          <Button 
-            onClick={handleExportCSV}
-            variant="outline"
-            className="text-green-600 border-green-600 hover:bg-green-600 hover:text-white"
-            data-testid="button-export-csv"
-          >
-            <Download className="w-4 h-4 mr-2" />
-            Exportar CSV
-          </Button>
-          <Button 
-            onClick={handleExportZIP}
-            variant="outline"
-            className="text-blue-600 border-blue-600 hover:bg-blue-600 hover:text-white"
-            data-testid="button-export-zip"
-          >
-            <Archive className="w-4 h-4 mr-2" />
-            Exportar ZIP
-          </Button>
-          <Button 
-            onClick={() => refetch()}
-            className="bg-gquicks-primary hover:bg-gquicks-primary/90"
-            data-testid="button-refresh"
-          >
-            <RefreshCw className="w-4 h-4 mr-2" />
-            Atualizar
-          </Button>
-        </div>
+        <Button 
+          onClick={() => refetch()}
+          className="bg-gquicks-primary hover:bg-gquicks-primary/90"
+          data-testid="button-refresh"
+        >
+          <RefreshCw className="w-4 h-4 mr-2" />
+          Atualizar
+        </Button>
       </div>
 
       {/* Filters */}

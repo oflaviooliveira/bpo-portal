@@ -80,14 +80,8 @@ export function Sidebar({ activeSection, onSectionChange }: SidebarProps) {
     },
     {
       section: 'clients',
-      label: 'Clientes',
+      label: 'Clientes & Usuários',
       icon: Building,
-      category: 'ADMINISTRAÇÃO',
-    },
-    {
-      section: 'users',
-      label: 'Usuários',
-      icon: Users,
       category: 'ADMINISTRAÇÃO',
     },
     {

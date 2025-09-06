@@ -12,7 +12,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@
 import { Switch } from '@/components/ui/switch';
 import { useToast } from '@/hooks/use-toast';
 import { apiRequest } from '@/lib/queryClient';
-import { Plus, Building2, Users, Settings, Eye, UserPlus, Calendar, TrendingUp } from 'lucide-react';
+import { Plus, Building2, Users, Settings, Eye, UserPlus, Calendar, TrendingUp, Activity } from 'lucide-react';
 
 interface Tenant {
   id: string;
@@ -37,6 +37,8 @@ interface TenantUser {
   role: string;
   isActive: boolean;
   createdAt: string;
+  tenantId?: string;
+  tenantName?: string;
 }
 
 interface CreateTenantForm {
@@ -82,6 +84,18 @@ export function ClientManagement() {
 
   const { toast } = useToast();
   const queryClient = useQueryClient();
+
+  // Query para listar todos os usuários globalmente
+  const { data: globalUsers, isLoading: isLoadingGlobalUsers } = useQuery({
+    queryKey: ['/api/admin/users/global'],
+    queryFn: async () => {
+      const response = await fetch('/api/admin/users/global');
+      if (!response.ok) {
+        throw new Error('Failed to fetch global users');
+      }
+      return await response.json() as TenantUser[];
+    }
+  });
 
   // Query para listar tenants
   const { data: tenants, isLoading: isLoadingTenants } = useQuery({
@@ -428,8 +442,10 @@ export function ClientManagement() {
         <TabsList>
           <TabsTrigger value="tenants">Clientes</TabsTrigger>
           <TabsTrigger value="users" disabled={!selectedTenant}>
-            {selectedTenant ? `Usuários - ${selectedTenant.name}` : 'Usuários'}
+            {selectedTenant ? `Usuários - ${selectedTenant.name}` : 'Usuários do Cliente'}
           </TabsTrigger>
+          <TabsTrigger value="global-users">Usuários Globais</TabsTrigger>
+          <TabsTrigger value="user-management">Gestão de Perfis</TabsTrigger>
         </TabsList>
 
         <TabsContent value="tenants" className="space-y-4">
@@ -674,6 +690,148 @@ export function ClientManagement() {
               </Card>
             </>
           )}
+        </TabsContent>
+
+        {/* Aba de Usuários Globais */}
+        <TabsContent value="global-users" className="space-y-4">
+          <Card>
+            <CardHeader>
+              <CardTitle>Usuários Globais</CardTitle>
+              <CardDescription>
+                Visualize todos os usuários do sistema, independente do cliente
+              </CardDescription>
+            </CardHeader>
+            <CardContent>
+              {isLoadingGlobalUsers ? (
+                <div className="flex items-center justify-center h-32">
+                  <div className="text-center">
+                    <div className="animate-spin w-6 h-6 border-4 border-gquicks-primary border-t-transparent rounded-full mx-auto mb-2"></div>
+                    <p className="text-muted-foreground text-sm">Carregando usuários...</p>
+                  </div>
+                </div>
+              ) : (
+                <Table>
+                  <TableHeader>
+                    <TableRow>
+                      <TableHead>Nome</TableHead>
+                      <TableHead>Email</TableHead>
+                      <TableHead>Cliente</TableHead>
+                      <TableHead>Função</TableHead>
+                      <TableHead>Status</TableHead>
+                      <TableHead>Criado em</TableHead>
+                      <TableHead>Ações</TableHead>
+                    </TableRow>
+                  </TableHeader>
+                  <TableBody>
+                    {globalUsers?.map((user) => (
+                      <TableRow key={user.id}>
+                        <TableCell className="font-medium">
+                          {user.firstName} {user.lastName}
+                          <div className="text-sm text-muted-foreground">@{user.username}</div>
+                        </TableCell>
+                        <TableCell>{user.email}</TableCell>
+                        <TableCell>
+                          <Badge variant="outline">{user.tenantName || 'N/A'}</Badge>
+                        </TableCell>
+                        <TableCell>
+                          <Badge className={`text-white ${getRoleBadgeColor(user.role)}`}>
+                            {user.role}
+                          </Badge>
+                        </TableCell>
+                        <TableCell>
+                          <span className={`text-sm ${user.isActive ? 'text-green-600' : 'text-red-600'}`}>
+                            {user.isActive ? 'Ativo' : 'Inativo'}
+                          </span>
+                        </TableCell>
+                        <TableCell>{new Date(user.createdAt).toLocaleDateString('pt-BR')}</TableCell>
+                        <TableCell>
+                          <div className="flex space-x-2">
+                            <Button
+                              size="sm"
+                              variant="outline"
+                              onClick={() => console.log('Editar usuário:', user.id)}
+                              data-testid={`button-edit-user-${user.id}`}
+                            >
+                              <Settings className="w-4 h-4 mr-1" />
+                              Editar
+                            </Button>
+                          </div>
+                        </TableCell>
+                      </TableRow>
+                    ))}
+                  </TableBody>
+                </Table>
+              )}
+            </CardContent>
+          </Card>
+        </TabsContent>
+
+        {/* Aba de Gestão de Perfis */}
+        <TabsContent value="user-management" className="space-y-4">
+          <Card>
+            <CardHeader>
+              <CardTitle>Gestão de Perfis de Usuários</CardTitle>
+              <CardDescription>
+                Funcionalidades avançadas para gerenciar usuários do sistema
+              </CardDescription>
+            </CardHeader>
+            <CardContent>
+              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+                <Card className="p-4">
+                  <div className="flex items-center space-x-3">
+                    <div className="p-3 bg-blue-100 rounded-lg">
+                      <Users className="h-6 w-6 text-blue-600" />
+                    </div>
+                    <div>
+                      <h3 className="font-semibold">Reset de Senhas</h3>
+                      <p className="text-sm text-muted-foreground">Redefinir senhas de usuários</p>
+                      <Button size="sm" className="mt-2" variant="outline">
+                        Gerenciar
+                      </Button>
+                    </div>
+                  </div>
+                </Card>
+
+                <Card className="p-4">
+                  <div className="flex items-center space-x-3">
+                    <div className="p-3 bg-green-100 rounded-lg">
+                      <Settings className="h-6 w-6 text-green-600" />
+                    </div>
+                    <div>
+                      <h3 className="font-semibold">Permissões</h3>
+                      <p className="text-sm text-muted-foreground">Gerenciar papéis e acessos</p>
+                      <Button size="sm" className="mt-2" variant="outline">
+                        Configurar
+                      </Button>
+                    </div>
+                  </div>
+                </Card>
+
+                <Card className="p-4">
+                  <div className="flex items-center space-x-3">
+                    <div className="p-3 bg-purple-100 rounded-lg">
+                      <Activity className="h-6 w-6 text-purple-600" />
+                    </div>
+                    <div>
+                      <h3 className="font-semibold">Auditoria</h3>
+                      <p className="text-sm text-muted-foreground">Logs de atividade dos usuários</p>
+                      <Button size="sm" className="mt-2" variant="outline">
+                        Visualizar
+                      </Button>
+                    </div>
+                  </div>
+                </Card>
+              </div>
+
+              <div className="mt-6 p-4 bg-muted rounded-lg">
+                <h4 className="font-semibold text-sm text-muted-foreground mb-2">FUNCIONALIDADES EM DESENVOLVIMENTO</h4>
+                <p className="text-sm text-muted-foreground">
+                  As funcionalidades avançadas de gestão de usuários estão sendo implementadas. 
+                  Em breve você terá acesso completo a reset de senhas, auditoria detalhada e controle granular de permissões.
+                </p>
+              </div>
+            </CardContent>
+          </Card>
         </TabsContent>
       </Tabs>
     </div>

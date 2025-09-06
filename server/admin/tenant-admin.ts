@@ -343,3 +343,138 @@ export async function createTenantUser(req: Request, res: Response) {
     res.status(500).json({ error: 'Erro interno do servidor' });
   }
 }
+
+/**
+ * Lista todos os usuários do sistema (visão global)
+ */
+export async function listGlobalUsers(req: Request, res: Response) {
+  try {
+    const allUsers = await db
+      .select({
+        id: users.id,
+        username: users.username,
+        email: users.email,
+        firstName: users.firstName,
+        lastName: users.lastName,
+        role: users.role,
+        isActive: users.isActive,
+        createdAt: users.createdAt,
+        tenantId: users.tenantId,
+        tenantName: tenants.name,
+      })
+      .from(users)
+      .innerJoin(tenants, eq(tenants.id, users.tenantId))
+      .orderBy(users.createdAt);
+
+    console.log(`📋 Listando ${allUsers.length} usuários globalmente`);
+    res.json(allUsers);
+  } catch (error) {
+    console.error('❌ Erro ao listar usuários globais:', error);
+    res.status(500).json({ error: 'Erro interno do servidor' });
+  }
+}
+
+/**
+ * Edita um usuário específico
+ */
+export async function updateUser(req: Request, res: Response) {
+  try {
+    const { userId } = req.params;
+    const { firstName, lastName, email, role, isActive } = req.body;
+
+    // Validação básica
+    if (!firstName || !lastName || !email || !role) {
+      return res.status(400).json({ error: 'Campos obrigatórios: firstName, lastName, email, role' });
+    }
+
+    // Verificar se usuário existe
+    const [existingUser] = await db
+      .select()
+      .from(users)
+      .where(eq(users.id, userId))
+      .limit(1);
+
+    if (!existingUser) {
+      return res.status(404).json({ error: 'Usuário não encontrado' });
+    }
+
+    // Atualizar usuário
+    const [updatedUser] = await db
+      .update(users)
+      .set({
+        firstName,
+        lastName,
+        email,
+        role,
+        isActive: isActive !== undefined ? isActive : existingUser.isActive,
+        updatedAt: new Date(),
+      })
+      .where(eq(users.id, userId))
+      .returning({
+        id: users.id,
+        username: users.username,
+        email: users.email,
+        firstName: users.firstName,
+        lastName: users.lastName,
+        role: users.role,
+        isActive: users.isActive,
+        updatedAt: users.updatedAt,
+      });
+
+    console.log(`✅ Usuário ${updatedUser.username} atualizado com sucesso`);
+
+    res.json({
+      message: 'Usuário atualizado com sucesso',
+      user: updatedUser,
+    });
+  } catch (error) {
+    console.error('❌ Erro ao atualizar usuário:', error);
+    res.status(500).json({ error: 'Erro interno do servidor' });
+  }
+}
+
+/**
+ * Reseta a senha de um usuário
+ */
+export async function resetUserPassword(req: Request, res: Response) {
+  try {
+    const { userId } = req.params;
+    const { newPassword } = req.body;
+
+    if (!newPassword || newPassword.length < 6) {
+      return res.status(400).json({ error: 'Nova senha deve ter pelo menos 6 caracteres' });
+    }
+
+    // Verificar se usuário existe
+    const [existingUser] = await db
+      .select()
+      .from(users)
+      .where(eq(users.id, userId))
+      .limit(1);
+
+    if (!existingUser) {
+      return res.status(404).json({ error: 'Usuário não encontrado' });
+    }
+
+    // Hash da nova senha
+    const hashedPassword = await hashPassword(newPassword);
+
+    // Atualizar senha
+    await db
+      .update(users)
+      .set({
+        password: hashedPassword,
+        updatedAt: new Date(),
+      })
+      .where(eq(users.id, userId));
+
+    console.log(`🔑 Senha resetada para usuário ${existingUser.username}`);
+
+    res.json({
+      message: 'Senha resetada com sucesso',
+    });
+  } catch (error) {
+    console.error('❌ Erro ao resetar senha:', error);
+    res.status(500).json({ error: 'Erro interno do servidor' });
+  }
+}

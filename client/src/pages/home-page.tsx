@@ -13,7 +13,7 @@ import { ClientManagement } from "@/components/admin/client-management";
 import { AdminDashboardSidebar } from "@/components/admin/admin-dashboard-sidebar";
 import { AdminStatsSidebar } from "@/components/admin/admin-stats-sidebar";
 
-type Section = 'dashboard' | 'inbox' | 'upload' | 'scheduled' | 'reconciliation' | 'emission' | 'archived' | 'clients' | 'users' | 'ai-control' | 'admin-dashboard' | 'admin-stats';
+type Section = 'dashboard' | 'inbox' | 'upload' | 'scheduled' | 'reconciliation' | 'emission' | 'archived' | 'clients' | 'ai-control' | 'admin-dashboard' | 'admin-stats';
 
 export default function HomePage() {
   const [activeSection, setActiveSection] = useState<Section>('dashboard');
@@ -40,13 +40,6 @@ export default function HomePage() {
         return <Archived />;
       case 'clients':
         return <ClientManagement />;
-      case 'users':
-        return (
-          <div className="p-6">
-            <h2 className="font-gilroy font-bold text-2xl text-foreground mb-4">Usuários</h2>
-            <p className="text-muted-foreground">Funcionalidade em desenvolvimento</p>
-          </div>
-        );
       case 'ai-control':
         return (
           <div className="p-6">
