@@ -525,6 +525,15 @@ FOQUE ESPECIFICAMENTE na seção do BOLETO para extração de dados de pagamento
 - EXEMPLO: "PORTO SEGURO CIA DE SEGUROS GERAIS", "TEAMGUIDE", "SOMPO SEGUROS S.A."
 - ⚡ IMPORTANTE: BENEFICIÁRIO = quem recebe o dinheiro = FORNECEDOR
 
+📋 CNPJ DO BENEFICIÁRIO (CRÍTICO):
+- SEMPRE extrair o CNPJ do beneficiário/cedente
+- Procure na MESMA LINHA do beneficiário: "CNPJ: XX.XXX.XXX/XXXX-XX"
+- EXEMPLO: "Allianz Seguros S.A. - CNPJ: 61.573.796/0001-66"
+- FORMATO: XX.XXX.XXX/XXXX-XX (14 dígitos com pontuação)
+- ⚠️ NÃO confundir com números de apólice, referência ou códigos de documento
+- ⚠️ IGNORE números como "13.194.882/3500-00" (referências/apólices)
+- ✅ PROCURE formato padrão: XX.XXX.XXX/XXXX-XX
+
 👤 SACADO (PAGADOR):
 - Quem deve pagar o boleto
 - Procure seção "SACADO:" ou "PAGADOR:"
@@ -570,6 +579,7 @@ RETORNE JSON COM DADOS EXATOS DO BOLETO:
 {
   "valor": "R$ [VALOR_EXATO]",
   "beneficiario": "[NOME_BENEFICIÁRIO_COMPLETO]",
+  "cnpj_beneficiario": "[XX.XXX.XXX/XXXX-XX]",
   "cedente": "[NOME_CEDENTE_COMPLETO]",
   "sacado": "[NOME_SACADO_COMPLETO]",
   "data_vencimento": "[DD/MM/AAAA]",
