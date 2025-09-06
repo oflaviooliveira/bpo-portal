@@ -1818,7 +1818,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
   }
 
   // AI Provider control endpoints - Enhanced monitoring system
-  app.get("/api/ai-control", ...authorize(["ADMIN", "GERENTE"]), async (req, res) => {
+  app.get("/api/ai-control", ...authorize(["SUPER_ADMIN"]), async (req, res) => {
     try {
       const user = req.user!;
       const { aiMultiProvider } = await import("./ai-multi-provider");
@@ -1887,7 +1887,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
-  app.post("/api/ai-control/toggle-provider", ...authorize(["ADMIN", "GERENTE"]), async (req, res) => {
+  app.post("/api/ai-control/toggle-provider", ...authorize(["SUPER_ADMIN"]), async (req, res) => {
     try {
       const { providerName } = req.body;
       const { aiMultiProvider } = await import("./ai-multi-provider");
@@ -1900,7 +1900,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
   });
 
   // Get available models
-  app.get('/api/ai-control/available-models', ...authorize(["ADMIN", "GERENTE"]), async (req, res) => {
+  app.get('/api/ai-control/available-models', ...authorize(["SUPER_ADMIN"]), async (req, res) => {
     try {
       const { aiMultiProvider } = await import("./ai-multi-provider");
       const models = aiMultiProvider.getAvailableModels();
@@ -1912,7 +1912,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
   });
 
   // Update provider model
-  app.post('/api/ai-control/update-model', ...authorize(["ADMIN", "GERENTE"]), async (req, res) => {
+  app.post('/api/ai-control/update-model', ...authorize(["SUPER_ADMIN"]), async (req, res) => {
     try {
       const { providerName, modelId } = req.body;
 
@@ -1940,7 +1940,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
   });
 
   // Update provider configuration (model, priority, etc)
-  app.post("/api/ai-control/update-config", ...authorize(["ADMIN", "GERENTE"]), async (req, res) => {
+  app.post("/api/ai-control/update-config", ...authorize(["SUPER_ADMIN"]), async (req, res) => {
     try {
       const { providerName, config } = req.body;
       const { aiMultiProvider } = await import("./ai-multi-provider");
@@ -1958,7 +1958,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
   });
 
   // Swap provider priorities
-  app.post("/api/ai-control/swap-priorities", ...authorize(["ADMIN", "GERENTE"]), async (req, res) => {
+  app.post("/api/ai-control/swap-priorities", ...authorize(["SUPER_ADMIN"]), async (req, res) => {
     try {
       const { aiMultiProvider } = await import("./ai-multi-provider");
       aiMultiProvider.swapPriorities();
@@ -1970,7 +1970,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
   });
 
   // AI Control - Performance metrics
-  app.get("/api/ai-control/performance", ...authorize(["ADMIN", "GERENTE"]), async (req, res) => {
+  app.get("/api/ai-control/performance", ...authorize(["SUPER_ADMIN"]), async (req, res) => {
     try {
       const { aiMultiProvider } = await import("./ai-multi-provider");
       const metrics = aiMultiProvider.getProviderMetrics();
@@ -1992,7 +1992,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
   });
 
   // AI Control - Real-time status with recent activity
-  app.get("/api/ai-control/status", ...authorize(["ADMIN", "GERENTE", "OPERADOR"]), async (req, res) => {
+  app.get("/api/ai-control/status", ...authorize(["SUPER_ADMIN"]), async (req, res) => {
     try {
       const { aiMultiProvider } = await import("./ai-multi-provider");
       const providers = aiMultiProvider.getProviders();
@@ -2036,7 +2036,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
   });
 
   // Emergency mode control
-  app.post("/api/ai-control/emergency-mode", ...authorize(["ADMIN", "GERENTE"]), async (req, res) => {
+  app.post("/api/ai-control/emergency-mode", ...authorize(["SUPER_ADMIN"]), async (req, res) => {
     try {
       const { enabled } = req.body;
       const { aiMultiProvider } = await import("./ai-multi-provider");
@@ -2055,7 +2055,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
   });
 
   // Reset provider status
-  app.post("/api/ai-control/reset-provider", ...authorize(["ADMIN", "GERENTE"]), async (req, res) => {
+  app.post("/api/ai-control/reset-provider", ...authorize(["SUPER_ADMIN"]), async (req, res) => {
     try {
       const { providerName } = req.body;
       const { aiMultiProvider } = await import("./ai-multi-provider");
@@ -2070,7 +2070,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
   });
 
   // Get detailed status
-  app.get("/api/ai-control/detailed-status", ...authorize(["ADMIN", "GERENTE", "OPERADOR"]), async (req, res) => {
+  app.get("/api/ai-control/detailed-status", ...authorize(["SUPER_ADMIN"]), async (req, res) => {
     try {
       const { aiMultiProvider } = await import("./ai-multi-provider");
       const detailedStatus = aiMultiProvider.getDetailedStatus();
@@ -2083,7 +2083,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
   });
 
   // Get recent AI document history
-  app.get("/api/ai-control/recent-documents", ...authorize(["ADMIN", "GERENTE"]), async (req, res) => {
+  app.get("/api/ai-control/recent-documents", ...authorize(["SUPER_ADMIN"]), async (req, res) => {
     try {
       const user = req.user!;
       const limit = parseInt(req.query.limit as string) || 10;
@@ -2136,7 +2136,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
   });
 
   // AI usage analytics endpoint
-  app.get("/api/ai-control/analytics", ...authorize(["ADMIN", "GERENTE"]), async (req, res) => {
+  app.get("/api/ai-control/analytics", ...authorize(["SUPER_ADMIN"]), async (req, res) => {
     try {
       const user = req.user!;
       const { period = '30', provider } = req.query;
@@ -2229,7 +2229,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
   });
 
   // AI provider configuration endpoint
-  app.patch("/api/ai-control/provider/:name", ...authorize(["ADMIN"]), async (req, res) => {
+  app.patch("/api/ai-control/provider/:name", ...authorize(["SUPER_ADMIN"]), async (req, res) => {
     try {
       const { name } = req.params;
       const { priority, costPer1000 } = req.body;
