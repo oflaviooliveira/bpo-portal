@@ -20,7 +20,7 @@ import { registerFileRoutes } from "./routes/files";
 import { AIDiagnostics } from "./ai-diagnostics";
 import { tenantContextMiddleware, validateTenantSlug, requireTenantContext } from "./middleware/tenant-context";
 import { setGlobalAdminContext } from "./middleware/rls-context";
-import { listTenants, createTenant, toggleTenant, listTenantUsers, createTenantUser, listGlobalUsers, updateUser, resetUserPassword } from "./admin/tenant-admin";
+import { listTenants, createTenant, toggleTenant, listTenantUsers, createTenantUser, listGlobalUsers, updateUser, resetUserPassword, createGquicksUser } from "./admin/tenant-admin";
 import { getDashboardStats } from "./admin/dashboard-stats";
 import { resetTenant, getTenantDetails, duplicateTenantConfig } from "./admin/tenant-actions";
 
@@ -2598,6 +2598,9 @@ export async function registerRoutes(app: Express): Promise<Server> {
   
   // Listar todos os usuários do sistema (apenas ADMIN global)
   app.get("/api/admin/users/global", setGlobalAdminContext, listGlobalUsers);
+  
+  // Criar usuário da equipe Gquicks (apenas ADMIN global)
+  app.post("/api/admin/users/gquicks", setGlobalAdminContext, createGquicksUser);
   
   // Editar usuário específico (apenas ADMIN global)
   app.put("/api/admin/users/:userId", setGlobalAdminContext, updateUser);

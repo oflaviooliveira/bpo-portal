@@ -1,7 +1,7 @@
 import { Request, Response } from 'express';
 import { db } from '../db';
 import { tenants, users, contrapartes, categories, costCenters, documents } from '@shared/schema';
-import { eq, count, sql } from 'drizzle-orm';
+import { eq, count, sql, or } from 'drizzle-orm';
 import { hashPassword } from '../auth';
 import { z } from 'zod';
 
@@ -429,6 +429,74 @@ export async function updateUser(req: Request, res: Response) {
     });
   } catch (error) {
     console.error('❌ Erro ao atualizar usuário:', error);
+    res.status(500).json({ error: 'Erro interno do servidor' });
+  }
+}
+
+/**
+ * Cria um novo usuário da equipe Gquicks (tenant global)
+ */
+export async function createGquicksUser(req: Request, res: Response) {
+  try {
+    const validatedData = createUserSchema.parse(req.body);
+    const gquicksTenantId = '00000000-0000-0000-0000-000000000001';
+
+    // Verificar se email/username já existe globalmente
+    const existingUser = await db
+      .select()
+      .from(users)
+      .where(
+        or(
+          eq(users.email, validatedData.email),
+          eq(users.username, validatedData.username)
+        )
+      )
+      .limit(1);
+
+    if (existingUser.length > 0) {
+      return res.status(400).json({ error: 'Email ou nome de usuário já existe' });
+    }
+
+    // Criar usuário da equipe Gquicks
+    const hashedPassword = await hashPassword(validatedData.password);
+    const [newUser] = await db
+      .insert(users)
+      .values({
+        tenantId: gquicksTenantId,
+        username: validatedData.username,
+        password: hashedPassword,
+        email: validatedData.email,
+        firstName: validatedData.firstName,
+        lastName: validatedData.lastName,
+        role: validatedData.role,
+        isActive: true,
+      })
+      .returning({
+        id: users.id,
+        username: users.username,
+        email: users.email,
+        firstName: users.firstName,
+        lastName: users.lastName,
+        role: users.role,
+        isActive: users.isActive,
+        createdAt: users.createdAt,
+      });
+
+    console.log(`✅ Colaborador Gquicks criado: ${newUser.username} (${newUser.role})`);
+
+    res.status(201).json({
+      message: 'Colaborador adicionado à equipe Gquicks com sucesso',
+      user: newUser,
+    });
+  } catch (error) {
+    if (error instanceof z.ZodError) {
+      return res.status(400).json({
+        error: 'Dados inválidos',
+        details: error.errors,
+      });
+    }
+
+    console.error('❌ Erro ao criar colaborador Gquicks:', error);
     res.status(500).json({ error: 'Erro interno do servidor' });
   }
 }
