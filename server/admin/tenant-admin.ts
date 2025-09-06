@@ -349,7 +349,8 @@ export async function createTenantUser(req: Request, res: Response) {
  */
 export async function listGlobalUsers(req: Request, res: Response) {
   try {
-    const allUsers = await db
+    // Buscar apenas usuários da equipe Gquicks (tenant global)
+    const gquicksUsers = await db
       .select({
         id: users.id,
         username: users.username,
@@ -359,16 +360,13 @@ export async function listGlobalUsers(req: Request, res: Response) {
         role: users.role,
         isActive: users.isActive,
         createdAt: users.createdAt,
-        tenantId: users.tenantId,
-        tenantName: tenants.name,
       })
       .from(users)
-      .innerJoin(tenants, eq(tenants.id, users.tenantId))
-      .where(eq(users.tenantId, '00000000-0000-0000-0000-000000000001')) // Filtrar apenas usuários Gquicks
+      .where(eq(users.tenantId, '00000000-0000-0000-0000-000000000001'))
       .orderBy(users.createdAt);
 
-    console.log(`📋 Listando ${allUsers.length} usuários globalmente`);
-    res.json(allUsers);
+    console.log(`📋 Listando ${gquicksUsers.length} usuários da equipe Gquicks`);
+    res.json(gquicksUsers);
   } catch (error) {
     console.error('❌ Erro ao listar usuários globais:', error);
     res.status(500).json({ error: 'Erro interno do servidor' });
