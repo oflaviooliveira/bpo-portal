@@ -12,7 +12,7 @@ export const users = pgTable("users", {
   email: varchar("email", { length: 255 }).notNull().unique(),
   firstName: varchar("first_name", { length: 255 }).notNull(),
   lastName: varchar("last_name", { length: 255 }).notNull(),
-  role: varchar("role", { length: 50 }).notNull().default("OPERADOR"), // ADMIN, GERENTE, OPERADOR
+  role: varchar("role", { length: 50 }).notNull().default("CLIENT_USER"), // SUPER_ADMIN (CEO Gquicks), CLIENT_USER (cliente único)
   tenantId: uuid("tenant_id").notNull(),
   isActive: boolean("is_active").notNull().default(true),
   createdAt: timestamp("created_at").defaultNow(),

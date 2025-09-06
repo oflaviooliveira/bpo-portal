@@ -133,7 +133,7 @@ export function requireRole(...allowedRoles: string[]) {
   };
 }
 
-// Middleware para scoping por operador - Wave 1
+// Middleware de acesso simplificado para novo modelo de papéis
 export function requireClientAccess(req: any, res: any, next: any) {
   if (!req.isAuthenticated()) {
     return res.status(401).json({ error: "Authentication required" });
@@ -141,37 +141,22 @@ export function requireClientAccess(req: any, res: any, next: any) {
 
   const user = req.user!;
   
-  // Admins e Gerentes veem todos os clientes do tenant
-  if (user.role === 'ADMIN' || user.role === 'GERENTE') {
+  // SUPER_ADMIN (CEO Gquicks) tem acesso total sem restrições
+  if (user.role === 'SUPER_ADMIN') {
     return next();
   }
 
-  // Operadores só veem clientes designados (implementar tabela user_clients)
-  if (user.role === 'OPERADOR') {
-    // Por enquanto, operador vê todos os clientes (será refinado)
+  // CLIENT_USER só acessa dados do próprio tenant
+  if (user.role === 'CLIENT_USER') {
+    // Filtrar automaticamente pelo tenant do usuário
+    req.tenantFilter = user.tenantId;
     return next();
   }
 
-  // Clientes só veem seus próprios documentos
-  if (user.role === 'CLIENTE') {
-    // Verificar se o clientId do request corresponde ao user
-    const requestedClientId = req.params.clientId || req.query.clientId || req.body.clientId;
-    
-    // Se não especificou cliente, assumir que é o próprio
-    if (!requestedClientId) {
-      req.query.clientId = user.id; // Cliente só acessa seus dados
-      return next();
-    }
-    
-    // Verificar se cliente está tentando acessar dados de outro cliente
-    if (requestedClientId !== user.id) {
-      return res.status(403).json({ 
-        error: "Acesso negado. Cliente só pode acessar seus próprios dados." 
-      });
-    }
-  }
-
-  next();
+  // Papel não reconhecido
+  return res.status(403).json({ 
+    error: "Papel de usuário não reconhecido." 
+  });
 }
 
 // Middleware combinado para autenticação + autorização

@@ -18,10 +18,8 @@ export type DocumentType =
   | "EMITIR_NF";
 
 export type UserRole = 
-  | "ADMIN" 
-  | "GERENTE" 
-  | "OPERADOR" 
-  | "CLIENTE";
+  | "SUPER_ADMIN"  // CEO da Gquicks - acesso total à plataforma
+  | "CLIENT_USER"; // Usuário do cliente BPO - acesso limitado
 
 // Fluxos de negócio conforme guia
 export const BusinessFlows: Record<DocumentType, DocumentStatus[]> = {
@@ -54,34 +52,26 @@ export const AutoTransitions: StatusTransition[] = [
   }
 ];
 
-// RBAC Permissions Matrix
+// RBAC Permissions Matrix Simplificado
 export const RolePermissions = {
-  ADMIN: {
+  SUPER_ADMIN: {
+    // CEO da Gquicks - controle total da plataforma
     documents: ["create", "read", "update", "delete", "export"],
     clients: ["create", "read", "update", "delete"],
     users: ["create", "read", "update", "delete"],
     reports: ["read", "export"],
-    settings: ["read", "update"]
+    settings: ["read", "update"],
+    platform: ["read", "manage"], // Acesso a analytics globais, IA, etc.
+    tenants: ["create", "read", "update", "delete"] // Gerenciar clientes BPO
   },
-  GERENTE: {
-    documents: ["create", "read", "update", "export"],
-    clients: ["create", "read", "update"],
-    users: ["read"],
-    reports: ["read", "export"],
-    settings: ["read"]
-  },
-  OPERADOR: {
-    documents: ["create", "read", "update"],
-    clients: ["read"],
-    users: [],
-    reports: ["read"],
-    settings: []
-  },
-  CLIENTE: {
-    documents: ["create", "read"],
-    clients: ["read"],
-    users: [],
-    reports: ["read"],
-    settings: []
+  CLIENT_USER: {
+    // Cliente BPO - acesso limitado apenas aos seus dados
+    documents: ["create", "read"], // Só seus documentos
+    clients: [], // Não gerencia clientes
+    users: [], // Não gerencia usuários
+    reports: ["read"], // Só seus relatórios
+    settings: ["read"], // Só configurações pessoais básicas
+    platform: [], // Sem acesso a dados da plataforma
+    tenants: [] // Sem acesso a outros tenants
   }
 } as const;
