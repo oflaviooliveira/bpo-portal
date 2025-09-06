@@ -134,16 +134,34 @@ export function Sidebar({ activeSection, onSectionChange }: SidebarProps) {
       category: 'PRINCIPAL',
     },
     {
+      section: 'fornecedores',
+      label: 'Fornecedores',
+      icon: Building,
+      category: 'CADASTROS',
+    },
+    {
+      section: 'categorias',
+      label: 'Categorias',
+      icon: BarChart3,
+      category: 'CADASTROS',
+    },
+    {
+      section: 'centros-custo',
+      label: 'Centros de Custo',
+      icon: TrendingUp,
+      category: 'CADASTROS',
+    },
+    {
       section: 'reports',
       label: 'Relatórios',
       icon: BarChart3,
-      category: 'PRINCIPAL',
+      category: 'RELATÓRIOS',
     },
     {
       section: 'settings',
       label: 'Configurações',
       icon: Settings,
-      category: 'PRINCIPAL',
+      category: 'CONFIGURAÇÕES',
     },
   ];
 
@@ -151,7 +169,7 @@ export function Sidebar({ activeSection, onSectionChange }: SidebarProps) {
 
   const categories = isSuperAdmin 
     ? ['PAINEL EXECUTIVO', 'ANALYTICS', 'CONFIGURAÇÕES']
-    : ['PRINCIPAL'];
+    : ['PRINCIPAL', 'CADASTROS', 'RELATÓRIOS', 'CONFIGURAÇÕES'];
 
   return (
     <div className="bg-gquicks-secondary w-64 flex flex-col">

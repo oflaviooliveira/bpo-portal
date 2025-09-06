@@ -158,8 +158,8 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
-  // Contrapartes endpoints - Nova implementação unificada
-  app.get("/api/contrapartes", ...authorize(["ADMIN", "GERENTE", "OPERADOR"], true), async (req, res) => {
+  // Fornecedores endpoints - Simplificado para clientes
+  app.get("/api/fornecedores", ...authorize(["SUPER_ADMIN", "CLIENT_USER"], true), async (req, res) => {
     try {
       const tenantId = req.user?.tenantId!;
       const filters = {
@@ -167,24 +167,29 @@ export async function registerRoutes(app: Express): Promise<Server> {
         canBeSupplier: req.query.canBeSupplier === 'true' ? true : undefined
       };
 
-      const contrapartes = await storage.getContrapartes(tenantId, filters);
-      res.json(contrapartes);
+      const fornecedores = await storage.getContrapartes(tenantId, { canBeSupplier: true });
+      res.json(fornecedores);
     } catch (error) {
-      console.error("Get contrapartes error:", error);
-      res.status(500).json({ error: "Erro ao carregar contrapartes" });
+      console.error("Get fornecedores error:", error);
+      res.status(500).json({ error: "Erro ao carregar fornecedores" });
     }
   });
 
-  app.post("/api/contrapartes", ...authorize(["ADMIN", "GERENTE"], true), async (req, res) => {
+  app.post("/api/fornecedores", ...authorize(["SUPER_ADMIN", "CLIENT_USER"], true), async (req, res) => {
     try {
       const tenantId = req.user?.tenantId!;
-      const contraparteData = { ...req.body, tenantId };
+      const fornecedorData = { 
+        ...req.body, 
+        tenantId,
+        canBeSupplier: true,
+        canBeClient: false 
+      };
 
-      const newContraparte = await storage.createContraparte(contraparteData);
-      res.status(201).json(newContraparte);
+      const newFornecedor = await storage.createContraparte(fornecedorData);
+      res.status(201).json(newFornecedor);
     } catch (error) {
-      console.error("Create contraparte error:", error);
-      res.status(500).json({ error: "Erro ao criar contraparte" });
+      console.error("Create fornecedor error:", error);
+      res.status(500).json({ error: "Erro ao criar fornecedor" });
     }
   });
 
