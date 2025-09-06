@@ -131,10 +131,9 @@ export function TeamManagement() {
 
   // Query para listar usuários da equipe Gquicks
   const { data: gquicksUsers, isLoading } = useQuery({
-    queryKey: ['/api/admin/users/global'],
+    queryKey: ['/api/admin/users/global', Date.now()], // Force cache bust
     queryFn: async () => {
-      const response = await fetch('/api/admin/users/global');
-      if (!response.ok) throw new Error('Failed to fetch team');
+      const response = await apiRequest('GET', '/api/admin/users/global');
       return await response.json() as GquicksUser[];
     }
   });
