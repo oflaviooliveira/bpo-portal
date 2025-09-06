@@ -1,5 +1,6 @@
 import { NotaFiscalAnalyzer } from "./nota-fiscal-analyzer";
 import { aiMultiProvider } from "../ai-multi-provider";
+import { SupplierAutoSuggest } from "./supplier-auto-suggest";
 
 // Removido OpenAI direto - agora usa AIMultiProvider
 
@@ -21,6 +22,7 @@ export interface DocumentAnalysisResult {
   confidence: number;
   reasoning?: string;
   error?: string;
+  supplierAutoSuggest?: any; // Dados de auto-sugestão para frontend
 }
 
 export class DocumentAnalyzer {
@@ -96,13 +98,55 @@ export class DocumentAnalyzer {
       if (aiResult.fallbackReason) {
         console.log(`🔄 Fallback: ${aiResult.fallbackReason}`);
       }
-      
-      return {
-        success: true,
-        extractedData: aiResult.extractedData,
-        confidence: aiResult.confidence,
-        reasoning: `Analisado com ${aiResult.provider}${aiResult.fallbackReason ? ` (fallback: ${aiResult.fallbackReason})` : ''}`
-      };
+
+      // 🔍 SISTEMA DE AUTO-DETECÇÃO DE FORNECEDOR
+      console.log("🔍 Executando auto-detecção de fornecedor...");
+      try {
+        const supplierResult = await SupplierAutoSuggest.autoDetectAndSuggest(
+          extractedText,
+          filename,
+          tenantId,
+          undefined, // documentType - pode ser inferido
+          false // não executar automaticamente, apenas sugerir
+        );
+
+        // Enriquecer dados extraídos com informações de fornecedor
+        const enrichedData = { ...aiResult.extractedData };
+        
+        if (supplierResult.supplierName && !enrichedData.fornecedor) {
+          enrichedData.fornecedor = supplierResult.supplierName;
+          console.log(`✅ Fornecedor auto-detectado: ${supplierResult.supplierName}`);
+        }
+        
+        if (supplierResult.supplierDocument && !enrichedData.documento) {
+          enrichedData.documento = supplierResult.supplierDocument;
+          console.log(`📄 Documento auto-detectado: ${supplierResult.supplierDocument}`);
+        }
+
+        // Log detalhado da auto-sugestão
+        const { autoSuggestResult } = supplierResult;
+        console.log(`🤖 Auto-sugestão: ${autoSuggestResult.recommendation.action} (${autoSuggestResult.recommendation.confidence}%)`);
+        console.log(`💡 Razão: ${autoSuggestResult.recommendation.reasoning}`);
+        
+        return {
+          success: true,
+          extractedData: enrichedData,
+          confidence: aiResult.confidence,
+          reasoning: `Analisado com ${aiResult.provider}${aiResult.fallbackReason ? ` (fallback: ${aiResult.fallbackReason})` : ''}. Auto-detecção: ${autoSuggestResult.recommendation.action}`,
+          // Adicionar dados de auto-sugestão para uso posterior
+          supplierAutoSuggest: autoSuggestResult
+        };
+        
+      } catch (supplierError) {
+        console.error(`⚠️ Erro na auto-detecção de fornecedor: ${supplierError}`);
+        // Continuar com os dados originais se a auto-detecção falhar
+        return {
+          success: true,
+          extractedData: aiResult.extractedData,
+          confidence: aiResult.confidence,
+          reasoning: `Analisado com ${aiResult.provider}${aiResult.fallbackReason ? ` (fallback: ${aiResult.fallbackReason})` : ''}. Auto-detecção falhou.`
+        };
+      }
 
     } catch (error) {
       console.error(`❌ Erro na análise com IA: ${error}`);

@@ -187,7 +187,6 @@ export class SupplierAutoSuggest {
         name: supplier.name,
         document: supplier.document || '',
         documentType: supplier.documentType || 'OUTROS',
-        category: supplier.category || 'OUTROS',
         email: supplier.email || '',
         phone: supplier.phone || '',
         address: supplier.address || '',
@@ -203,7 +202,6 @@ export class SupplierAutoSuggest {
         name: detected.supplier.name,
         document: detected.supplier.cnpj || '',
         documentType: detected.supplier.cnpj ? 'CNPJ' : 'OUTROS',
-        category: detected.supplier.category || 'OUTROS',
         email: '',
         phone: '',
         address: '',
@@ -224,12 +222,8 @@ export class SupplierAutoSuggest {
       name: supplier.name,
       document: supplier.cnpj || '',
       documentType: supplier.cnpj ? 'CNPJ' : 'OUTROS',
-      category: supplier.category || 'OUTROS',
       canBeSupplier: true,
       canBeClient: false,
-      email: '',
-      phone: '',
-      address: '',
       notes: `Auto-detectado em ${new Date().toLocaleDateString('pt-BR')} (${supplier.source})`,
       tenantId: '' // Será preenchido no momento da criação
     };
