@@ -44,13 +44,13 @@ export function Sidebar({ activeSection, onSectionChange }: SidebarProps) {
       label: 'Inbox',
       icon: Inbox,
       badge: '12',
-      category: 'PRINCIPAL',
+      category: 'OPERAÇÕES',
     },
     {
       section: 'upload',
       label: 'Upload Documentos',
       icon: Upload,
-      category: 'PRINCIPAL',
+      category: 'OPERAÇÕES',
     },
     {
       section: 'scheduled',
