@@ -380,14 +380,23 @@ class AIMultiProvider {
     };
   }
 
-  // SPECIALIZED PROMPTS BY DOCUMENT TYPE
-  private createSpecializedPrompt(documentType: DocumentType, ocrText: string, fileName: string): string {
+  // SPECIALIZED PROMPTS BY DOCUMENT TYPE WITH COMPOSITE SUPPORT
+  private createSpecializedPrompt(documentType: DocumentType, ocrText: string, fileName: string, classification?: DocumentClassification): string {
     const fileMetadata = this.extractFileMetadata(fileName);
+    
+    // Detectar se é documento composto
+    const isComposite = classification?.isComposite || false;
+    const secondaryType = classification?.secondaryType;
+    const boletoData = classification?.boletoDetection;
     
     const baseContext = `
 ARQUIVO: ${fileName}
 TEXTO OCR: ${ocrText.length > 1500 ? ocrText.substring(0, 1500) + '...' : ocrText}
 METADADOS: ${JSON.stringify(fileMetadata, null, 2)}
+${isComposite ? `
+🔄 DOCUMENTO COMPOSTO DETECTADO: ${documentType} + ${secondaryType}
+${boletoData?.isBoleto ? `💰 BOLETO CONFIRMADO (${boletoData.confidence}% confiança): ${boletoData.indicators.join(', ')}` : ''}
+` : ''}
 `;
 
     switch (documentType) {
@@ -463,24 +472,85 @@ VALIDAÇÕES:
 Retorne JSON com: valor, pagador, recebedor, finalidade, data_pagamento, forma_pagamento, documento_pagador, confidence`;
 
       case 'BOLETO':
-        return `Você é um especialista em análise de boletos bancários brasileiros.
+        return `🏦 ESPECIALISTA BOLETO - EXTRAÇÃO FOCADA EM PAGAMENTO
 
 ${baseContext}
 
-INSTRUÇÕES ESPECÍFICAS:
-1. CEDENTE: Favorecido/quem recebe o pagamento
-2. SACADO: Pagador/devedor
-3. VALOR: Valor original do boleto
-4. VENCIMENTO: Data limite para pagamento
-5. CÓDIGO DE BARRAS: Sequência numérica para pagamento
-6. JUROS/MULTA: Se aplicáveis após vencimento
+${isComposite ? `
+⚠️  ATENÇÃO: DOCUMENTO COMPOSTO DETECTADO
+Este documento contém ${secondaryType} + BOLETO anexado. 
+FOQUE ESPECIFICAMENTE na seção do BOLETO para extração de dados de pagamento.
 
-VALIDAÇÕES:
-- Linha digitável ou código de barras válidos
-- Data de vencimento lógica
-- Cálculo de juros/multa se houver
+🎯 ESTRATÉGIA DE PROCESSAMENTO:
+- Procure seções com: "FICHA DE COMPENSAÇÃO", "CÓDIGO DE BARRAS", "LINHA DIGITÁVEL"
+- Ignore dados da ${secondaryType} (apólice, fatura, etc.) no início do documento
+- Concentre-se na área de pagamento/boleto (geralmente final do documento)
+- Priorize dados bancários: vencimento, valor, cedente, código de barras
 
-Retorne JSON com: valor, cedente, sacado, data_vencimento, codigo_barras, linha_digitavel, valor_juros, valor_multa, confidence`;
+` : ''}
+
+💰 INSTRUÇÕES CRÍTICAS PARA BOLETO:
+
+🏢 CEDENTE (FAVORECIDO):
+- Empresa/pessoa que receberá o pagamento
+- Geralmente aparece como "CEDENTE:" ou "BENEFICIÁRIO:"
+- EXEMPLO: "PORTO SEGURO CIA DE SEGUROS GERAIS"
+
+👤 SACADO (PAGADOR):
+- Quem deve pagar o boleto
+- Procure seção "SACADO:" ou "PAGADOR:"
+- Inclua nome e documento (CPF/CNPJ)
+
+💵 VALOR DO BOLETO:
+- Valor exato a ser pago
+- Procure em: "VALOR DO DOCUMENTO", seção de valores
+- FORMATO: "R$ XXX,XX"
+
+📅 DATA DE VENCIMENTO:
+- Data limite para pagamento sem juros
+- Procure "VENCIMENTO:" seguido de DD/MM/AAAA
+- EXEMPLO: "30/06/2025"
+
+🔢 LINHA DIGITÁVEL:
+- Código para pagamento em banco/app
+- FORMATO: XXXXX.XXXXX XXXXX.XXXXXX XXXXX.XXXXXX X XXXXXXXXXXXX
+- EXEMPLO: "34191.79001 01043.510047 91020.150008 1 97770000014500"
+
+🔻 CÓDIGO DE BARRAS:
+- Sequência numérica para leitura óptica
+- 47 ou 48 dígitos
+- EXEMPLO: "34191977700000145001790010435100479102015000"
+
+🏦 INFORMAÇÕES BANCÁRIAS:
+- Banco, agência, conta corrente
+- Nosso número, carteira
+- Local de pagamento
+
+⚡ VALIDAÇÕES CRÍTICAS:
+- Linha digitável deve ter exatamente 47 posições
+- Data de vencimento não pode ser muito antiga (> 2 anos)
+- Valor deve ser numérico e positivo
+- Cedente não pode ser vazio
+
+${boletoData?.section ? `
+📍 SEÇÃO DO BOLETO IDENTIFICADA:
+${boletoData.section.text.substring(0, 500)}...
+` : ''}
+
+RETORNE JSON COM DADOS EXATOS DO BOLETO:
+{
+  "valor": "R$ [VALOR_EXATO]",
+  "cedente": "[NOME_CEDENTE_COMPLETO]",
+  "sacado": "[NOME_SACADO_COMPLETO]",
+  "data_vencimento": "[DD/MM/AAAA]",
+  "codigo_barras": "[47_DIGITOS]",
+  "linha_digitavel": "[LINHA_COMPLETA_47_POSICOES]",
+  "nosso_numero": "[NUMERO_BOLETO]",
+  "banco": "[NOME_BANCO]",
+  "agencia": "[AGENCIA]",
+  "conta": "[CONTA]",
+  "confidence": 90
+}`;
 
       case 'PIX':
         return `Você é um especialista em análise de comprovantes PIX brasileiros.
@@ -936,7 +1006,7 @@ Retorne JSON com: valor, remetente, destinatario, data_transacao, hora_transacao
 
     // ESTRATÉGIA 2: Prompt especializado baseado no tipo de documento
     const prompt = classification 
-      ? this.createSpecializedPrompt(classification.type, ocrText, fileName)
+      ? this.createSpecializedPrompt(classification.type, ocrText, fileName, classification)
       : (this.shouldUseSimplifiedPrompt(ocrText) 
          ? this.createSimplifiedGLMPrompt(ocrText, fileName)
          : this.buildAnalysisPrompt(ocrText, fileName));
@@ -1077,7 +1147,7 @@ Retorne JSON com: valor, remetente, destinatario, data_transacao, hora_transacao
 
   async analyzeWithOpenAI(ocrText: string, fileName: string, classification?: DocumentClassification, qualityFlags?: any): Promise<AIAnalysisResult> {
     const prompt = classification 
-      ? this.createSpecializedPrompt(classification.type, ocrText, fileName)
+      ? this.createSpecializedPrompt(classification.type, ocrText, fileName, classification)
       : this.buildAnalysisPrompt(ocrText, fileName, qualityFlags);
     const modelToUse = this.getProviderByName('openai')?.model || "gpt-4o-mini";
     
