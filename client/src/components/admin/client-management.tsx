@@ -64,6 +64,9 @@ export function ClientManagement() {
   const [isCreateModalOpen, setIsCreateModalOpen] = useState(false);
   const [isCreateUserModalOpen, setIsCreateUserModalOpen] = useState(false);
   const [selectedTenant, setSelectedTenant] = useState<Tenant | null>(null);
+  const [selectedUser, setSelectedUser] = useState<TenantUser | null>(null);
+  const [isEditUserDialogOpen, setIsEditUserDialogOpen] = useState(false);
+  const [isResetPasswordDialogOpen, setIsResetPasswordDialogOpen] = useState(false);
   const [createForm, setCreateForm] = useState<CreateTenantForm>({
     name: '',
     slug: '',
@@ -80,6 +83,11 @@ export function ClientManagement() {
     username: '',
     password: '',
     role: 'OPERADOR'
+  });
+  const [editUserForm, setEditUserForm] = useState<Partial<TenantUser>>({});
+  const [resetPasswordForm, setResetPasswordForm] = useState({
+    newPassword: '',
+    confirmPassword: ''
   });
 
   const { toast } = useToast();
@@ -206,12 +214,135 @@ export function ClientManagement() {
     }
   });
 
+  // Mutation para editar usuário
+  const editUserMutation = useMutation({
+    mutationFn: async (data: { userId: string; userData: Partial<TenantUser> }) => {
+      const response = await fetch(`/api/admin/users/${data.userId}`, {
+        method: 'PUT',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(data.userData),
+      });
+
+      if (!response.ok) {
+        const errorData = await response.json();
+        throw new Error(errorData.error || 'Erro ao editar usuário');
+      }
+
+      return response.json();
+    },
+    onSuccess: () => {
+      toast({
+        title: "Usuário atualizado",
+        description: "Usuário editado com sucesso.",
+        variant: "default"
+      });
+      setIsEditUserDialogOpen(false);
+      setEditUserForm({});
+      queryClient.invalidateQueries({ queryKey: ['/api/admin/users/global'] });
+      queryClient.invalidateQueries({ queryKey: ['/api/admin/tenants', selectedTenant?.id, 'users'] });
+    },
+    onError: (error: Error) => {
+      toast({
+        title: "Erro ao editar usuário",
+        description: error.message,
+        variant: "destructive"
+      });
+    }
+  });
+
+  // Mutation para reset de senha
+  const resetPasswordMutation = useMutation({
+    mutationFn: async (data: { userId: string; newPassword: string }) => {
+      const response = await fetch(`/api/admin/users/${data.userId}/reset-password`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ newPassword: data.newPassword }),
+      });
+
+      if (!response.ok) {
+        const errorData = await response.json();
+        throw new Error(errorData.error || 'Erro ao resetar senha');
+      }
+
+      return response.json();
+    },
+    onSuccess: () => {
+      toast({
+        title: "Senha resetada",
+        description: "Senha do usuário resetada com sucesso.",
+        variant: "default"
+      });
+      setIsResetPasswordDialogOpen(false);
+      setResetPasswordForm({ newPassword: '', confirmPassword: '' });
+    },
+    onError: (error: Error) => {
+      toast({
+        title: "Erro ao resetar senha",
+        description: error.message,
+        variant: "destructive"
+      });
+    }
+  });
+
   const handleCreateTenant = () => {
     createTenantMutation.mutate(createForm);
   };
 
   const handleCreateUser = () => {
     createUserMutation.mutate(createUserForm);
+  };
+
+  const handleEditUser = (user: TenantUser) => {
+    setSelectedUser(user);
+    setEditUserForm({
+      firstName: user.firstName,
+      lastName: user.lastName,
+      email: user.email,
+      role: user.role,
+      isActive: user.isActive
+    });
+    setIsEditUserDialogOpen(true);
+  };
+
+  const handleSaveUser = () => {
+    if (!selectedUser) return;
+    
+    editUserMutation.mutate({
+      userId: selectedUser.id,
+      userData: editUserForm
+    });
+  };
+
+  const handleResetPassword = (user: TenantUser) => {
+    setSelectedUser(user);
+    setIsResetPasswordDialogOpen(true);
+  };
+
+  const handleConfirmResetPassword = () => {
+    if (!selectedUser || !resetPasswordForm.newPassword) return;
+    
+    if (resetPasswordForm.newPassword !== resetPasswordForm.confirmPassword) {
+      toast({
+        title: "Erro",
+        description: "As senhas não conferem.",
+        variant: "destructive"
+      });
+      return;
+    }
+
+    if (resetPasswordForm.newPassword.length < 6) {
+      toast({
+        title: "Erro",
+        description: "A senha deve ter pelo menos 6 caracteres.",
+        variant: "destructive"
+      });
+      return;
+    }
+
+    resetPasswordMutation.mutate({
+      userId: selectedUser.id,
+      newPassword: resetPasswordForm.newPassword
+    });
   };
 
   const generateSlug = (name: string) => {
@@ -749,11 +880,20 @@ export function ClientManagement() {
                             <Button
                               size="sm"
                               variant="outline"
-                              onClick={() => console.log('Editar usuário:', user.id)}
+                              onClick={() => handleEditUser(user)}
                               data-testid={`button-edit-user-${user.id}`}
                             >
                               <Settings className="w-4 h-4 mr-1" />
                               Editar
+                            </Button>
+                            <Button
+                              size="sm"
+                              variant="outline"
+                              className="text-orange-600 border-orange-600 hover:bg-orange-600 hover:text-white"
+                              onClick={() => handleResetPassword(user)}
+                              data-testid={`button-reset-password-${user.id}`}
+                            >
+                              Reset Senha
                             </Button>
                           </div>
                         </TableCell>
@@ -834,6 +974,148 @@ export function ClientManagement() {
           </Card>
         </TabsContent>
       </Tabs>
+
+      {/* Modal de Edição de Usuário */}
+      <Dialog open={isEditUserDialogOpen} onOpenChange={setIsEditUserDialogOpen}>
+        <DialogContent className="sm:max-w-md">
+          <DialogHeader>
+            <DialogTitle>Editar Usuário</DialogTitle>
+            <DialogDescription>
+              Edite as informações do usuário selecionado
+            </DialogDescription>
+          </DialogHeader>
+          <div className="space-y-4">
+            <div className="grid grid-cols-2 gap-4">
+              <div className="space-y-2">
+                <Label htmlFor="edit-firstName">Nome</Label>
+                <Input
+                  id="edit-firstName"
+                  value={editUserForm.firstName || ''}
+                  onChange={(e) => setEditUserForm(prev => ({ ...prev, firstName: e.target.value }))}
+                  placeholder="Nome"
+                />
+              </div>
+              <div className="space-y-2">
+                <Label htmlFor="edit-lastName">Sobrenome</Label>
+                <Input
+                  id="edit-lastName"
+                  value={editUserForm.lastName || ''}
+                  onChange={(e) => setEditUserForm(prev => ({ ...prev, lastName: e.target.value }))}
+                  placeholder="Sobrenome"
+                />
+              </div>
+            </div>
+
+            <div className="space-y-2">
+              <Label htmlFor="edit-email">Email</Label>
+              <Input
+                id="edit-email"
+                type="email"
+                value={editUserForm.email || ''}
+                onChange={(e) => setEditUserForm(prev => ({ ...prev, email: e.target.value }))}
+                placeholder="email@exemplo.com"
+              />
+            </div>
+
+            <div className="space-y-2">
+              <Label htmlFor="edit-role">Função</Label>
+              <Select
+                value={editUserForm.role || ''}
+                onValueChange={(value) => setEditUserForm(prev => ({ ...prev, role: value }))}
+              >
+                <SelectTrigger>
+                  <SelectValue placeholder="Selecione a função" />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="ADMIN">Administrador</SelectItem>
+                  <SelectItem value="GERENTE">Gerente</SelectItem>
+                  <SelectItem value="OPERADOR">Operador</SelectItem>
+                  <SelectItem value="CLIENTE">Cliente</SelectItem>
+                </SelectContent>
+              </Select>
+            </div>
+
+            <div className="flex items-center space-x-2">
+              <Switch
+                id="edit-isActive"
+                checked={editUserForm.isActive ?? true}
+                onCheckedChange={(checked) => setEditUserForm(prev => ({ ...prev, isActive: checked }))}
+              />
+              <Label htmlFor="edit-isActive">Usuário ativo</Label>
+            </div>
+
+            <div className="flex justify-end space-x-2 pt-4">
+              <Button
+                variant="outline"
+                onClick={() => setIsEditUserDialogOpen(false)}
+              >
+                Cancelar
+              </Button>
+              <Button
+                onClick={handleSaveUser}
+                disabled={editUserMutation.isPending}
+                className="bg-gquicks-primary hover:bg-gquicks-primary/90"
+              >
+                {editUserMutation.isPending ? 'Salvando...' : 'Salvar'}
+              </Button>
+            </div>
+          </div>
+        </DialogContent>
+      </Dialog>
+
+      {/* Modal de Reset de Senha */}
+      <Dialog open={isResetPasswordDialogOpen} onOpenChange={setIsResetPasswordDialogOpen}>
+        <DialogContent className="sm:max-w-md">
+          <DialogHeader>
+            <DialogTitle>Reset de Senha</DialogTitle>
+            <DialogDescription>
+              Defina uma nova senha para o usuário {selectedUser?.firstName} {selectedUser?.lastName}
+            </DialogDescription>
+          </DialogHeader>
+          <div className="space-y-4">
+            <div className="space-y-2">
+              <Label htmlFor="newPassword">Nova Senha</Label>
+              <Input
+                id="newPassword"
+                type="password"
+                value={resetPasswordForm.newPassword}
+                onChange={(e) => setResetPasswordForm(prev => ({ ...prev, newPassword: e.target.value }))}
+                placeholder="Digite a nova senha (mín. 6 caracteres)"
+              />
+            </div>
+
+            <div className="space-y-2">
+              <Label htmlFor="confirmPassword">Confirmar Senha</Label>
+              <Input
+                id="confirmPassword"
+                type="password"
+                value={resetPasswordForm.confirmPassword}
+                onChange={(e) => setResetPasswordForm(prev => ({ ...prev, confirmPassword: e.target.value }))}
+                placeholder="Confirme a nova senha"
+              />
+            </div>
+
+            <div className="flex justify-end space-x-2 pt-4">
+              <Button
+                variant="outline"
+                onClick={() => {
+                  setIsResetPasswordDialogOpen(false);
+                  setResetPasswordForm({ newPassword: '', confirmPassword: '' });
+                }}
+              >
+                Cancelar
+              </Button>
+              <Button
+                onClick={handleConfirmResetPassword}
+                disabled={resetPasswordMutation.isPending}
+                className="bg-orange-600 hover:bg-orange-700"
+              >
+                {resetPasswordMutation.isPending ? 'Resetando...' : 'Reset Senha'}
+              </Button>
+            </div>
+          </div>
+        </DialogContent>
+      </Dialog>
     </div>
   );
 }
