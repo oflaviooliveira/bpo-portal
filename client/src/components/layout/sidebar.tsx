@@ -80,34 +80,34 @@ export function Sidebar({ activeSection, onSectionChange }: SidebarProps) {
     },
     {
       section: 'clients',
-      label: 'Clientes & Usuários',
+      label: 'Meus Clientes BPO',
       icon: Building,
-      category: 'ADMINISTRAÇÃO',
+      category: 'GESTÃO GQUICKS',
     },
     {
       section: 'ai-control',
       label: 'Centro de Controle IA',
       icon: Cpu,
-      category: 'ADMINISTRAÇÃO',
+      category: 'GESTÃO GQUICKS',
     },
     {
       section: 'admin-dashboard',
-      label: 'Dashboard Admin',
+      label: 'Dashboard Gquicks',
       icon: BarChart3,
-      category: 'ADMINISTRAÇÃO',
+      category: 'GESTÃO GQUICKS',
       adminOnly: true,
     },
     {
       section: 'admin-stats',
-      label: 'Estatísticas Globais',
+      label: 'Estatísticas da Plataforma',
       icon: TrendingUp,
-      category: 'ADMINISTRAÇÃO',
+      category: 'GESTÃO GQUICKS',
       adminOnly: true,
     },
 
   ];
 
-  const categories = ['PRINCIPAL', 'OPERAÇÕES', 'ADMINISTRAÇÃO'];
+  const categories = ['PRINCIPAL', 'OPERAÇÕES', 'GESTÃO GQUICKS'];
 
   return (
     <div className="bg-gquicks-secondary w-64 flex flex-col">

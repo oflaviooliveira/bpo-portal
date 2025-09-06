@@ -433,7 +433,7 @@ export function ClientManagement() {
         <div className="flex items-center justify-center h-64">
           <div className="text-center">
             <div className="animate-spin w-8 h-8 border-4 border-gquicks-primary border-t-transparent rounded-full mx-auto mb-4"></div>
-            <p className="text-muted-foreground">Carregando clientes...</p>
+            <p className="text-muted-foreground">Carregando clientes BPO...</p>
           </div>
         </div>
       </div>
@@ -445,22 +445,22 @@ export function ClientManagement() {
       {/* Header */}
       <div className="flex justify-between items-center">
         <div>
-          <h2 className="font-gilroy font-bold text-2xl text-foreground">Gerenciamento de Clientes</h2>
-          <p className="text-muted-foreground">Gerencie os clientes do BPO e seus usuários</p>
+          <h2 className="font-gilroy font-bold text-2xl text-foreground">Meus Clientes BPO</h2>
+          <p className="text-muted-foreground">Empresas que contrataram os serviços de BPO Financeiro da Gquicks</p>
         </div>
         
         <Dialog open={isCreateModalOpen} onOpenChange={setIsCreateModalOpen}>
           <DialogTrigger asChild>
             <Button className="bg-gquicks-primary hover:bg-gquicks-primary/90" data-testid="button-create-client">
               <Plus className="w-4 h-4 mr-2" />
-              Novo Cliente
+              Novo Cliente BPO
             </Button>
           </DialogTrigger>
           <DialogContent className="max-w-md">
             <DialogHeader>
-              <DialogTitle>Criar Novo Cliente</DialogTitle>
+              <DialogTitle>Novo Cliente BPO</DialogTitle>
               <DialogDescription>
-                Adicione um novo cliente BPO com configuração automática
+                Adicione uma nova empresa cliente que contratará serviços de BPO Financeiro
               </DialogDescription>
             </DialogHeader>
             
@@ -488,7 +488,7 @@ export function ClientManagement() {
               </div>
 
               <div className="border-t pt-4">
-                <h4 className="font-semibold mb-3">Administrador do Cliente</h4>
+                <h4 className="font-semibold mb-3">Administrador da Empresa Cliente</h4>
                 
                 <div className="grid grid-cols-2 gap-3">
                   <div>
