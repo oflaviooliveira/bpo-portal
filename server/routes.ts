@@ -1052,7 +1052,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
-  app.post("/api/categories", ...authorize(["ADMIN", "GERENTE"]), async (req, res) => {
+  app.post("/api/categories", ...authorize(["SUPER_ADMIN"]), async (req, res) => {
     try {
       const user = req.user!;
       const categoryData = { ...req.body, tenantId: user.tenantId };
@@ -1064,7 +1064,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
-  app.patch("/api/categories/:id", ...authorize(["ADMIN", "GERENTE"]), async (req, res) => {
+  app.patch("/api/categories/:id", ...authorize(["SUPER_ADMIN"]), async (req, res) => {
     try {
       const user = req.user!;
       const category = await storage.updateCategory(req.params.id, user.tenantId, req.body);
@@ -1075,7 +1075,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
-  app.delete("/api/categories/:id", ...authorize(["ADMIN"]), async (req, res) => {
+  app.delete("/api/categories/:id", ...authorize(["SUPER_ADMIN"]), async (req, res) => {
     try {
       const user = req.user!;
       await storage.deleteCategory(req.params.id, user.tenantId);
@@ -1494,7 +1494,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
   });
 
   // Operational Panel: Inbox - Wave 1 Enhanced
-  app.get("/api/documents/inbox", ...authorize(["ADMIN", "GERENTE", "OPERADOR"]), async (req, res) => {
+  app.get("/api/documents/inbox", ...authorize(["SUPER_ADMIN"]), async (req, res) => {
     try {
       const user = req.user!;
       const { priority, sortBy = 'createdAt', sortOrder = 'desc', status, documentType } = req.query;
@@ -1556,7 +1556,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
   });
 
   // Operational Panel: Scheduled - Wave 1 Enhanced  
-  app.get("/api/documents/scheduled", ...authorize(["ADMIN", "GERENTE", "OPERADOR"]), async (req, res) => {
+  app.get("/api/documents/scheduled", ...authorize(["SUPER_ADMIN"]), async (req, res) => {
     try {
       const user = req.user!;
       const { filter = "all" } = req.query;
@@ -1614,7 +1614,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
   });
 
   // Operational Panel: Reconciliation - Wave 1 Enhanced
-  app.get("/api/documents/reconciliation", ...authorize(["ADMIN", "GERENTE", "OPERADOR"]), async (req, res) => {
+  app.get("/api/documents/reconciliation", ...authorize(["SUPER_ADMIN"]), async (req, res) => {
     try {
       const user = req.user!;
       const { bankId, clientId } = req.query;
@@ -1641,7 +1641,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
   });
 
   // Operational Panel: Archived - Wave 1 Enhanced
-  app.get("/api/documents/archived", ...authorize(["ADMIN", "GERENTE", "OPERADOR"]), async (req, res) => {
+  app.get("/api/documents/archived", ...authorize(["SUPER_ADMIN"]), async (req, res) => {
     try {
       const user = req.user!;
       const { search, clientId, bankId, dateFrom, dateTo } = req.query;
@@ -1769,7 +1769,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
   });
 
   // OCR Metrics - Wave 1: Advanced OCR with metrics
-  app.get("/api/ocr/metrics/:documentId", ...authorize(["ADMIN", "GERENTE", "OPERADOR"]), async (req, res) => {
+  app.get("/api/ocr/metrics/:documentId", ...authorize(["SUPER_ADMIN"]), async (req, res) => {
     try {
       const { documentId } = req.params;
       const user = req.user!;
@@ -1789,7 +1789,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
   });
 
   // OCR Performance Stats - Wave 1: Analytics dashboard  
-  app.get("/api/ocr/performance", ...authorize(["ADMIN", "GERENTE"]), async (req, res) => {
+  app.get("/api/ocr/performance", ...authorize(["SUPER_ADMIN"]), async (req, res) => {
     try {
       const user = req.user!;
       const daysBack = parseInt(req.query.days as string) || 30;
