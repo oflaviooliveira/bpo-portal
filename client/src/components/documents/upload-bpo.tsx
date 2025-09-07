@@ -1712,433 +1712,106 @@ export function UploadBpo() {
         </Card>
 
       </form>
-                        {...form.register("payerName")}
-                        placeholder="Nome completo ou razão social"
-                        data-testid="input-payer-name"
-                      />
-                      {form.formState.errors.payerName && (
-                        <p className="text-sm text-red-500">{form.formState.errors.payerName.message}</p>
-                      )}
-                    </div>
 
-                    <div className="space-y-2">
-                      <Label>Inscrição Estadual</Label>
-                      <Input
-                        {...form.register("payerStateRegistration")}
-                        placeholder="000.000.000.000 (opcional)"
-                        data-testid="input-payer-state-registration"
-                      />
-                    </div>
-                  </div>
-                </div>
-              )}
-
-              {/* Contato */}
-              <div className="space-y-4">
-                <h4 className="text-sm font-semibold text-[#0B0E30] border-b pb-2">Contato</h4>
-                <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-                  <div className="space-y-2">
-                    <Label>Email *</Label>
-                    <Input
-                      {...form.register("payerEmail")}
-                      type="email"
-                      placeholder="email@exemplo.com"
-                      data-testid="input-payer-email"
-                    />
-                    {form.formState.errors.payerEmail && (
-                      <p className="text-sm text-red-500">{form.formState.errors.payerEmail.message}</p>
-                    )}
-                  </div>
-
-                  <div className="space-y-2">
-                    <Label>Telefone *</Label>
-                    <Input
-                      {...form.register("payerPhone")}
-                      placeholder="(11) 99999-9999"
-                      data-testid="input-payer-phone"
-                    />
-                    {form.formState.errors.payerPhone && (
-                      <p className="text-sm text-red-500">{form.formState.errors.payerPhone.message}</p>
-                    )}
-                  </div>
-
-                  <div className="space-y-2">
-                    <Label>Nome da Pessoa de Contato</Label>
-                    <Input
-                      {...form.register("payerContactName")}
-                      placeholder="Nome do responsável"
-                      data-testid="input-payer-contact-name"
-                    />
-                  </div>
-                </div>
-              </div>
-
-              {/* Endereço Completo */}
-              <div className="space-y-4">
-                <h4 className="text-sm font-semibold text-[#0B0E30] border-b pb-2">Endereço</h4>
-                <div className="grid grid-cols-1 gap-4">
-                  {/* Linha 1: CEP e Rua */}
-                  <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
-                    <div className="space-y-2">
-                      <Label>CEP *</Label>
-                      <Input
-                        {...form.register("payerZipCode")}
-                        placeholder="00000-000"
-                        data-testid="input-payer-zip-code"
-                      />
-                      {form.formState.errors.payerZipCode && (
-                        <p className="text-sm text-red-500">{form.formState.errors.payerZipCode.message}</p>
-                      )}
-                    </div>
-
-                    <div className="space-y-2 md:col-span-3">
-                      <Label>Rua/Avenida *</Label>
-                      <Input
-                        {...form.register("payerStreet")}
-                        placeholder="Nome da rua/avenida"
-                        data-testid="input-payer-street"
-                      />
-                      {form.formState.errors.payerStreet && (
-                        <p className="text-sm text-red-500">{form.formState.errors.payerStreet.message}</p>
-                      )}
-                    </div>
-                  </div>
-
-                  {/* Linha 2: Número, Complemento, Bairro */}
-                  <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-                    <div className="space-y-2">
-                      <Label>Número *</Label>
-                      <Input
-                        {...form.register("payerNumber")}
-                        placeholder="123"
-                        data-testid="input-payer-number"
-                      />
-                      {form.formState.errors.payerNumber && (
-                        <p className="text-sm text-red-500">{form.formState.errors.payerNumber.message}</p>
-                      )}
-                    </div>
-
-                    <div className="space-y-2">
-                      <Label>Complemento</Label>
-                      <Input
-                        {...form.register("payerComplement")}
-                        placeholder="Apto 45, Bloco B..."
-                        data-testid="input-payer-complement"
-                      />
-                    </div>
-
-                    <div className="space-y-2">
-                      <Label>Bairro *</Label>
-                      <Input
-                        {...form.register("payerNeighborhood")}
-                        placeholder="Nome do bairro"
-                        data-testid="input-payer-neighborhood"
-                      />
-                      {form.formState.errors.payerNeighborhood && (
-                        <p className="text-sm text-red-500">{form.formState.errors.payerNeighborhood.message}</p>
-                      )}
-                    </div>
-                  </div>
-
-                  {/* Linha 3: Cidade e Estado */}
-                  <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-                    <div className="space-y-2 md:col-span-2">
-                      <Label>Cidade *</Label>
-                      <Input
-                        {...form.register("payerCity")}
-                        placeholder="Nome da cidade"
-                        data-testid="input-payer-city"
-                      />
-                      {form.formState.errors.payerCity && (
-                        <p className="text-sm text-red-500">{form.formState.errors.payerCity.message}</p>
-                      )}
-                    </div>
-
-                    <div className="space-y-2">
-                      <Label>Estado *</Label>
-                      <Input
-                        {...form.register("payerState")}
-                        placeholder="SP"
-                        maxLength={2}
-                        data-testid="input-payer-state"
-                      />
-                      {form.formState.errors.payerState && (
-                        <p className="text-sm text-red-500">{form.formState.errors.payerState.message}</p>
-                      )}
-                    </div>
-                  </div>
-                </div>
-              </div>
-
-              {/* Campos específicos para NF */}
-              {documentType === "EMITIR_NF" && (
-                <div className="space-y-4">
-                  <h4 className="text-sm font-semibold text-[#0B0E30] border-b pb-2">Dados do Serviço</h4>
-                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                    <div className="space-y-2">
-                      <Label>Código do Serviço *</Label>
-                      <Input
-                        {...form.register("serviceCode")}
-                        placeholder="Código do serviço"
-                        data-testid="input-service-code"
-                      />
-                      {form.formState.errors.serviceCode && (
-                        <p className="text-sm text-red-500">{form.formState.errors.serviceCode.message}</p>
-                      )}
-                    </div>
-
-                    <div className="space-y-2">
-                      <Label>Descrição do Serviço *</Label>
-                      <Textarea
-                        {...form.register("serviceDescription")}
-                        placeholder="Descrição detalhada do serviço"
-                        data-testid="textarea-service-description"
-                      />
-                      {form.formState.errors.serviceDescription && (
-                        <p className="text-sm text-red-500">{form.formState.errors.serviceDescription.message}</p>
-                      )}
-                    </div>
-                  </div>
-                </div>
-              )}
-
-              {/* Instruções (campo opcional para boletos) */}
-              <div className="space-y-2">
-                <Label>Instruções Especiais</Label>
-                <Textarea
-                  {...form.register("instructions")}
-                  placeholder="Instruções especiais para o boleto/NF (opcional)"
-                  data-testid="textarea-instructions"
-                />
-              </div>
-
-            </CardContent>
-          </Card>
-        )}
-
-        {/* 🤖 NOVO: Card de campos auto-preenchidos */}
-        {showAutoFillConfirmation && autoFilledFields.length > 0 && (
-          <Card className="border-blue-200 bg-blue-50 dark:border-blue-800 dark:bg-blue-950">
-            <CardHeader>
-              <CardTitle className="text-blue-800 dark:text-blue-200 flex items-center gap-2">
-                <Bot className="h-4 w-4" />
-                Campos preenchidos automaticamente
-                <Badge variant="secondary" className="ml-2">
-                  {autoFilledFields.length} campo{autoFilledFields.length > 1 ? 's' : ''}
-                </Badge>
-              </CardTitle>
-              <p className="text-sm text-blue-600 dark:text-blue-300">
-                A IA preencheu automaticamente alguns campos. Confirme se estão corretos antes de enviar.
-              </p>
-            </CardHeader>
-            <CardContent>
-              <div className="space-y-3">
-                {autoFilledFields.map((field, index) => (
-                  <div key={index} className="flex items-center justify-between p-3 bg-white dark:bg-gray-800 rounded-md border border-blue-200 dark:border-blue-700">
-                    <div className="flex-1">
-                      <div className="flex items-center gap-2">
-                        <CheckCircle className="h-4 w-4 text-blue-600" />
-                        <p className="font-medium text-sm text-gray-900 dark:text-gray-100">
-                          {field.field === 'bankId' && 'Banco'}
-                          {field.field === 'categoryId' && 'Categoria'}
-                          {field.field === 'costCenterId' && 'Centro de Custo'}
-                          {field.field === 'dueDate' && 'Data de Vencimento'}
-                        </p>
-                      </div>
-                      <p className="text-sm text-gray-700 dark:text-gray-300 mt-1">
-                        {field.value}
-                      </p>
-                      <p className="text-xs text-gray-500 dark:text-gray-400 mt-1">
-                        {field.reasoning}
-                      </p>
-                    </div>
-                    <div className="flex flex-col items-end gap-1">
-                      <Badge 
-                        variant={field.confidence >= 80 ? "default" : "secondary"} 
-                        className={field.confidence >= 80 ? 
-                          "text-blue-700 border-blue-300 bg-blue-100 dark:text-blue-400 dark:border-blue-600 dark:bg-blue-900" :
-                          "text-yellow-700 border-yellow-300 bg-yellow-100 dark:text-yellow-400 dark:border-yellow-600 dark:bg-yellow-900"
-                        }
-                      >
-                        {field.confidence}% confiança
-                      </Badge>
-                      <Badge variant="outline" className="text-xs">
-                        {field.source === 'ai_suggestion' && '🤖 IA'}
-                        {field.source === 'intelligent_default' && '💡 Inteligente'}
-                        {field.source === 'historical_pattern' && '📊 Histórico'}
-                      </Badge>
-                    </div>
-                  </div>
-                ))}
-              </div>
-              <div className="flex gap-2 mt-4">
-                <Button 
-                  variant="outline" 
-                  size="sm"
-                  onClick={() => setShowAutoFillConfirmation(false)}
-                  className="flex-1"
-                >
-                  <X className="h-4 w-4 mr-2" />
-                  Aceitar Sugestões
-                </Button>
-                <Button 
-                  variant="secondary" 
-                  size="sm"
-                  onClick={() => {
-                    // Limpar campos auto-preenchidos
-                    autoFilledFields.forEach((field) => {
-                      if (field.field === 'bankId') form.setValue('bankId', '');
-                      if (field.field === 'categoryId') form.setValue('categoryId', '');
-                      if (field.field === 'costCenterId') form.setValue('costCenterId', '');
-                      if (field.field === 'dueDate') form.setValue('competenceDate', '');
-                    });
-                    setShowAutoFillConfirmation(false);
-                    setAutoFilledFields([]);
-                  }}
-                  className="flex-1"
-                >
-                  <RotateCcw className="h-4 w-4 mr-2" />
-                  Limpar Auto-Fill
-                </Button>
-              </div>
-            </CardContent>
-          </Card>
-        )}
-
-        {/* Dados Opcionais BPO */}
-        <Card>
-          <CardHeader>
-            <CardTitle className="flex items-center gap-2 text-[#0B0E30]">
-              <Building2 className="h-5 w-5 text-[#E40064]" />
-              Informações Complementares
-              <Badge variant="outline">Opcional</Badge>
-            </CardTitle>
-          </CardHeader>
-          <CardContent className="space-y-4">
-
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-
-              {/* Categoria */}
-              <div className="space-y-2">
-                <Label>Categoria</Label>
-                <Select 
-                  value={form.watch("categoryId") || ""} 
-                  onValueChange={(value) => form.setValue("categoryId", value)}
-                >
-                  <SelectTrigger data-testid="select-category">
-                    <SelectValue placeholder="Selecione a categoria" />
-                  </SelectTrigger>
-                  <SelectContent>
-                    {Array.isArray(categories) && categories.map((category: any) => (
-                      <SelectItem key={category.id} value={category.id}>
-                        {category.name}
-                      </SelectItem>
-                    ))}
-                  </SelectContent>
-                </Select>
-              </div>
-
-              {/* Centro de Custo */}
-              <div className="space-y-2">
-                <Label>Centro de Custo</Label>
-                <Select 
-                  value={form.watch("costCenterId") || ""} 
-                  onValueChange={(value) => form.setValue("costCenterId", value)}
-                >
-                  <SelectTrigger data-testid="select-cost-center">
-                    <SelectValue placeholder="Selecione o centro de custo" />
-                  </SelectTrigger>
-                  <SelectContent>
-                    {Array.isArray(costCenters) && costCenters.map((center: any) => (
-                      <SelectItem key={center.id} value={center.id}>
-                        {center.name}
-                      </SelectItem>
-                    ))}
-                  </SelectContent>
-                </Select>
-              </div>
-            </div>
-
-            {/* Observações */}
-            <div className="space-y-2">
-              <Label>Observações</Label>
-              <Textarea
-                {...form.register("notes")}
-                placeholder="Observações adicionais para o BPO"
-                data-testid="textarea-notes"
-              />
-            </div>
-          </CardContent>
-        </Card>
-
-        {/* Botão de Envio */}
-        <Card>
-          <CardContent className="pt-6">
-            <Button
-              type="submit"
-              disabled={processingState.stage === 'processing' || processingState.stage === 'submitting'}
-              className="w-full bg-[#E40064] hover:bg-[#E40064]/90 text-white"
-              data-testid="button-submit"
-            >
-              {processingState.stage === 'submitting' ? (
-                <>
-                  <Sparkles className="mr-2 h-4 w-4 animate-spin" />
-                  Processando...
-                </>
-              ) : (
-                <>
-                  <UploadIcon className="mr-2 h-4 w-4" />
-                  Enviar para BPO Financeiro
-                </>
-              )}
-            </Button>
-          </CardContent>
-        </Card>
-
-      </form>
-
-      {/* Modal de Auto-detecção de Fornecedor */}
-      {autoSupplierModal.detectedSupplier && (
-        <AutoSupplierModal
-          open={autoSupplierModal.open}
-          onOpenChange={(open) => setAutoSupplierModal({ ...autoSupplierModal, open })}
-          detectedSupplier={autoSupplierModal.detectedSupplier}
-          onSupplierCreated={handleSupplierCreated}
-          onSkip={handleSupplierSkip}
-          documentFile={selectedFile || undefined}
+      {/* Processamento em Tempo Real */}
+      {processingState.stage !== 'idle' && (
+        <ProcessingSteps 
+          stage={processingState.stage}
+          progress={processingState.progress}
+          details={processingState.details}
         />
       )}
 
-      {/* Modal de Visualização de Documento */}
-      <Dialog open={documentPreviewModal} onOpenChange={setDocumentPreviewModal}>
-        <DialogContent className="max-w-6xl h-[90vh] flex flex-col">
-          <DialogHeader className="flex-shrink-0">
-            <DialogTitle className="flex items-center gap-2">
-              <FileText className="h-5 w-5" />
-              {selectedFile?.name}
-            </DialogTitle>
-          </DialogHeader>
-          <div className="flex-1 overflow-hidden flex items-center justify-center">
-            {selectedFile && (
-              <div className="w-full h-full flex items-center justify-center border border-gray-300 rounded-lg bg-gray-50">
-                {selectedFile.type === 'application/pdf' ? (
-                  <iframe
-                    src={URL.createObjectURL(selectedFile)}
-                    className="w-full h-full rounded-lg"
-                    title="Visualização do documento"
-                  />
-                ) : (
-                  <img
-                    src={URL.createObjectURL(selectedFile)}
-                    alt="Documento"
-                    className="max-w-full max-h-full object-contain rounded-lg shadow-lg"
-                  />
-                )}
-              </div>
-            )}
-          </div>
-        </DialogContent>
-      </Dialog>
     </div>
   );
+};
+
+// Componente para mostrar o progresso do processamento
+interface ProcessingStepsProps {
+  stage: 'idle' | 'uploading' | 'ocr' | 'ai' | 'processing' | 'submitting' | 'success' | 'error';
+  progress?: number;
+  details?: string;
 }
+
+const ProcessingSteps: React.FC<ProcessingStepsProps> = ({ stage, progress, details }) => {
+  if (stage === 'idle') return null;
+
+  const stages = [
+    { key: 'uploading', label: 'Fazendo upload do arquivo...', icon: UploadIcon },
+    { key: 'ocr', label: 'Extraindo texto do documento...', icon: FileText },
+    { key: 'ai', label: 'Analisando com Inteligência Artificial...', icon: Sparkles },
+    { key: 'processing', label: 'Processando informações...', icon: Cog },
+    { key: 'submitting', label: 'Finalizando envio...', icon: CheckCircle },
+  ];
+
+  const currentStageIndex = stages.findIndex(s => s.key === stage);
+
+  return (
+    <Card className="mt-6">
+      <CardHeader>
+        <CardTitle className="flex items-center gap-2 text-[#0B0E30]">
+          <Sparkles className="h-5 w-5 text-[#E40064] animate-pulse" />
+          Processamento em Andamento
+        </CardTitle>
+      </CardHeader>
+      <CardContent className="space-y-4">
+        <div className="space-y-3">
+          {stages.map((stageItem, index) => {
+            const Icon = stageItem.icon;
+            const isActive = index === currentStageIndex;
+            const isCompleted = index < currentStageIndex;
+            
+            return (
+              <div
+                key={stageItem.key}
+                className={`flex items-center gap-3 p-3 rounded-lg transition-colors ${
+                  isActive ? 'bg-[#E40064]/10 border border-[#E40064]/20' : 
+                  isCompleted ? 'bg-green-50 border border-green-200' : 'bg-gray-50'
+                }`}
+              >
+                <Icon className={`h-5 w-5 ${
+                  isActive ? 'text-[#E40064] animate-spin' :
+                  isCompleted ? 'text-green-600' : 'text-gray-400'
+                }`} />
+                <span className={`flex-1 ${
+                  isActive ? 'text-[#0B0E30] font-medium' :
+                  isCompleted ? 'text-green-700' : 'text-gray-500'
+                }`}>
+                  {stageItem.label}
+                </span>
+                {isCompleted && <CheckCircle className="h-5 w-5 text-green-600" />}
+              </div>
+            );
+          })}
+        </div>
+        
+        {progress && progress > 0 && (
+          <div className="space-y-2">
+            <div className="flex justify-between text-sm">
+              <span>Progresso</span>
+              <span>{Math.round(progress)}%</span>
+            </div>
+            <div className="w-full bg-gray-200 rounded-full h-2">
+              <div 
+                className="bg-[#E40064] h-2 rounded-full transition-all duration-300"
+                style={{ width: `${progress}%` }}
+              />
+            </div>
+          </div>
+        )}
+        
+        {details && (
+          <p className="text-sm text-gray-600 bg-blue-50 p-3 rounded-lg border border-blue-200">
+            <Info className="h-4 w-4 inline mr-2 text-blue-600" />
+            {details}
+          </p>
+        )}
+      </CardContent>
+    </Card>
+  );
+};
+
+export default UploadBpo;
+              )}
+
+              {/* Contato */}
