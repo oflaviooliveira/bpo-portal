@@ -625,6 +625,10 @@ export function UploadBpo() {
 
     setProcessingState({ stage: 'submitting', message: 'Enviando para BPO...' });
 
+    // 🔍 DEBUG: Capturar TODOS os valores do formulário (incluindo Select controlados)
+    const allFormValues = form.getValues();
+    console.log("🔍 TODOS os valores do formulário capturados:", allFormValues);
+
     const formData = new FormData();
 
     if (selectedFile) {
@@ -652,17 +656,49 @@ export function UploadBpo() {
     // Mapear campos do frontend para backend
     const fieldMapping: Record<string, string> = {
       contraparteId: 'supplier',
-      realPaidDate: 'paidDate'
+      realPaidDate: 'paidDate',
+      scheduledDate: 'scheduledDate'
     };
 
-    // Adicionar todos os campos do formulário com mapeamento correto
-    Object.entries(data).forEach(([key, value]) => {
-      if (value !== undefined && value !== "") {
+    // 🎯 CORREÇÃO: Usar form.getValues() para capturar TODOS os campos (incluindo Select controlados)
+    const completeData = form.getValues();
+    
+    // Adicionar campos essenciais que podem estar faltando
+    const essentialFields = ['bankId', 'categoryId', 'costCenterId', 'contraparteId'];
+    essentialFields.forEach(fieldName => {
+      if (!completeData[fieldName]) {
+        const fieldValue = form.watch(fieldName);
+        if (fieldValue) {
+          completeData[fieldName] = fieldValue;
+          console.log(`✅ Campo ${fieldName} recuperado via watch:`, fieldValue);
+        }
+      }
+    });
+
+    // Adicionar dueDate das sugestões se disponível
+    if (suggestions?.realData?.dueDate && !completeData.dueDate) {
+      completeData.dueDate = formatDateForServer(suggestions.realData.dueDate);
+      console.log("📅 Data de vencimento adicionada das sugestões:", suggestions.realData.dueDate);
+    }
+
+    // 🎯 CORREÇÃO ADICIONAL: Garantir que contraparte seja enviada como contraparteName se não tiver contraparteId
+    if (completeData.contraparteId && !completeData.contraparteName) {
+      // Buscar o nome da contraparte pelo ID
+      const contraparte = contrapartes?.find(c => c.id === completeData.contraparteId);
+      if (contraparte) {
+        completeData.contraparteName = contraparte.name;
+        console.log("✅ Nome da contraparte adicionado:", contraparte.name);
+      }
+    }
+
+    // Processar todos os campos
+    Object.entries(completeData).forEach(([key, value]) => {
+      if (value !== undefined && value !== "" && value !== null) {
         const backendKey = fieldMapping[key] || key;
         
         // Converter formato de datas para DD/MM/AAAA
         let finalValue = String(value);
-        if (key === 'competenceDate' || key === 'realPaidDate') {
+        if (key === 'competenceDate' || key === 'realPaidDate' || key === 'scheduledDate') {
           finalValue = formatDateForServer(finalValue);
           console.log(`📅 Convertendo data ${key}: ${value} → ${finalValue}`);
         }

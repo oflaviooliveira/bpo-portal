@@ -1,0 +1,296 @@
+The source list for the Content Security Policy directive 'default-src' contains an invalid source: ''unsafe-dynamic''. It will be ignored.
+The source list for the Content Security Policy directive 'default-src' contains an invalid source: ''unsafe-dynamic''. It will be ignored.
+The source list for the Content Security Policy directive 'default-src' contains an invalid source: ''unsafe-dynamic''. It will be ignored.
+The source list for the Content Security Policy directive 'default-src' contains an invalid source: ''unsafe-dynamic''. It will be ignored.
+The source list for the Content Security Policy directive 'default-src' contains an invalid source: ''unsafe-dynamic''. It will be ignored.
+The source list for the Content Security Policy directive 'default-src' contains an invalid source: ''unsafe-dynamic''. It will be ignored.
+The source list for the Content Security Policy directive 'default-src' contains an invalid source: ''unsafe-dynamic''. It will be ignored.
+The source list for the Content Security Policy directive 'default-src' contains an invalid source: ''unsafe-dynamic''. It will be ignored.
+The source list for the Content Security Policy directive 'default-src' contains an invalid source: ''unsafe-dynamic''. It will be ignored.
+The source list for the Content Security Policy directive 'default-src' contains an invalid source: ''unsafe-dynamic''. It will be ignored.
+The source list for the Content Security Policy directive 'default-src' contains an invalid source: ''unsafe-dynamic''. It will be ignored.
+The source list for the Content Security Policy directive 'default-src' contains an invalid source: ''unsafe-dynamic''. It will be ignored.
+The Content-Security-Policy directive 'default-src' contains 'report-uri' as a source expression. Did you want to add it as a directive and forget a semicolon?
+The Content-Security-Policy directive 'default-src' contains 'report-uri' as a source expression. Did you want to add it as a directive and forget a semicolon?
+The Content-Security-Policy directive 'default-src' contains 'report-uri' as a source expression. Did you want to add it as a directive and forget a semicolon?
+The Content-Security-Policy directive 'default-src' contains 'report-uri' as a source expression. Did you want to add it as a directive and forget a semicolon?
+The Content-Security-Policy directive 'default-src' contains 'report-uri' as a source expression. Did you want to add it as a directive and forget a semicolon?
+The Content-Security-Policy directive 'default-src' contains 'report-uri' as a source expression. Did you want to add it as a directive and forget a semicolon?
+The Content-Security-Policy directive 'default-src' contains 'report-uri' as a source expression. Did you want to add it as a directive and forget a semicolon?
+The Content-Security-Policy directive 'default-src' contains 'report-uri' as a source expression. Did you want to add it as a directive and forget a semicolon?
+The Content-Security-Policy directive 'default-src' contains 'report-uri' as a source expression. Did you want to add it as a directive and forget a semicolon?
+The Content-Security-Policy directive 'default-src' contains 'report-uri' as a source expression. Did you want to add it as a directive and forget a semicolon?
+The Content-Security-Policy directive 'default-src' contains 'report-uri' as a source expression. Did you want to add it as a directive and forget a semicolon?
+The Content-Security-Policy directive 'default-src' contains 'report-uri' as a source expression. Did you want to add it as a directive and forget a semicolon?
+The source list for Content Security Policy directive 'default-src' contains a source with an invalid path: '/api/4509669501698048/security/?sentry_key=7eb3d90eb4660416caf507087367e67e'. The query component, including the '?', will be ignored.
+The source list for Content Security Policy directive 'default-src' contains a source with an invalid path: '/api/4509669501698048/security/?sentry_key=7eb3d90eb4660416caf507087367e67e'. The query component, including the '?', will be ignored.
+The source list for Content Security Policy directive 'default-src' contains a source with an invalid path: '/api/4509669501698048/security/?sentry_key=7eb3d90eb4660416caf507087367e67e'. The query component, including the '?', will be ignored.
+The source list for Content Security Policy directive 'default-src' contains a source with an invalid path: '/api/4509669501698048/security/?sentry_key=7eb3d90eb4660416caf507087367e67e'. The query component, including the '?', will be ignored.
+The source list for Content Security Policy directive 'default-src' contains a source with an invalid path: '/api/4509669501698048/security/?sentry_key=7eb3d90eb4660416caf507087367e67e'. The query component, including the '?', will be ignored.
+The source list for Content Security Policy directive 'default-src' contains a source with an invalid path: '/api/4509669501698048/security/?sentry_key=7eb3d90eb4660416caf507087367e67e'. The query component, including the '?', will be ignored.
+The source list for Content Security Policy directive 'default-src' contains a source with an invalid path: '/api/4509669501698048/security/?sentry_key=7eb3d90eb4660416caf507087367e67e'. The query component, including the '?', will be ignored.
+The source list for Content Security Policy directive 'default-src' contains a source with an invalid path: '/api/4509669501698048/security/?sentry_key=7eb3d90eb4660416caf507087367e67e'. The query component, including the '?', will be ignored.
+The source list for Content Security Policy directive 'default-src' contains a source with an invalid path: '/api/4509669501698048/security/?sentry_key=7eb3d90eb4660416caf507087367e67e'. The query component, including the '?', will be ignored.
+The source list for Content Security Policy directive 'default-src' contains a source with an invalid path: '/api/4509669501698048/security/?sentry_key=7eb3d90eb4660416caf507087367e67e'. The query component, including the '?', will be ignored.
+The source list for Content Security Policy directive 'default-src' contains a source with an invalid path: '/api/4509669501698048/security/?sentry_key=7eb3d90eb4660416caf507087367e67e'. The query component, including the '?', will be ignored.
+The source list for Content Security Policy directive 'default-src' contains a source with an invalid path: '/api/4509669501698048/security/?sentry_key=7eb3d90eb4660416caf507087367e67e'. The query component, including the '?', will be ignored.
+PortalBPOSystem:1 The source list for the Content Security Policy directive 'default-src' contains an invalid source: ''unsafe-dynamic''. It will be ignored.
+PortalBPOSystem:1 The Content-Security-Policy directive 'default-src' contains 'report-uri' as a source expression. Did you want to add it as a directive and forget a semicolon?
+PortalBPOSystem:1 The source list for Content Security Policy directive 'default-src' contains a source with an invalid path: '/api/4509669501698048/security/?sentry_key=7eb3d90eb4660416caf507087367e67e'. The query component, including the '?', will be ignored.
+ 
+      /////////////////////
+   ///////////////////////////
+  ////////@@@@@@@//////////////
+  ////////@@@@@@@//////////////
+  ////////@@@@@@@//////////////        Curious and driven?
+  ///////////////@@@@@@@///////        Work with us!
+  ///////////////@@@@@@@///////
+  ///////////////@@@@@@@///////        https://join.replit.com/hack.with.us
+  ////////@@@@@@@//////////////
+  ////////@@@@@@@//////////////
+  ////////@@@@@@#//////////////
+   ///////////////////////////
+      /////////////////////
+      
+ [LaunchDarkly] LaunchDarkly client initialized
+PortalBPOSystem:1 Banner not shown: beforeinstallpromptevent.preventDefault() called. The page must call beforeinstallpromptevent.prompt() to show the banner.
+ Error while parsing the 'sandbox' attribute: 'allow-downloads-without-user-activation' is an invalid sandbox flag.
+_ @ framework-994b2f07905f3a90.js:1
+ Unrecognized feature: 'ambient-light-sensor'.
+_ @ framework-994b2f07905f3a90.js:1
+ Unrecognized feature: 'battery'.
+_ @ framework-994b2f07905f3a90.js:1
+ Unrecognized feature: 'execution-while-not-rendered'.
+_ @ framework-994b2f07905f3a90.js:1
+ Unrecognized feature: 'execution-while-out-of-viewport'.
+_ @ framework-994b2f07905f3a90.js:1
+ Unrecognized feature: 'layout-animations'.
+_ @ framework-994b2f07905f3a90.js:1
+ Unrecognized feature: 'legacy-image-formats'.
+_ @ framework-994b2f07905f3a90.js:1
+ Unrecognized feature: 'navigation-override'.
+_ @ framework-994b2f07905f3a90.js:1
+ Unrecognized feature: 'oversized-images'.
+_ @ framework-994b2f07905f3a90.js:1
+ Unrecognized feature: 'publickey-credentials'.
+_ @ framework-994b2f07905f3a90.js:1
+ Unrecognized feature: 'speaker-selection'.
+_ @ framework-994b2f07905f3a90.js:1
+ Unrecognized feature: 'unoptimized-images'.
+_ @ framework-994b2f07905f3a90.js:1
+ Unrecognized feature: 'unsized-media'.
+_ @ framework-994b2f07905f3a90.js:1
+ Unrecognized feature: 'pointer-lock'.
+_ @ framework-994b2f07905f3a90.js:1
+ Allow attribute will take precedence over 'allowfullscreen'.
+_ @ framework-994b2f07905f3a90.js:1
+ Allow attribute will take precedence over 'allowpaymentrequest'.
+_ @ framework-994b2f07905f3a90.js:1
+sp.replit.com/v1/t:1  Failed to load resource: the server responded with a status of 400 ()
+PortalBPOSystem:1 Uncaught (in promise) 
+PortalBPOSystem:1 Unchecked runtime.lastError: A listener indicated an asynchronous response by returning true, but the message channel closed before a response was received
+ Error while parsing the 'sandbox' attribute: 'allow-downloads-without-user-activation' is an invalid sandbox flag.
+_ @ framework-994b2f07905f3a90.js:1
+PortalBPOSystem:1 Uncaught (in promise) 
+PortalBPOSystem:1 Uncaught (in promise) 
+ Error while parsing the 'sandbox' attribute: 'allow-downloads-without-user-activation' is an invalid sandbox flag.
+_ @ framework-994b2f07905f3a90.js:1
+workspace_iframe.html?initialPath=%2F&id=%3Arbh%3A:32 Error while parsing the 'sandbox' attribute: 'allow-downloads-without-user-activation' is an invalid sandbox flag.
+workspace_iframe.html?initialPath=%2F&id=%3Arbh%3A:32 Unrecognized feature: 'ambient-light-sensor'.
+workspace_iframe.html?initialPath=%2F&id=%3Arbh%3A:32 Unrecognized feature: 'battery'.
+workspace_iframe.html?initialPath=%2F&id=%3Arbh%3A:32 Unrecognized feature: 'execution-while-not-rendered'.
+workspace_iframe.html?initialPath=%2F&id=%3Arbh%3A:32 Unrecognized feature: 'execution-while-out-of-viewport'.
+workspace_iframe.html?initialPath=%2F&id=%3Arbh%3A:32 Unrecognized feature: 'layout-animations'.
+workspace_iframe.html?initialPath=%2F&id=%3Arbh%3A:32 Unrecognized feature: 'legacy-image-formats'.
+workspace_iframe.html?initialPath=%2F&id=%3Arbh%3A:32 Unrecognized feature: 'navigation-override'.
+workspace_iframe.html?initialPath=%2F&id=%3Arbh%3A:32 Unrecognized feature: 'oversized-images'.
+workspace_iframe.html?initialPath=%2F&id=%3Arbh%3A:32 Unrecognized feature: 'publickey-credentials'.
+workspace_iframe.html?initialPath=%2F&id=%3Arbh%3A:32 Unrecognized feature: 'speaker-selection'.
+workspace_iframe.html?initialPath=%2F&id=%3Arbh%3A:32 Unrecognized feature: 'unoptimized-images'.
+workspace_iframe.html?initialPath=%2F&id=%3Arbh%3A:32 Unrecognized feature: 'unsized-media'.
+workspace_iframe.html?initialPath=%2F&id=%3Arbh%3A:32 Allow attribute will take precedence over 'allowfullscreen'.
+workspace_iframe.html?initialPath=%2F&id=%3Arbh%3A:32 Allow attribute will take precedence over 'allowpaymentrequest'.
+ 🎯 UploadBpo component está sendo renderizado!
+ 🔄 Component UploadBpo carregado no DOM
+ 🎯 UploadBpo component está sendo renderizado!
+ 🔄 Component UploadBpo carregado no DOM
+ 🎯 UploadBpo component está sendo renderizado!
+ 🔄 Component UploadBpo carregado no DOM
+ 🎯 UploadBpo component está sendo renderizado!
+ 🔄 Component UploadBpo carregado no DOM
+ 🎯 UploadBpo component está sendo renderizado!
+ 🔄 Component UploadBpo carregado no DOM
+ 🎯 UploadBpo component está sendo renderizado!
+ 🔄 Component UploadBpo carregado no DOM
+ 🎯 UploadBpo component está sendo renderizado!
+ 🔄 Component UploadBpo carregado no DOM
+ 🎯 UploadBpo component está sendo renderizado!
+ 🔄 Component UploadBpo carregado no DOM
+ ✅ Processamento IA concluído: Object
+ 🎯 Recebendo sugestões: Object
+ 💰 Valor preenchido: R$ 3.221,40
+ 🔍 Detectando fornecedor: SOMPO SEGUROS S.A. 61.383.493/0001-80
+ 📋 Total de fornecedores disponíveis: 6
+ 📋 Lista de fornecedores: Array(6)
+ 🚀 Novo fornecedor detectado, abrindo modal para confirmação...
+ 🏢 Processando fornecedor da IA: SOMPO SEGUROS S.A.
+ 📝 Descrição preenchida: Serviços - SOMPO SEGUROS S.A.
+ 📄 Documento identificado: 61.383.493/0001-80
+ 🏢 Centro de custo sugerido: GERAL
+ 📅 Conversão de data: 08/09/2025 → 2025-09-08
+ 📅 Data vencimento (documento): 08/09/2025 → 2025-09-08
+ ⚠️ NOTA: Datas do documento NÃO são preenchidas automaticamente nos campos BPO
+ 💡 Usuário deve confirmar as datas reais de operação manualmente
+ 📋 Dados reais detectados - preenchimento automático: Object
+ 💰 Valor preenchido automaticamente: R$ 3.221,40
+ 📝 Descrição preenchida automaticamente: Serviços - SOMPO SEGUROS S.A.
+ 🏢 Detectando fornecedor automaticamente: SOMPO SEGUROS S.A.
+ 🔍 Detectando fornecedor: SOMPO SEGUROS S.A. 61.383.493/0001-80
+ 📋 Total de fornecedores disponíveis: 6
+ 📋 Lista de fornecedores: Array(6)
+ 🚀 Novo fornecedor detectado, abrindo modal para confirmação...
+ 📅 Conversão de data: 08/09/2025 → 2025-09-08
+ 📅 Data de agendamento preenchida automaticamente: 08/09/2025 → 2025-09-08
+ 💡 DICA: Você pode alterar esta data se quiser pagar em outro dia
+ 🏢 Sugestões operacionais recebidas: Array(3)
+ ✅ Total de campos sugeridos: 3
+ 🎯 UploadBpo component está sendo renderizado!
+ 🔄 Component UploadBpo carregado no DOM
+ 🎯 UploadBpo component está sendo renderizado!
+ 🔄 Component UploadBpo carregado no DOM
+ 🎯 UploadBpo component está sendo renderizado!
+ 🔄 Component UploadBpo carregado no DOM
+ 🎯 UploadBpo component está sendo renderizado!
+ 🔄 Component UploadBpo carregado no DOM
+ 🎯 UploadBpo component está sendo renderizado!
+ 🔄 Component UploadBpo carregado no DOM
+ 🎯 UploadBpo component está sendo renderizado!
+ 🔄 Component UploadBpo carregado no DOM
+ ✅ Processamento IA concluído: Object
+ 🎯 Recebendo sugestões: Object
+ 💰 Valor preenchido: R$ 657,00
+ 🔍 Detectando fornecedor: SimplesLog 44.533.434/0001-22
+ 📋 Total de fornecedores disponíveis: 6
+ 📋 Lista de fornecedores: Array(6)
+ ✅ Fornecedor existente encontrado: SimplesLog ID: 7eff812f-795c-4bb7-96eb-f394b97f19ad
+ 🔄 Preenchendo campo contraparteId...
+ 🏢 Processando fornecedor da IA: SimplesLog
+ 📝 Descrição preenchida: Serviços - SimplesLog
+ 📄 Documento identificado: 44.533.434/0001-22
+ 🏢 Centro de custo sugerido: GERAL
+ 📅 Conversão de data: 10/09/2025 → 2025-09-10
+ 📅 Data vencimento (documento): 10/09/2025 → 2025-09-10
+ ⚠️ NOTA: Datas do documento NÃO são preenchidas automaticamente nos campos BPO
+ 💡 Usuário deve confirmar as datas reais de operação manualmente
+ 📋 Dados reais detectados - preenchimento automático: Object
+ 💰 Valor preenchido automaticamente: R$ 657,00
+ 📝 Descrição preenchida automaticamente: Serviços - SimplesLog
+ 🏢 Detectando fornecedor automaticamente: SimplesLog
+ 🔍 Detectando fornecedor: SimplesLog 44.533.434/0001-22
+ 📋 Total de fornecedores disponíveis: 6
+ 📋 Lista de fornecedores: Array(6)
+ ✅ Fornecedor existente encontrado: SimplesLog ID: 7eff812f-795c-4bb7-96eb-f394b97f19ad
+ 🔄 Preenchendo campo contraparteId...
+ 📅 Conversão de data: 10/09/2025 → 2025-09-10
+ 📅 Data de competência preenchida automaticamente: 10/09/2025 → 2025-09-10
+ 💡 DICA: Você pode alterar esta data se quiser pagar em outro dia
+ 🏢 Sugestões operacionais recebidas: Array(3)
+ ✅ Total de campos sugeridos: 3
+ 🎯 UploadBpo component está sendo renderizado!
+ 🔄 Component UploadBpo carregado no DOM
+ 🔍 Valor atual do campo contraparteId: 7eff812f-795c-4bb7-96eb-f394b97f19ad
+ ✅ Campo contraparteId preenchido com sucesso!
+ 🔍 Valor atual do campo contraparteId: 7eff812f-795c-4bb7-96eb-f394b97f19ad
+ ✅ Campo contraparteId preenchido com sucesso!
+ 🎯 UploadBpo component está sendo renderizado!
+ 🔄 Component UploadBpo carregado no DOM
+ 🎯 UploadBpo component está sendo renderizado!
+Console.js:61 🔄 Component UploadBpo carregado no DOM
+Console.js:61 🎯 UploadBpo component está sendo renderizado!
+Console.js:61 🔄 Component UploadBpo carregado no DOM
+Console.js:61 🎯 UploadBpo component está sendo renderizado!
+Console.js:61 🔄 Component UploadBpo carregado no DOM
+Console.js:61 🎯 UploadBpo component está sendo renderizado!
+Console.js:61 🔄 Component UploadBpo carregado no DOM
+Console.js:61 🎯 UploadBpo component está sendo renderizado!
+Console.js:61 🔄 Component UploadBpo carregado no DOM
+Console.js:61 🎯 UploadBpo component está sendo renderizado!
+Console.js:61 🔄 Component UploadBpo carregado no DOM
+Console.js:61 🎯 UploadBpo component está sendo renderizado!
+Console.js:61 🔄 Component UploadBpo carregado no DOM
+Console.js:61 ✅ Processamento IA concluído: Object
+Console.js:61 🎯 Recebendo sugestões: Object
+Console.js:61 💰 Valor preenchido: R$ 657,00
+Console.js:61 🔍 Detectando fornecedor: SimplesLog 44.533.434/0001-22
+Console.js:61 📋 Total de fornecedores disponíveis: 6
+Console.js:61 📋 Lista de fornecedores: Array(6)
+Console.js:61 ✅ Fornecedor existente encontrado: SimplesLog ID: 7eff812f-795c-4bb7-96eb-f394b97f19ad
+Console.js:61 🔄 Preenchendo campo contraparteId...
+Console.js:61 🏢 Processando fornecedor da IA: SimplesLog
+Console.js:61 📝 Descrição preenchida: Serviços - SimplesLog
+Console.js:61 📄 Documento identificado: 44.533.434/0001-22
+Console.js:61 🏢 Centro de custo sugerido: GERAL
+Console.js:61 📅 Conversão de data: 10/09/2025 → 2025-09-10
+Console.js:61 📅 Data vencimento (documento): 10/09/2025 → 2025-09-10
+Console.js:61 ⚠️ NOTA: Datas do documento NÃO são preenchidas automaticamente nos campos BPO
+Console.js:61 💡 Usuário deve confirmar as datas reais de operação manualmente
+Console.js:61 📋 Dados reais detectados - preenchimento automático: Object
+Console.js:61 💰 Valor preenchido automaticamente: R$ 657,00
+Console.js:61 📝 Descrição preenchida automaticamente: Serviços - SimplesLog
+Console.js:61 🏢 Detectando fornecedor automaticamente: SimplesLog
+Console.js:61 🔍 Detectando fornecedor: SimplesLog 44.533.434/0001-22
+Console.js:61 📋 Total de fornecedores disponíveis: 6
+Console.js:61 📋 Lista de fornecedores: Array(6)
+Console.js:61 ✅ Fornecedor existente encontrado: SimplesLog ID: 7eff812f-795c-4bb7-96eb-f394b97f19ad
+Console.js:61 🔄 Preenchendo campo contraparteId...
+Console.js:61 📅 Conversão de data: 10/09/2025 → 2025-09-10
+Console.js:61 📅 Data de agendamento preenchida automaticamente: 10/09/2025 → 2025-09-10
+Console.js:61 💡 DICA: Você pode alterar esta data se quiser pagar em outro dia
+Console.js:61 🏢 Sugestões operacionais recebidas: Array(3)
+Console.js:61 ✅ Total de campos sugeridos: 3
+Console.js:61 🎯 UploadBpo component está sendo renderizado!
+Console.js:61 🔄 Component UploadBpo carregado no DOM
+Console.js:61 🔍 Valor atual do campo contraparteId: 7eff812f-795c-4bb7-96eb-f394b97f19ad
+Console.js:61 ✅ Campo contraparteId preenchido com sucesso!
+Console.js:61 🔍 Valor atual do campo contraparteId: 7eff812f-795c-4bb7-96eb-f394b97f19ad
+Console.js:61 ✅ Campo contraparteId preenchido com sucesso!
+Console.js:61 🎯 UploadBpo component está sendo renderizado!
+Console.js:61 🔄 Component UploadBpo carregado no DOM
+Console.js:61 🎯 UploadBpo component está sendo renderizado!
+Console.js:61 🔄 Component UploadBpo carregado no DOM
+Console.js:61 📤 Dados sendo enviados para o servidor:
+Console.js:61   file: [object File]
+Console.js:61   documentType: AGENDADO
+Console.js:61   amount: R$ 657,00
+Console.js:61   supplier: 7eff812f-795c-4bb7-96eb-f394b97f19ad
+Console.js:61   description: Serviços - SimplesLog
+Console.js:61   scheduledDate: 2025-09-10
+Console.js:61   bankId: ec72d976-205a-474c-8282-0c4bee085de8
+Console.js:61   categoryId: 5b64ab9f-8091-448e-8403-406f5f1fa5e8
+Console.js:61   costCenterId: 4d3931e5-02b1-4931-b829-439c3e264dea
+Console.js:61 🎯 UploadBpo component está sendo renderizado!
+Console.js:61 🔄 Component UploadBpo carregado no DOM
+Console.js:61 🎯 UploadBpo component está sendo renderizado!
+Console.js:61 🔄 Component UploadBpo carregado no DOM
+25fd9d59-c143-431a-a29f-114646967772-00-3rktq1czjd3gu.riker.replit.dev/api/documents/upload:1  Failed to load resource: the server responded with a status of 400 (Bad Request)
+Console.js:61 🔍 Detalhes completos do erro do servidor: Object
+Console.js:61 ❌ Erro no upload BPO: Error: Dados inválidos
+
+Campos com problema:
+• undefined: undefined
+• undefined: undefined
+• undefined: undefined
+• undefined: undefined
+• undefined: undefined
+    at Object.mutationFn (upload-bpo.tsx:559:17)
+Mt.forEach.n.<computed> @ Console.js:61
+Console.js:61 📋 Mensagem de erro completa: Dados inválidos
+
+Campos com problema:
+• undefined: undefined
+• undefined: undefined
+• undefined: undefined
+• undefined: undefined
+• undefined: undefined
+Console.js:61 🎯 UploadBpo component está sendo renderizado!
+Console.js:61 🔄 Component UploadBpo carregado no DOM
