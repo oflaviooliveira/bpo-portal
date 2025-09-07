@@ -13,7 +13,7 @@ import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
 import { Badge } from "@/components/ui/badge";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { useToast } from "@/hooks/use-toast";
-import { CloudUpload, Upload as UploadIcon, FileText, Calendar, DollarSign, Building2, Sparkles, AlertTriangle, CheckCircle2, Bot, CheckCircle, X, RotateCcw, Eye } from "lucide-react";
+import { CloudUpload, Upload as UploadIcon, FileText, Calendar, DollarSign, Building2, Sparkles, AlertTriangle, CheckCircle2, Bot, CheckCircle, X, RotateCcw, Eye, Plus } from "lucide-react";
 import { Alert, AlertDescription } from "@/components/ui/alert";
 import { Separator } from "@/components/ui/separator";
 import { AutoSupplierModal } from "@/components/client/auto-supplier-modal";
@@ -186,6 +186,64 @@ export function UploadBpo() {
 
   // Estado para visualização de documento
   const [documentPreviewModal, setDocumentPreviewModal] = useState(false);
+
+  // 🎯 NOVO: Estados para busca híbrida de clientes
+  const [showNewClientForm, setShowNewClientForm] = useState(false);
+  const [selectedClient, setSelectedClient] = useState<any>(null);
+  const [clientSearchTerm, setClientSearchTerm] = useState('');
+  const [searchResults, setSearchResults] = useState<any[]>([]);
+
+  // 🎯 NOVA FUNCIONALIDADE: Busca inteligente de clientes
+  const searchClients = async (searchTerm: string) => {
+    if (!searchTerm || searchTerm.length < 2) {
+      setSearchResults([]);
+      return;
+    }
+    
+    try {
+      const response = await fetch(`/api/clientes/search?q=${encodeURIComponent(searchTerm)}`);
+      if (response.ok) {
+        const results = await response.json();
+        setSearchResults(results);
+      }
+    } catch (error) {
+      console.error('Erro na busca de clientes:', error);
+    }
+  };
+
+  // 🚀 FUNCIONALIDADE PRINCIPAL: Auto-preenchimento inteligente
+  const autoFillClientData = (cliente: any) => {
+    setSelectedClient(cliente);
+    setShowNewClientForm(false);
+    
+    // 🎯 Auto-preenchimento COMPLETO de todos os campos
+    form.setValue("payerDocument", cliente.document || "");
+    form.setValue("payerName", cliente.name || "");
+    form.setValue("payerEmail", cliente.email || "");
+    form.setValue("payerPhone", cliente.phone || "");
+    form.setValue("payerContactName", cliente.contactName || "");
+    form.setValue("payerStateRegistration", cliente.stateRegistration || "");
+    
+    // Endereço completo
+    form.setValue("payerStreet", cliente.street || "");
+    form.setValue("payerNumber", cliente.number || "");
+    form.setValue("payerComplement", cliente.complement || "");
+    form.setValue("payerNeighborhood", cliente.neighborhood || "");
+    form.setValue("payerCity", cliente.city || "");
+    form.setValue("payerState", cliente.state || "");
+    form.setValue("payerZipCode", cliente.zipCode || "");
+
+    // 🎊 Feedback visual de sucesso
+    toast({
+      title: "✅ Cliente selecionado!",
+      description: `Dados de ${cliente.name} preenchidos automaticamente`,
+      duration: 3000,
+    });
+    
+    // Limpar busca
+    setClientSearchTerm('');
+    setSearchResults([]);
+  };
 
   const form = useForm<BpoUploadData>({
     resolver: zodResolver(bpoUploadSchema),
@@ -1123,44 +1181,168 @@ export function UploadBpo() {
             </CardHeader>
             <CardContent className="space-y-6">
 
-              {/* Dados Básicos */}
+              {/* 🎯 BUSCA HÍBRIDA INTELIGENTE */}
               <div className="space-y-4">
-                <h4 className="text-sm font-semibold text-[#0B0E30] border-b pb-2">Identificação</h4>
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                  <div className="space-y-2">
-                    <Label>CNPJ/CPF do Tomador *</Label>
-                    <Input
-                      {...form.register("payerDocument")}
-                      placeholder="00.000.000/0000-00"
-                      data-testid="input-payer-document"
-                    />
-                    {form.formState.errors.payerDocument && (
-                      <p className="text-sm text-red-500">{form.formState.errors.payerDocument.message}</p>
-                    )}
-                  </div>
+                <div className="flex items-center justify-between">
+                  <h4 className="text-sm font-semibold text-[#0B0E30] border-b pb-2 flex-1">
+                    {selectedClient ? `Cliente: ${selectedClient.name}` : 'Buscar Cliente'}
+                  </h4>
+                  {selectedClient && (
+                    <Button 
+                      type="button" 
+                      variant="ghost" 
+                      size="sm"
+                      onClick={() => {
+                        setSelectedClient(null);
+                        setClientSearchTerm('');
+                        form.reset({ ...form.getValues(), payerDocument: '', payerName: '', payerEmail: '', payerPhone: '', payerStreet: '', payerNumber: '', payerNeighborhood: '', payerCity: '', payerState: '', payerZipCode: '' });
+                      }}
+                      className="text-red-500 hover:text-red-700"
+                    >
+                      <X className="h-4 w-4 mr-1" />
+                      Limpar
+                    </Button>
+                  )}
+                </div>
 
-                  <div className="space-y-2">
-                    <Label>Nome/Razão Social *</Label>
-                    <Input
-                      {...form.register("payerName")}
-                      placeholder="Nome completo ou razão social"
-                      data-testid="input-payer-name"
-                    />
-                    {form.formState.errors.payerName && (
-                      <p className="text-sm text-red-500">{form.formState.errors.payerName.message}</p>
-                    )}
-                  </div>
+                {!selectedClient && (
+                  <>
+                    <p className="text-sm text-gray-600">
+                      🔍 Busque um cliente existente ou cadastre um novo
+                    </p>
+                    <div className="space-y-2">
+                      <div className="flex gap-2">
+                        <Input
+                          value={clientSearchTerm}
+                          onChange={(e) => {
+                            const term = e.target.value;
+                            setClientSearchTerm(term);
+                            searchClients(term);
+                          }}
+                          placeholder="Digite nome, CNPJ ou email do cliente..."
+                          className="flex-1"
+                          data-testid="input-client-search"
+                        />
+                        <Button 
+                          type="button" 
+                          variant="outline"
+                          onClick={() => setShowNewClientForm(true)}
+                        >
+                          <Plus className="h-4 w-4 mr-2" />
+                          Novo Cliente
+                        </Button>
+                      </div>
 
-                  <div className="space-y-2">
-                    <Label>Inscrição Estadual</Label>
-                    <Input
-                      {...form.register("payerStateRegistration")}
-                      placeholder="000.000.000.000 (opcional)"
-                      data-testid="input-payer-state-registration"
-                    />
+                      {/* 📋 Resultados da busca em tempo real */}
+                      {searchResults.length > 0 && (
+                        <div className="border rounded-md bg-white shadow-sm max-h-60 overflow-y-auto">
+                          {searchResults.map((cliente) => (
+                            <div
+                              key={cliente.id}
+                              onClick={() => autoFillClientData(cliente)}
+                              className="p-3 hover:bg-gray-50 cursor-pointer border-b last:border-b-0 transition-colors"
+                              data-testid={`client-result-${cliente.id}`}
+                            >
+                              <div className="flex justify-between items-start">
+                                <div>
+                                  <p className="font-medium text-gray-900">{cliente.name}</p>
+                                  <p className="text-sm text-gray-600">{cliente.document}</p>
+                                  {cliente.email && (
+                                    <p className="text-sm text-gray-500">{cliente.email}</p>
+                                  )}
+                                </div>
+                                <div className="text-right text-xs text-gray-400">
+                                  {cliente.city && <p>{cliente.city}/{cliente.state}</p>}
+                                </div>
+                              </div>
+                            </div>
+                          ))}
+                        </div>
+                      )}
+
+                      {clientSearchTerm.length >= 2 && searchResults.length === 0 && (
+                        <div className="text-sm text-gray-500 text-center py-3 border border-dashed rounded">
+                          Nenhum cliente encontrado. 
+                          <Button 
+                            type="button" 
+                            variant="link" 
+                            className="p-0 h-auto ml-1"
+                            onClick={() => setShowNewClientForm(true)}
+                          >
+                            Cadastrar novo cliente?
+                          </Button>
+                        </div>
+                      )}
+                    </div>
+                  </>
+                )}
+
+                {selectedClient && (
+                  <div className="bg-green-50 border border-green-200 rounded-lg p-3">
+                    <div className="flex items-center gap-2 mb-2">
+                      <CheckCircle className="h-4 w-4 text-green-600" />
+                      <span className="text-sm font-medium text-green-800">Cliente selecionado</span>
+                    </div>
+                    <div className="text-sm text-green-700">
+                      <p><strong>{selectedClient.name}</strong></p>
+                      <p>{selectedClient.document} • {selectedClient.email}</p>
+                      {selectedClient.city && <p>{selectedClient.city}/{selectedClient.state}</p>}
+                    </div>
+                  </div>
+                )}
+              </div>
+
+              {showNewClientForm && (
+                <div className="space-y-4">
+                  <div className="flex items-center justify-between">
+                    <h4 className="text-sm font-semibold text-[#0B0E30] border-b pb-2 flex-1">Dados do Novo Cliente</h4>
+                    <Button 
+                      type="button" 
+                      variant="ghost" 
+                      size="sm"
+                      onClick={() => setShowNewClientForm(false)}
+                      className="text-gray-500"
+                    >
+                      <X className="h-4 w-4 mr-1" />
+                      Cancelar
+                    </Button>
+                  </div>
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                    <div className="space-y-2">
+                      <Label>CNPJ/CPF do Tomador *</Label>
+                      <Input
+                        {...form.register("payerDocument")}
+                        placeholder="00.000.000/0000-00"
+                        data-testid="input-payer-document"
+                      />
+                      {form.formState.errors.payerDocument && (
+                        <p className="text-sm text-red-500">{form.formState.errors.payerDocument.message}</p>
+                      )}
+                    </div>
+
+                    <div className="space-y-2">
+                      <Label>Nome/Razão Social *</Label>
+                      <Input
+                        {...form.register("payerName")}
+                        placeholder="Nome completo ou razão social"
+                        data-testid="input-payer-name"
+                      />
+                      {form.formState.errors.payerName && (
+                        <p className="text-sm text-red-500">{form.formState.errors.payerName.message}</p>
+                      )}
+                    </div>
+
+                    <div className="space-y-2">
+                      <Label>Inscrição Estadual</Label>
+                      <Input
+                        {...form.register("payerStateRegistration")}
+                        placeholder="000.000.000.000 (opcional)"
+                        data-testid="input-payer-state-registration"
+                      />
+                    </div>
                   </div>
                 </div>
-              </div>
+              )}
 
               {/* Contato */}
               <div className="space-y-4">
