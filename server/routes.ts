@@ -1029,27 +1029,36 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
-  // Upload and process document - Wave 1 RBAC + Validação aprimorada
+  // Upload and process document - Wave 1 RBAC + Validação aprimorada + Documentos Virtuais
   app.post("/api/documents/upload", ...authorize(["SUPER_ADMIN", "CLIENT_USER"], true), upload.single('file'), validateBody(documentUploadSchema), async (req, res) => {
     try {
       const user = req.user!;
       const file = req.file;
+      const isVirtualDocument = req.body.isVirtualDocument === 'true';
 
-      if (!file) {
+      // Verificar se é um documento virtual válido ou se tem arquivo
+      if (!file && !isVirtualDocument) {
         return res.status(400).json({ error: "Nenhum arquivo foi enviado" });
       }
+      
+      // Verificar se documentos virtuais são apenas EMITIR_BOLETO/EMITIR_NF
+      if (isVirtualDocument && !['EMITIR_BOLETO', 'EMITIR_NF'].includes(req.body.documentType)) {
+        return res.status(400).json({ error: "Documentos virtuais são permitidos apenas para emissão de boletos e notas fiscais" });
+      }
 
-      // Validação aprimorada do arquivo
-      const fileBuffer = await fs.readFile(file.path);
-      const validation = await FileValidator.validateFile(fileBuffer, file.originalname, file.mimetype);
+      // Validação aprimorada do arquivo (apenas para documentos com arquivo)
+      if (file) {
+        const fileBuffer = await fs.readFile(file.path);
+        const validation = await FileValidator.validateFile(fileBuffer, file.originalname, file.mimetype);
 
-      if (!validation.isValid) {
-        // Limpar arquivo temporário
-        await fs.unlink(file.path).catch(() => {});
-        return res.status(400).json({ 
-          error: "Arquivo inválido", 
-          details: validation.errors 
-        });
+        if (!validation.isValid) {
+          // Limpar arquivo temporário
+          await fs.unlink(file.path).catch(() => {});
+          return res.status(400).json({ 
+            error: "Arquivo inválido", 
+            details: validation.errors 
+          });
+        }
       }
 
       // Usar o handler de upload estruturado
