@@ -362,6 +362,25 @@ export const insertContraparteSchema = createInsertSchema(contrapartes).pick({
   name: true,
   document: true,
   documentType: true,
+  
+  // Dados de contato
+  email: true,
+  phone: true,
+  contactName: true,
+  
+  // Documentação adicional
+  stateRegistration: true,
+  
+  // Endereço completo
+  street: true,
+  number: true,
+  complement: true,
+  neighborhood: true,
+  city: true,
+  state: true,
+  zipCode: true,
+  
+  // Controle
   canBeClient: true,
   canBeSupplier: true,
 });

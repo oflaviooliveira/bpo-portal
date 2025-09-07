@@ -374,8 +374,8 @@ export const documentValidationSchemas = {
     optional: ['supplier', 'notes', 'dueDate']
   },
   EMITIR_BOLETO: {
-    required: ['clientId', 'bankId', 'categoryId', 'costCenterId', 'amount', 'dueDate', 'payerDocument', 'payerName', 'payerAddress', 'payerEmail'],
-    optional: ['supplier', 'notes', 'instructions']
+    required: ['clientId', 'bankId', 'categoryId', 'costCenterId', 'amount', 'dueDate', 'payerDocument', 'payerName', 'payerEmail', 'payerPhone', 'payerStreet', 'payerNumber', 'payerNeighborhood', 'payerCity', 'payerState', 'payerZipCode'],
+    optional: ['supplier', 'notes', 'instructions', 'payerContactName', 'payerStateRegistration', 'payerComplement', 'payerAddress']
   },
   EMITIR_NF: {
     required: ['clientId', 'categoryId', 'costCenterId', 'amount', 'serviceCode', 'serviceDescription', 'payerDocument', 'payerName', 'payerAddress', 'payerEmail'],
@@ -413,8 +413,18 @@ export function validateBusinessRules(
     'scheduledDate': 'Data de Agendamento',
     'payerDocument': 'Documento do Tomador',
     'payerName': 'Nome do Tomador',
-    'payerAddress': 'Endereço do Tomador',
     'payerEmail': 'Email do Tomador',
+    'payerPhone': 'Telefone do Tomador',
+    'payerContactName': 'Nome do Contato',
+    'payerStateRegistration': 'Inscrição Estadual',
+    'payerStreet': 'Rua',
+    'payerNumber': 'Número',
+    'payerComplement': 'Complemento',
+    'payerNeighborhood': 'Bairro',
+    'payerCity': 'Cidade',
+    'payerState': 'Estado',
+    'payerZipCode': 'CEP',
+    'payerAddress': 'Endereço do Tomador',
     'serviceCode': 'Código do Serviço',
     'serviceDescription': 'Descrição do Serviço'
   };

@@ -38,11 +38,27 @@ const baseDocumentUploadSchema = z.object({
   scheduledDate: z.string().regex(/^\d{2}\/\d{2}\/\d{4}$/, 'Data de agendamento inválida (DD/MM/AAAA)').optional(),
   paymentDate: z.string().optional(),
   
-  // Campos para emissão de boleto/NF
+  // Campos para emissão de boleto/NF - dados do tomador (expandidos)
   payerDocument: z.string().optional(),
-  payerName: z.string().optional(), 
-  payerAddress: z.string().optional(),
+  payerName: z.string().optional(),
   payerEmail: z.string().optional(),
+  payerPhone: z.string().optional(),
+  payerContactName: z.string().optional(),
+  payerStateRegistration: z.string().optional(), // IE - opcional
+  
+  // Endereço completo do tomador
+  payerStreet: z.string().optional(),
+  payerNumber: z.string().optional(),
+  payerComplement: z.string().optional(),
+  payerNeighborhood: z.string().optional(),
+  payerCity: z.string().optional(),
+  payerState: z.string().optional(), // UF
+  payerZipCode: z.string().optional(), // CEP
+  
+  // Compatibilidade (manter o campo legado)
+  payerAddress: z.string().optional(),
+  
+  // Campos de serviço
   serviceCode: z.string().optional(),
   serviceDescription: z.string().optional(),
   instructions: z.string().optional(),
