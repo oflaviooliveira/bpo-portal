@@ -357,8 +357,18 @@ export function UploadBpo() {
         if (data.suggestions.realData.dueDate && (documentType === "AGENDADO" || documentType === "PAGO")) {
           const convertedDate = convertBRDateToISO(data.suggestions.realData.dueDate);
           if (convertedDate) {
-            form.setValue("competenceDate", convertedDate);
-            console.log("📅 Data de agendamento preenchida automaticamente:", data.suggestions.realData.dueDate, "→", convertedDate);
+            // Para PAGO, preencher competenceDate
+            if (documentType === "PAGO") {
+              form.setValue("competenceDate", convertedDate);
+              console.log("📅 Data de competência preenchida automaticamente:", data.suggestions.realData.dueDate, "→", convertedDate);
+            }
+            
+            // Para AGENDADO, preencher scheduledDate
+            if (documentType === "AGENDADO") {
+              form.setValue("scheduledDate", convertedDate);
+              console.log("📅 Data de agendamento preenchida automaticamente:", data.suggestions.realData.dueDate, "→", convertedDate);
+            }
+            
             console.log("💡 DICA: Você pode alterar esta data se quiser pagar em outro dia");
           }
         }
@@ -930,6 +940,20 @@ export function UploadBpo() {
             </CardHeader>
             <CardContent className="space-y-4">
 
+              {/* Mostrar dados do documento para referência */}
+              {documentMetadata && (
+                <Alert className="mb-4">
+                  <AlertTriangle className="h-4 w-4" />
+                  <AlertDescription>
+                    <div className="text-sm">
+                      <strong>Dados do documento:</strong> Data {documentMetadata.documentDate}, Valor {documentMetadata.documentValue}
+                      <br />
+                      <em>Ajuste as datas abaixo conforme a realidade do BPO (podem ser diferentes do documento)</em>
+                    </div>
+                  </AlertDescription>
+                </Alert>
+              )}
+
               {documentType === "PAGO" && (
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                   <div className="space-y-2">
@@ -980,6 +1004,10 @@ export function UploadBpo() {
                     <p className="text-xs text-gray-600">
                       Quando deve ser agendado o pagamento no banco
                     </p>
+                    {/* 💡 NOVA FUNCIONALIDADE: Dica sobre auto-preenchimento da data */}
+                    <p className="text-xs text-blue-600 bg-blue-50 p-2 rounded">
+                      💡 Data preenchida automaticamente com vencimento do documento. Você pode alterar se preferir agendar para outro dia.
+                    </p>
                     {form.formState.errors.scheduledDate && (
                       <p className="text-sm text-red-500">{form.formState.errors.scheduledDate.message}</p>
                     )}
@@ -1009,19 +1037,6 @@ export function UploadBpo() {
                 </div>
               )}
 
-              {/* Mostrar dados do documento para referência */}
-              {documentMetadata && (
-                <Alert>
-                  <AlertTriangle className="h-4 w-4" />
-                  <AlertDescription>
-                    <div className="text-sm">
-                      <strong>Dados do documento:</strong> Data {documentMetadata.documentDate}, Valor {documentMetadata.documentValue}
-                      <br />
-                      <em>Ajuste as datas acima conforme a realidade do BPO (podem ser diferentes do documento)</em>
-                    </div>
-                  </AlertDescription>
-                </Alert>
-              )}
             </CardContent>
           </Card>
         )}
