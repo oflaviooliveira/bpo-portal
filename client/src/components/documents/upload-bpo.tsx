@@ -977,12 +977,342 @@ export function UploadBpo() {
           </Card>
         )}
 
-        {/* Dados Básicos */}
+        {/* Campos para Emissão de Boleto/NF - REORGANIZADO PARA VIR PRIMEIRO */}
+        {(documentType === "EMITIR_BOLETO" || documentType === "EMITIR_NF") && (
+          <Card>
+            <CardHeader>
+              <CardTitle className="flex items-center gap-2 text-[#0B0E30]">
+                <Building2 className="h-5 w-5 text-[#E40064]" />
+                Dados do Tomador - {documentType}
+                <Badge variant="destructive">Obrigatório</Badge>
+              </CardTitle>
+            </CardHeader>
+            <CardContent className="space-y-6">
+
+              {/* 🎯 BUSCA HÍBRIDA INTELIGENTE */}
+              <div className="space-y-4">
+                <div className="flex items-center justify-between">
+                  <h4 className="text-sm font-semibold text-[#0B0E30] border-b pb-2 flex-1">
+                    {selectedClient ? `Cliente: ${selectedClient.name}` : 'Buscar Cliente'}
+                  </h4>
+                  {selectedClient && (
+                    <Button 
+                      type="button" 
+                      variant="ghost" 
+                      size="sm"
+                      onClick={() => {
+                        setSelectedClient(null);
+                        setClientSearchTerm('');
+                        form.reset({ ...form.getValues(), payerDocument: '', payerName: '', payerEmail: '', payerPhone: '', payerStreet: '', payerNumber: '', payerNeighborhood: '', payerCity: '', payerState: '', payerZipCode: '' });
+                      }}
+                      className="text-red-500 hover:text-red-700"
+                    >
+                      <X className="h-4 w-4 mr-1" />
+                      Limpar
+                    </Button>
+                  )}
+                </div>
+
+                {!selectedClient && (
+                  <>
+                    <p className="text-sm text-gray-600">
+                      🔍 Busque um cliente existente ou cadastre um novo
+                    </p>
+                    <div className="space-y-2">
+                      <div className="flex gap-2">
+                        <Input
+                          value={clientSearchTerm}
+                          onChange={(e) => {
+                            const term = e.target.value;
+                            setClientSearchTerm(term);
+                            searchClients(term);
+                          }}
+                          placeholder="Digite nome, CNPJ ou email do cliente..."
+                          className="flex-1"
+                          data-testid="input-client-search"
+                        />
+                        <Button 
+                          type="button" 
+                          variant="outline"
+                          onClick={() => setShowNewClientForm(true)}
+                        >
+                          <Plus className="h-4 w-4 mr-2" />
+                          Novo Cliente
+                        </Button>
+                      </div>
+
+                      {/* 📋 Resultados da busca em tempo real */}
+                      {searchResults.length > 0 && (
+                        <div className="border rounded-md bg-white shadow-sm max-h-60 overflow-y-auto">
+                          {searchResults.map((cliente) => (
+                            <div
+                              key={cliente.id}
+                              onClick={() => autoFillClientData(cliente)}
+                              className="p-3 hover:bg-gray-50 cursor-pointer border-b last:border-b-0 transition-colors"
+                              data-testid={`client-result-${cliente.id}`}
+                            >
+                              <div className="flex justify-between items-start">
+                                <div>
+                                  <p className="font-medium text-gray-900">{cliente.name}</p>
+                                  <p className="text-sm text-gray-600">{cliente.document}</p>
+                                  {cliente.email && (
+                                    <p className="text-sm text-gray-500">{cliente.email}</p>
+                                  )}
+                                </div>
+                                <div className="text-right text-xs text-gray-400">
+                                  {cliente.city && <p>{cliente.city}/{cliente.state}</p>}
+                                </div>
+                              </div>
+                            </div>
+                          ))}
+                        </div>
+                      )}
+
+                      {clientSearchTerm.length >= 2 && searchResults.length === 0 && (
+                        <div className="text-sm text-gray-500 text-center py-3 border border-dashed rounded">
+                          Nenhum cliente encontrado. 
+                          <Button 
+                            type="button" 
+                            variant="link" 
+                            className="p-0 h-auto ml-1"
+                            onClick={() => setShowNewClientForm(true)}
+                          >
+                            Cadastrar novo cliente?
+                          </Button>
+                        </div>
+                      )}
+                    </div>
+                  </>
+                )}
+
+                {selectedClient && (
+                  <div className="bg-green-50 border border-green-200 rounded-lg p-3">
+                    <div className="flex items-center gap-2 mb-2">
+                      <CheckCircle className="h-4 w-4 text-green-600" />
+                      <span className="text-sm font-medium text-green-800">Cliente selecionado</span>
+                    </div>
+                    <div className="text-sm text-green-700">
+                      <p><strong>{selectedClient.name}</strong></p>
+                      <p>{selectedClient.document} • {selectedClient.email}</p>
+                      {selectedClient.city && <p>{selectedClient.city}/{selectedClient.state}</p>}
+                    </div>
+                  </div>
+                )}
+              </div>
+
+              {showNewClientForm && (
+                <div className="space-y-4">
+                  <div className="flex items-center justify-between">
+                    <h4 className="text-sm font-semibold text-[#0B0E30] border-b pb-2 flex-1">Dados do Novo Cliente</h4>
+                    <Button 
+                      type="button" 
+                      variant="ghost" 
+                      size="sm"
+                      onClick={() => setShowNewClientForm(false)}
+                      className="text-gray-500"
+                    >
+                      <X className="h-4 w-4 mr-1" />
+                      Cancelar
+                    </Button>
+                  </div>
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                    <div className="space-y-2">
+                      <Label>CNPJ/CPF do Tomador *</Label>
+                      <Input
+                        {...form.register("payerDocument")}
+                        placeholder="00.000.000/0000-00"
+                        data-testid="input-payer-document"
+                      />
+                      {form.formState.errors.payerDocument && (
+                        <p className="text-sm text-red-500">{form.formState.errors.payerDocument.message}</p>
+                      )}
+                    </div>
+
+                    <div className="space-y-2">
+                      <Label>Nome/Razão Social *</Label>
+                      <Input
+                        {...form.register("payerName")}
+                        placeholder="Nome completo ou razão social"
+                        data-testid="input-payer-name"
+                      />
+                      {form.formState.errors.payerName && (
+                        <p className="text-sm text-red-500">{form.formState.errors.payerName.message}</p>
+                      )}
+                    </div>
+
+                    <div className="space-y-2">
+                      <Label>Inscrição Estadual</Label>
+                      <Input
+                        {...form.register("payerStateRegistration")}
+                        placeholder="000.000.000.000 (opcional)"
+                        data-testid="input-payer-state-registration"
+                      />
+                    </div>
+                  </div>
+                </div>
+              )}
+
+              {/* Contato */}
+              <div className="space-y-4">
+                <h4 className="text-sm font-semibold text-[#0B0E30] border-b pb-2">Contato</h4>
+                <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                  <div className="space-y-2">
+                    <Label>Email *</Label>
+                    <Input
+                      {...form.register("payerEmail")}
+                      type="email"
+                      placeholder="email@exemplo.com"
+                      data-testid="input-payer-email"
+                    />
+                    {form.formState.errors.payerEmail && (
+                      <p className="text-sm text-red-500">{form.formState.errors.payerEmail.message}</p>
+                    )}
+                  </div>
+
+                  <div className="space-y-2">
+                    <Label>Telefone *</Label>
+                    <Input
+                      {...form.register("payerPhone")}
+                      placeholder="(11) 99999-9999"
+                      data-testid="input-payer-phone"
+                    />
+                    {form.formState.errors.payerPhone && (
+                      <p className="text-sm text-red-500">{form.formState.errors.payerPhone.message}</p>
+                    )}
+                  </div>
+
+                  <div className="space-y-2">
+                    <Label>Nome da Pessoa de Contato</Label>
+                    <Input
+                      {...form.register("payerContactName")}
+                      placeholder="Nome do responsável"
+                      data-testid="input-payer-contact-name"
+                    />
+                  </div>
+                </div>
+              </div>
+
+              {/* Endereço Completo */}
+              <div className="space-y-4">
+                <h4 className="text-sm font-semibold text-[#0B0E30] border-b pb-2">Endereço</h4>
+                <div className="grid grid-cols-1 gap-4">
+                  {/* Linha 1: CEP e Rua */}
+                  <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
+                    <div className="space-y-2">
+                      <Label>CEP *</Label>
+                      <Input
+                        {...form.register("payerZipCode")}
+                        placeholder="00000-000"
+                        data-testid="input-payer-zip-code"
+                      />
+                      {form.formState.errors.payerZipCode && (
+                        <p className="text-sm text-red-500">{form.formState.errors.payerZipCode.message}</p>
+                      )}
+                    </div>
+
+                    <div className="space-y-2 md:col-span-3">
+                      <Label>Rua/Avenida *</Label>
+                      <Input
+                        {...form.register("payerStreet")}
+                        placeholder="Nome da rua/avenida"
+                        data-testid="input-payer-street"
+                      />
+                      {form.formState.errors.payerStreet && (
+                        <p className="text-sm text-red-500">{form.formState.errors.payerStreet.message}</p>
+                      )}
+                    </div>
+                  </div>
+
+                  {/* Linha 2: Número, Complemento, Bairro */}
+                  <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                    <div className="space-y-2">
+                      <Label>Número *</Label>
+                      <Input
+                        {...form.register("payerNumber")}
+                        placeholder="123"
+                        data-testid="input-payer-number"
+                      />
+                      {form.formState.errors.payerNumber && (
+                        <p className="text-sm text-red-500">{form.formState.errors.payerNumber.message}</p>
+                      )}
+                    </div>
+
+                    <div className="space-y-2">
+                      <Label>Complemento</Label>
+                      <Input
+                        {...form.register("payerComplement")}
+                        placeholder="Apto 45, Bloco B..."
+                        data-testid="input-payer-complement"
+                      />
+                    </div>
+
+                    <div className="space-y-2">
+                      <Label>Bairro *</Label>
+                      <Input
+                        {...form.register("payerNeighborhood")}
+                        placeholder="Nome do bairro"
+                        data-testid="input-payer-neighborhood"
+                      />
+                      {form.formState.errors.payerNeighborhood && (
+                        <p className="text-sm text-red-500">{form.formState.errors.payerNeighborhood.message}</p>
+                      )}
+                    </div>
+                  </div>
+
+                  {/* Linha 3: Cidade e Estado */}
+                  <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                    <div className="space-y-2 md:col-span-2">
+                      <Label>Cidade *</Label>
+                      <Input
+                        {...form.register("payerCity")}
+                        placeholder="Nome da cidade"
+                        data-testid="input-payer-city"
+                      />
+                      {form.formState.errors.payerCity && (
+                        <p className="text-sm text-red-500">{form.formState.errors.payerCity.message}</p>
+                      )}
+                    </div>
+
+                    <div className="space-y-2">
+                      <Label>Estado *</Label>
+                      <Input
+                        {...form.register("payerState")}
+                        placeholder="SP"
+                        maxLength={2}
+                        data-testid="input-payer-state"
+                      />
+                      {form.formState.errors.payerState && (
+                        <p className="text-sm text-red-500">{form.formState.errors.payerState.message}</p>
+                      )}
+                    </div>
+                  </div>
+                </div>
+              </div>
+
+              {/* Instruções Especiais */}
+              <div className="space-y-4">
+                <h4 className="text-sm font-semibold text-[#0B0E30] border-b pb-2">Instruções Especiais</h4>
+                <div className="space-y-2">
+                  <Label>Instruções especiais para o boleto/NF (opcional)</Label>
+                  <Textarea
+                    {...form.register("specialInstructions")}
+                    placeholder="Instruções especiais para o boleto/NF (opcional)"
+                    className="min-h-[80px]"
+                    data-testid="textarea-special-instructions"
+                  />
+                </div>
+              </div>
+
+            </CardContent>
+          </Card>
+        )}
+
+        {/* Dados da Operação - SIMPLIFICADO E REORGANIZADO */}
         <Card>
           <CardHeader>
             <CardTitle className="flex items-center gap-2 text-[#0B0E30]">
               <DollarSign className="h-5 w-5 text-[#E40064]" />
-              Dados Básicos
+              {documentType === "EMITIR_BOLETO" ? "Dados da Operação" : "Dados Básicos"}
               <Badge variant="destructive">Obrigatório</Badge>
             </CardTitle>
           </CardHeader>
@@ -1007,34 +1337,54 @@ export function UploadBpo() {
                 )}
               </div>
 
-              {/* Contraparte dinâmica */}
-              <div className="space-y-2">
-                <Label className="flex items-center">
-                  {getContraparteLabel()} *
-                  {getSuggestionBadge('contraparte')}
-                </Label>
-                <Select 
-                  value={form.watch("contraparteId") || ""} 
-                  onValueChange={(value) => form.setValue("contraparteId", value)}
-                >
-                  <SelectTrigger 
-                    data-testid="select-contraparte"
-                    className={isFieldSuggested('contraparte') ? 'border-[#E40064]/30 bg-[#E40064]/5' : ''}
+              {/* Data de Vencimento - NOVO CAMPO ESPECÍFICO PARA BOLETO */}
+              {documentType === "EMITIR_BOLETO" && (
+                <div className="space-y-2">
+                  <Label>Data de Vencimento *</Label>
+                  <Input
+                    {...form.register("dueDate")}
+                    type="date"
+                    data-testid="input-due-date"
+                  />
+                  <p className="text-xs text-gray-600">
+                    Data limite para pagamento do boleto
+                  </p>
+                  {form.formState.errors.dueDate && (
+                    <p className="text-sm text-red-500">{form.formState.errors.dueDate.message}</p>
+                  )}
+                </div>
+              )}
+
+              {/* Contraparte dinâmica - SÓ PARA OUTROS TIPOS (NÃO EMITIR_BOLETO) */}
+              {documentType !== "EMITIR_BOLETO" && (
+                <div className="space-y-2">
+                  <Label className="flex items-center">
+                    {getContraparteLabel()} *
+                    {getSuggestionBadge('contraparte')}
+                  </Label>
+                  <Select 
+                    value={form.watch("contraparteId") || ""} 
+                    onValueChange={(value) => form.setValue("contraparteId", value)}
                   >
-                    <SelectValue placeholder={`Selecione o ${getContraparteLabel().toLowerCase()}`} />
-                  </SelectTrigger>
-                  <SelectContent>
-                    {Array.isArray(contrapartes) && contrapartes.map((contraparte: any) => (
-                      <SelectItem key={contraparte.id} value={contraparte.id}>
-                        {contraparte.name} {contraparte.document && `(${contraparte.document})`}
-                      </SelectItem>
-                    ))}
-                  </SelectContent>
-                </Select>
-                {form.formState.errors.contraparteId && (
-                  <p className="text-sm text-red-500">{form.formState.errors.contraparteId.message}</p>
-                )}
-              </div>
+                    <SelectTrigger 
+                      data-testid="select-contraparte"
+                      className={isFieldSuggested('contraparte') ? 'border-[#E40064]/30 bg-[#E40064]/5' : ''}
+                    >
+                      <SelectValue placeholder={`Selecione o ${getContraparteLabel().toLowerCase()}`} />
+                    </SelectTrigger>
+                    <SelectContent>
+                      {Array.isArray(contrapartes) && contrapartes.map((contraparte: any) => (
+                        <SelectItem key={contraparte.id} value={contraparte.id}>
+                          {contraparte.name} {contraparte.document && `(${contraparte.document})`}
+                        </SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                  {form.formState.errors.contraparteId && (
+                    <p className="text-sm text-red-500">{form.formState.errors.contraparteId.message}</p>
+                  )}
+                </div>
+              )}
             </div>
 
             {/* Descrição */}
@@ -1169,47 +1519,9 @@ export function UploadBpo() {
           </Card>
         )}
 
-        {/* Campos para Emissão de Boleto/NF - EXPANDIDOS */}
-        {(documentType === "EMITIR_BOLETO" || documentType === "EMITIR_NF") && (
-          <Card>
-            <CardHeader>
-              <CardTitle className="flex items-center gap-2 text-[#0B0E30]">
-                <Building2 className="h-5 w-5 text-[#E40064]" />
-                Dados do Tomador - {documentType}
-                <Badge variant="destructive">Obrigatório</Badge>
-              </CardTitle>
-            </CardHeader>
-            <CardContent className="space-y-6">
-
-              {/* 🎯 BUSCA HÍBRIDA INTELIGENTE */}
-              <div className="space-y-4">
-                <div className="flex items-center justify-between">
-                  <h4 className="text-sm font-semibold text-[#0B0E30] border-b pb-2 flex-1">
-                    {selectedClient ? `Cliente: ${selectedClient.name}` : 'Buscar Cliente'}
-                  </h4>
-                  {selectedClient && (
-                    <Button 
-                      type="button" 
-                      variant="ghost" 
-                      size="sm"
-                      onClick={() => {
-                        setSelectedClient(null);
-                        setClientSearchTerm('');
-                        form.reset({ ...form.getValues(), payerDocument: '', payerName: '', payerEmail: '', payerPhone: '', payerStreet: '', payerNumber: '', payerNeighborhood: '', payerCity: '', payerState: '', payerZipCode: '' });
-                      }}
-                      className="text-red-500 hover:text-red-700"
-                    >
-                      <X className="h-4 w-4 mr-1" />
-                      Limpar
-                    </Button>
-                  )}
-                </div>
-
-                {!selectedClient && (
-                  <>
-                    <p className="text-sm text-gray-600">
-                      🔍 Busque um cliente existente ou cadastre um novo
-                    </p>
+        {/* 🤖 NOVO: Card de campos auto-preenchidos */}
+        {showAutoFillConfirmation && autoFilledFields.length > 0 && (
+          <Card className="border-blue-200 bg-blue-50 dark:border-blue-800 dark:bg-blue-950">
                     <div className="space-y-2">
                       <div className="flex gap-2">
                         <Input
