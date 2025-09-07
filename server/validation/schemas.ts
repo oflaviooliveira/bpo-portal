@@ -73,6 +73,11 @@ export const pagoDocumentUploadSchema = baseDocumentUploadSchema.extend({
   paidDate: z.string().regex(/^\d{2}\/\d{2}\/\d{4}$/, 'Data de pagamento é obrigatória para documentos PAGO (DD/MM/AAAA)'),
 });
 
+// Validação condicional para documentos EMITIR_BOLETO - dueDate obrigatório
+export const emitirBoletoDocumentUploadSchema = baseDocumentUploadSchema.extend({
+  dueDate: z.string().regex(/^\d{2}\/\d{2}\/\d{4}$/, 'Data de vencimento é obrigatória para boletos (DD/MM/AAAA)'),
+});
+
 // Validação para outros tipos de documento - mantém validação atual
 export const defaultDocumentUploadSchema = baseDocumentUploadSchema;
 
@@ -80,7 +85,7 @@ export const defaultDocumentUploadSchema = baseDocumentUploadSchema;
 export const documentUploadSchema = z.discriminatedUnion('documentType', [
   pagoDocumentUploadSchema.extend({ documentType: z.literal('PAGO') }),
   defaultDocumentUploadSchema.extend({ documentType: z.literal('AGENDADO') }),
-  defaultDocumentUploadSchema.extend({ documentType: z.literal('EMITIR_BOLETO') }),
+  emitirBoletoDocumentUploadSchema.extend({ documentType: z.literal('EMITIR_BOLETO') }),
   defaultDocumentUploadSchema.extend({ documentType: z.literal('EMITIR_NF') }),
 ]);
 
