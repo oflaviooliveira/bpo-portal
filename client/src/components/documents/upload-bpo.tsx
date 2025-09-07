@@ -343,8 +343,25 @@ export function UploadBpo() {
           console.log("📝 Descrição preenchida automaticamente:", data.suggestions.realData.description);
         }
         
-        // Data de vencimento/pagamento será preenchida automaticamente nos campos condicionais
-        // (será tratado na validação do formulário)
+        // 🏢 CORREÇÃO: Preencher fornecedor automaticamente 
+        if (data.suggestions.realData.supplier) {
+          console.log("🏢 Detectando fornecedor automaticamente:", data.suggestions.realData.supplier);
+          detectAndHandleSupplier(
+            data.suggestions.realData.supplier, 
+            data.suggestions.realData.document, 
+            90
+          );
+        }
+        
+        // 📅 NOVA FUNCIONALIDADE: Auto-preencher data de agendamento com data de vencimento
+        if (data.suggestions.realData.dueDate && (documentType === "AGENDADO" || documentType === "PAGO")) {
+          const convertedDate = convertBRDateToISO(data.suggestions.realData.dueDate);
+          if (convertedDate) {
+            form.setValue("competenceDate", convertedDate);
+            console.log("📅 Data de agendamento preenchida automaticamente:", data.suggestions.realData.dueDate, "→", convertedDate);
+            console.log("💡 DICA: Você pode alterar esta data se quiser pagar em outro dia");
+          }
+        }
       }
 
       // 🏢 SUGESTÕES OPERACIONAIS: Mostrar para aprovação do usuário
@@ -921,6 +938,10 @@ export function UploadBpo() {
                     />
                     <p className="text-xs text-gray-600">
                       Quando a despesa/receita pertence (mês de competência)
+                    </p>
+                    {/* 💡 NOVA FUNCIONALIDADE: Dica sobre auto-preenchimento da data */}
+                    <p className="text-xs text-blue-600 bg-blue-50 p-2 rounded">
+                      💡 Data preenchida automaticamente com vencimento do documento. Você pode alterar se preferir pagar em outro dia.
                     </p>
                     {form.formState.errors.competenceDate && (
                       <p className="text-sm text-red-500">{form.formState.errors.competenceDate.message}</p>
