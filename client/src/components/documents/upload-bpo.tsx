@@ -875,7 +875,10 @@ export function UploadBpo() {
                   {getContraparteLabel()} *
                   {getSuggestionBadge('contraparte')}
                 </Label>
-                <Select onValueChange={(value) => form.setValue("contraparteId", value)}>
+                <Select 
+                  value={form.watch("contraparteId") || ""} 
+                  onValueChange={(value) => form.setValue("contraparteId", value)}
+                >
                   <SelectTrigger 
                     data-testid="select-contraparte"
                     className={isFieldSuggested('contraparte') ? 'border-[#E40064]/30 bg-[#E40064]/5' : ''}
@@ -984,7 +987,10 @@ export function UploadBpo() {
 
                   <div className="space-y-2">
                     <Label>Banco para Agendamento *</Label>
-                    <Select onValueChange={(value) => form.setValue("bankId", value)}>
+                    <Select 
+                      value={form.watch("bankId") || ""} 
+                      onValueChange={(value) => form.setValue("bankId", value)}
+                    >
                       <SelectTrigger data-testid="select-bank">
                         <SelectValue placeholder="Selecione o banco" />
                       </SelectTrigger>
@@ -1219,7 +1225,10 @@ export function UploadBpo() {
               {/* Categoria */}
               <div className="space-y-2">
                 <Label>Categoria</Label>
-                <Select onValueChange={(value) => form.setValue("categoryId", value)}>
+                <Select 
+                  value={form.watch("categoryId") || ""} 
+                  onValueChange={(value) => form.setValue("categoryId", value)}
+                >
                   <SelectTrigger data-testid="select-category">
                     <SelectValue placeholder="Selecione a categoria" />
                   </SelectTrigger>
@@ -1236,7 +1245,10 @@ export function UploadBpo() {
               {/* Centro de Custo */}
               <div className="space-y-2">
                 <Label>Centro de Custo</Label>
-                <Select onValueChange={(value) => form.setValue("costCenterId", value)}>
+                <Select 
+                  value={form.watch("costCenterId") || ""} 
+                  onValueChange={(value) => form.setValue("costCenterId", value)}
+                >
                   <SelectTrigger data-testid="select-cost-center">
                     <SelectValue placeholder="Selecione o centro de custo" />
                   </SelectTrigger>
