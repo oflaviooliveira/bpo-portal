@@ -25,7 +25,7 @@ const bpoUploadSchema = z.object({
 
   // Dados básicos sempre obrigatórios
   amount: z.string().min(1, "Valor é obrigatório"),
-  contraparteId: z.string().min(1, "Contraparte é obrigatória"),
+  contraparteId: z.string().optional(), // Será validado condicionalmente abaixo
   description: z.string().min(1, "Descrição é obrigatória"),
 
   // Dados condicionais por tipo
@@ -64,6 +64,15 @@ const bpoUploadSchema = z.object({
   serviceDescription: z.string().optional(),
   instructions: z.string().optional(),
 }).superRefine((data, ctx) => {
+  // Validação condicional da contraparte - obrigatória para PAGO e AGENDADO
+  if ((data.documentType === "PAGO" || data.documentType === "AGENDADO") && !data.contraparteId) {
+    ctx.addIssue({
+      code: z.ZodIssueCode.custom,
+      message: "Contraparte é obrigatória para documentos PAGO e AGENDADO",
+      path: ["contraparteId"]
+    });
+  }
+
   // Validação condicional por tipo
   if (data.documentType === "PAGO") {
     if (!data.competenceDate) {
@@ -1409,34 +1418,47 @@ export function UploadBpo() {
                 </div>
               )}
 
-              {/* Contraparte dinâmica - PARA TODOS OS TIPOS */}
-              <div className="space-y-2">
-                <Label className="flex items-center">
-                  {getContraparteLabel()} *
-                  {getSuggestionBadge('contraparte')}
-                </Label>
-                <Select 
-                  value={form.watch("contraparteId") || ""} 
-                  onValueChange={(value) => form.setValue("contraparteId", value)}
-                >
-                  <SelectTrigger 
-                    data-testid="select-contraparte"
-                    className={isFieldSuggested('contraparte') ? 'border-[#E40064]/30 bg-[#E40064]/5' : ''}
+              {/* Contraparte dinâmica - SÓ PARA PAGO E AGENDADO */}
+              {(documentType === "PAGO" || documentType === "AGENDADO") && (
+                <div className="space-y-2">
+                  <Label className="flex items-center">
+                    {getContraparteLabel()} *
+                    {getSuggestionBadge('contraparte')}
+                  </Label>
+                  <Select 
+                    value={form.watch("contraparteId") || ""} 
+                    onValueChange={(value) => form.setValue("contraparteId", value)}
                   >
-                    <SelectValue placeholder={`Selecione o ${getContraparteLabel().toLowerCase()}`} />
-                  </SelectTrigger>
-                  <SelectContent>
-                    {Array.isArray(contrapartes) && contrapartes.map((contraparte: any) => (
-                      <SelectItem key={contraparte.id} value={contraparte.id}>
-                        {contraparte.name} {contraparte.document && `(${contraparte.document})`}
-                      </SelectItem>
-                    ))}
-                  </SelectContent>
-                </Select>
-                {form.formState.errors.contraparteId && (
-                  <p className="text-sm text-red-500">{form.formState.errors.contraparteId.message}</p>
-                )}
-              </div>
+                    <SelectTrigger 
+                      data-testid="select-contraparte"
+                      className={isFieldSuggested('contraparte') ? 'border-[#E40064]/30 bg-[#E40064]/5' : ''}
+                    >
+                      <SelectValue placeholder={`Selecione o ${getContraparteLabel().toLowerCase()}`} />
+                    </SelectTrigger>
+                    <SelectContent>
+                      {Array.isArray(contrapartes) && contrapartes.map((contraparte: any) => (
+                        <SelectItem key={contraparte.id} value={contraparte.id}>
+                          {contraparte.name} {contraparte.document && `(${contraparte.document})`}
+                        </SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                  {form.formState.errors.contraparteId && (
+                    <p className="text-sm text-red-500">{form.formState.errors.contraparteId.message}</p>
+                  )}
+                </div>
+              )}
+
+              {/* Auto-preencher contraparte para EMITIR_BOLETO com cliente selecionado */}
+              {(documentType === "EMITIR_BOLETO" || documentType === "EMITIR_NF") && selectedClient && (
+                <div className="space-y-2">
+                  <Label className="text-gray-600">Cliente Selecionado (Automático)</Label>
+                  <div className="p-3 bg-green-50 border border-green-200 rounded-lg">
+                    <p className="text-green-800 font-medium">{selectedClient.name}</p>
+                    <p className="text-green-600 text-sm">{selectedClient.document}</p>
+                  </div>
+                </div>
+              )}
             </div>
 
             {/* Descrição */}
