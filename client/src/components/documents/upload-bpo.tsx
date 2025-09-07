@@ -704,6 +704,8 @@ export function UploadBpo() {
       return;
     }
 
+    console.log("🚀 INICIANDO ENVIO - Dados completos:", data);
+    console.log("🔍 Validando formulário...", form.formState.errors);
     setProcessingState({ stage: 'submitting', message: 'Enviando para BPO...' });
 
     // 🔍 DEBUG: Capturar TODOS os valores do formulário (incluindo Select controlados)
@@ -860,7 +862,7 @@ export function UploadBpo() {
         </CardHeader>
       </Card>
 
-      <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-6" autoComplete="off" noValidate>
+      <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-6" autoComplete="new-password" noValidate data-lpignore="true" data-1p-ignore="true">
 
         {/* Seleção de Tipo */}
         <Card>
@@ -1320,6 +1322,11 @@ export function UploadBpo() {
                         placeholder="SP"
                         maxLength={2}
                         data-testid="input-payer-state"
+                        autoComplete="new-password"
+                        data-lpignore="true"
+                        data-1p-ignore="true"
+                        data-form-type="other"
+                        spellCheck="false"
                       />
                       {form.formState.errors.payerState && (
                         <p className="text-sm text-red-500">{form.formState.errors.payerState.message}</p>

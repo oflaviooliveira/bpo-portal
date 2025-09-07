@@ -9,6 +9,7 @@ import HomePage from "@/pages/home-page";
 import AuthPage from "@/pages/auth-page";
 import AIControlCenter from "@/pages/ai-control-center";
 import { DocumentsPage } from "@/pages/documents";
+import ClientsPage from "@/pages/clients";
 import NotFound from "@/pages/not-found";
 
 function Router() {
@@ -16,6 +17,7 @@ function Router() {
     <Switch>
       <ProtectedRoute path="/" component={HomePage} />
       <ProtectedRoute path="/documents" component={DocumentsPage} />
+      <ProtectedRoute path="/clients" component={ClientsPage} />
       <ProtectedRoute path="/ai-control" component={AIControlCenter} />
       <Route path="/auth" component={AuthPage} />
       <Route component={NotFound} />
