@@ -1812,6 +1812,3 @@ const ProcessingSteps: React.FC<ProcessingStepsProps> = ({ stage, progress, deta
 };
 
 export default UploadBpo;
-              )}
-
-              {/* Contato */}
