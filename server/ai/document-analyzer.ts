@@ -140,9 +140,21 @@ export class DocumentAnalyzer {
         if (extractedDataAny.cnpj_beneficiario) {
           finalSupplierDoc = extractedDataAny.cnpj_beneficiario;
           console.log(`📋 CNPJ beneficiário priorizado: ${finalSupplierDoc}`);
+          
+          // 🔍 DEBUG ESPECÍFICO PARA ALLIANZ
+          if (finalSupplierName && finalSupplierName.includes('Allianz')) {
+            console.log(`🚨 ALLIANZ DEBUG - CNPJ extraído do beneficiário: ${finalSupplierDoc}`);
+          }
         } else if (aiResult.extractedData.cnpj_emitente) {
           finalSupplierDoc = aiResult.extractedData.cnpj_emitente;
           console.log(`📋 CNPJ emitente priorizado: ${finalSupplierDoc}`);
+        } else {
+          // 🔍 DEBUG ESPECÍFICO PARA ALLIANZ - mostrar todos os campos disponíveis
+          if (finalSupplierName && finalSupplierName.includes('Allianz')) {
+            console.log(`🚨 ALLIANZ DEBUG - Campos disponíveis na resposta IA:`, Object.keys(extractedDataAny));
+            console.log(`🚨 ALLIANZ DEBUG - cnpj_beneficiario encontrado:`, extractedDataAny.cnpj_beneficiario);
+            console.log(`🚨 ALLIANZ DEBUG - documento genérico:`, extractedDataAny.documento);
+          }
         }
         
         // PRIORIDADE 2: Auto-detecção se IA não encontrou

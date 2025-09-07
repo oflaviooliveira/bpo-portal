@@ -1218,6 +1218,11 @@ Retorne JSON com: valor, remetente, destinatario, data_transacao, hora_transacao
       }
 
       console.log(`🤖 OpenAI Response (${modelToUse}):`, content);
+      
+      // 🔍 DEBUG ESPECÍFICO PARA ALLIANZ
+      if (content.includes('Allianz') || content.includes('61.573.796')) {
+        console.log(`🚨 ALLIANZ DEBUG - Resposta IA bruta:`, content);
+      }
 
       let extractedData;
       try {
@@ -1279,6 +1284,12 @@ Retorne JSON com: valor, remetente, destinatario, data_transacao, hora_transacao
       }
     }
     
+    // 🔍 DEBUG ESPECÍFICO PARA ALLIANZ
+    if (ocrText.includes('Allianz') || fileName.includes('Allianz')) {
+      console.log(`🚨 ALLIANZ DEBUG - Texto OCR completo:`, ocrText);
+      console.log(`🚨 ALLIANZ DEBUG - Contém CNPJ correto?`, ocrText.includes('61.573.796'));
+    }
+
     return `
 Analise este documento fiscal brasileiro e extraia os dados em formato JSON.
 

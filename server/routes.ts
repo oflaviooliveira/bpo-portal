@@ -434,6 +434,13 @@ export async function registerRoutes(app: Express): Promise<Server> {
         const data = aiResult.extractedData;
 
         console.log(`🔄 Mapeando dados IA:`, JSON.stringify(data, null, 2));
+        
+        // 🔍 DEBUG ESPECÍFICO PARA ALLIANZ
+        if (data.fornecedor && data.fornecedor.includes('Allianz')) {
+          console.log(`🚨 ALLIANZ DEBUG - Dados IA completos:`, data);
+          console.log(`🚨 ALLIANZ DEBUG - cnpj_beneficiario na resposta:`, data.cnpj_beneficiario);
+          console.log(`🚨 ALLIANZ DEBUG - documento genérico:`, data.documento);
+        }
 
         // Debug específico para campos perdidos
         console.log(`💰 VALOR EXTRAÍDO:`, data.valor || 'VAZIO');
