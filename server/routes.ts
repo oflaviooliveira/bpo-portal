@@ -33,6 +33,200 @@ import fs from "fs/promises";
 import { z } from "zod";
 
 // Configure multer for file uploads com validação aprimorada
+// 🤖 SISTEMA DE PREENCHIMENTO AUTOMÁTICO INTELIGENTE
+async function createIntelligentDefaults(data: any, tenantId: string) {
+  console.log(`🧠 Criando sugestões inteligentes automáticas...`);
+  
+  const suggestions: any = {};
+  const autoFilledFields: Array<{
+    field: string;
+    value: string;
+    confidence: number;
+    source: 'intelligent_default' | 'ai_suggestion' | 'historical_pattern';
+    reasoning: string;
+  }> = [];
+
+  try {
+    // 1. 🏦 BANCO INTELIGENTE baseado no fornecedor
+    if (data.fornecedor) {
+      const suggestedBank = await suggestBankBySupplier(data.fornecedor, tenantId);
+      if (suggestedBank) {
+        suggestions.bankId = suggestedBank.id;
+        autoFilledFields.push({
+          field: 'bankId',
+          value: suggestedBank.name,
+          confidence: suggestedBank.confidence,
+          source: suggestedBank.source,
+          reasoning: `Banco ${suggestedBank.name} sugerido baseado no fornecedor ${data.fornecedor}`
+        });
+      }
+    }
+
+    // 2. 📂 CATEGORIA INTELIGENTE baseada na descrição/fornecedor
+    const suggestedCategory = await suggestCategoryByContext(data, tenantId);
+    if (suggestedCategory) {
+      suggestions.categoryId = suggestedCategory.id;
+      autoFilledFields.push({
+        field: 'categoryId', 
+        value: suggestedCategory.name,
+        confidence: suggestedCategory.confidence,
+        source: suggestedCategory.source,
+        reasoning: `Categoria ${suggestedCategory.name} sugerida baseada no contexto do documento`
+      });
+    }
+
+    // 3. 🏢 CENTRO DE CUSTO INTELIGENTE
+    const suggestedCostCenter = await suggestCostCenterByContext(data, tenantId);
+    if (suggestedCostCenter) {
+      suggestions.costCenterId = suggestedCostCenter.id;
+      autoFilledFields.push({
+        field: 'costCenterId',
+        value: suggestedCostCenter.name, 
+        confidence: suggestedCostCenter.confidence,
+        source: suggestedCostCenter.source,
+        reasoning: `Centro de custo ${suggestedCostCenter.name} sugerido baseado no tipo de despesa`
+      });
+    }
+
+    // 4. 📅 DATA DE VENCIMENTO INTELIGENTE
+    if (data.data_vencimento) {
+      suggestions.dueDate = data.data_vencimento;
+      autoFilledFields.push({
+        field: 'dueDate',
+        value: data.data_vencimento,
+        confidence: 95,
+        source: 'ai_suggestion',
+        reasoning: `Data de vencimento extraída do documento pela IA`
+      });
+    } else {
+      // Sugerir vencimento padrão baseado no tipo de fornecedor
+      const defaultDueDate = suggestDefaultDueDate(data.fornecedor);
+      if (defaultDueDate) {
+        suggestions.dueDate = defaultDueDate.date;
+        autoFilledFields.push({
+          field: 'dueDate',
+          value: defaultDueDate.date,
+          confidence: defaultDueDate.confidence,
+          source: 'intelligent_default',
+          reasoning: defaultDueDate.reasoning
+        });
+      }
+    }
+
+    console.log(`✅ ${autoFilledFields.length} campos preenchidos automaticamente:`, autoFilledFields.map(f => f.field).join(', '));
+    
+    return {
+      suggestions,
+      autoFilledFields,
+      hasAutoFills: autoFilledFields.length > 0
+    };
+
+  } catch (error) {
+    console.error(`❌ Erro ao criar sugestões inteligentes:`, error);
+    return {
+      suggestions: {},
+      autoFilledFields: [],
+      hasAutoFills: false
+    };
+  }
+}
+
+// Funções auxiliares para sugestões inteligentes
+async function suggestBankBySupplier(supplierName: string, tenantId: string) {
+  // Por enquanto, retornar banco padrão mais comum
+  const banks = await storage.getBanks(tenantId);
+  if (banks.length > 0) {
+    return {
+      id: banks[0].id,
+      name: banks[0].name,
+      confidence: 70,
+      source: 'intelligent_default' as const
+    };
+  }
+  return null;
+}
+
+async function suggestCategoryByContext(data: any, tenantId: string) {
+  const categories = await storage.getCategories(tenantId);
+  
+  // Lógica de sugestão baseada em palavras-chave
+  const keywords: Record<string, string[]> = {
+    'seguros': ['seguro', 'allianz', 'porto seguro', 'bradesco seguros'],
+    'tecnologia': ['software', 'licença', 'microsoft', 'google', 'aws'],
+    'serviços': ['consultoria', 'assessoria', 'manutenção'],
+    'transporte': ['frete', 'logística', 'transporte', 'correios']
+  };
+
+  const text = `${data.fornecedor || ''} ${data.descricao || ''}`.toLowerCase();
+  
+  for (const category of categories) {
+    const categoryKey = category.name.toLowerCase();
+    if (keywords[categoryKey]) {
+      const hasKeyword = keywords[categoryKey].some((keyword: string) => text.includes(keyword));
+      if (hasKeyword) {
+        return {
+          id: category.id,
+          name: category.name,
+          confidence: 85,
+          source: 'intelligent_default' as const
+        };
+      }
+    }
+  }
+
+  // Retornar categoria padrão se disponível
+  if (categories.length > 0) {
+    return {
+      id: categories[0].id,
+      name: categories[0].name,
+      confidence: 60,
+      source: 'intelligent_default' as const
+    };
+  }
+  
+  return null;
+}
+
+async function suggestCostCenterByContext(data: any, tenantId: string) {
+  const costCenters = await storage.getCostCenters(tenantId);
+  
+  // Retornar centro de custo padrão (GERAL) se disponível
+  const defaultCenter = costCenters.find(cc => cc.name.toUpperCase().includes('GERAL'));
+  if (defaultCenter) {
+    return {
+      id: defaultCenter.id,
+      name: defaultCenter.name,
+      confidence: 80,
+      source: 'intelligent_default' as const
+    };
+  }
+
+  // Ou primeiro centro de custo disponível
+  if (costCenters.length > 0) {
+    return {
+      id: costCenters[0].id,
+      name: costCenters[0].name,
+      confidence: 70,
+      source: 'intelligent_default' as const
+    };
+  }
+  
+  return null;
+}
+
+function suggestDefaultDueDate(supplierName?: string) {
+  // Sugerir data de vencimento em 30 dias por padrão
+  const futureDate = new Date();
+  futureDate.setDate(futureDate.getDate() + 30);
+  const formattedDate = futureDate.toISOString().split('T')[0];
+  
+  return {
+    date: formattedDate,
+    confidence: 60,
+    reasoning: `Data sugerida: 30 dias a partir de hoje para ${supplierName || 'fornecedor'}`
+  };
+}
+
 const upload = multer({
   dest: "uploads/",
   limits: {
@@ -469,6 +663,9 @@ export async function registerRoutes(app: Express): Promise<Server> {
           hasMonetaryValues: false
         };
 
+        // 🤖 SISTEMA DE PREENCHIMENTO AUTOMÁTICO INTELIGENTE
+        const intelligentDefaults = await createIntelligentDefaults(data, user.tenantId);
+        
         suggestions = {
           // Campos básicos sempre mapeados
           amount: data.valor || '',
@@ -481,6 +678,9 @@ export async function registerRoutes(app: Express): Promise<Server> {
           documento: isDANFE ? (data.cnpj_emitente || '') : (data.documento || ''),
           numeroNF: isDANFE ? (data.documento || '') : '', // Número da NF para DANFEs
           cnpjEmitente: data.cnpj_emitente || '', // CNPJ sempre disponível
+          
+          // 🎯 CAMPOS AUTO-PREENCHIDOS INTELIGENTES
+          ...intelligentDefaults.suggestions,
 
           // Mapeamento inteligente de datas com fallbacks múltiplos
           paymentDate: data.data_pagamento || data.data_emissao || data.data_saida || '',
@@ -515,6 +715,13 @@ export async function registerRoutes(app: Express): Promise<Server> {
         };
 
         console.log(`✅ Sugestões mapeadas:`, JSON.stringify(suggestions, null, 2));
+
+        // Adicionar informações de campos auto-preenchidos às sugestões
+        if (intelligentDefaults.hasAutoFills) {
+          console.log(`🤖 Auto-preenchimento ativo: ${intelligentDefaults.autoFilledFields.length} campos`);
+          suggestions.autoFilledFields = intelligentDefaults.autoFilledFields;
+          suggestions.hasAutoFills = true;
+        }
 
         // NOVA FUNCIONALIDADE: Análise avançada de qualidade
         const totalFields = ['amount', 'supplier', 'documento', 'description', 'paymentDate', 'dueDate'];

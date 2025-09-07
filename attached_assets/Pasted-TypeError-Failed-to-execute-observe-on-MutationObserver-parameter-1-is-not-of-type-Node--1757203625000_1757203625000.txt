@@ -1,0 +1,100 @@
+TypeError: Failed to execute 'observe' on 'MutationObserver': parameter 1 is not of type 'Node'.
+    at index.ts-4e01dc6b.js:1:3292Understand this error
+chunk-WERSD76P.js?v=65e44fcf:21551 Download the React DevTools for a better development experience: https://reactjs.org/link/react-devtools
+upload-bpo.tsx:137 🎯 UploadBpo component está sendo renderizado!
+upload-bpo.tsx:138 🔄 Component UploadBpo carregado no DOM
+upload-bpo.tsx:137 🎯 UploadBpo component está sendo renderizado!
+upload-bpo.tsx:138 🔄 Component UploadBpo carregado no DOM
+upload-bpo.tsx:137 🎯 UploadBpo component está sendo renderizado!
+upload-bpo.tsx:138 🔄 Component UploadBpo carregado no DOM
+upload-bpo.tsx:137 🎯 UploadBpo component está sendo renderizado!
+upload-bpo.tsx:138 🔄 Component UploadBpo carregado no DOM
+upload-bpo.tsx:137 🎯 UploadBpo component está sendo renderizado!
+upload-bpo.tsx:138 🔄 Component UploadBpo carregado no DOM
+upload-bpo.tsx:137 🎯 UploadBpo component está sendo renderizado!
+upload-bpo.tsx:138 🔄 Component UploadBpo carregado no DOM
+upload-bpo.tsx:137 🎯 UploadBpo component está sendo renderizado!
+upload-bpo.tsx:138 🔄 Component UploadBpo carregado no DOM
+upload-bpo.tsx:137 🎯 UploadBpo component está sendo renderizado!
+upload-bpo.tsx:138 🔄 Component UploadBpo carregado no DOM
+upload-bpo.tsx:137 🎯 UploadBpo component está sendo renderizado!
+upload-bpo.tsx:138 🔄 Component UploadBpo carregado no DOM
+upload-bpo.tsx:220 ✅ Processamento IA concluído: Object
+upload-bpo.tsx:232 🎯 Recebendo sugestões: Object
+upload-bpo.tsx:245 💰 Valor preenchido: R$ 147,64
+upload-bpo.tsx:358 🔍 Detectando fornecedor: Allianz Seguros S.A. 61.573.796/0001-66
+upload-bpo.tsx:359 📋 Total de fornecedores disponíveis: 4
+upload-bpo.tsx:360 📋 Lista de fornecedores: Array(4)
+upload-bpo.tsx:412 🚀 Novo fornecedor detectado, abrindo modal para confirmação...
+upload-bpo.tsx:263 🏢 Processando fornecedor da IA: Allianz Seguros S.A.
+upload-bpo.tsx:293 📄 Documento identificado: 61.573.796/0001-66
+upload-bpo.tsx:301 🏢 Centro de custo sugerido: GERAL
+upload-bpo.tsx:283 📅 Conversão de data: 10/09/2025 → 2025-09-10
+upload-bpo.tsx:312 📅 Data vencimento (documento): 10/09/2025 → 2025-09-10
+upload-bpo.tsx:316 ⚠️ NOTA: Datas do documento NÃO são preenchidas automaticamente nos campos BPO
+upload-bpo.tsx:317 💡 Usuário deve confirmar as datas reais de operação manualmente
+upload-bpo.tsx:338 ✅ Total de campos sugeridos: 2
+upload-bpo.tsx:137 🎯 UploadBpo component está sendo renderizado!
+upload-bpo.tsx:138 🔄 Component UploadBpo carregado no DOM
+upload-bpo.tsx:137 🎯 UploadBpo component está sendo renderizado!
+upload-bpo.tsx:138 🔄 Component UploadBpo carregado no DOM
+chunk-ARA7E7V4.js?v=65e44fcf:341 Warning: Missing `Description` or `aria-describedby={undefined}` for {DialogContent}.
+(anonymous) @ chunk-ARA7E7V4.js?v=65e44fcf:341Understand this warning
+upload-bpo.tsx:137 🎯 UploadBpo component está sendo renderizado!
+upload-bpo.tsx:138 🔄 Component UploadBpo carregado no DOM
+upload-bpo.tsx:137 🎯 UploadBpo component está sendo renderizado!
+upload-bpo.tsx:138 🔄 Component UploadBpo carregado no DOM
+upload-bpo.tsx:137 🎯 UploadBpo component está sendo renderizado!
+upload-bpo.tsx:138 🔄 Component UploadBpo carregado no DOM
+upload-bpo.tsx:137 🎯 UploadBpo component está sendo renderizado!
+upload-bpo.tsx:138 🔄 Component UploadBpo carregado no DOM
+upload-bpo.tsx:220 ✅ Processamento IA concluído: Object
+upload-bpo.tsx:232 🎯 Recebendo sugestões: Object
+upload-bpo.tsx:245 💰 Valor preenchido: R$ 657,00
+upload-bpo.tsx:358 🔍 Detectando fornecedor: SimplesLog 44.533.434/0001-22
+upload-bpo.tsx:359 📋 Total de fornecedores disponíveis: 4
+upload-bpo.tsx:360 📋 Lista de fornecedores: Array(4)
+upload-bpo.tsx:412 🚀 Novo fornecedor detectado, abrindo modal para confirmação...
+upload-bpo.tsx:263 🏢 Processando fornecedor da IA: SimplesLog
+upload-bpo.tsx:293 📄 Documento identificado: 44.533.434/0001-22
+upload-bpo.tsx:301 🏢 Centro de custo sugerido: GERAL
+upload-bpo.tsx:283 📅 Conversão de data: 10/09/2025 → 2025-09-10
+upload-bpo.tsx:312 📅 Data vencimento (documento): 10/09/2025 → 2025-09-10
+upload-bpo.tsx:316 ⚠️ NOTA: Datas do documento NÃO são preenchidas automaticamente nos campos BPO
+upload-bpo.tsx:317 💡 Usuário deve confirmar as datas reais de operação manualmente
+upload-bpo.tsx:338 ✅ Total de campos sugeridos: 2
+upload-bpo.tsx:137 🎯 UploadBpo component está sendo renderizado!
+upload-bpo.tsx:138 🔄 Component UploadBpo carregado no DOM
+chunk-ARA7E7V4.js?v=65e44fcf:341 Warning: Missing `Description` or `aria-describedby={undefined}` for {DialogContent}.
+(anonymous) @ chunk-ARA7E7V4.js?v=65e44fcf:341Understand this warning
+upload-bpo.tsx:137 🎯 UploadBpo component está sendo renderizado!
+upload-bpo.tsx:138 🔄 Component UploadBpo carregado no DOM
+upload-bpo.tsx:137 🎯 UploadBpo component está sendo renderizado!
+upload-bpo.tsx:138 🔄 Component UploadBpo carregado no DOM
+upload-bpo.tsx:137 🎯 UploadBpo component está sendo renderizado!
+upload-bpo.tsx:138 🔄 Component UploadBpo carregado no DOM
+upload-bpo.tsx:137 🎯 UploadBpo component está sendo renderizado!
+upload-bpo.tsx:138 🔄 Component UploadBpo carregado no DOM
+upload-bpo.tsx:137 🎯 UploadBpo component está sendo renderizado!
+upload-bpo.tsx:138 🔄 Component UploadBpo carregado no DOM
+upload-bpo.tsx:220 ✅ Processamento IA concluído: Object
+upload-bpo.tsx:232 🎯 Recebendo sugestões: Object
+upload-bpo.tsx:245 💰 Valor preenchido: R$ 450,00
+upload-bpo.tsx:358 🔍 Detectando fornecedor: Teamguide 27.481.998/0001-40
+upload-bpo.tsx:359 📋 Total de fornecedores disponíveis: 4
+upload-bpo.tsx:360 📋 Lista de fornecedores: Array(4)
+upload-bpo.tsx:412 🚀 Novo fornecedor detectado, abrindo modal para confirmação...
+upload-bpo.tsx:263 🏢 Processando fornecedor da IA: Teamguide
+upload-bpo.tsx:293 📄 Documento identificado: 27.481.998/0001-40
+upload-bpo.tsx:301 🏢 Centro de custo sugerido: GERAL
+upload-bpo.tsx:283 📅 Conversão de data: 10/09/2025 → 2025-09-10
+upload-bpo.tsx:312 📅 Data vencimento (documento): 10/09/2025 → 2025-09-10
+upload-bpo.tsx:316 ⚠️ NOTA: Datas do documento NÃO são preenchidas automaticamente nos campos BPO
+upload-bpo.tsx:317 💡 Usuário deve confirmar as datas reais de operação manualmente
+upload-bpo.tsx:338 ✅ Total de campos sugeridos: 2
+upload-bpo.tsx:137 🎯 UploadBpo component está sendo renderizado!
+upload-bpo.tsx:138 🔄 Component UploadBpo carregado no DOM
+upload-bpo.tsx:137 🎯 UploadBpo component está sendo renderizado!
+upload-bpo.tsx:138 🔄 Component UploadBpo carregado no DOM
+upload-bpo.tsx:137 🎯 UploadBpo component está sendo renderizado!
+upload-bpo.tsx:138 🔄 Component UploadBpo carregado no DOM
