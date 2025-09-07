@@ -13,7 +13,7 @@ import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
 import { Badge } from "@/components/ui/badge";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { useToast } from "@/hooks/use-toast";
-import { CloudUpload, Upload as UploadIcon, FileText, Calendar, DollarSign, Building2, Sparkles, AlertTriangle, CheckCircle2 } from "lucide-react";
+import { CloudUpload, Upload as UploadIcon, FileText, Calendar, DollarSign, Building2, Sparkles, AlertTriangle, CheckCircle2, Bot, CheckCircle, X, RotateCcw, Eye } from "lucide-react";
 import { Alert, AlertDescription } from "@/components/ui/alert";
 import { Separator } from "@/components/ui/separator";
 import { AutoSupplierModal } from "@/components/client/auto-supplier-modal";
@@ -144,6 +144,8 @@ export function UploadBpo() {
   });
   const [suggestions, setSuggestions] = useState<DocumentSuggestion[]>([]);
   const [documentMetadata, setDocumentMetadata] = useState<any>(null);
+  const [autoFilledFields, setAutoFilledFields] = useState<any[]>([]);
+  const [showAutoFillConfirmation, setShowAutoFillConfirmation] = useState(false);
   const { toast } = useToast();
   const queryClient = useQueryClient();
 
@@ -325,6 +327,30 @@ export function UploadBpo() {
       });
 
       setSuggestions(newSuggestions);
+
+      // 🤖 Capturar campos auto-preenchidos se disponíveis
+      if (data.suggestions?.hasAutoFills && data.suggestions?.autoFilledFields) {
+        console.log("🤖 Campos auto-preenchidos recebidos:", data.suggestions.autoFilledFields);
+        setAutoFilledFields(data.suggestions.autoFilledFields);
+        setShowAutoFillConfirmation(true);
+        
+        // Aplicar valores sugeridos automaticamente
+        data.suggestions.autoFilledFields.forEach((field: any) => {
+          if (field.field === 'bankId' && data.suggestions.bankId) {
+            form.setValue('bankId', data.suggestions.bankId);
+          }
+          if (field.field === 'categoryId' && data.suggestions.categoryId) {
+            form.setValue('categoryId', data.suggestions.categoryId);
+          }
+          if (field.field === 'costCenterId' && data.suggestions.costCenterId) {
+            form.setValue('costCenterId', data.suggestions.costCenterId);
+          }
+          if (field.field === 'dueDate' && data.suggestions.dueDate) {
+            form.setValue('competenceDate', data.suggestions.dueDate);
+          }
+        });
+      }
+
       setProcessingState({ 
         stage: 'analyzed', 
         message: `IA analisou o documento com ${Math.round((data.suggestions.confidence?.amount || 95))}% de precisão` 
@@ -1047,6 +1073,95 @@ export function UploadBpo() {
                   </div>
                 </div>
               )}
+            </CardContent>
+          </Card>
+        )}
+
+        {/* 🤖 NOVO: Card de campos auto-preenchidos */}
+        {showAutoFillConfirmation && autoFilledFields.length > 0 && (
+          <Card className="border-blue-200 bg-blue-50 dark:border-blue-800 dark:bg-blue-950">
+            <CardHeader>
+              <CardTitle className="text-blue-800 dark:text-blue-200 flex items-center gap-2">
+                <Bot className="h-4 w-4" />
+                Campos preenchidos automaticamente
+                <Badge variant="secondary" className="ml-2">
+                  {autoFilledFields.length} campo{autoFilledFields.length > 1 ? 's' : ''}
+                </Badge>
+              </CardTitle>
+              <p className="text-sm text-blue-600 dark:text-blue-300">
+                A IA preencheu automaticamente alguns campos. Confirme se estão corretos antes de enviar.
+              </p>
+            </CardHeader>
+            <CardContent>
+              <div className="space-y-3">
+                {autoFilledFields.map((field, index) => (
+                  <div key={index} className="flex items-center justify-between p-3 bg-white dark:bg-gray-800 rounded-md border border-blue-200 dark:border-blue-700">
+                    <div className="flex-1">
+                      <div className="flex items-center gap-2">
+                        <CheckCircle className="h-4 w-4 text-blue-600" />
+                        <p className="font-medium text-sm text-gray-900 dark:text-gray-100">
+                          {field.field === 'bankId' && 'Banco'}
+                          {field.field === 'categoryId' && 'Categoria'}
+                          {field.field === 'costCenterId' && 'Centro de Custo'}
+                          {field.field === 'dueDate' && 'Data de Vencimento'}
+                        </p>
+                      </div>
+                      <p className="text-sm text-gray-700 dark:text-gray-300 mt-1">
+                        {field.value}
+                      </p>
+                      <p className="text-xs text-gray-500 dark:text-gray-400 mt-1">
+                        {field.reasoning}
+                      </p>
+                    </div>
+                    <div className="flex flex-col items-end gap-1">
+                      <Badge 
+                        variant={field.confidence >= 80 ? "default" : "secondary"} 
+                        className={field.confidence >= 80 ? 
+                          "text-blue-700 border-blue-300 bg-blue-100 dark:text-blue-400 dark:border-blue-600 dark:bg-blue-900" :
+                          "text-yellow-700 border-yellow-300 bg-yellow-100 dark:text-yellow-400 dark:border-yellow-600 dark:bg-yellow-900"
+                        }
+                      >
+                        {field.confidence}% confiança
+                      </Badge>
+                      <Badge variant="outline" className="text-xs">
+                        {field.source === 'ai_suggestion' && '🤖 IA'}
+                        {field.source === 'intelligent_default' && '💡 Inteligente'}
+                        {field.source === 'historical_pattern' && '📊 Histórico'}
+                      </Badge>
+                    </div>
+                  </div>
+                ))}
+              </div>
+              <div className="flex gap-2 mt-4">
+                <Button 
+                  variant="outline" 
+                  size="sm"
+                  onClick={() => setShowAutoFillConfirmation(false)}
+                  className="flex-1"
+                >
+                  <X className="h-4 w-4 mr-2" />
+                  Aceitar Sugestões
+                </Button>
+                <Button 
+                  variant="secondary" 
+                  size="sm"
+                  onClick={() => {
+                    // Limpar campos auto-preenchidos
+                    autoFilledFields.forEach((field) => {
+                      if (field.field === 'bankId') form.setValue('bankId', '');
+                      if (field.field === 'categoryId') form.setValue('categoryId', '');
+                      if (field.field === 'costCenterId') form.setValue('costCenterId', '');
+                      if (field.field === 'dueDate') form.setValue('competenceDate', '');
+                    });
+                    setShowAutoFillConfirmation(false);
+                    setAutoFilledFields([]);
+                  }}
+                  className="flex-1"
+                >
+                  <RotateCcw className="h-4 w-4 mr-2" />
+                  Limpar Auto-Fill
+                </Button>
+              </div>
             </CardContent>
           </Card>
         )}
