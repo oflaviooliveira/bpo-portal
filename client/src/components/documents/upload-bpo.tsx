@@ -661,10 +661,10 @@ export function UploadBpo() {
     };
 
     // 🎯 CORREÇÃO: Usar form.getValues() para capturar TODOS os campos (incluindo Select controlados)
-    const completeData = form.getValues();
+    const completeData: any = form.getValues();
     
     // Adicionar campos essenciais que podem estar faltando
-    const essentialFields = ['bankId', 'categoryId', 'costCenterId', 'contraparteId'];
+    const essentialFields: Array<keyof BpoUploadData> = ['bankId', 'categoryId', 'costCenterId', 'contraparteId'];
     essentialFields.forEach(fieldName => {
       if (!completeData[fieldName]) {
         const fieldValue = form.watch(fieldName);
@@ -675,16 +675,27 @@ export function UploadBpo() {
       }
     });
 
-    // Adicionar dueDate das sugestões se disponível
-    if (suggestions?.realData?.dueDate && !completeData.dueDate) {
-      completeData.dueDate = formatDateForServer(suggestions.realData.dueDate);
-      console.log("📅 Data de vencimento adicionada das sugestões:", suggestions.realData.dueDate);
+    // Buscar dueDate nas sugestões processadas (pode estar em diferentes lugares)
+    let dueDate = null;
+    if (suggestions && Array.isArray(suggestions)) {
+      // Procurar por suggestion com dueDate
+      const dueDateSuggestion = suggestions.find((s: any) => s.field === 'dueDate' || (s as any).dueDate);
+      if (dueDateSuggestion) {
+        dueDate = dueDateSuggestion.value || (dueDateSuggestion as any).dueDate;
+      }
+    } else if (suggestions && typeof suggestions === 'object') {
+      // Se suggestions é um objeto, tentar acessar realData
+      dueDate = (suggestions as any)?.realData?.dueDate || (suggestions as any)?.dueDate;
     }
 
-    // 🎯 CORREÇÃO ADICIONAL: Garantir que contraparte seja enviada como contraparteName se não tiver contraparteId
-    if (completeData.contraparteId && !completeData.contraparteName) {
-      // Buscar o nome da contraparte pelo ID
-      const contraparte = contrapartes?.find(c => c.id === completeData.contraparteId);
+    if (dueDate && !completeData.dueDate) {
+      completeData.dueDate = formatDateForServer(dueDate);
+      console.log("📅 Data de vencimento adicionada das sugestões:", dueDate);
+    }
+
+    // 🎯 CORREÇÃO ADICIONAL: Buscar nome da contraparte pelo ID
+    if (completeData.contraparteId && contrapartes) {
+      const contraparte = contrapartes.find((c: any) => c.id === completeData.contraparteId);
       if (contraparte) {
         completeData.contraparteName = contraparte.name;
         console.log("✅ Nome da contraparte adicionado:", contraparte.name);
