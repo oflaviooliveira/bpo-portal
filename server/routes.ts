@@ -33,7 +33,151 @@ import fs from "fs/promises";
 import { z } from "zod";
 
 // Configure multer for file uploads com validação aprimorada
-// 🤖 SISTEMA DE PREENCHIMENTO AUTOMÁTICO INTELIGENTE
+// 📋 NOVA FUNÇÃO: Extrair dados reais do documento (fatos imutáveis)
+function extractRealDataFromDocument(data: any) {
+  console.log(`📋 Extraindo dados reais do documento...`);
+  
+  const realData: any = {};
+  
+  // VALOR - sempre do documento (fato)
+  if (data.valor) {
+    realData.amount = data.valor;
+    console.log(`💰 Valor real: ${data.valor}`);
+  }
+  
+  // FORNECEDOR - sempre do documento (fato)
+  if (data.fornecedor || data.contraparte) {
+    realData.supplier = data.fornecedor || data.contraparte;
+    console.log(`🏢 Fornecedor real: ${realData.supplier}`);
+  }
+  
+  // DATAS - sempre do documento (fatos)
+  if (data.data_vencimento) {
+    realData.dueDate = data.data_vencimento;
+    console.log(`📅 Data vencimento real: ${data.data_vencimento}`);
+  }
+  
+  if (data.data_pagamento) {
+    realData.paymentDate = data.data_pagamento;
+    console.log(`💳 Data pagamento real: ${data.data_pagamento}`);
+  }
+  
+  // DOCUMENTO/CNPJ - sempre do documento (fato)
+  if (data.documento || data.cnpj_beneficiario || data.cnpj_emitente) {
+    realData.document = data.documento || data.cnpj_beneficiario || data.cnpj_emitente;
+    console.log(`📄 Documento real: ${realData.document}`);
+  }
+  
+  // DESCRIÇÃO - extrair do contexto do documento (melhorar extração)
+  realData.description = extractSmartDescription(data);
+  
+  console.log(`✅ ${Object.keys(realData).length} dados reais extraídos`);
+  return realData;
+}
+
+// 📝 FUNÇÃO: Extrair descrição inteligente do documento
+function extractSmartDescription(data: any): string {
+  // Se já tem descrição, usar
+  if (data.descricao && data.descricao !== '') {
+    return data.descricao;
+  }
+  
+  // Para boletos, usar informações do beneficiário
+  if (data.beneficiario && data.beneficiario !== '') {
+    return `Serviços - ${data.beneficiario}`;
+  }
+  
+  // Para notas fiscais, usar dados do emitente
+  if (data.cnpj_emitente && data.fornecedor) {
+    return `Serviços/Produtos - ${data.fornecedor}`;
+  }
+  
+  // Para outros casos, usar fornecedor genérico
+  if (data.fornecedor) {
+    return `Serviços - ${data.fornecedor}`;
+  }
+  
+  return ''; // Deixar vazio se não conseguir inferir
+}
+
+// 🏢 NOVA FUNÇÃO: Criar sugestões operacionais baseadas no histórico do usuário
+async function createOperationalSuggestions(data: any, tenantId: string, userId: string) {
+  console.log(`🏢 Criando sugestões operacionais para usuário ${userId}...`);
+  
+  const suggestions: any = {};
+  const operationalFields: Array<{
+    field: string;
+    value: string;
+    confidence: number;
+    source: 'user_history' | 'intelligent_default' | 'first_time';
+    reasoning: string;
+  }> = [];
+
+  try {
+    // TODO: Implementar busca de preferências históricas do usuário
+    // const userPreferences = await storage.getUserSupplierPreferences(tenantId, userId, supplierId);
+    
+    // Por enquanto, usar lógica inteligente padrão como fallback
+    const supplierName = data.fornecedor || data.contraparte || '';
+    
+    // 1. 🏦 BANCO INTELIGENTE (decisão operacional)
+    const suggestedBank = await suggestBankBySupplier(supplierName, tenantId);
+    if (suggestedBank) {
+      suggestions.bankId = suggestedBank.id;
+      operationalFields.push({
+        field: 'bankId',
+        value: suggestedBank.name,
+        confidence: 70, // Menor confiança - é decisão empresarial
+        source: 'intelligent_default',
+        reasoning: `Banco ${suggestedBank.name} sugerido como padrão para ${supplierName || 'fornecedores'}`
+      });
+    }
+
+    // 2. 📂 CATEGORIA INTELIGENTE (decisão operacional)
+    const suggestedCategory = await suggestCategoryByContext(data, tenantId);
+    if (suggestedCategory) {
+      suggestions.categoryId = suggestedCategory.id;
+      operationalFields.push({
+        field: 'categoryId', 
+        value: suggestedCategory.name,
+        confidence: suggestedCategory.confidence,
+        source: 'intelligent_default',
+        reasoning: `Categoria ${suggestedCategory.name} sugerida baseada no contexto do fornecedor`
+      });
+    }
+
+    // 3. 🏢 CENTRO DE CUSTO INTELIGENTE (decisão operacional)
+    const suggestedCostCenter = await suggestCostCenterByContext(data, tenantId);
+    if (suggestedCostCenter) {
+      suggestions.costCenterId = suggestedCostCenter.id;
+      operationalFields.push({
+        field: 'costCenterId',
+        value: suggestedCostCenter.name, 
+        confidence: suggestedCostCenter.confidence,
+        source: 'intelligent_default',
+        reasoning: `Centro de custo ${suggestedCostCenter.name} sugerido baseado no tipo de despesa`
+      });
+    }
+
+    console.log(`✅ ${operationalFields.length} sugestões operacionais criadas`);
+    
+    return {
+      suggestions,
+      operationalFields,
+      hasOperationalSuggestions: operationalFields.length > 0
+    };
+
+  } catch (error) {
+    console.error(`❌ Erro ao criar sugestões operacionais:`, error);
+    return {
+      suggestions: {},
+      operationalFields: [],
+      hasOperationalSuggestions: false
+    };
+  }
+}
+
+// 🤖 SISTEMA DE PREENCHIMENTO AUTOMÁTICO INTELIGENTE (LEGACY - será removido)
 async function createIntelligentDefaults(data: any, tenantId: string) {
   console.log(`🧠 Criando sugestões inteligentes automáticas...`);
   
@@ -134,7 +278,7 @@ async function createIntelligentDefaults(data: any, tenantId: string) {
 // Funções auxiliares para sugestões inteligentes
 async function suggestBankBySupplier(supplierName: string, tenantId: string) {
   // Por enquanto, retornar banco padrão mais comum
-  const banks = await storage.getBanks(tenantId);
+  const banks = await storage.getBanks();
   if (banks.length > 0) {
     return {
       id: banks[0].id,
@@ -663,28 +807,36 @@ export async function registerRoutes(app: Express): Promise<Server> {
           hasMonetaryValues: false
         };
 
-        // 🤖 SISTEMA DE PREENCHIMENTO AUTOMÁTICO INTELIGENTE
-        const intelligentDefaults = await createIntelligentDefaults(data, user.tenantId);
+        // 🤖 SISTEMA REFORMULADO: Separar dados reais dos operacionais
+        console.log(`🧠 Separando dados reais dos operacionais...`);
+        
+        // 📋 DADOS REAIS (extraídos do documento) - preenchimento automático 
+        const realData = extractRealDataFromDocument(data);
+        
+        // 🏢 DADOS OPERACIONAIS (preferências do usuário) - sugestões baseadas no histórico
+        const operationalSuggestions = await createOperationalSuggestions(data, user.tenantId, user.id);
+        
+        console.log(`✅ Dados reais identificados:`, Object.keys(realData).join(', '));
+        console.log(`✅ Sugestões operacionais:`, Object.keys(operationalSuggestions.suggestions).join(', '));
         
         suggestions = {
-          // Campos básicos sempre mapeados
-          amount: data.valor || '',
-          supplier: data.fornecedor || '',
-          contraparte: data.contraparte || data.fornecedor || '',
-          description: data.descricao || '',
-          category: data.categoria || '',
-
+          // 📋 DADOS REAIS (preenchimento automático - fatos do documento)
+          ...realData,
+          
+          // Campos legados para compatibilidade
+          supplier: realData.supplier || '',
+          contraparte: realData.supplier || '',
+          
           // Mapeamento inteligente de documento e datas
-          documento: isDANFE ? (data.cnpj_emitente || '') : (data.documento || ''),
+          documento: isDANFE ? (data.cnpj_emitente || '') : (realData.document || ''),
           numeroNF: isDANFE ? (data.documento || '') : '', // Número da NF para DANFEs
           cnpjEmitente: data.cnpj_emitente || '', // CNPJ sempre disponível
           
-          // 🎯 CAMPOS AUTO-PREENCHIDOS INTELIGENTES
-          ...intelligentDefaults.suggestions,
+          // 🏢 SUGESTÕES OPERACIONAIS (decisões empresariais)
+          ...operationalSuggestions.suggestions,
 
           // Mapeamento inteligente de datas com fallbacks múltiplos
-          paymentDate: data.data_pagamento || data.data_emissao || data.data_saida || '',
-          dueDate: data.data_vencimento || '',
+          paymentDate: realData.paymentDate || data.data_emissao || data.data_saida || '',
           issueDate: data.data_emissao || '',
           exitDate: data.data_saida || '',
 
@@ -716,11 +868,17 @@ export async function registerRoutes(app: Express): Promise<Server> {
 
         console.log(`✅ Sugestões mapeadas:`, JSON.stringify(suggestions, null, 2));
 
-        // Adicionar informações de campos auto-preenchidos às sugestões
-        if (intelligentDefaults.hasAutoFills) {
-          console.log(`🤖 Auto-preenchimento ativo: ${intelligentDefaults.autoFilledFields.length} campos`);
-          suggestions.autoFilledFields = intelligentDefaults.autoFilledFields;
-          suggestions.hasAutoFills = true;
+        // 🎯 NOVA LÓGICA: Separar informações por tipo de dados
+        
+        // Dados reais (preenchimento automático sem confirmação)
+        suggestions.realData = realData;
+        suggestions.hasRealData = Object.keys(realData).length > 0;
+        
+        // Sugestões operacionais (mostrar para aprovação do usuário)
+        if (operationalSuggestions.hasOperationalSuggestions) {
+          console.log(`🏢 Sugestões operacionais ativas: ${operationalSuggestions.operationalFields.length} campos`);
+          suggestions.operationalSuggestions = operationalSuggestions.operationalFields;
+          suggestions.hasOperationalSuggestions = true;
         }
 
         // NOVA FUNCIONALIDADE: Análise avançada de qualidade

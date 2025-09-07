@@ -328,14 +328,33 @@ export function UploadBpo() {
 
       setSuggestions(newSuggestions);
 
-      // 🤖 Capturar campos auto-preenchidos se disponíveis
-      if (data.suggestions?.hasAutoFills && data.suggestions?.autoFilledFields) {
-        console.log("🤖 Campos auto-preenchidos recebidos:", data.suggestions.autoFilledFields);
-        setAutoFilledFields(data.suggestions.autoFilledFields);
+      // 📋 NOVA LÓGICA: Aplicar dados reais automaticamente (sem confirmação)
+      if (data.suggestions?.hasRealData && data.suggestions?.realData) {
+        console.log("📋 Dados reais detectados - preenchimento automático:", data.suggestions.realData);
+        
+        // Preencher dados reais automaticamente (fatos do documento)
+        if (data.suggestions.realData.amount) {
+          form.setValue("amount", data.suggestions.realData.amount);
+          console.log("💰 Valor preenchido automaticamente:", data.suggestions.realData.amount);
+        }
+        
+        if (data.suggestions.realData.description) {
+          form.setValue("description", data.suggestions.realData.description);
+          console.log("📝 Descrição preenchida automaticamente:", data.suggestions.realData.description);
+        }
+        
+        // Data de vencimento/pagamento será preenchida automaticamente nos campos condicionais
+        // (será tratado na validação do formulário)
+      }
+
+      // 🏢 SUGESTÕES OPERACIONAIS: Mostrar para aprovação do usuário
+      if (data.suggestions?.hasOperationalSuggestions && data.suggestions?.operationalSuggestions) {
+        console.log("🏢 Sugestões operacionais recebidas:", data.suggestions.operationalSuggestions);
+        setAutoFilledFields(data.suggestions.operationalSuggestions);
         setShowAutoFillConfirmation(true);
         
-        // Aplicar valores sugeridos automaticamente
-        data.suggestions.autoFilledFields.forEach((field: any) => {
+        // Aplicar sugestões operacionais (usuário pode aceitar/rejeitar)
+        data.suggestions.operationalSuggestions.forEach((field: any) => {
           if (field.field === 'bankId' && data.suggestions.bankId) {
             form.setValue('bankId', data.suggestions.bankId);
           }
@@ -344,9 +363,6 @@ export function UploadBpo() {
           }
           if (field.field === 'costCenterId' && data.suggestions.costCenterId) {
             form.setValue('costCenterId', data.suggestions.costCenterId);
-          }
-          if (field.field === 'dueDate' && data.suggestions.dueDate) {
-            form.setValue('competenceDate', data.suggestions.dueDate);
           }
         });
       }

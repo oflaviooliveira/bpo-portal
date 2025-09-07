@@ -449,7 +449,41 @@ export type DocumentInconsistency = typeof documentInconsistencies.$inferSelect;
 
 export type InsertDocumentLog = z.infer<typeof insertDocumentLogSchema>;
 
+// 🤖 NOVA: Tabela de preferências do usuário por fornecedor
+export const userSupplierPreferences = pgTable("user_supplier_preferences", {
+  id: uuid("id").primaryKey().default(sql`gen_random_uuid()`),
+  tenantId: uuid("tenant_id").notNull(),
+  userId: uuid("user_id").notNull(),
+  supplierId: uuid("supplier_id").notNull(), // referencia contrapartes
+  
+  // Preferências operacionais aprendidas
+  preferredBankId: uuid("preferred_bank_id"),
+  preferredCategoryId: uuid("preferred_category_id"), 
+  preferredCostCenterId: uuid("preferred_cost_center_id"),
+  
+  // Descrição padrão personalizada (opcional)
+  customDescription: text("custom_description"),
+  
+  // Métricas de confiança
+  usageCount: integer("usage_count").notNull().default(1),
+  lastUsedAt: timestamp("last_used_at").defaultNow(),
+  
+  createdAt: timestamp("created_at").defaultNow(),
+  updatedAt: timestamp("updated_at").defaultNow(),
+}, (table) => ({
+  // Unique constraint: um usuário tem uma preferência por fornecedor
+  uniqueUserSupplier: unique().on(table.tenantId, table.userId, table.supplierId),
+  // Índices para performance
+  tenantIdx: index().on(table.tenantId),
+  userIdx: index().on(table.userId),
+  supplierIdx: index().on(table.supplierId),
+}));
+
+export const insertUserSupplierPreferencesSchema = createInsertSchema(userSupplierPreferences);
+
 export type Bank = typeof banks.$inferSelect;
 export type Category = typeof categories.$inferSelect;
 export type CostCenter = typeof costCenters.$inferSelect;
 export type DocumentLog = typeof documentLogs.$inferSelect;
+export type InsertUserSupplierPreferences = z.infer<typeof insertUserSupplierPreferencesSchema>;
+export type UserSupplierPreferences = typeof userSupplierPreferences.$inferSelect;
