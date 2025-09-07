@@ -860,7 +860,7 @@ export function UploadBpo() {
         </CardHeader>
       </Card>
 
-      <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-6">
+      <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-6" autoComplete="off" noValidate>
 
         {/* Seleção de Tipo */}
         <Card>
@@ -1134,6 +1134,10 @@ export function UploadBpo() {
                         {...form.register("payerName")}
                         placeholder="Nome completo ou razão social"
                         data-testid="input-payer-name"
+                        autoComplete="new-password"
+                        data-lpignore="true"
+                        data-1p-ignore="true"
+                        data-form-type="other"
                       />
                       {form.formState.errors.payerName && (
                         <p className="text-sm text-red-500">{form.formState.errors.payerName.message}</p>
@@ -1163,6 +1167,10 @@ export function UploadBpo() {
                       type="email"
                       placeholder="email@exemplo.com"
                       data-testid="input-payer-email"
+                      autoComplete="new-password"
+                      data-lpignore="true"
+                      data-1p-ignore="true"
+                      data-form-type="other"
                     />
                     {form.formState.errors.payerEmail && (
                       <p className="text-sm text-red-500">{form.formState.errors.payerEmail.message}</p>
@@ -1175,6 +1183,10 @@ export function UploadBpo() {
                       {...form.register("payerPhone")}
                       placeholder="(11) 99999-9999"
                       data-testid="input-payer-phone"
+                      autoComplete="new-password"
+                      data-lpignore="true"
+                      data-1p-ignore="true"
+                      data-form-type="other"
                     />
                     {form.formState.errors.payerPhone && (
                       <p className="text-sm text-red-500">{form.formState.errors.payerPhone.message}</p>
@@ -1187,6 +1199,10 @@ export function UploadBpo() {
                       {...form.register("payerContactName")}
                       placeholder="Nome do responsável"
                       data-testid="input-payer-contact-name"
+                      autoComplete="new-password"
+                      data-lpignore="true"
+                      data-1p-ignore="true"
+                      data-form-type="other"
                     />
                   </div>
                 </div>
@@ -1204,6 +1220,10 @@ export function UploadBpo() {
                         {...form.register("payerZipCode")}
                         placeholder="00000-000"
                         data-testid="input-payer-zip-code"
+                        autoComplete="new-password"
+                        data-lpignore="true"
+                        data-1p-ignore="true"
+                        data-form-type="other"
                       />
                       {form.formState.errors.payerZipCode && (
                         <p className="text-sm text-red-500">{form.formState.errors.payerZipCode.message}</p>
@@ -1216,6 +1236,10 @@ export function UploadBpo() {
                         {...form.register("payerStreet")}
                         placeholder="Nome da rua/avenida"
                         data-testid="input-payer-street"
+                        autoComplete="new-password"
+                        data-lpignore="true"
+                        data-1p-ignore="true"
+                        data-form-type="other"
                       />
                       {form.formState.errors.payerStreet && (
                         <p className="text-sm text-red-500">{form.formState.errors.payerStreet.message}</p>
@@ -1231,6 +1255,10 @@ export function UploadBpo() {
                         {...form.register("payerNumber")}
                         placeholder="123"
                         data-testid="input-payer-number"
+                        autoComplete="new-password"
+                        data-lpignore="true"
+                        data-1p-ignore="true"
+                        data-form-type="other"
                       />
                       {form.formState.errors.payerNumber && (
                         <p className="text-sm text-red-500">{form.formState.errors.payerNumber.message}</p>
@@ -1243,6 +1271,10 @@ export function UploadBpo() {
                         {...form.register("payerComplement")}
                         placeholder="Apto 45, Bloco B..."
                         data-testid="input-payer-complement"
+                        autoComplete="new-password"
+                        data-lpignore="true"
+                        data-1p-ignore="true"
+                        data-form-type="other"
                       />
                     </div>
 
@@ -1252,6 +1284,10 @@ export function UploadBpo() {
                         {...form.register("payerNeighborhood")}
                         placeholder="Nome do bairro"
                         data-testid="input-payer-neighborhood"
+                        autoComplete="new-password"
+                        data-lpignore="true"
+                        data-1p-ignore="true"
+                        data-form-type="other"
                       />
                       {form.formState.errors.payerNeighborhood && (
                         <p className="text-sm text-red-500">{form.formState.errors.payerNeighborhood.message}</p>
@@ -1267,6 +1303,10 @@ export function UploadBpo() {
                         {...form.register("payerCity")}
                         placeholder="Nome da cidade"
                         data-testid="input-payer-city"
+                        autoComplete="new-password"
+                        data-lpignore="true"
+                        data-1p-ignore="true"
+                        data-form-type="other"
                       />
                       {form.formState.errors.payerCity && (
                         <p className="text-sm text-red-500">{form.formState.errors.payerCity.message}</p>
