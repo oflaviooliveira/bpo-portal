@@ -35,13 +35,32 @@ export const tenants = pgTable("tenants", {
   updatedAt: timestamp("updated_at").defaultNow(),
 });
 
-// Contrapartes table - Estrutura simplificada: Nome + CNPJ
+// Contrapartes table - Estrutura completa: Nome + CNPJ + Dados completos para boletos
 export const contrapartes = pgTable("contrapartes", {
   id: uuid("id").primaryKey().default(sql`gen_random_uuid()`),
   tenantId: uuid("tenant_id").notNull(),
   name: varchar("name", { length: 255 }).notNull(),
   document: varchar("document", { length: 18 }), // CPF: XXX.XXX.XXX-XX ou CNPJ: XX.XXX.XXX/XXXX-XX
   documentType: varchar("document_type", { length: 4 }), // "CPF" ou "CNPJ"
+  
+  // Dados de contato
+  email: varchar("email", { length: 255 }),
+  phone: varchar("phone", { length: 20 }),
+  contactName: varchar("contact_name", { length: 255 }), // Pessoa de contato
+  
+  // Documentação adicional
+  stateRegistration: varchar("state_registration", { length: 50 }), // Inscrição Estadual - opcional
+  
+  // Endereço completo
+  street: varchar("street", { length: 255 }),
+  number: varchar("number", { length: 20 }),
+  complement: varchar("complement", { length: 100 }),
+  neighborhood: varchar("neighborhood", { length: 100 }),
+  city: varchar("city", { length: 100 }),
+  state: varchar("state", { length: 2 }), // UF (SP, RJ, etc.)
+  zipCode: varchar("zip_code", { length: 10 }), // CEP: XXXXX-XXX
+  
+  // Controle
   canBeClient: boolean("can_be_client").notNull().default(true),
   canBeSupplier: boolean("can_be_supplier").notNull().default(true),
   isActive: boolean("is_active").notNull().default(true),
