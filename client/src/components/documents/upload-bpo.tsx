@@ -702,7 +702,10 @@ export function UploadBpo() {
   };
 
   const onSubmit = async (data: BpoUploadData) => {
-    if (needsDocument && !selectedFile) {
+    // Para EMITIR_BOLETO e EMITIR_NF, arquivo não é obrigatório (documento virtual)
+    const requiresFile = data.documentType === "PAGO" || data.documentType === "AGENDADO";
+    
+    if (requiresFile && !selectedFile) {
       toast({
         title: "Arquivo obrigatório",
         description: "Selecione um documento para análise",
@@ -727,9 +730,15 @@ export function UploadBpo() {
     console.log("🔍 TODOS os valores do formulário capturados:", allFormValues);
 
     const formData = new FormData();
-
-    if (selectedFile) {
-      formData.append("file", selectedFile);
+    
+    // Para documentos que requerem arquivo, anexar
+    if (selectedFile && requiresFile) {
+      formData.append('file', selectedFile);
+    }
+    
+    // Para documentos virtuais (EMITIR_BOLETO/EMITIR_NF), marcar como virtual
+    if (!requiresFile) {
+      formData.append('isVirtualDocument', 'true');
     }
 
     // Função para converter datas para formato DD/MM/AAAA
