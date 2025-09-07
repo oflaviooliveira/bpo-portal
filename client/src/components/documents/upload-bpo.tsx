@@ -806,7 +806,7 @@ export function UploadBpo() {
         
         // Converter formato de datas para DD/MM/AAAA
         let finalValue = String(value);
-        if (key === 'competenceDate' || key === 'realPaidDate' || key === 'scheduledDate') {
+        if (key === 'competenceDate' || key === 'realPaidDate' || key === 'scheduledDate' || key === 'dueDate') {
           finalValue = formatDateForServer(finalValue);
           console.log(`📅 Convertendo data ${key}: ${value} → ${finalValue}`);
         }
