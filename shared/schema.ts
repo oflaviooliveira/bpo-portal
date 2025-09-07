@@ -140,12 +140,13 @@ export const documents = pgTable("documents", {
   categoryId: uuid("category_id"),
   costCenterId: uuid("cost_center_id"),
 
-  // Document info
-  fileName: varchar("file_name", { length: 500 }).notNull(),
-  originalName: varchar("original_name", { length: 500 }).notNull(),
-  fileSize: integer("file_size").notNull(),
-  mimeType: varchar("mime_type", { length: 100 }).notNull(),
-  filePath: text("file_path").notNull(),
+  // Document info (opcional para documentos virtuais)
+  fileName: varchar("file_name", { length: 500 }),
+  originalName: varchar("original_name", { length: 500 }),
+  fileSize: integer("file_size"),
+  mimeType: varchar("mime_type", { length: 100 }),
+  filePath: text("file_path"),
+  isVirtualDocument: boolean("is_virtual_document").notNull().default(false), // Para boletos/NF sem arquivo físico inicial
 
   // Business data - Tipos conforme PRD
   documentType: varchar("document_type", { length: 50 }).notNull(), // PAGO, AGENDADO, EMITIR_BOLETO, EMITIR_NF
@@ -162,8 +163,8 @@ export const documents = pgTable("documents", {
   issuerData: jsonb("issuer_data"), // Dados do tomador para boletos/NF
   instructions: text("instructions"), // Instruções específicas
 
-  // Processing status - Estados conforme PRD Wave 1
-  status: varchar("status", { length: 50 }).notNull().default("RECEBIDO"), // RECEBIDO, VALIDANDO, PENDENTE_REVISAO, PAGO_A_CONCILIAR, AGENDADO, A_PAGAR_HOJE, AGUARDANDO_RECEBIMENTO, EM_CONCILIACAO, ARQUIVADO
+  // Processing status - Estados conforme PRD Wave 1 + Fluxo de Boletos
+  status: varchar("status", { length: 50 }).notNull().default("RECEBIDO"), // RECEBIDO, VALIDANDO, PENDENTE_REVISAO, PAGO_A_CONCILIAR, AGENDADO, A_PAGAR_HOJE, AGUARDANDO_RECEBIMENTO, EM_CONCILIACAO, ARQUIVADO, PENDENTE_EMISSAO, BOLETO_EMITIDO, AGUARDANDO_PAGAMENTO, BOLETO_VENCIDO
 
   // OCR and AI results
   ocrText: text("ocr_text"),

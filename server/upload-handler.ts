@@ -58,7 +58,7 @@ const uploadDocumentSchema = z.object({
 type UploadData = z.infer<typeof uploadDocumentSchema>;
 
 export class DocumentUploadHandler {
-  async processUpload(file: Express.Multer.File, formData: any, user: any): Promise<{
+  async processUpload(file: Express.Multer.File | null, formData: any, user: any): Promise<{
     success: boolean;
     documentId?: string;
     message: string;
@@ -66,21 +66,36 @@ export class DocumentUploadHandler {
     warnings?: string[];
   }> {
     try {
-      console.log(`📁 Processando upload: ${file.originalname} (${Math.round(file.size/1024)}KB)`);
+      // Verificar se é documento virtual
+      const isVirtualDocument = formData.isVirtualDocument === 'true';
+      
+      if (file) {
+        console.log(`📁 Processando upload: ${file.originalname} (${Math.round(file.size/1024)}KB)`);
+      } else if (isVirtualDocument) {
+        console.log(`🔮 Processando documento virtual: ${formData.documentType}`);
+      } else {
+        throw new Error("Nenhum arquivo foi enviado");
+      }
 
       // 1. Validar dados do formulário
       console.log(`📋 Dados recebidos no formulário:`, JSON.stringify(formData, null, 2));
       const validatedData = uploadDocumentSchema.parse(formData);
       console.log(`✅ Dados do formulário validados: ${validatedData.documentType}`);
 
-      // 2. Analisar nome do arquivo (não bloquear upload se inválido)
-      const filenameAnalysis = parseFileName(file.originalname);
-      console.log(`🔍 Nome do arquivo analisado:`, filenameAnalysis);
-      
-      // Coletar warnings do nome do arquivo
+      // 2. Analisar nome do arquivo (apenas para documentos com arquivo)
+      let filenameAnalysis = null;
       const warnings: string[] = [];
-      if (!filenameAnalysis.isValid && filenameAnalysis.errors) {
-        warnings.push(...filenameAnalysis.errors.map(error => `Aviso do nome do arquivo: ${error}`));
+      
+      if (file) {
+        filenameAnalysis = parseFileName(file.originalname);
+        console.log(`🔍 Nome do arquivo analisado:`, filenameAnalysis);
+        
+        // Coletar warnings do nome do arquivo
+        if (!filenameAnalysis.isValid && filenameAnalysis.errors) {
+          warnings.push(...filenameAnalysis.errors.map(error => `Aviso do nome do arquivo: ${error}`));
+        }
+      } else {
+        console.log(`📄 Documento virtual - análise de arquivo pulada`);
       }
 
       // 3. Validar regras de negócio
@@ -163,11 +178,13 @@ export class DocumentUploadHandler {
         bankId: validatedData.bankId,
         categoryId: validatedData.categoryId,
         costCenterId: validatedData.costCenterId,
-        fileName: file.filename,
-        originalName: file.originalname,
-        fileSize: file.size,
-        mimeType: file.mimetype,
-        filePath: file.path,
+        // File metadata (nullable para documentos virtuais)
+        fileName: file?.filename || null,
+        originalName: file?.originalname || null,
+        fileSize: file?.size || null,
+        mimeType: file?.mimetype || null,
+        filePath: file?.path || null,
+        isVirtualDocument: isVirtualDocument,
         documentType: validatedData.documentType,
         amount: this.parseAmount(validatedData.amount || '') || '0',
         supplier: validatedData.supplier || validatedData.contraparteName,
@@ -178,7 +195,10 @@ export class DocumentUploadHandler {
         instructions: validatedData.instructions,
         notes: validatedData.notes,
         createdBy: user.id,
-        status: "RECEBIDO"
+        // Status inicial baseado no tipo
+        status: isVirtualDocument && ['EMITIR_BOLETO', 'EMITIR_NF'].includes(validatedData.documentType) 
+          ? "PENDENTE_EMISSAO" 
+          : "RECEBIDO"
       });
 
       // 7. Log da criação
