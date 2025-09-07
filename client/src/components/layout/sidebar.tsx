@@ -180,6 +180,12 @@ export function Sidebar({ activeSection, onSectionChange }: SidebarProps) {
       category: 'PRINCIPAL',
     },
     {
+      section: 'clients',
+      label: 'Clientes',
+      icon: Users,
+      category: 'CADASTROS',
+    },
+    {
       section: 'fornecedores',
       label: 'Fornecedores',
       icon: Building,
