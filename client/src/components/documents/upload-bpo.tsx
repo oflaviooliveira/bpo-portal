@@ -1538,93 +1538,180 @@ export function UploadBpo() {
               <div className="space-y-3">
                 {autoFilledFields.map((field, index) => (
                   <div key={index} className="flex items-center justify-between p-3 bg-white dark:bg-gray-800 rounded-md border border-blue-200 dark:border-blue-700">
-                          {searchResults.map((cliente) => (
-                            <div
-                              key={cliente.id}
-                              onClick={() => autoFillClientData(cliente)}
-                              className="p-3 hover:bg-gray-50 cursor-pointer border-b last:border-b-0 transition-colors"
-                              data-testid={`client-result-${cliente.id}`}
-                            >
-                              <div className="flex justify-between items-start">
-                                <div>
-                                  <p className="font-medium text-gray-900">{cliente.name}</p>
-                                  <p className="text-sm text-gray-600">{cliente.document}</p>
-                                  {cliente.email && (
-                                    <p className="text-sm text-gray-500">{cliente.email}</p>
-                                  )}
-                                </div>
-                                <div className="text-right text-xs text-gray-400">
-                                  {cliente.city && <p>{cliente.city}/{cliente.state}</p>}
-                                </div>
-                              </div>
-                            </div>
-                          ))}
-                        </div>
-                      )}
-
-                      {clientSearchTerm.length >= 2 && searchResults.length === 0 && (
-                        <div className="text-sm text-gray-500 text-center py-3 border border-dashed rounded">
-                          Nenhum cliente encontrado. 
-                          <Button 
-                            type="button" 
-                            variant="link" 
-                            className="p-0 h-auto ml-1"
-                            onClick={() => setShowNewClientForm(true)}
-                          >
-                            Cadastrar novo cliente?
-                          </Button>
-                        </div>
-                      )}
+                    <div className="flex-1">
+                      <div className="flex items-center gap-2">
+                        <CheckCircle className="h-4 w-4 text-blue-600" />
+                        <p className="font-medium text-sm text-gray-900 dark:text-gray-100">
+                          {field.field === 'bankId' && 'Banco'}
+                          {field.field === 'categoryId' && 'Categoria'}
+                          {field.field === 'costCenterId' && 'Centro de Custo'}
+                          {field.field === 'dueDate' && 'Data de Vencimento'}
+                        </p>
+                      </div>
+                      <p className="text-sm text-gray-700 dark:text-gray-300 mt-1">
+                        {field.value}
+                      </p>
+                      <p className="text-xs text-gray-500 dark:text-gray-400 mt-1">
+                        {field.reasoning}
+                      </p>
                     </div>
-                  </>
-                )}
-
-                {selectedClient && (
-                  <div className="bg-green-50 border border-green-200 rounded-lg p-3">
-                    <div className="flex items-center gap-2 mb-2">
-                      <CheckCircle className="h-4 w-4 text-green-600" />
-                      <span className="text-sm font-medium text-green-800">Cliente selecionado</span>
-                    </div>
-                    <div className="text-sm text-green-700">
-                      <p><strong>{selectedClient.name}</strong></p>
-                      <p>{selectedClient.document} • {selectedClient.email}</p>
-                      {selectedClient.city && <p>{selectedClient.city}/{selectedClient.state}</p>}
+                    <div className="flex flex-col items-end gap-1">
+                      <Badge 
+                        variant={field.confidence >= 80 ? "default" : "secondary"} 
+                        className={field.confidence >= 80 ? 
+                          "text-blue-700 border-blue-300 bg-blue-100 dark:text-blue-400 dark:border-blue-600 dark:bg-blue-900" :
+                          "text-yellow-700 border-yellow-300 bg-yellow-100 dark:text-yellow-400 dark:border-yellow-600 dark:bg-yellow-900"
+                        }
+                      >
+                        {field.confidence}% confiança
+                      </Badge>
+                      <Badge variant="outline" className="text-xs">
+                        {field.source === 'ai_suggestion' && '🤖 IA'}
+                        {field.source === 'intelligent_default' && '💡 Inteligente'}
+                        {field.source === 'historical_pattern' && '📊 Histórico'}
+                      </Badge>
                     </div>
                   </div>
-                )}
+                ))}
+              </div>
+              <div className="flex gap-2 mt-4">
+                <Button 
+                  variant="outline" 
+                  size="sm"
+                  onClick={() => setShowAutoFillConfirmation(false)}
+                  className="flex-1"
+                >
+                  <X className="h-4 w-4 mr-2" />
+                  Aceitar Sugestões
+                </Button>
+                <Button 
+                  variant="secondary" 
+                  size="sm"
+                  onClick={() => {
+                    // Limpar campos auto-preenchidos
+                    autoFilledFields.forEach((field) => {
+                      if (field.field === 'bankId') form.setValue('bankId', '');
+                      if (field.field === 'categoryId') form.setValue('categoryId', '');
+                      if (field.field === 'costCenterId') form.setValue('costCenterId', '');
+                      if (field.field === 'dueDate') form.setValue('competenceDate', '');
+                    });
+                    setShowAutoFillConfirmation(false);
+                    setAutoFilledFields([]);
+                  }}
+                  className="flex-1"
+                >
+                  <RotateCcw className="h-4 w-4 mr-2" />
+                  Limpar Auto-Fill
+                </Button>
+              </div>
+            </CardContent>
+          </Card>
+        )}
+
+        {/* SEÇÃO ÓRFÃ COMPLETAMENTE REMOVIDA */}
+
+        {/* Dados Opcionais BPO */}
+        <Card>
+          <CardHeader>
+            <CardTitle className="flex items-center gap-2 text-[#0B0E30]">
+              <Building2 className="h-5 w-5 text-[#E40064]" />
+              Informações Complementares
+              <Badge variant="outline">Opcional</Badge>
+            </CardTitle>
+          </CardHeader>
+          <CardContent className="space-y-4">
+
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+
+              {/* Categoria */}
+              <div className="space-y-2">
+                <Label>Categoria</Label>
+                <Select 
+                  value={form.watch("categoryId") || ""} 
+                  onValueChange={(value) => form.setValue("categoryId", value)}
+                >
+                  <SelectTrigger data-testid="select-category">
+                    <SelectValue placeholder="Selecione a categoria" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    {Array.isArray(categories) && categories.map((category: any) => (
+                      <SelectItem key={category.id} value={category.id}>
+                        {category.name}
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
               </div>
 
-              {showNewClientForm && (
-                <div className="space-y-4">
-                  <div className="flex items-center justify-between">
-                    <h4 className="text-sm font-semibold text-[#0B0E30] border-b pb-2 flex-1">Dados do Novo Cliente</h4>
-                    <Button 
-                      type="button" 
-                      variant="ghost" 
-                      size="sm"
-                      onClick={() => setShowNewClientForm(false)}
-                      className="text-gray-500"
-                    >
-                      <X className="h-4 w-4 mr-1" />
-                      Cancelar
-                    </Button>
-                  </div>
-                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                    <div className="space-y-2">
-                      <Label>CNPJ/CPF do Tomador *</Label>
-                      <Input
-                        {...form.register("payerDocument")}
-                        placeholder="00.000.000/0000-00"
-                        data-testid="input-payer-document"
-                      />
-                      {form.formState.errors.payerDocument && (
-                        <p className="text-sm text-red-500">{form.formState.errors.payerDocument.message}</p>
-                      )}
-                    </div>
+              {/* Centro de Custo */}
+              <div className="space-y-2">
+                <Label>Centro de Custo</Label>
+                <Select 
+                  value={form.watch("costCenterId") || ""} 
+                  onValueChange={(value) => form.setValue("costCenterId", value)}
+                >
+                  <SelectTrigger data-testid="select-cost-center">
+                    <SelectValue placeholder="Selecione o centro de custo" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    {Array.isArray(costCenters) && costCenters.map((costCenter: any) => (
+                      <SelectItem key={costCenter.id} value={costCenter.id}>
+                        {costCenter.name}
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+              </div>
+            </div>
 
-                    <div className="space-y-2">
-                      <Label>Nome/Razão Social *</Label>
-                      <Input
+            {/* Data de Competência */}
+            <div className="space-y-2">
+              <Label>Data de Competência</Label>
+              <Input
+                {...form.register("competenceDate")}
+                type="date"
+                data-testid="input-competence-date"
+              />
+            </div>
+
+            {/* Observações */}
+            <div className="space-y-2">
+              <Label>Observações</Label>
+              <Textarea
+                {...form.register("notes")}
+                placeholder="Observações adicionais (opcional)"
+                data-testid="textarea-notes"
+              />
+            </div>
+
+          </CardContent>
+        </Card>
+
+        {/* Botão de Envio */}
+        <Card>
+          <CardContent className="pt-6">
+            <Button
+              type="submit"
+              disabled={processingState.stage === 'processing' || processingState.stage === 'submitting'}
+              className="w-full bg-[#E40064] hover:bg-[#E40064]/90 text-white"
+              data-testid="button-submit"
+            >
+              {processingState.stage === 'submitting' ? (
+                <>
+                  <Sparkles className="mr-2 h-4 w-4 animate-spin" />
+                  Processando...
+                </>
+              ) : (
+                <>
+                  <UploadIcon className="mr-2 h-4 w-4" />
+                  Enviar para BPO Financeiro
+                </>
+              )}
+            </Button>
+          </CardContent>
+        </Card>
+
+      </form>
                         {...form.register("payerName")}
                         placeholder="Nome completo ou razão social"
                         data-testid="input-payer-name"
