@@ -39,13 +39,30 @@ const bpoUploadSchema = z.object({
   costCenterId: z.string().optional(),
   notes: z.string().optional(),
 
-  // Campos para boleto/NF
+  // Campos para boleto/NF - dados do tomador (expandidos)
   payerDocument: z.string().optional(),
   payerName: z.string().optional(),
-  payerAddress: z.string().optional(),
   payerEmail: z.string().optional(),
+  payerPhone: z.string().optional(),
+  payerContactName: z.string().optional(),
+  payerStateRegistration: z.string().optional(), // IE - opcional
+  
+  // Endereço completo do tomador
+  payerStreet: z.string().optional(),
+  payerNumber: z.string().optional(),
+  payerComplement: z.string().optional(),
+  payerNeighborhood: z.string().optional(),
+  payerCity: z.string().optional(),
+  payerState: z.string().optional(), // UF
+  payerZipCode: z.string().optional(), // CEP
+  
+  // Compatibilidade (manter o campo legado)
+  payerAddress: z.string().optional(),
+  
+  // Campos de serviço
   serviceCode: z.string().optional(),
   serviceDescription: z.string().optional(),
+  instructions: z.string().optional(),
 }).superRefine((data, ctx) => {
   // Validação condicional por tipo
   if (data.documentType === "PAGO") {
@@ -86,8 +103,14 @@ const bpoUploadSchema = z.object({
     const requiredFields = [
       { field: "payerDocument", name: "CNPJ/CPF do Tomador" },
       { field: "payerName", name: "Nome/Razão Social" },
-      { field: "payerAddress", name: "Endereço" },
-      { field: "payerEmail", name: "Email" }
+      { field: "payerEmail", name: "Email" },
+      { field: "payerPhone", name: "Telefone" },
+      { field: "payerStreet", name: "Rua/Avenida" },
+      { field: "payerNumber", name: "Número" },
+      { field: "payerNeighborhood", name: "Bairro" },
+      { field: "payerCity", name: "Cidade" },
+      { field: "payerState", name: "Estado" },
+      { field: "payerZipCode", name: "CEP" }
     ];
 
     requiredFields.forEach(({ field, name }) => {
@@ -1088,7 +1111,7 @@ export function UploadBpo() {
           </Card>
         )}
 
-        {/* Campos para Emissão de Boleto/NF */}
+        {/* Campos para Emissão de Boleto/NF - EXPANDIDOS */}
         {(documentType === "EMITIR_BOLETO" || documentType === "EMITIR_NF") && (
           <Card>
             <CardHeader>
@@ -1098,86 +1121,226 @@ export function UploadBpo() {
                 <Badge variant="destructive">Obrigatório</Badge>
               </CardTitle>
             </CardHeader>
-            <CardContent className="space-y-4">
+            <CardContent className="space-y-6">
 
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                <div className="space-y-2">
-                  <Label>CNPJ/CPF do Tomador *</Label>
-                  <Input
-                    {...form.register("payerDocument")}
-                    placeholder="00.000.000/0000-00"
-                    data-testid="input-payer-document"
-                  />
-                  {form.formState.errors.payerDocument && (
-                    <p className="text-sm text-red-500">{form.formState.errors.payerDocument.message}</p>
-                  )}
-                </div>
+              {/* Dados Básicos */}
+              <div className="space-y-4">
+                <h4 className="text-sm font-semibold text-[#0B0E30] border-b pb-2">Identificação</h4>
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                  <div className="space-y-2">
+                    <Label>CNPJ/CPF do Tomador *</Label>
+                    <Input
+                      {...form.register("payerDocument")}
+                      placeholder="00.000.000/0000-00"
+                      data-testid="input-payer-document"
+                    />
+                    {form.formState.errors.payerDocument && (
+                      <p className="text-sm text-red-500">{form.formState.errors.payerDocument.message}</p>
+                    )}
+                  </div>
 
-                <div className="space-y-2">
-                  <Label>Nome/Razão Social *</Label>
-                  <Input
-                    {...form.register("payerName")}
-                    placeholder="Nome completo ou razão social"
-                    data-testid="input-payer-name"
-                  />
-                  {form.formState.errors.payerName && (
-                    <p className="text-sm text-red-500">{form.formState.errors.payerName.message}</p>
-                  )}
-                </div>
+                  <div className="space-y-2">
+                    <Label>Nome/Razão Social *</Label>
+                    <Input
+                      {...form.register("payerName")}
+                      placeholder="Nome completo ou razão social"
+                      data-testid="input-payer-name"
+                    />
+                    {form.formState.errors.payerName && (
+                      <p className="text-sm text-red-500">{form.formState.errors.payerName.message}</p>
+                    )}
+                  </div>
 
-                <div className="space-y-2">
-                  <Label>Email *</Label>
-                  <Input
-                    {...form.register("payerEmail")}
-                    type="email"
-                    placeholder="email@exemplo.com"
-                    data-testid="input-payer-email"
-                  />
-                  {form.formState.errors.payerEmail && (
-                    <p className="text-sm text-red-500">{form.formState.errors.payerEmail.message}</p>
-                  )}
-                </div>
-
-                <div className="space-y-2">
-                  <Label>Endereço *</Label>
-                  <Input
-                    {...form.register("payerAddress")}
-                    placeholder="Endereço completo"
-                    data-testid="input-payer-address"
-                  />
-                  {form.formState.errors.payerAddress && (
-                    <p className="text-sm text-red-500">{form.formState.errors.payerAddress.message}</p>
-                  )}
+                  <div className="space-y-2">
+                    <Label>Inscrição Estadual</Label>
+                    <Input
+                      {...form.register("payerStateRegistration")}
+                      placeholder="000.000.000.000 (opcional)"
+                      data-testid="input-payer-state-registration"
+                    />
+                  </div>
                 </div>
               </div>
 
-              {documentType === "EMITIR_NF" && (
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+              {/* Contato */}
+              <div className="space-y-4">
+                <h4 className="text-sm font-semibold text-[#0B0E30] border-b pb-2">Contato</h4>
+                <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
                   <div className="space-y-2">
-                    <Label>Código do Serviço *</Label>
+                    <Label>Email *</Label>
                     <Input
-                      {...form.register("serviceCode")}
-                      placeholder="Código do serviço"
-                      data-testid="input-service-code"
+                      {...form.register("payerEmail")}
+                      type="email"
+                      placeholder="email@exemplo.com"
+                      data-testid="input-payer-email"
                     />
-                    {form.formState.errors.serviceCode && (
-                      <p className="text-sm text-red-500">{form.formState.errors.serviceCode.message}</p>
+                    {form.formState.errors.payerEmail && (
+                      <p className="text-sm text-red-500">{form.formState.errors.payerEmail.message}</p>
                     )}
                   </div>
 
                   <div className="space-y-2">
-                    <Label>Descrição do Serviço *</Label>
-                    <Textarea
-                      {...form.register("serviceDescription")}
-                      placeholder="Descrição detalhada do serviço"
-                      data-testid="textarea-service-description"
+                    <Label>Telefone *</Label>
+                    <Input
+                      {...form.register("payerPhone")}
+                      placeholder="(11) 99999-9999"
+                      data-testid="input-payer-phone"
                     />
-                    {form.formState.errors.serviceDescription && (
-                      <p className="text-sm text-red-500">{form.formState.errors.serviceDescription.message}</p>
+                    {form.formState.errors.payerPhone && (
+                      <p className="text-sm text-red-500">{form.formState.errors.payerPhone.message}</p>
                     )}
+                  </div>
+
+                  <div className="space-y-2">
+                    <Label>Nome da Pessoa de Contato</Label>
+                    <Input
+                      {...form.register("payerContactName")}
+                      placeholder="Nome do responsável"
+                      data-testid="input-payer-contact-name"
+                    />
+                  </div>
+                </div>
+              </div>
+
+              {/* Endereço Completo */}
+              <div className="space-y-4">
+                <h4 className="text-sm font-semibold text-[#0B0E30] border-b pb-2">Endereço</h4>
+                <div className="grid grid-cols-1 gap-4">
+                  {/* Linha 1: CEP e Rua */}
+                  <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
+                    <div className="space-y-2">
+                      <Label>CEP *</Label>
+                      <Input
+                        {...form.register("payerZipCode")}
+                        placeholder="00000-000"
+                        data-testid="input-payer-zip-code"
+                      />
+                      {form.formState.errors.payerZipCode && (
+                        <p className="text-sm text-red-500">{form.formState.errors.payerZipCode.message}</p>
+                      )}
+                    </div>
+
+                    <div className="space-y-2 md:col-span-3">
+                      <Label>Rua/Avenida *</Label>
+                      <Input
+                        {...form.register("payerStreet")}
+                        placeholder="Nome da rua/avenida"
+                        data-testid="input-payer-street"
+                      />
+                      {form.formState.errors.payerStreet && (
+                        <p className="text-sm text-red-500">{form.formState.errors.payerStreet.message}</p>
+                      )}
+                    </div>
+                  </div>
+
+                  {/* Linha 2: Número, Complemento, Bairro */}
+                  <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                    <div className="space-y-2">
+                      <Label>Número *</Label>
+                      <Input
+                        {...form.register("payerNumber")}
+                        placeholder="123"
+                        data-testid="input-payer-number"
+                      />
+                      {form.formState.errors.payerNumber && (
+                        <p className="text-sm text-red-500">{form.formState.errors.payerNumber.message}</p>
+                      )}
+                    </div>
+
+                    <div className="space-y-2">
+                      <Label>Complemento</Label>
+                      <Input
+                        {...form.register("payerComplement")}
+                        placeholder="Apto 45, Bloco B..."
+                        data-testid="input-payer-complement"
+                      />
+                    </div>
+
+                    <div className="space-y-2">
+                      <Label>Bairro *</Label>
+                      <Input
+                        {...form.register("payerNeighborhood")}
+                        placeholder="Nome do bairro"
+                        data-testid="input-payer-neighborhood"
+                      />
+                      {form.formState.errors.payerNeighborhood && (
+                        <p className="text-sm text-red-500">{form.formState.errors.payerNeighborhood.message}</p>
+                      )}
+                    </div>
+                  </div>
+
+                  {/* Linha 3: Cidade e Estado */}
+                  <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                    <div className="space-y-2 md:col-span-2">
+                      <Label>Cidade *</Label>
+                      <Input
+                        {...form.register("payerCity")}
+                        placeholder="Nome da cidade"
+                        data-testid="input-payer-city"
+                      />
+                      {form.formState.errors.payerCity && (
+                        <p className="text-sm text-red-500">{form.formState.errors.payerCity.message}</p>
+                      )}
+                    </div>
+
+                    <div className="space-y-2">
+                      <Label>Estado *</Label>
+                      <Input
+                        {...form.register("payerState")}
+                        placeholder="SP"
+                        maxLength={2}
+                        data-testid="input-payer-state"
+                      />
+                      {form.formState.errors.payerState && (
+                        <p className="text-sm text-red-500">{form.formState.errors.payerState.message}</p>
+                      )}
+                    </div>
+                  </div>
+                </div>
+              </div>
+
+              {/* Campos específicos para NF */}
+              {documentType === "EMITIR_NF" && (
+                <div className="space-y-4">
+                  <h4 className="text-sm font-semibold text-[#0B0E30] border-b pb-2">Dados do Serviço</h4>
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                    <div className="space-y-2">
+                      <Label>Código do Serviço *</Label>
+                      <Input
+                        {...form.register("serviceCode")}
+                        placeholder="Código do serviço"
+                        data-testid="input-service-code"
+                      />
+                      {form.formState.errors.serviceCode && (
+                        <p className="text-sm text-red-500">{form.formState.errors.serviceCode.message}</p>
+                      )}
+                    </div>
+
+                    <div className="space-y-2">
+                      <Label>Descrição do Serviço *</Label>
+                      <Textarea
+                        {...form.register("serviceDescription")}
+                        placeholder="Descrição detalhada do serviço"
+                        data-testid="textarea-service-description"
+                      />
+                      {form.formState.errors.serviceDescription && (
+                        <p className="text-sm text-red-500">{form.formState.errors.serviceDescription.message}</p>
+                      )}
+                    </div>
                   </div>
                 </div>
               )}
+
+              {/* Instruções (campo opcional para boletos) */}
+              <div className="space-y-2">
+                <Label>Instruções Especiais</Label>
+                <Textarea
+                  {...form.register("instructions")}
+                  placeholder="Instruções especiais para o boleto/NF (opcional)"
+                  data-testid="textarea-instructions"
+                />
+              </div>
+
             </CardContent>
           </Card>
         )}
