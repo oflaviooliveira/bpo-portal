@@ -704,8 +704,15 @@ export function UploadBpo() {
       return;
     }
 
-    console.log("🚀 INICIANDO ENVIO - Dados completos:", data);
-    console.log("🔍 Validando formulário...", form.formState.errors);
+    console.log("🚀 ===== INICIANDO ENVIO BPO =====");
+    console.log("📋 Dados completos:", data);
+    console.log("🔍 Erros de validação:", form.formState.errors);
+    console.log("📊 Estado do formulário:", {
+      isValid: form.formState.isValid,
+      isDirty: form.formState.isDirty,
+      isSubmitting: form.formState.isSubmitting,
+      errorCount: Object.keys(form.formState.errors).length
+    });
     setProcessingState({ stage: 'submitting', message: 'Enviando para BPO...' });
 
     // 🔍 DEBUG: Capturar TODOS os valores do formulário (incluindo Select controlados)
@@ -1731,6 +1738,67 @@ export function UploadBpo() {
               />
             </div>
 
+          </CardContent>
+        </Card>
+
+        {/* 🔍 DEBUG: Card de Erros de Validação */}
+        {Object.keys(form.formState.errors).length > 0 && (
+          <Card className="border-red-500 bg-red-50">
+            <CardHeader>
+              <CardTitle className="text-red-700 flex items-center gap-2">
+                <span className="text-2xl">🚨</span>
+                Erros de Validação Detectados ({Object.keys(form.formState.errors).length})
+              </CardTitle>
+            </CardHeader>
+            <CardContent className="space-y-2">
+              {Object.entries(form.formState.errors).map(([field, error]) => (
+                <div key={field} className="bg-white p-2 rounded border border-red-200">
+                  <p className="text-red-700 font-medium text-sm">
+                    <strong>{field}:</strong> {error?.message || 'Erro desconhecido'}
+                  </p>
+                </div>
+              ))}
+              <div className="mt-4 p-3 bg-blue-50 rounded border border-blue-200">
+                <p className="text-blue-700 text-sm">
+                  💡 <strong>Dica:</strong> Corrija os erros acima antes de enviar o formulário.
+                </p>
+              </div>
+            </CardContent>
+          </Card>
+        )}
+
+        {/* 🔍 DEBUG: Botão de Debug Manual */}
+        <Card className="border-yellow-500 bg-yellow-50">
+          <CardContent className="pt-6">
+            <Button
+              type="button"
+              onClick={() => {
+                console.log("🔍 ===== DEBUG MANUAL DE VALIDAÇÃO =====");
+                console.log("📋 ERROS ATUAIS:", form.formState.errors);
+                console.log("📊 VALORES ATUAIS:", form.getValues());
+                console.log("🔧 FORM STATE:", {
+                  isValid: form.formState.isValid,
+                  isDirty: form.formState.isDirty,
+                  isSubmitting: form.formState.isSubmitting,
+                  touchedFields: form.formState.touchedFields,
+                  dirtyFields: form.formState.dirtyFields
+                });
+                
+                // Testar validação manual
+                const data = form.getValues();
+                const result = bpoUploadSchema.safeParse(data);
+                console.log("✅ RESULTADO VALIDAÇÃO MANUAL:", result);
+                
+                if (!result.success) {
+                  console.log("❌ ERROS DETALHADOS:", result.error.issues);
+                } else {
+                  console.log("✅ VALIDAÇÃO PASSOU! Dados válidos:", result.data);
+                }
+              }}
+              className="w-full bg-yellow-600 hover:bg-yellow-700 text-white mb-4"
+            >
+              🔍 Debug Manual - Ver Erros no Console
+            </Button>
           </CardContent>
         </Card>
 
