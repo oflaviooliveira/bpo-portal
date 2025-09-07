@@ -172,7 +172,6 @@ export class DocumentUploadHandler {
         amount: this.parseAmount(validatedData.amount || '') || '0',
         supplier: validatedData.supplier || validatedData.contraparteName,
         description: validatedData.description,
-        competenceDate: this.parseDate(validatedData.competenceDate || ''),
         dueDate: this.parseDate(validatedData.dueDate || validatedData.scheduledDate || ''),
         paidDate: this.parseDate(validatedData.paidDate || validatedData.realPaidDate || validatedData.paymentDate || ''),
         issuerData,
