@@ -1522,32 +1522,22 @@ export function UploadBpo() {
         {/* 🤖 NOVO: Card de campos auto-preenchidos */}
         {showAutoFillConfirmation && autoFilledFields.length > 0 && (
           <Card className="border-blue-200 bg-blue-50 dark:border-blue-800 dark:bg-blue-950">
-                    <div className="space-y-2">
-                      <div className="flex gap-2">
-                        <Input
-                          value={clientSearchTerm}
-                          onChange={(e) => {
-                            const term = e.target.value;
-                            setClientSearchTerm(term);
-                            searchClients(term);
-                          }}
-                          placeholder="Digite nome, CNPJ ou email do cliente..."
-                          className="flex-1"
-                          data-testid="input-client-search"
-                        />
-                        <Button 
-                          type="button" 
-                          variant="outline"
-                          onClick={() => setShowNewClientForm(true)}
-                        >
-                          <Plus className="h-4 w-4 mr-2" />
-                          Novo Cliente
-                        </Button>
-                      </div>
-
-                      {/* 📋 Resultados da busca em tempo real */}
-                      {searchResults.length > 0 && (
-                        <div className="border rounded-md bg-white shadow-sm max-h-60 overflow-y-auto">
+            <CardHeader>
+              <CardTitle className="text-blue-800 dark:text-blue-200 flex items-center gap-2">
+                <Bot className="h-4 w-4" />
+                Campos preenchidos automaticamente
+                <Badge variant="secondary" className="ml-2">
+                  {autoFilledFields.length} campo{autoFilledFields.length > 1 ? 's' : ''}
+                </Badge>
+              </CardTitle>
+              <p className="text-sm text-blue-600 dark:text-blue-300">
+                A IA preencheu automaticamente alguns campos. Confirme se estão corretos antes de enviar.
+              </p>
+            </CardHeader>
+            <CardContent>
+              <div className="space-y-3">
+                {autoFilledFields.map((field, index) => (
+                  <div key={index} className="flex items-center justify-between p-3 bg-white dark:bg-gray-800 rounded-md border border-blue-200 dark:border-blue-700">
                           {searchResults.map((cliente) => (
                             <div
                               key={cliente.id}
