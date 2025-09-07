@@ -5,17 +5,49 @@ import { z } from 'zod';
  * Previne bugs e ataques durante desenvolvimento
  */
 
-// Validação base para upload de documento
+// Validação base para upload de documento - COMPLETA com todos os campos necessários
 const baseDocumentUploadSchema = z.object({
+  // Tipo de documento
   documentType: z.enum(['PAGO', 'AGENDADO', 'EMITIR_BOLETO', 'EMITIR_NF'], {
     errorMap: () => ({ message: 'Tipo de documento inválido' })
   }),
-  supplier: z.string().min(1, 'Fornecedor é obrigatório').max(255),
+  
+  // Campos básicos do documento
+  supplier: z.string().optional(), // Pode ser UUID ou nome
   description: z.string().max(1000, 'Descrição muito longa').optional(),
   amount: z.string().regex(/^R?\$?\s?[\d.,]+$/, 'Valor inválido').optional(),
+  
+  // Sistema de contrapartes (novo)
+  contraparteId: z.string().uuid().optional(),
+  contraparteName: z.string().optional(),
+  contraparteDocument: z.string().optional(),
+  
+  // Campos legacy para compatibilidade
+  clientId: z.string().uuid().optional(),
+  
+  // Campos operacionais (sugestões da IA)
+  bankId: z.string().uuid().optional(),
+  categoryId: z.string().uuid().optional(), 
+  costCenterId: z.string().uuid().optional(),
+  
+  // Datas do documento
   competenceDate: z.string().regex(/^\d{2}\/\d{2}\/\d{4}$/, 'Data de competência inválida (DD/MM/AAAA)').optional(),
   dueDate: z.string().regex(/^\d{2}\/\d{2}\/\d{4}$/, 'Data de vencimento inválida (DD/MM/AAAA)').optional(),
   paidDate: z.string().regex(/^\d{2}\/\d{2}\/\d{4}$/, 'Data de pagamento inválida (DD/MM/AAAA)').optional(),
+  realPaidDate: z.string().regex(/^\d{2}\/\d{2}\/\d{4}$/, 'Data real de pagamento inválida (DD/MM/AAAA)').optional(),
+  scheduledDate: z.string().regex(/^\d{2}\/\d{2}\/\d{4}$/, 'Data de agendamento inválida (DD/MM/AAAA)').optional(),
+  paymentDate: z.string().optional(),
+  
+  // Campos para emissão de boleto/NF
+  payerDocument: z.string().optional(),
+  payerName: z.string().optional(), 
+  payerAddress: z.string().optional(),
+  payerEmail: z.string().optional(),
+  serviceCode: z.string().optional(),
+  serviceDescription: z.string().optional(),
+  instructions: z.string().optional(),
+  
+  // Observações
   notes: z.string().max(500, 'Observações muito longas').optional(),
 });
 
