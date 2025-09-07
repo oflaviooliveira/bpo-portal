@@ -531,7 +531,98 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
-  // Get clients - Wave 1 RBAC (Legacy)
+  // 🎯 NOVOS ENDPOINTS PARA CLIENTES (Contrapartes que podem ser clientes)
+  app.get("/api/clientes", ...authorize(["SUPER_ADMIN", "CLIENT_USER"], true), async (req, res) => {
+    try {
+      const tenantId = req.user?.tenantId!;
+      const search = req.query.search as string;
+
+      let clientes = await storage.getContrapartes(tenantId, { canBeClient: true });
+      
+      // 🔍 Busca inteligente por qualquer campo
+      if (search && search.trim() !== '') {
+        const searchTerm = search.toLowerCase().trim();
+        clientes = clientes.filter(cliente => 
+          cliente.name?.toLowerCase().includes(searchTerm) ||
+          cliente.document?.toLowerCase().includes(searchTerm) ||
+          cliente.email?.toLowerCase().includes(searchTerm) ||
+          cliente.phone?.toLowerCase().includes(searchTerm) ||
+          cliente.city?.toLowerCase().includes(searchTerm)
+        );
+      }
+
+      res.json(clientes);
+    } catch (error) {
+      console.error("Get clientes error:", error);
+      res.status(500).json({ error: "Erro ao carregar clientes" });
+    }
+  });
+
+  app.post("/api/clientes", ...authorize(["SUPER_ADMIN", "CLIENT_USER"], true), async (req, res) => {
+    try {
+      const tenantId = req.user?.tenantId!;
+      const clienteData = { 
+        ...req.body, 
+        tenantId,
+        canBeClient: true,
+        canBeSupplier: false  // Cliente puro
+      };
+
+      const novoCliente = await storage.createContraparte(clienteData);
+      res.status(201).json(novoCliente);
+    } catch (error) {
+      console.error("Create cliente error:", error);
+      res.status(500).json({ error: "Erro ao criar cliente" });
+    }
+  });
+
+  // 🔍 Busca rápida de clientes para auto-complete
+  app.get("/api/clientes/search", ...authorize(["SUPER_ADMIN", "CLIENT_USER"], true), async (req, res) => {
+    try {
+      const tenantId = req.user?.tenantId!;
+      const query = req.query.q as string;
+      const limit = parseInt(req.query.limit as string) || 10;
+
+      if (!query || query.trim().length < 2) {
+        return res.json([]);
+      }
+
+      let clientes = await storage.getContrapartes(tenantId, { canBeClient: true });
+      
+      const searchTerm = query.toLowerCase().trim();
+      const filtered = clientes
+        .filter(cliente => 
+          cliente.name?.toLowerCase().includes(searchTerm) ||
+          cliente.document?.toLowerCase().includes(searchTerm) ||
+          cliente.email?.toLowerCase().includes(searchTerm)
+        )
+        .slice(0, limit)
+        .map(cliente => ({
+          id: cliente.id,
+          name: cliente.name,
+          document: cliente.document,
+          email: cliente.email,
+          phone: cliente.phone,
+          // Dados completos para auto-fill
+          street: cliente.street,
+          number: cliente.number,
+          complement: cliente.complement,
+          neighborhood: cliente.neighborhood,
+          city: cliente.city,
+          state: cliente.state,
+          zipCode: cliente.zipCode,
+          stateRegistration: cliente.stateRegistration,
+          contactName: cliente.contactName
+        }));
+
+      res.json(filtered);
+    } catch (error) {
+      console.error("Search clientes error:", error);
+      res.status(500).json({ error: "Erro na busca de clientes" });
+    }
+  });
+
+  // Get clients - Wave 1 RBAC (Legacy - manter compatibilidade)
   app.get("/api/clients", ...authorize(["SUPER_ADMIN", "CLIENT_USER"], true), async (req, res) => {
     try {
       const user = req.user!;
