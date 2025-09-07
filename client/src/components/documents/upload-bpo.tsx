@@ -863,6 +863,25 @@ export function UploadBpo() {
     });
   }, [documentType, form]);
 
+  // Auto-preencher contraparte para EMITIR_BOLETO com cliente selecionado
+  useEffect(() => {
+    if ((documentType === "EMITIR_BOLETO" || documentType === "EMITIR_NF") && selectedClient) {
+      console.log("🎯 Auto-preenchendo contraparteId para EMITIR_BOLETO:", selectedClient.id);
+      form.setValue("contraparteId", selectedClient.id, { 
+        shouldValidate: true, 
+        shouldDirty: true,
+        shouldTouch: true 
+      });
+    } else if (documentType === "PAGO" || documentType === "AGENDADO") {
+      // Limpar contraparteId para que o usuário selecione manualmente
+      form.setValue("contraparteId", "", { 
+        shouldValidate: true, 
+        shouldDirty: true,
+        shouldTouch: true 
+      });
+    }
+  }, [documentType, selectedClient, form]);
+
   return (
     <div className="space-y-6">
       {/* Header - NOVO COMPONENTE BPO */}
