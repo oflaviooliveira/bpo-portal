@@ -367,11 +367,11 @@ export const documentValidationSchemas = {
     optional: ['bankId', 'categoryId', 'costCenterId', 'notes', 'description']
   },
   AGENDADO: {
-    required: ['bankId', 'categoryId', 'costCenterId', 'amount', 'dueDate'],
+    required: ['bankId', 'categoryId', 'costCenterId', 'amount', 'scheduledDate'],
     conditionalRequired: [
       { fields: ['clientId', 'contraparteName'], condition: 'at_least_one' }
     ],
-    optional: ['supplier', 'notes']
+    optional: ['supplier', 'notes', 'dueDate']
   },
   EMITIR_BOLETO: {
     required: ['clientId', 'bankId', 'categoryId', 'costCenterId', 'amount', 'dueDate', 'payerDocument', 'payerName', 'payerAddress', 'payerEmail'],
@@ -410,6 +410,7 @@ export function validateBusinessRules(
     'paidDate': 'Data de Pagamento',
     'paymentDate': 'Data de Pagamento',
     'dueDate': 'Data de Vencimento',
+    'scheduledDate': 'Data de Agendamento',
     'payerDocument': 'Documento do Tomador',
     'payerName': 'Nome do Tomador',
     'payerAddress': 'Endereço do Tomador',
