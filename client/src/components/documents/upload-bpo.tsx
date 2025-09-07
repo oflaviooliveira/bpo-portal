@@ -1409,36 +1409,34 @@ export function UploadBpo() {
                 </div>
               )}
 
-              {/* Contraparte dinâmica - SÓ PARA OUTROS TIPOS (NÃO EMITIR_BOLETO) */}
-              {documentType !== "EMITIR_BOLETO" && (
-                <div className="space-y-2">
-                  <Label className="flex items-center">
-                    {getContraparteLabel()} *
-                    {getSuggestionBadge('contraparte')}
-                  </Label>
-                  <Select 
-                    value={form.watch("contraparteId") || ""} 
-                    onValueChange={(value) => form.setValue("contraparteId", value)}
+              {/* Contraparte dinâmica - PARA TODOS OS TIPOS */}
+              <div className="space-y-2">
+                <Label className="flex items-center">
+                  {getContraparteLabel()} *
+                  {getSuggestionBadge('contraparte')}
+                </Label>
+                <Select 
+                  value={form.watch("contraparteId") || ""} 
+                  onValueChange={(value) => form.setValue("contraparteId", value)}
+                >
+                  <SelectTrigger 
+                    data-testid="select-contraparte"
+                    className={isFieldSuggested('contraparte') ? 'border-[#E40064]/30 bg-[#E40064]/5' : ''}
                   >
-                    <SelectTrigger 
-                      data-testid="select-contraparte"
-                      className={isFieldSuggested('contraparte') ? 'border-[#E40064]/30 bg-[#E40064]/5' : ''}
-                    >
-                      <SelectValue placeholder={`Selecione o ${getContraparteLabel().toLowerCase()}`} />
-                    </SelectTrigger>
-                    <SelectContent>
-                      {Array.isArray(contrapartes) && contrapartes.map((contraparte: any) => (
-                        <SelectItem key={contraparte.id} value={contraparte.id}>
-                          {contraparte.name} {contraparte.document && `(${contraparte.document})`}
-                        </SelectItem>
-                      ))}
-                    </SelectContent>
-                  </Select>
-                  {form.formState.errors.contraparteId && (
-                    <p className="text-sm text-red-500">{form.formState.errors.contraparteId.message}</p>
-                  )}
-                </div>
-              )}
+                    <SelectValue placeholder={`Selecione o ${getContraparteLabel().toLowerCase()}`} />
+                  </SelectTrigger>
+                  <SelectContent>
+                    {Array.isArray(contrapartes) && contrapartes.map((contraparte: any) => (
+                      <SelectItem key={contraparte.id} value={contraparte.id}>
+                        {contraparte.name} {contraparte.document && `(${contraparte.document})`}
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+                {form.formState.errors.contraparteId && (
+                  <p className="text-sm text-red-500">{form.formState.errors.contraparteId.message}</p>
+                )}
+              </div>
             </div>
 
             {/* Descrição */}
