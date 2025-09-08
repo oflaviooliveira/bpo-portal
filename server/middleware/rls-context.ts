@@ -40,7 +40,7 @@ export async function setRLSContext(req: Request, res: Response, next: NextFunct
  */
 export async function setGlobalAdminContext(req: Request, res: Response, next: NextFunction) {
   if (!req.isAuthenticated() || !req.user) {
-    return res.status(401).json({ error: 'Authentication required' });
+    return res.status(401).json({ error: 'Autenticação necessária' });
   }
 
   const user = req.user;
@@ -49,7 +49,7 @@ export async function setGlobalAdminContext(req: Request, res: Response, next: N
   
   if (user.role !== 'ADMIN' && user.role !== 'SUPER_ADMIN') {
     console.log(`❌ Access denied - Role ${user.role} not allowed`);
-    return res.status(403).json({ error: 'Admin access required' });
+    return res.status(403).json({ error: 'Acesso de administrador necessário' });
   }
 
   try {
@@ -73,7 +73,7 @@ export async function setGlobalAdminContext(req: Request, res: Response, next: N
  */
 export async function validateRLSContext(req: Request, res: Response, next: NextFunction) {
   if (!req.isAuthenticated() || !req.user) {
-    return res.status(401).json({ error: 'Authentication required' });
+    return res.status(401).json({ error: 'Autenticação necessária' });
   }
 
   try {

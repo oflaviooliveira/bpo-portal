@@ -110,14 +110,14 @@ export function isAuthenticated(req: any, res: any, next: any) {
   if (req.isAuthenticated()) {
     return next();
   }
-  return res.status(401).json({ error: "Authentication required" });
+  return res.status(401).json({ error: "Autenticação necessária" });
 }
 
 // RBAC Middleware - Wave 1 Implementation
 export function requireRole(...allowedRoles: string[]) {
   return (req: any, res: any, next: any) => {
     if (!req.isAuthenticated()) {
-      return res.status(401).json({ error: "Authentication required" });
+      return res.status(401).json({ error: "Autenticação necessária" });
     }
 
     const user = req.user!;
@@ -136,7 +136,7 @@ export function requireRole(...allowedRoles: string[]) {
 // Middleware de acesso simplificado para novo modelo de papéis
 export function requireClientAccess(req: any, res: any, next: any) {
   if (!req.isAuthenticated()) {
-    return res.status(401).json({ error: "Authentication required" });
+    return res.status(401).json({ error: "Autenticação necessária" });
   }
 
   const user = req.user!;

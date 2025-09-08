@@ -2394,14 +2394,14 @@ export async function registerRoutes(app: Express): Promise<Server> {
       const { providerName, modelId } = req.body;
 
       if (!providerName || !modelId) {
-        return res.status(400).json({ error: 'Provider name and model ID are required' });
+        return res.status(400).json({ error: 'Nome do provedor e ID do modelo são obrigatórios' });
       }
 
       const { aiMultiProvider } = await import("./ai-multi-provider");
       const success = aiMultiProvider.updateProviderModel(providerName, modelId);
 
       if (!success) {
-        return res.status(400).json({ error: 'Invalid provider or model' });
+        return res.status(400).json({ error: 'Provedor ou modelo inválido' });
       }
 
       res.json({ 
