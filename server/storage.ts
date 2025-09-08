@@ -414,7 +414,7 @@ export class DatabaseStorage implements IStorage {
       }
     }
 
-    // Buscar documentos com inconsistências
+    // Buscar documentos com inconsistências e nome real da contraparte
     const docsWithInconsistencies = await db
       .select({
         id: documents.id,
@@ -453,6 +453,9 @@ export class DatabaseStorage implements IStorage {
         createdBy: documents.createdBy,
         createdAt: documents.createdAt,
         updatedAt: documents.updatedAt,
+        // Campos das contrapartes para exibir nome real
+        contraparteName: contrapartes.name,
+        contraparteDocument: contrapartes.document,
         inconsistencies: sql<any[]>`
           COALESCE(
             json_agg(
@@ -480,12 +483,13 @@ export class DatabaseStorage implements IStorage {
         `
       })
       .from(documents)
+      .leftJoin(contrapartes, eq(documents.contraparteId, contrapartes.id))
       .leftJoin(documentInconsistencies, eq(documents.id, documentInconsistencies.documentId))
       .where(and(...conditions))
-      .groupBy(documents.id)
+      .groupBy(documents.id, contrapartes.name, contrapartes.document)
       .orderBy(desc(documents.createdAt));
 
-    // Mapear os resultados para incluir extractedData corretamente
+    // Mapear os resultados para incluir extractedData e dados da contraparte
     return docsWithInconsistencies.map(doc => ({
       id: doc.id,
       tenantId: doc.tenantId,
@@ -522,6 +526,9 @@ export class DatabaseStorage implements IStorage {
       isReadyForBpo: doc.isReadyForBpo,
       createdBy: doc.createdBy,
       createdAt: doc.createdAt,
+      // Campos das contrapartes para uso no frontend
+      contraparteName: doc.contraparteName,
+      contraparteDocument: doc.contraparteDocument,
       updatedAt: doc.updatedAt,
       extractedData: doc.aiAnalysis, // aiAnalysis contém os dados extraídos
       tasks: doc.inconsistencies || []

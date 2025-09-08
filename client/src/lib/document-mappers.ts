@@ -148,15 +148,15 @@ export class PhysicalDocumentMapper extends DocumentMapper {
     return {
       displayName: document.originalName || 'Documento Físico',
       amount: getFormattedCurrency('valor', 'amount'),
-      supplier: getValue('razao_social', 'supplier') || getValue('fornecedor', 'supplier'),
+      supplier: document.contraparteName || getValue('razao_social', 'supplier') || getValue('fornecedor', 'supplier'),
       dueDate: getFormattedDate('data_vencimento', 'dueDate'),
       status: document.status,
       documentType: document.documentType || document.bpoType,
       isVirtual: false,
       
-      // Campos básicos com fallbacks inteligentes
-      razaoSocial: getValue('razao_social', 'supplier') || getValue('fornecedor', 'supplier') || getValue('empresa'),
-      cnpj: getValue('cnpj') || getValue('cpf') || getValue('documento'),
+      // Campos básicos com fallbacks inteligentes - priorizando dados manuais
+      razaoSocial: document.contraparteName || getValue('razao_social', 'supplier') || getValue('fornecedor', 'supplier') || getValue('empresa'),
+      cnpj: document.contraparteDocument || getValue('cnpj') || getValue('cpf') || getValue('documento'),
       valor: getFormattedCurrency('valor', 'amount', 'total', 'value'),
       dataEmissao: getFormattedDate('data_emissao', 'createdAt', 'data_documento'),
       dataVencimento: getFormattedDate('data_vencimento', 'dueDate', 'vencimento'),
