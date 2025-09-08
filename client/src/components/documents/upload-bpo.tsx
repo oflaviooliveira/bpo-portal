@@ -567,19 +567,24 @@ export function UploadBpo() {
   // Função de detecção inteligente de fornecedor
   const detectAndHandleSupplier = async (name: string, document?: string, confidence?: number) => {
     try {
+      console.log("🚨 ===== INICIANDO DETECÇÃO DE FORNECEDOR =====");
       console.log("🔍 DETECTANDO FORNECEDOR:");
-      console.log("  📄 Nome:", name);
-      console.log("  🆔 Documento:", document);
-      console.log("  📊 Confiança:", confidence);
+      console.log("  📄 Nome recebido:", name);
+      console.log("  🆔 Documento recebido:", document);
+      console.log("  📊 Confiança recebida:", confidence);
       console.log("  📋 Total de fornecedores disponíveis:", contrapartes?.length || 0);
+      console.log("  🔍 Contrapartes carregadas:", !!contrapartes);
+      console.log("  📊 Estado do modal atual:", autoSupplierModal.open);
       
       // Se modal já está aberto, não duplicar detecção
       if (autoSupplierModal.open) {
         console.log("⏸️ Modal já aberto, ignorando detecção duplicada");
+        console.log("🚨 ===== FIM DETECÇÃO (MODAL ABERTO) =====");
         return;
       }
       
       // Verificar se os dados estão carregados
+      console.log("✅ Modal não está aberto, prosseguindo com detecção...");
       if (!contrapartes || contrapartes.length === 0) {
         console.log("⏳ Lista de fornecedores vazia, abrindo modal para criar novo...");
         setAutoSupplierModal({
