@@ -291,6 +291,21 @@ export function UploadBpo() {
     },
     onSuccess: (data) => {
       console.log("✅ Processamento IA concluído:", data);
+      
+      // 🚨 DEBUG EXTREMO: Logs abrangentes para rastrear tudo
+      console.log("🔍 ===== DEBUG PROCESSAMENTO IA =====");
+      console.log("📊 Estrutura completa do data:", JSON.stringify(data, null, 2));
+      console.log("🎯 data.suggestions:", data.suggestions);
+      console.log("📋 data.suggestions keys:", data.suggestions ? Object.keys(data.suggestions) : 'N/A');
+      console.log("🏢 data.suggestions.supplier:", data.suggestions?.supplier);
+      console.log("🏢 data.suggestions.contraparte:", data.suggestions?.contraparte);
+      console.log("📄 data.suggestions.documento:", data.suggestions?.documento);
+      console.log("📄 data.suggestions.document:", data.suggestions?.document);
+      console.log("🔑 data.suggestions.realData:", data.suggestions?.realData);
+      console.log("✅ data.suggestions.hasRealData:", data.suggestions?.hasRealData);
+      console.log("🏢 data.suggestions.realData?.supplier:", data.suggestions?.realData?.supplier);
+      console.log("📊 Contrapartes disponíveis:", contrapartes?.length || 0);
+      console.log("🔍 ===== FIM DEBUG PROCESSAMENTO =====");
 
       // Verificar se temos sugestões da API
       if (!data.suggestions) {
@@ -481,13 +496,26 @@ export function UploadBpo() {
       // 🏢 SUGESTÕES OPERACIONAIS: Mostrar para aprovação do usuário
       if (data.suggestions?.hasOperationalSuggestions && data.suggestions?.operationalSuggestions) {
         console.log("🏢 Sugestões operacionais recebidas:", data.suggestions.operationalSuggestions);
-        const operationalFields = Object.entries(data.suggestions.operationalSuggestions).map(([key, value]) => ({
-          field: key,
-          value: typeof value === 'object' ? JSON.stringify(value) : String(value),
-          confidence: 85,
-          source: 'ai_suggestion',
-          reasoning: 'Sugestão baseada em análise do documento'
-        }));
+        const operationalFields = Object.entries(data.suggestions.operationalSuggestions).map(([key, value]) => {
+          // 🔧 CORREÇÃO: Formatação segura de valores para evitar renderização de objetos
+          let displayValue = '';
+          if (typeof value === 'object' && value !== null) {
+            // Se for objeto, extrair informação útil
+            if (value.name) displayValue = value.name;
+            else if (value.label) displayValue = value.label;
+            else displayValue = '[Objeto complexo]';
+          } else {
+            displayValue = String(value || '');
+          }
+          
+          return {
+            field: key,
+            value: displayValue,
+            confidence: 85,
+            source: 'ai_suggestion',
+            reasoning: `Sugestão para ${key} baseada no documento`
+          };
+        });
         setAutoFilledFields(operationalFields);
         setShowAutoFillConfirmation(true);
         
@@ -1750,7 +1778,7 @@ export function UploadBpo() {
                         {field.value}
                       </p>
                       <p className="text-xs text-gray-500 dark:text-gray-400 mt-1">
-                        {field.reasoning || "Sugestão automática"}
+                        {typeof field.reasoning === 'string' ? field.reasoning : "Sugestão automática"}
                       </p>
                     </div>
                     <div className="flex flex-col items-end gap-1">
