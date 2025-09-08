@@ -1,0 +1,57 @@
+injected.js:253  POST https://25fd9d59-c143-431a-a29f-114646967772-00-3rktq1czjd3gu.riker.replit.dev/api/documents/upload 400 (Bad Request)
+window.fetch @ Network.js:219
+apply @ injected.js:253
+mutationFn @ upload-bpo.tsx:633
+fn @ @tanstack_react-query.js?v=65e44fcf:1189
+run @ @tanstack_react-query.js?v=65e44fcf:494
+start @ @tanstack_react-query.js?v=65e44fcf:536
+execute @ @tanstack_react-query.js?v=65e44fcf:1225
+await in execute
+mutate @ @tanstack_react-query.js?v=65e44fcf:2630
+(anonymous) @ @tanstack_react-query.js?v=65e44fcf:3295
+onSubmit @ upload-bpo.tsx:834
+(anonymous) @ chunk-CXJMC5RA.js?v=65e44fcf:1465
+await in (anonymous)
+callCallback2 @ chunk-WERSD76P.js?v=65e44fcf:3674
+invokeGuardedCallbackDev @ chunk-WERSD76P.js?v=65e44fcf:3699
+invokeGuardedCallback @ chunk-WERSD76P.js?v=65e44fcf:3733
+invokeGuardedCallbackAndCatchFirstError @ chunk-WERSD76P.js?v=65e44fcf:3736
+executeDispatch @ chunk-WERSD76P.js?v=65e44fcf:7014
+processDispatchQueueItemsInOrder @ chunk-WERSD76P.js?v=65e44fcf:7034
+processDispatchQueue @ chunk-WERSD76P.js?v=65e44fcf:7043
+dispatchEventsForPlugins @ chunk-WERSD76P.js?v=65e44fcf:7051
+(anonymous) @ chunk-WERSD76P.js?v=65e44fcf:7174
+batchedUpdates$1 @ chunk-WERSD76P.js?v=65e44fcf:18913
+batchedUpdates @ chunk-WERSD76P.js?v=65e44fcf:3579
+dispatchEventForPluginEventSystem @ chunk-WERSD76P.js?v=65e44fcf:7173
+dispatchEventWithEnableCapturePhaseSelectiveHydrationWithoutDiscreteEventReplay @ chunk-WERSD76P.js?v=65e44fcf:5478
+dispatchEvent @ chunk-WERSD76P.js?v=65e44fcf:5472
+dispatchDiscreteEvent @ chunk-WERSD76P.js?v=65e44fcf:5449Understand this error
+Console.js:61 🔍 Detalhes completos do erro do servidor: {error: 'Nenhum arquivo foi enviado'}
+Console.js:61 ❌ Erro no upload BPO: Error: Nenhum arquivo foi enviado
+    at Object.mutationFn (upload-bpo.tsx:650:15)
+Mt.forEach.n.<computed> @ Console.js:61
+onError @ upload-bpo.tsx:674
+execute @ @tanstack_react-query.js?v=65e44fcf:1254
+await in execute
+mutate @ @tanstack_react-query.js?v=65e44fcf:2630
+(anonymous) @ @tanstack_react-query.js?v=65e44fcf:3295
+onSubmit @ upload-bpo.tsx:834
+(anonymous) @ chunk-CXJMC5RA.js?v=65e44fcf:1465
+await in (anonymous)
+callCallback2 @ chunk-WERSD76P.js?v=65e44fcf:3674
+invokeGuardedCallbackDev @ chunk-WERSD76P.js?v=65e44fcf:3699
+invokeGuardedCallback @ chunk-WERSD76P.js?v=65e44fcf:3733
+invokeGuardedCallbackAndCatchFirstError @ chunk-WERSD76P.js?v=65e44fcf:3736
+executeDispatch @ chunk-WERSD76P.js?v=65e44fcf:7014
+processDispatchQueueItemsInOrder @ chunk-WERSD76P.js?v=65e44fcf:7034
+processDispatchQueue @ chunk-WERSD76P.js?v=65e44fcf:7043
+dispatchEventsForPlugins @ chunk-WERSD76P.js?v=65e44fcf:7051
+(anonymous) @ chunk-WERSD76P.js?v=65e44fcf:7174
+batchedUpdates$1 @ chunk-WERSD76P.js?v=65e44fcf:18913
+batchedUpdates @ chunk-WERSD76P.js?v=65e44fcf:3579
+dispatchEventForPluginEventSystem @ chunk-WERSD76P.js?v=65e44fcf:7173
+dispatchEventWithEnableCapturePhaseSelectiveHydrationWithoutDiscreteEventReplay @ chunk-WERSD76P.js?v=65e44fcf:5478
+dispatchEvent @ chunk-WERSD76P.js?v=65e44fcf:5472
+dispatchDiscreteEvent @ chunk-WERSD76P.js?v=65e44fcf:5449Understand this error
+Console.js:61 📋 Mensagem de erro completa: Nenhum arquivo foi enviado
