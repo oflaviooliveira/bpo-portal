@@ -24,7 +24,15 @@ export function ClientDocuments() {
     const matchesSearch = doc.originalName?.toLowerCase().includes(searchTerm.toLowerCase()) ||
                          doc.extractedData?.razao_social?.toLowerCase().includes(searchTerm.toLowerCase());
     const matchesStatus = statusFilter === "all" || doc.status === statusFilter;
-    const matchesType = typeFilter === "all" || doc.bpoType === typeFilter;
+    
+    // Aceitar tanto bpoType quanto documentType para documentos virtuais
+    const docType = doc.bpoType || doc.documentType;
+    const matchesType = typeFilter === "all" || docType === typeFilter;
+    
+    // Debug log para identificar problemas
+    if (!matchesType && typeFilter !== "all") {
+      console.log(`Documento filtrado - Nome: ${doc.originalName}, bpoType: ${doc.bpoType}, documentType: ${doc.documentType}, filtro: ${typeFilter}`);
+    }
     
     return matchesSearch && matchesStatus && matchesType;
   }) || [];
@@ -166,7 +174,7 @@ export function ClientDocuments() {
                       <div className="flex-1 min-w-0">
                         <h3 className="font-medium truncate">{doc.originalName}</h3>
                         <div className="flex items-center space-x-4 text-sm text-muted-foreground mt-1">
-                          <span>{getBpoTypeLabel(doc.bpoType)}</span>
+                          <span>{getBpoTypeLabel(doc.bpoType || doc.documentType)}</span>
                           <span>•</span>
                           <span>{new Date(doc.createdAt).toLocaleDateString('pt-BR')}</span>
                           {doc.extractedData?.razao_social && (
