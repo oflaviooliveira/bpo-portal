@@ -415,8 +415,8 @@ export function UploadBpo() {
           // Aguardar um momento para garantir que as queries foram carregadas
           setTimeout(() => {
             detectAndHandleSupplier(
-              data.suggestions.realData.supplier, 
-              data.suggestions.realData.document, 
+              data.suggestions?.realData?.supplier || '', 
+              data.suggestions?.realData?.document || '', 
               90
             );
           }, 100);
