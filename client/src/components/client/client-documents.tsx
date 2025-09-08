@@ -41,6 +41,8 @@ export function ClientDocuments() {
         return "bg-blue-100 text-blue-800";
       case 'VALIDANDO':
         return "bg-purple-100 text-purple-800";
+      case 'PENDENTE_EMISSAO':
+        return "bg-orange-100 text-orange-800";
       default:
         return "bg-gray-100 text-gray-800";
     }
@@ -102,6 +104,7 @@ export function ClientDocuments() {
                 <SelectItem value="all">Todos os Status</SelectItem>
                 <SelectItem value="RECEBIDO">Recebido</SelectItem>
                 <SelectItem value="VALIDANDO">Validando</SelectItem>
+                <SelectItem value="PENDENTE_EMISSAO">Pendente Emissão</SelectItem>
                 <SelectItem value="VALID">Válido</SelectItem>
                 <SelectItem value="WARNING">Com Aviso</SelectItem>
                 <SelectItem value="ERROR">Com Erro</SelectItem>
