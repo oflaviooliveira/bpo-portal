@@ -734,6 +734,18 @@ export async function registerRoutes(app: Express): Promise<Server> {
       );
 
       const documents = await storage.getDocuments(user.tenantId, filters);
+      
+      // Debug: Log dados de contraparte para investigar UUID issue
+      if (documents.length > 0) {
+        console.log(`🔍 DEBUG - Primeiro documento:`, {
+          id: documents[0].id,
+          supplier: documents[0].supplier,
+          contraparteId: documents[0].contraparteId,
+          contraparteName: documents[0].contraparteName,
+          contraparteDocument: documents[0].contraparteDocument
+        });
+      }
+      
       res.json(documents);
     } catch (error) {
       console.error("Get documents error:", error);
