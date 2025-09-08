@@ -576,6 +576,39 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
+  // Editar cliente
+  app.put("/api/clientes/:id", ...authorize(["SUPER_ADMIN", "CLIENT_USER"], true), async (req, res) => {
+    try {
+      const tenantId = req.user?.tenantId!;
+      const clienteId = req.params.id;
+      const updateData = { 
+        ...req.body,
+        canBeClient: true,
+        canBeSupplier: false  // Manter como cliente puro
+      };
+
+      const clienteAtualizado = await storage.updateContraparte(clienteId, tenantId, updateData);
+      res.json(clienteAtualizado);
+    } catch (error) {
+      console.error("Update cliente error:", error);
+      res.status(500).json({ error: "Erro ao atualizar cliente" });
+    }
+  });
+
+  // Excluir cliente (soft delete)
+  app.delete("/api/clientes/:id", ...authorize(["SUPER_ADMIN", "CLIENT_USER"], true), async (req, res) => {
+    try {
+      const tenantId = req.user?.tenantId!;
+      const clienteId = req.params.id;
+
+      await storage.updateContraparte(clienteId, tenantId, { isActive: false });
+      res.json({ message: "Cliente excluído com sucesso" });
+    } catch (error) {
+      console.error("Delete cliente error:", error);
+      res.status(500).json({ error: "Erro ao excluir cliente" });
+    }
+  });
+
   // 🔍 Busca rápida de clientes para auto-complete
   app.get("/api/clientes/search", ...authorize(["SUPER_ADMIN", "CLIENT_USER"], true), async (req, res) => {
     try {
