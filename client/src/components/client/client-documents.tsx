@@ -20,6 +20,14 @@ export function ClientDocuments() {
     queryKey: ['/api/documents'],
   });
 
+  // Debug log para verificar documentos carregados
+  console.log('Documentos carregados:', documents?.length, documents?.map(d => ({
+    nome: d.originalName,
+    bpoType: d.bpoType,
+    documentType: d.documentType,
+    status: d.status
+  })));
+
   const filteredDocuments = (documents as any[])?.filter((doc: any) => {
     const matchesSearch = doc.originalName?.toLowerCase().includes(searchTerm.toLowerCase()) ||
                          doc.extractedData?.razao_social?.toLowerCase().includes(searchTerm.toLowerCase());
