@@ -1,0 +1,35 @@
+}
+✅ Dados do formulário validados: EMITIR_BOLETO
+📄 Documento virtual - análise de arquivo pulada
+🔍 Iniciando validação de regras de negócio para tipo: EMITIR_BOLETO
+📊 Resultado da validação: isValid=true, errors=0, warnings=1
+🔍 Buscando/criando contraparte: 79e09a8a-802b-47e8-a7d7-064bc0bad33f como CLIENT
+✅ Contraparte processada: 79e09a8a-802b-47e8-a7d7-064bc0bad33f (d00e78a7-4693-4761-a52b-52a1cdd53d40)
+❌ Erro no processamento de upload: error: null value in column "file_name" of relation "documents" violates not-null constraint
+    at file:///home/runner/workspace/node_modules/@neondatabase/serverless/index.mjs:1345:74
+    at process.processTicksAndRejections (node:internal/process/task_queues:95:5)
+    at async NeonPreparedQuery.execute (/home/runner/workspace/node_modules/src/neon-serverless/session.ts:102:18)
+    at async DatabaseStorage.createDocument (/home/runner/workspace/server/storage.ts:540:24)
+    at async DocumentUploadHandler.processUpload (/home/runner/workspace/server/upload-handler.ts:173:24)
+    at async <anonymous> (/home/runner/workspace/server/routes.ts:1069:22) {
+  length: 782,
+  severity: 'ERROR',
+  code: '23502',
+  detail: 'Failing row contains (c0040960-6f18-4e1c-bf83-372755851903, 3023999d-477e-43d8-ad03-a96f36fd8515, null, null, 5b64ab9f-8091-448e-8403-406f5f1fa5e8, 4d3931e5-02b1-4931-b829-439c3e264dea, null, null, null, null, null, EMITIR_BOLETO, 1.45, 2025-09-08 00:00:00, null, PENDENTE_EMISSAO, null, null, null, null, null, f, null, null, ADA, 3e7e252d-9ba7-4524-be18-df8477e84530, 2025-09-08 13:01:36.638619, 2025-09-08 13:01:36.638619, {"name": "Empresa ABC Comércio Ltda", "email": "financeiro@empr..., null, 79e09a8a-802b-47e8-a7d7-064bc0bad33f, ADA, d00e78a7-4693-4761-a52b-52a1cdd53d40, CLIENT, null, f, t).',
+  hint: undefined,
+  position: undefined,
+  internalPosition: undefined,
+  internalQuery: undefined,
+  where: undefined,
+  schema: 'public',
+  table: 'documents',
+  column: 'file_name',
+  dataType: undefined,
+  constraint: undefined,
+  file: 'execMain.c',
+  line: '2021',
+  routine: 'ExecConstraints'
+}
+1:01:36 PM [express] POST /api/documents/upload 400 in 346ms :: {"error":"Erro interno do servidor",…
+🔐 RLS Context: tenant=3023999d-477e-43d8-ad03-a96f36fd8515, user=3e7e252d-9ba7-4524-be18-df8477e84530, role=CLIENT_USER
+1:01:42 PM [express] GET /api/documents 304 in 231ms :: [{"id":"0b0746a8-32bc-4126-bc82-31b938a27517…

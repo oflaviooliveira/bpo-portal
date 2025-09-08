@@ -207,10 +207,10 @@ export class DocumentUploadHandler {
         action: "UPLOAD",
         status: "SUCCESS", 
         details: {
-          fileName: file.originalname,
-          fileSize: file.size,
+          fileName: file?.originalname || 'VIRTUAL_DOCUMENT',
+          fileSize: file?.size || 0,
           documentType: validatedData.documentType,
-          filenameAnalysis: filenameAnalysis.parsed
+          filenameAnalysis: filenameAnalysis?.parsed || null
         },
         userId: user.id,
       });
