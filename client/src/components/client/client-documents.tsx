@@ -70,11 +70,30 @@ export function ClientDocuments() {
       case 'RECEBIDO':
         return "bg-blue-100 text-blue-800";
       case 'VALIDANDO':
+      case 'PROCESSANDO':
         return "bg-purple-100 text-purple-800";
       case 'PENDENTE_EMISSAO':
         return "bg-orange-100 text-orange-800";
       case 'PENDENTE_REVISAO':
         return "bg-amber-100 text-amber-800";
+      case 'PAGO_A_CONCILIAR':
+        return "bg-green-100 text-green-800";
+      case 'AGENDADO':
+        return "bg-blue-100 text-blue-800";
+      case 'A_PAGAR_HOJE':
+        return "bg-red-100 text-red-800";
+      case 'EM_CONCILIACAO':
+        return "bg-yellow-100 text-yellow-800";
+      case 'AGUARDANDO_RECEBIMENTO':
+        return "bg-cyan-100 text-cyan-800";
+      case 'ARQUIVADO':
+        return "bg-gray-100 text-gray-800";
+      case 'BOLETO_EMITIDO':
+        return "bg-indigo-100 text-indigo-800";
+      case 'AGUARDANDO_PAGAMENTO':
+        return "bg-pink-100 text-pink-800";
+      case 'BOLETO_VENCIDO':
+        return "bg-red-100 text-red-800";
       default:
         return "bg-gray-100 text-gray-800";
     }
@@ -136,8 +155,18 @@ export function ClientDocuments() {
                 <SelectItem value="all">Todos os Status</SelectItem>
                 <SelectItem value="RECEBIDO">Recebido</SelectItem>
                 <SelectItem value="VALIDANDO">Validando</SelectItem>
+                <SelectItem value="PROCESSANDO">Processando</SelectItem>
                 <SelectItem value="PENDENTE_EMISSAO">Pendente Emissão</SelectItem>
                 <SelectItem value="PENDENTE_REVISAO">Pendente Revisão</SelectItem>
+                <SelectItem value="PAGO_A_CONCILIAR">Pago a Conciliar</SelectItem>
+                <SelectItem value="AGENDADO">Agendado</SelectItem>
+                <SelectItem value="A_PAGAR_HOJE">A Pagar Hoje</SelectItem>
+                <SelectItem value="EM_CONCILIACAO">Em Conciliação</SelectItem>
+                <SelectItem value="AGUARDANDO_RECEBIMENTO">Aguardando Recebimento</SelectItem>
+                <SelectItem value="ARQUIVADO">Arquivado</SelectItem>
+                <SelectItem value="BOLETO_EMITIDO">Boleto Emitido</SelectItem>
+                <SelectItem value="AGUARDANDO_PAGAMENTO">Aguardando Pagamento</SelectItem>
+                <SelectItem value="BOLETO_VENCIDO">Boleto Vencido</SelectItem>
                 <SelectItem value="VALID">Válido</SelectItem>
                 <SelectItem value="WARNING">Com Aviso</SelectItem>
                 <SelectItem value="ERROR">Com Erro</SelectItem>
