@@ -20,17 +20,26 @@ export function ClientDocuments() {
     queryKey: ['/api/documents'],
   });
 
-  // Debug log para verificar documentos carregados
-  console.log('Documentos carregados:', documents?.length, (documents as any[])?.map((d: any) => ({
-    nome: d.originalName,
-    bpoType: d.bpoType,
-    documentType: d.documentType,
-    status: d.status
-  })));
+
+  // Função auxiliar para evitar erro de hoisting
+  const getTypeLabel = (type: string) => {
+    switch (type) {
+      case 'PAGO':
+        return "Comprovante de Pagamento";
+      case 'AGENDADO':
+        return "Agendamento de Pagamento";
+      case 'EMITIR_BOLETO':
+        return "Emissão de Boleto";
+      case 'EMITIR_NF':
+        return "Emissão de Nota Fiscal";
+      default:
+        return type;
+    }
+  };
 
   const filteredDocuments = (documents as any[])?.filter((doc: any) => {
     // Corrigir filtro de busca para aceitar originalName null
-    const docName = doc.originalName || `Documento Virtual - ${getBpoTypeLabel(doc.bpoType || doc.documentType)}`;
+    const docName = doc.originalName || `Documento Virtual - ${getTypeLabel(doc.bpoType || doc.documentType)}`;
     const matchesSearch = docName.toLowerCase().includes(searchTerm.toLowerCase()) ||
                          doc.extractedData?.razao_social?.toLowerCase().includes(searchTerm.toLowerCase());
     const matchesStatus = statusFilter === "all" || doc.status === statusFilter;
@@ -181,10 +190,10 @@ export function ClientDocuments() {
                       
                       <div className="flex-1 min-w-0">
                         <h3 className="font-medium truncate">
-                          {doc.originalName || `Documento Virtual - ${getBpoTypeLabel(doc.bpoType || doc.documentType)}`}
+                          {doc.originalName || `Documento Virtual - ${getTypeLabel(doc.bpoType || doc.documentType)}`}
                         </h3>
                         <div className="flex items-center space-x-4 text-sm text-muted-foreground mt-1">
-                          <span>{getBpoTypeLabel(doc.bpoType || doc.documentType)}</span>
+                          <span>{getTypeLabel(doc.bpoType || doc.documentType)}</span>
                           <span>•</span>
                           <span>{new Date(doc.createdAt).toLocaleDateString('pt-BR')}</span>
                           {doc.extractedData?.razao_social && (
