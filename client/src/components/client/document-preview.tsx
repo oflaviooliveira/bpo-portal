@@ -17,26 +17,41 @@ import {
   Zap,
   AlertTriangle,
   CheckCircle,
-  Info
+  Info,
+  Receipt,
+  Clock,
+  CreditCard
 } from "lucide-react";
 import { cn } from "@/lib/utils";
+import { DocumentMapperFactory, type UnifiedDocumentData } from "@/lib/document-mappers";
 
 interface DocumentPreviewProps {
   document: {
     id: string;
-    originalName: string;
-    filePath: string;
+    originalName?: string;
+    filePath?: string;
     status: string;
-    bpoType: string;
-    extractedData: Record<string, any>;
-    confidence: number;
+    bpoType?: string;
+    documentType?: string;
+    extractedData?: Record<string, any>;
+    confidence?: number;
     createdAt: string;
     metadata?: Record<string, any>;
+    isVirtualDocument?: boolean;
+    amount?: string | number;
+    supplier?: string;
+    dueDate?: string;
+    description?: string;
+    issuerData?: Record<string, any>;
+    instructions?: string;
   };
 }
 
 export function DocumentPreview({ document }: DocumentPreviewProps) {
   const [activeTab, setActiveTab] = useState<'extracted' | 'raw'>('extracted');
+  
+  // Usar mapper para unificar dados independente do tipo
+  const unifiedData: UnifiedDocumentData = DocumentMapperFactory.mapDocument(document);
 
   const getStatusIcon = (status: string) => {
     switch (status) {
@@ -79,44 +94,8 @@ export function DocumentPreview({ document }: DocumentPreviewProps) {
     }
   };
 
-  const formatDate = (dateStr: string) => {
-    if (!dateStr) return null;
-    
-    // Try parsing different date formats
-    const formats = [
-      // ISO format
-      /^\d{4}-\d{2}-\d{2}/,
-      // Brazilian format DD/MM/YYYY
-      /^\d{2}\/\d{2}\/\d{4}/,
-      // US format MM/DD/YYYY  
-      /^\d{2}\/\d{2}\/\d{4}/
-    ];
-    
-    try {
-      const date = new Date(dateStr);
-      if (isNaN(date.getTime())) return dateStr;
-      return date.toLocaleDateString('pt-BR');
-    } catch {
-      return dateStr;
-    }
-  };
 
-  const formatCurrency = (value: string | number) => {
-    if (!value) return null;
-    
-    const numValue = typeof value === 'string' 
-      ? parseFloat(value.replace(/[^\d,.-]/g, '').replace(',', '.'))
-      : value;
-      
-    if (isNaN(numValue)) return value;
-    
-    return new Intl.NumberFormat('pt-BR', {
-      style: 'currency',
-      currency: 'BRL'
-    }).format(numValue);
-  };
-
-  const renderExtractedField = (label: string, value: any, icon?: React.ReactNode) => {
+  const renderField = (label: string, value: any, icon?: React.ReactNode, highlight?: boolean) => {
     if (!value) return null;
     
     return (
@@ -125,11 +104,138 @@ export function DocumentPreview({ document }: DocumentPreviewProps) {
           {icon}
           {label}
         </div>
-        <div className="text-sm text-gray-900 bg-gray-50 p-2 rounded border">
+        <div className={cn(
+          "text-sm p-2 rounded border",
+          highlight 
+            ? "text-gray-900 bg-blue-50 border-blue-200" 
+            : "text-gray-900 bg-gray-50"
+        )}>
           {value}
         </div>
       </div>
     );
+  };
+  
+  const renderSpecializedContent = () => {
+    if (unifiedData.isVirtual && unifiedData.boletoInfo) {
+      return (
+        <div className="space-y-4">
+          {/* Seção específica de Boletos */}
+          <div className="space-y-3">
+            <h4 className="font-medium text-[#E40064] border-b border-[#E40064]/20 pb-1 flex items-center gap-2">
+              <Receipt className="h-4 w-4" />
+              Dados do Boleto
+            </h4>
+            
+            {renderField(
+              "Pagador", 
+              unifiedData.boletoInfo.payerName,
+              <User className="h-4 w-4" />,
+              true
+            )}
+            
+            {renderField(
+              "CPF/CNPJ do Pagador", 
+              unifiedData.boletoInfo.payerDocument,
+              <FileText className="h-4 w-4" />,
+              true
+            )}
+            
+            {renderField(
+              "E-mail do Pagador", 
+              unifiedData.boletoInfo.payerEmail,
+              <Mail className="h-4 w-4" />
+            )}
+            
+            {renderField(
+              "Telefone do Pagador", 
+              unifiedData.boletoInfo.payerPhone,
+              <Phone className="h-4 w-4" />
+            )}
+            
+            {renderField(
+              "Endereço do Pagador", 
+              unifiedData.boletoInfo.payerAddress,
+              <MapPin className="h-4 w-4" />
+            )}
+            
+            {renderField(
+              "Instruções", 
+              unifiedData.boletoInfo.instructions,
+              <FileText className="h-4 w-4" />
+            )}
+          </div>
+          
+          <Separator />
+        </div>
+      );
+    }
+    
+    if (unifiedData.scheduleInfo) {
+      return (
+        <div className="space-y-4">
+          {/* Seção específica de Agendamentos */}
+          <div className="space-y-3">
+            <h4 className="font-medium text-[#0B0E30] border-b border-[#0B0E30]/20 pb-1 flex items-center gap-2">
+              <Clock className="h-4 w-4" />
+              Dados do Agendamento
+            </h4>
+            
+            {renderField(
+              "Data Agendada", 
+              unifiedData.scheduleInfo.scheduledDate,
+              <Calendar className="h-4 w-4" />,
+              true
+            )}
+            
+            {renderField(
+              "Forma de Pagamento", 
+              unifiedData.scheduleInfo.paymentMethod,
+              <CreditCard className="h-4 w-4" />
+            )}
+            
+            {renderField(
+              "Instruções", 
+              unifiedData.scheduleInfo.instructions,
+              <FileText className="h-4 w-4" />
+            )}
+          </div>
+          
+          <Separator />
+        </div>
+      );
+    }
+    
+    if (unifiedData.paymentInfo) {
+      return (
+        <div className="space-y-4">
+          {/* Seção específica de Pagamentos */}
+          <div className="space-y-3">
+            <h4 className="font-medium text-green-700 border-b border-green-200 pb-1 flex items-center gap-2">
+              <CheckCircle className="h-4 w-4" />
+              Dados da Conciliação
+            </h4>
+            
+            {renderField(
+              "Banco", 
+              unifiedData.paymentInfo.bankName,
+              <Building className="h-4 w-4" />,
+              true
+            )}
+            
+            {renderField(
+              "ID da Transação", 
+              unifiedData.paymentInfo.transactionId,
+              <FileText className="h-4 w-4" />
+            )}
+          </div>
+          
+          <Separator />
+        </div>
+      );
+    }
+    
+    return null;
   };
 
   return (
@@ -148,7 +254,15 @@ export function DocumentPreview({ document }: DocumentPreviewProps) {
           </CardHeader>
           <CardContent className="p-0">
             <div className="bg-gray-100 h-full rounded-b-lg flex items-center justify-center">
-              {document.filePath?.endsWith('.pdf') ? (
+              {unifiedData.isVirtual ? (
+                <div className="text-center space-y-4">
+                  <Receipt className="h-16 w-16 text-[#E40064] mx-auto" />
+                  <div>
+                    <p className="text-gray-600">Documento Virtual</p>
+                    <p className="text-sm text-gray-500">{unifiedData.displayName}</p>
+                  </div>
+                </div>
+              ) : document.filePath?.endsWith('.pdf') ? (
                 <div className="text-center space-y-4">
                   <FileText className="h-16 w-16 text-gray-400 mx-auto" />
                   <div>
@@ -166,7 +280,7 @@ export function DocumentPreview({ document }: DocumentPreviewProps) {
               ) : (
                 <img
                   src={`/api/files/${document.id}`}
-                  alt={document.originalName}
+                  alt={document.originalName || 'Documento'}
                   className="max-w-full max-h-full object-contain"
                   onError={(e) => {
                     const target = e.target as HTMLImageElement;
@@ -200,21 +314,27 @@ export function DocumentPreview({ document }: DocumentPreviewProps) {
               </div>
               
               <div className="flex items-center gap-3">
-                <Badge className={cn("flex items-center gap-1", getStatusColor(document.status))}>
-                  {getStatusIcon(document.status)}
-                  {document.status}
+                <Badge className={cn("flex items-center gap-1", getStatusColor(unifiedData.status))}>
+                  {getStatusIcon(unifiedData.status)}
+                  {unifiedData.status}
                 </Badge>
                 
                 <div className="text-sm text-gray-600">
                   {Math.round(document.confidence || 0)}% confiança
                 </div>
+                
+                {unifiedData.isVirtual && (
+                  <Badge variant="outline" className="text-xs text-[#E40064] border-[#E40064]">
+                    Virtual
+                  </Badge>
+                )}
               </div>
             </div>
 
             {/* Document Type */}
             <div className="pt-2">
               <Badge variant="outline" className="text-xs">
-                {getBpoTypeLabel(document.bpoType)}
+                {getBpoTypeLabel(unifiedData.documentType)}
               </Badge>
             </div>
           </CardHeader>
@@ -226,70 +346,76 @@ export function DocumentPreview({ document }: DocumentPreviewProps) {
                 <div className="space-y-3">
                   <h4 className="font-medium text-gray-900 border-b pb-1">Informações Principais</h4>
                   
-                  {renderExtractedField(
+                  {renderField(
                     "Razão Social", 
-                    document.extractedData?.razao_social,
-                    <Building className="h-4 w-4" />
+                    unifiedData.razaoSocial,
+                    <Building className="h-4 w-4" />,
+                    true
                   )}
                   
-                  {renderExtractedField(
+                  {renderField(
                     "CNPJ/CPF", 
-                    document.extractedData?.cnpj || document.extractedData?.cpf,
-                    <User className="h-4 w-4" />
+                    unifiedData.cnpj,
+                    <User className="h-4 w-4" />,
+                    true
                   )}
                   
-                  {renderExtractedField(
+                  {renderField(
                     "Valor", 
-                    formatCurrency(document.extractedData?.valor),
-                    <DollarSign className="h-4 w-4" />
+                    unifiedData.valor,
+                    <DollarSign className="h-4 w-4" />,
+                    true
                   )}
                   
-                  {renderExtractedField(
+                  {renderField(
                     "Data de Pagamento", 
-                    formatDate(document.extractedData?.data_pagamento),
+                    unifiedData.dataPagamento,
                     <Calendar className="h-4 w-4" />
                   )}
                 </div>
 
                 <Separator />
 
+                {/* Conteúdo Especializado por Tipo */}
+                {renderSpecializedContent()}
+
                 {/* Additional Information */}
                 <div className="space-y-3">
                   <h4 className="font-medium text-gray-900 border-b pb-1">Informações Adicionais</h4>
                   
-                  {renderExtractedField(
+                  {renderField(
                     "Descrição", 
-                    document.extractedData?.descricao,
+                    unifiedData.descricao,
                     <FileText className="h-4 w-4" />
                   )}
                   
-                  {renderExtractedField(
+                  {renderField(
                     "Data de Emissão", 
-                    formatDate(document.extractedData?.data_emissao),
+                    unifiedData.dataEmissao,
                     <Calendar className="h-4 w-4" />
                   )}
                   
-                  {renderExtractedField(
+                  {renderField(
                     "Data de Vencimento", 
-                    formatDate(document.extractedData?.data_vencimento),
+                    unifiedData.dataVencimento,
                     <Calendar className="h-4 w-4" />
                   )}
 
-                  {renderExtractedField(
+                  {renderField(
                     "Endereço", 
-                    document.extractedData?.endereco,
+                    unifiedData.endereco,
                     <MapPin className="h-4 w-4" />
                   )}
 
-                  {renderExtractedField(
+                  {renderField(
                     "Telefone", 
-                    document.extractedData?.telefone,
+                    unifiedData.telefone,
                     <Phone className="h-4 w-4" />
                   )}
 
-                  {renderExtractedField(
+                  {renderField(
                     "E-mail", 
-                    document.extractedData?.email,
+                    unifiedData.email,
                     <Mail className="h-4 w-4" />
                   )}
                 </div>
@@ -311,7 +437,11 @@ export function DocumentPreview({ document }: DocumentPreviewProps) {
                   
                   {activeTab === 'raw' && (
                     <div className="bg-gray-50 p-3 rounded border text-xs font-mono max-h-40 overflow-y-auto">
-                      <pre>{JSON.stringify(document.extractedData, null, 2)}</pre>
+                      <div className="mb-2 text-xs font-semibold text-gray-600">Dados Unificados:</div>
+                      <pre className="mb-4">{JSON.stringify(unifiedData, null, 2)}</pre>
+                      
+                      <div className="mb-2 text-xs font-semibold text-gray-600">Dados Originais:</div>
+                      <pre>{JSON.stringify(unifiedData.rawExtractedData, null, 2)}</pre>
                     </div>
                   )}
                 </div>
@@ -320,8 +450,9 @@ export function DocumentPreview({ document }: DocumentPreviewProps) {
                 <Separator />
                 
                 <div className="text-xs text-gray-500 space-y-1">
-                  <div>Processado em: {formatDate(document.createdAt)}</div>
+                  <div>Processado em: {document.createdAt}</div>
                   <div>ID do documento: {document.id}</div>
+                  <div>Tipo: {unifiedData.isVirtual ? 'Virtual' : 'Físico'}</div>
                   {document.metadata?.processingTime && (
                     <div>Tempo de processamento: {document.metadata.processingTime}ms</div>
                   )}
