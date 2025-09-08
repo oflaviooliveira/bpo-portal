@@ -166,6 +166,13 @@ export class PhysicalDocumentMapper extends DocumentMapper {
       telefone: getValue('telefone') || getValue('phone'),
       email: getValue('email'),
       
+      // Campos específicos para pagamentos
+      metodoPagamento: getValue('forma_pagamento') || getValue('metodo_pagamento') || getValue('payment_method'),
+      contaOrigem: getValue('conta_origem') || getValue('account_origin') || getValue('conta'),
+      agencia: getValue('agencia') || getValue('agency'),
+      numeroOperacao: getValue('numero_operacao') || getValue('transacao_id') || getValue('protocolo'),
+      banco: getValue('banco') || getValue('bank_name') || getValue('instituicao_financeira'),
+      
       // Seções específicas aprimoradas
       paymentInfo: this.buildPaymentInfo(document, extracted),
       

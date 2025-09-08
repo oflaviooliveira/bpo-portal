@@ -217,16 +217,35 @@ export function DocumentPreview({ document }: DocumentPreviewProps) {
             </h4>
             
             {renderField(
-              "Banco", 
+              "Banco / Instituição", 
               unifiedData.paymentInfo.bankName,
               <Building className="h-4 w-4" />,
               true
             )}
             
             {renderField(
-              "ID da Transação", 
+              "ID da Transação / Protocolo", 
               unifiedData.paymentInfo.transactionId,
-              <FileText className="h-4 w-4" />
+              <FileText className="h-4 w-4" />,
+              true
+            )}
+            
+            {unifiedData.paymentInfo.reconciliationData?.account && renderField(
+              "Conta Origem", 
+              unifiedData.paymentInfo.reconciliationData.account,
+              <CreditCard className="h-4 w-4" />
+            )}
+            
+            {unifiedData.paymentInfo.reconciliationData?.agency && renderField(
+              "Agência", 
+              unifiedData.paymentInfo.reconciliationData.agency,
+              <Building className="h-4 w-4" />
+            )}
+            
+            {unifiedData.paymentInfo.reconciliationData?.paymentMethod && renderField(
+              "Forma de Pagamento", 
+              unifiedData.paymentInfo.reconciliationData.paymentMethod,
+              <CreditCard className="h-4 w-4" />
             )}
           </div>
           
@@ -347,7 +366,7 @@ export function DocumentPreview({ document }: DocumentPreviewProps) {
                   <h4 className="font-medium text-gray-900 border-b pb-1">Informações Principais</h4>
                   
                   {renderField(
-                    "Razão Social", 
+                    "Razão Social / Fornecedor", 
                     unifiedData.razaoSocial,
                     <Building className="h-4 w-4" />,
                     true
@@ -361,7 +380,7 @@ export function DocumentPreview({ document }: DocumentPreviewProps) {
                   )}
                   
                   {renderField(
-                    "Valor", 
+                    "Valor Pago", 
                     unifiedData.valor,
                     <DollarSign className="h-4 w-4" />,
                     true
@@ -370,7 +389,14 @@ export function DocumentPreview({ document }: DocumentPreviewProps) {
                   {renderField(
                     "Data de Pagamento", 
                     unifiedData.dataPagamento,
-                    <Calendar className="h-4 w-4" />
+                    <Calendar className="h-4 w-4" />,
+                    true
+                  )}
+                  
+                  {unifiedData.documentType === 'PAGO' && renderField(
+                    "Método de Pagamento", 
+                    unifiedData.metodoPagamento || unifiedData.paymentInfo?.reconciliationData?.paymentMethod,
+                    <CreditCard className="h-4 w-4" />
                   )}
                 </div>
 
@@ -384,9 +410,21 @@ export function DocumentPreview({ document }: DocumentPreviewProps) {
                   <h4 className="font-medium text-gray-900 border-b pb-1">Informações Adicionais</h4>
                   
                   {renderField(
-                    "Descrição", 
+                    "Descrição / Finalidade", 
                     unifiedData.descricao,
                     <FileText className="h-4 w-4" />
+                  )}
+                  
+                  {unifiedData.documentType === 'PAGO' && unifiedData.numeroOperacao && renderField(
+                    "Número da Operação", 
+                    unifiedData.numeroOperacao,
+                    <FileText className="h-4 w-4" />
+                  )}
+                  
+                  {unifiedData.documentType === 'PAGO' && unifiedData.banco && renderField(
+                    "Banco", 
+                    unifiedData.banco,
+                    <Building className="h-4 w-4" />
                   )}
                   
                   {renderField(
