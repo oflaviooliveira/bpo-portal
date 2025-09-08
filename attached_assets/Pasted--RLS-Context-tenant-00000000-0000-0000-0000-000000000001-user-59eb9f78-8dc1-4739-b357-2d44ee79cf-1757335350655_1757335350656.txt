@@ -1,0 +1,78 @@
+🔐 RLS Context: tenant=00000000-0000-0000-0000-000000000001, user=59eb9f78-8dc1-4739-b357-2d44ee79cf24, role=SUPER_ADMIN
+🔍 setGlobalAdminContext - User role: SUPER_ADMIN, Expected: ADMIN or SUPER_ADMIN
+🌐 Global Admin Context: user=59eb9f78-8dc1-4739-b357-2d44ee79cf24, unrestricted access
+🌐 Global Admin Context: user=59eb9f78-8dc1-4739-b357-2d44ee79cf24, unrestricted access
+📋 Listando 2 usuários da equipe Gquicks
+12:40:51 PM [express] GET /api/admin/users/global 304 in 274ms :: [{"id":"59eb9f78-8dc1-4739-b357-2d4…
+12:40:51 PM [express] GET /api/admin/tenants 200 in 423ms :: [{"id":"3023999d-477e-43d8-ad03-a96f36fd…
+12:41:03 PM [express] POST /api/logout 200 in 224ms
+12:41:10 PM [express] POST /api/login 200 in 273ms :: {"id":"3e7e252d-9ba7-4524-be18-df8477e84530","u…
+🔐 RLS Context: tenant=3023999d-477e-43d8-ad03-a96f36fd8515, user=3e7e252d-9ba7-4524-be18-df8477e84530, role=CLIENT_USER
+12:41:10 PM [express] GET /api/client/dashboard/stats 304 in 337ms :: {"totalDocuments":2,"pendingRev…
+🔐 RLS Context: tenant=3023999d-477e-43d8-ad03-a96f36fd8515, user=3e7e252d-9ba7-4524-be18-df8477e84530, role=CLIENT_USER
+12:41:14 PM [express] GET /api/fornecedores 200 in 227ms :: [{"id":"40086e55-929e-453f-9ffa-5f71eefe5…
+🔐 RLS Context: tenant=3023999d-477e-43d8-ad03-a96f36fd8515, user=3e7e252d-9ba7-4524-be18-df8477e84530, role=CLIENT_USER
+12:41:17 PM [express] GET /api/clientes/search 304 in 242ms :: [{"id":"79e09a8a-802b-47e8-a7d7-064bc0…
+🔐 RLS Context: tenant=3023999d-477e-43d8-ad03-a96f36fd8515, user=3e7e252d-9ba7-4524-be18-df8477e84530, role=CLIENT_USER
+12:41:17 PM [express] GET /api/clientes/search 304 in 234ms :: [{"id":"79e09a8a-802b-47e8-a7d7-064bc0…
+🔐 RLS Context: tenant=3023999d-477e-43d8-ad03-a96f36fd8515, user=3e7e252d-9ba7-4524-be18-df8477e84530, role=CLIENT_USER
+🔍 Upload Debug Detalhado: {
+  hasFile: false,
+  isVirtualDocument_raw: true,
+  isVirtualDocument_type: 'boolean',
+  isVirtualDocument_parsed: true,
+  documentType: 'EMITIR_BOLETO',
+  bodyKeys: [
+    'documentType',      'supplier',
+    'description',       'amount',
+    'categoryId',        'costCenterId',
+    'competenceDate',    'dueDate',
+    'payerDocument',     'payerName',
+    'payerEmail',        'payerPhone',
+    'payerContactName',  'payerStreet',
+    'payerNumber',       'payerNeighborhood',
+    'payerCity',         'payerState',
+    'payerZipCode',      'notes',
+    'isVirtualDocument'
+  ]
+}
+✅ Documento virtual detectado: EMITIR_BOLETO
+🔍 Upload Handler Debug: isVirtualDocument=true (type: boolean) -> parsed: true
+🔮 Processando documento virtual: EMITIR_BOLETO
+📋 Dados recebidos no formulário: {
+  "documentType": "EMITIR_BOLETO",
+  "supplier": "79e09a8a-802b-47e8-a7d7-064bc0bad33f",
+  "description": "AAAA",
+  "amount": "R$ 1.450,00",
+  "categoryId": "3765df3d-d887-42d0-972b-318d5cb0c5b4",
+  "costCenterId": "84f9e046-e796-44e9-83e4-9708fa71972b",
+  "competenceDate": "08/09/2025",
+  "dueDate": "08/09/2025",
+  "payerDocument": "12.345.678/0001-90",
+  "payerName": "Empresa ABC Comércio Ltda",
+  "payerEmail": "financeiro@empresaabc.com.br",
+  "payerPhone": "(11) 99988-7766",
+  "payerContactName": "João Silva",
+  "payerStreet": "Rua das Empresas",
+  "payerNumber": "123",
+  "payerNeighborhood": "Centro",
+  "payerCity": "São Paulo",
+  "payerState": "SP",
+  "payerZipCode": "01234-567",
+  "notes": "AAA",
+  "isVirtualDocument": true
+}
+✅ Dados do formulário validados: EMITIR_BOLETO
+📄 Documento virtual - análise de arquivo pulada
+🔍 Iniciando validação de regras de negócio para tipo: EMITIR_BOLETO
+❌ Campo obrigatório ausente: clientId (valor: "undefined")
+❌ Campo obrigatório ausente: bankId (valor: "undefined")
+📊 Resultado da validação: isValid=false, errors=3, warnings=1
+❌ Validação de negócio falhou: [
+  'Campo obrigatório não preenchido: Cliente',
+  'Campo obrigatório não preenchido: Banco',
+  'CNPJ/CPF do tomador é inválido'
+]
+12:41:34 PM [express] POST /api/documents/upload 400 in 279ms :: {"error":"Dados inválidos","details"…
+🔐 RLS Context: tenant=3023999d-477e-43d8-ad03-a96f36fd8515, user=3e7e252d-9ba7-4524-be18-df8477e84530, role=CLIENT_USER
+12:41:40 PM [express] GET /api/documents 200 in 230ms :: [{"id":"0b0746a8-32bc-4126-bc82-31b938a27517…
