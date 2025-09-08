@@ -322,20 +322,20 @@ export function UploadBpo() {
         console.log("💰 Valor preenchido:", data.suggestions.amount);
       }
 
-      if (data.suggestions.supplier || data.suggestions.contraparte) {
-        const contraparteValue = data.suggestions.contraparte || data.suggestions.supplier;
+      if (data.suggestions?.supplier || data.suggestions?.contraparte) {
+        const contraparteValue = data.suggestions?.contraparte || data.suggestions?.supplier;
         newSuggestions.push({
           field: "contraparte", 
           value: contraparteValue,
-          confidence: data.suggestions.confidence?.supplier || 95,
+          confidence: data.suggestions?.confidence?.supplier || 95,
           source: "IA"
         });
 
         // Detectar e processar fornecedor inteligentemente
         detectAndHandleSupplier(
-          contraparteValue, 
-          data.suggestions.documento,
-          data.suggestions.confidence?.supplier || 95
+          contraparteValue || '', 
+          data.suggestions?.documento || '',
+          data.suggestions?.confidence?.supplier || 95
         );
         console.log("🏢 Processando fornecedor da IA:", contraparteValue);
       }
@@ -452,21 +452,23 @@ export function UploadBpo() {
       // 🏢 SUGESTÕES OPERACIONAIS: Mostrar para aprovação do usuário
       if (data.suggestions?.hasOperationalSuggestions && data.suggestions?.operationalSuggestions) {
         console.log("🏢 Sugestões operacionais recebidas:", data.suggestions.operationalSuggestions);
-        setAutoFilledFields(data.suggestions.operationalSuggestions);
+        const operationalFields = Object.entries(data.suggestions.operationalSuggestions).map(([key, value]) => ({
+          field: key,
+          value: value
+        }));
+        setAutoFilledFields(operationalFields);
         setShowAutoFillConfirmation(true);
         
         // Aplicar sugestões operacionais (usuário pode aceitar/rejeitar)
-        data.suggestions.operationalSuggestions.forEach((field: any) => {
-          if (field.field === 'bankId' && data.suggestions.bankId) {
-            form.setValue('bankId', data.suggestions.bankId);
-          }
-          if (field.field === 'categoryId' && data.suggestions.categoryId) {
-            form.setValue('categoryId', data.suggestions.categoryId);
-          }
-          if (field.field === 'costCenterId' && data.suggestions.costCenterId) {
-            form.setValue('costCenterId', data.suggestions.costCenterId);
-          }
-        });
+        if (data.suggestions?.bankId) {
+          form.setValue('bankId', data.suggestions.bankId);
+        }
+        if (data.suggestions?.categoryId) {
+          form.setValue('categoryId', data.suggestions.categoryId);
+        }
+        if (data.suggestions?.costCenterId) {
+          form.setValue('costCenterId', data.suggestions.costCenterId);
+        }
       }
 
       setProcessingState({ 

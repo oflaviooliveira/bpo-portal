@@ -132,14 +132,62 @@ export interface ApiResponse<T = any> {
   data?: T;
   error?: string;
   message?: string;
+  documentId?: string; // Para endpoints de upload de documento
 }
 
-// Response de processamento de arquivo
+// Response de processamento de arquivo - Estrutura real da API
 export interface ProcessFileResponse extends ApiResponse {
-  suggestions?: DocumentSuggestion[];
+  suggestions?: ProcessedSuggestions;
   ocrText?: string;
   confidence?: number;
   qualityMetadata?: QualityMetadata;
+}
+
+// Estrutura real das sugestões retornadas pela API
+export interface ProcessedSuggestions {
+  // Campos principais
+  amount?: string;
+  supplier?: string;
+  contraparte?: string;
+  description?: string;
+  documento?: string;
+  category?: string;
+  centerCost?: string;
+  paymentDate?: string;
+  dueDate?: string;
+  
+  // Níveis de confiança
+  confidence?: {
+    amount?: number;
+    supplier?: number;
+    description?: number;
+    [key: string]: number | undefined;
+  };
+  
+  // Dados reais para preenchimento automático
+  hasRealData?: boolean;
+  realData?: {
+    contraparteId?: string;
+    amount?: string;
+    description?: string;
+    competenceDate?: string;
+    realPaidDate?: string;
+    scheduledDate?: string;
+    [key: string]: any;
+  };
+  
+  // Sugestões operacionais
+  hasOperationalSuggestions?: boolean;
+  operationalSuggestions?: {
+    bankId?: string;
+    categoryId?: string;
+    costCenterId?: string;
+  };
+  
+  // IDs para preenchimento direto
+  bankId?: string;
+  categoryId?: string;
+  costCenterId?: string;
 }
 
 export interface QualityMetadata {
