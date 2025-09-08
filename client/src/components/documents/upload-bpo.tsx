@@ -1821,6 +1821,15 @@ export function UploadBpo() {
         />
       )}
 
+      {/* Modal de Auto-Detecção de Fornecedor */}
+      <AutoSupplierModal
+        open={autoSupplierModal.open}
+        onClose={() => setAutoSupplierModal({ open: false })}
+        detectedSupplier={autoSupplierModal.detectedSupplier}
+        onSupplierCreated={handleSupplierCreated}
+        onSkip={handleSupplierSkip}
+      />
+
     </div>
   );
 };
@@ -1880,27 +1889,6 @@ const ProcessingSteps: React.FC<ProcessingStepsProps> = ({ stage }) => {
           })}
         </div>
         
-        {progress && progress > 0 && (
-          <div className="space-y-2">
-            <div className="flex justify-between text-sm">
-              <span>Progresso</span>
-              <span>{Math.round(progress)}%</span>
-            </div>
-            <div className="w-full bg-gray-200 rounded-full h-2">
-              <div 
-                className="bg-[#E40064] h-2 rounded-full transition-all duration-300"
-                style={{ width: `${progress}%` }}
-              />
-            </div>
-          </div>
-        )}
-        
-        {details && (
-          <p className="text-sm text-gray-600 bg-blue-50 p-3 rounded-lg border border-blue-200">
-            <Info className="h-4 w-4 inline mr-2 text-blue-600" />
-            {details}
-          </p>
-        )}
       </CardContent>
     </Card>
   );
