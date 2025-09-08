@@ -509,11 +509,14 @@ export function UploadBpo() {
         console.log("⏳ Fornecedores não carregados, criando novo fornecedor...");
         // Se não conseguir carregar fornecedores, proceder com criação de novo
         setAutoSupplierModal({
-          supplierName: name,
-          supplierDocument: document,
-          confidence: confidence || 0,
-          isNewSupplier: true,
-          existingSupplier: null
+          open: true,
+          detectedSupplier: {
+            name: name,
+            document: document || '',
+            type: 'PJ',
+            confidence: confidence || 0,
+            source: 'IA'
+          }
         });
         return;
       }
