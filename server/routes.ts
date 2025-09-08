@@ -531,6 +531,39 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
+  // Editar fornecedor
+  app.put("/api/fornecedores/:id", ...authorize(["SUPER_ADMIN", "CLIENT_USER"], true), async (req, res) => {
+    try {
+      const tenantId = req.user?.tenantId!;
+      const fornecedorId = req.params.id;
+      const updateData = { 
+        ...req.body,
+        canBeSupplier: true,
+        canBeClient: false  // Manter como fornecedor puro
+      };
+
+      const fornecedorAtualizado = await storage.updateContraparte(fornecedorId, tenantId, updateData);
+      res.json(fornecedorAtualizado);
+    } catch (error) {
+      console.error("Update fornecedor error:", error);
+      res.status(500).json({ error: "Erro ao atualizar fornecedor" });
+    }
+  });
+
+  // Excluir fornecedor (soft delete)
+  app.delete("/api/fornecedores/:id", ...authorize(["SUPER_ADMIN", "CLIENT_USER"], true), async (req, res) => {
+    try {
+      const tenantId = req.user?.tenantId!;
+      const fornecedorId = req.params.id;
+
+      await storage.updateContraparte(fornecedorId, tenantId, { isActive: false });
+      res.json({ message: "Fornecedor excluído com sucesso" });
+    } catch (error) {
+      console.error("Delete fornecedor error:", error);
+      res.status(500).json({ error: "Erro ao excluir fornecedor" });
+    }
+  });
+
   // 🎯 NOVOS ENDPOINTS PARA CLIENTES (Contrapartes que podem ser clientes)
   app.get("/api/clientes", ...authorize(["SUPER_ADMIN", "CLIENT_USER"], true), async (req, res) => {
     try {
