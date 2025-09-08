@@ -1,13 +1,14 @@
-import { useState } from "react";
+import { useState, useMemo } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
-import { FileText, Search, Filter, Download, Eye, X } from "lucide-react";
+import { FileText, Search, Filter, Download, Eye, X, Receipt } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
 import { DocumentPreview } from "./document-preview";
+import { DocumentMapperFactory, type UnifiedDocumentData } from "@/lib/document-mappers";
 
 export function ClientDocuments() {
   const [searchTerm, setSearchTerm] = useState("");
@@ -19,6 +20,15 @@ export function ClientDocuments() {
   const { data: documents, isLoading } = useQuery({
     queryKey: ['/api/documents'],
   });
+
+  // Mapear todos os documentos para dados unificados
+  const unifiedDocuments = useMemo(() => {
+    if (!documents) return [];
+    return (documents as any[]).map(doc => ({
+      originalDoc: doc,
+      unified: DocumentMapperFactory.mapDocument(doc)
+    }));
+  }, [documents]);
 
 
   // Função auxiliar para evitar erro de hoisting
@@ -37,16 +47,14 @@ export function ClientDocuments() {
     }
   };
 
-  const filteredDocuments = (documents as any[])?.filter((doc: any) => {
-    // Corrigir filtro de busca para aceitar originalName null
-    const docName = doc.originalName || `Documento Virtual - ${getTypeLabel(doc.bpoType || doc.documentType)}`;
+  const filteredDocuments = unifiedDocuments?.filter(({ originalDoc, unified }) => {
+    // Usar dados unificados para busca mais robusta
+    const docName = unified.displayName;
     const matchesSearch = docName.toLowerCase().includes(searchTerm.toLowerCase()) ||
-                         doc.extractedData?.razao_social?.toLowerCase().includes(searchTerm.toLowerCase());
-    const matchesStatus = statusFilter === "all" || doc.status === statusFilter;
-    
-    // Aceitar tanto bpoType quanto documentType para documentos virtuais
-    const docType = doc.bpoType || doc.documentType;
-    const matchesType = typeFilter === "all" || docType === typeFilter;
+                         unified.razaoSocial?.toLowerCase().includes(searchTerm.toLowerCase()) ||
+                         unified.supplier?.toLowerCase().includes(searchTerm.toLowerCase());
+    const matchesStatus = statusFilter === "all" || unified.status === statusFilter;
+    const matchesType = typeFilter === "all" || unified.documentType === typeFilter;
     
     return matchesSearch && matchesStatus && matchesType;
   }) || [];
@@ -179,27 +187,38 @@ export function ClientDocuments() {
             </div>
           ) : (
             <div className="space-y-3">
-              {filteredDocuments.map((doc: any) => (
+              {filteredDocuments.map(({ originalDoc, unified }) => (
                 <div
-                  key={doc.id}
+                  key={originalDoc.id}
                   className="border rounded-lg p-4 hover:bg-muted/50 transition-colors"
                 >
                   <div className="flex items-center justify-between">
                     <div className="flex items-center space-x-4 flex-1">
-                      <FileText className="h-8 w-8 text-muted-foreground" />
+                      {unified.isVirtual ? (
+                        <Receipt className="h-8 w-8 text-[#E40064]" />
+                      ) : (
+                        <FileText className="h-8 w-8 text-muted-foreground" />
+                      )}
                       
                       <div className="flex-1 min-w-0">
-                        <h3 className="font-medium truncate">
-                          {doc.originalName || `Documento Virtual - ${getTypeLabel(doc.bpoType || doc.documentType)}`}
-                        </h3>
+                        <div className="flex items-center gap-2">
+                          <h3 className="font-medium truncate">
+                            {unified.displayName}
+                          </h3>
+                          {unified.isVirtual && (
+                            <span className="px-2 py-1 bg-[#E40064]/10 text-[#E40064] text-xs rounded-full border border-[#E40064]/20">
+                              Virtual
+                            </span>
+                          )}
+                        </div>
                         <div className="flex items-center space-x-4 text-sm text-muted-foreground mt-1">
-                          <span>{getTypeLabel(doc.bpoType || doc.documentType)}</span>
+                          <span>{getTypeLabel(unified.documentType)}</span>
                           <span>•</span>
-                          <span>{new Date(doc.createdAt).toLocaleDateString('pt-BR')}</span>
-                          {doc.extractedData?.razao_social && (
+                          <span>{new Date(originalDoc.createdAt).toLocaleDateString('pt-BR')}</span>
+                          {unified.razaoSocial && (
                             <>
                               <span>•</span>
-                              <span className="truncate">{doc.extractedData.razao_social}</span>
+                              <span className="truncate">{unified.razaoSocial}</span>
                             </>
                           )}
                         </div>
@@ -209,59 +228,71 @@ export function ClientDocuments() {
                     <div className="flex items-center space-x-3">
                       <span className={cn(
                         "px-3 py-1 rounded-full text-xs font-medium",
-                        getStatusColor(doc.status)
+                        getStatusColor(unified.status)
                       )}>
-                        {doc.status}
+                        {unified.status}
                       </span>
                       
                       <div className="flex items-center space-x-1">
                         <Button 
                           variant="ghost" 
                           size="sm" 
-                          data-testid={`button-view-${doc.id}`}
+                          data-testid={`button-view-${originalDoc.id}`}
                           onClick={() => {
-                            setSelectedDocument(doc);
+                            setSelectedDocument(originalDoc);
                             setPreviewOpen(true);
                           }}
                         >
                           <Eye className="h-4 w-4" />
                         </Button>
-                        <Button variant="ghost" size="sm" data-testid={`button-download-${doc.id}`}>
-                          <Download className="h-4 w-4" />
-                        </Button>
+                        {!unified.isVirtual && (
+                          <Button variant="ghost" size="sm" data-testid={`button-download-${originalDoc.id}`}>
+                            <Download className="h-4 w-4" />
+                          </Button>
+                        )}
                       </div>
                     </div>
                   </div>
 
-                  {/* Additional info for documents with extracted data */}
-                  {doc.extractedData && Object.keys(doc.extractedData).length > 0 && (
-                    <div className="mt-3 pt-3 border-t grid grid-cols-2 md:grid-cols-4 gap-2 text-xs">
-                      {doc.extractedData.valor && (
-                        <div>
-                          <span className="text-muted-foreground">Valor:</span>
-                          <span className="ml-1 font-medium">{doc.extractedData.valor}</span>
-                        </div>
-                      )}
-                      {doc.extractedData.data_pagamento && (
-                        <div>
-                          <span className="text-muted-foreground">Data:</span>
-                          <span className="ml-1 font-medium">{doc.extractedData.data_pagamento}</span>
-                        </div>
-                      )}
-                      {doc.extractedData.cnpj && (
-                        <div>
-                          <span className="text-muted-foreground">CNPJ:</span>
-                          <span className="ml-1 font-medium">{doc.extractedData.cnpj}</span>
-                        </div>
-                      )}
-                      {doc.confidence && (
-                        <div>
-                          <span className="text-muted-foreground">Confiança:</span>
-                          <span className="ml-1 font-medium">{Math.round(doc.confidence)}%</span>
-                        </div>
-                      )}
-                    </div>
-                  )}
+                  {/* Informações unificadas para todos os tipos de documento */}
+                  <div className="mt-3 pt-3 border-t grid grid-cols-2 md:grid-cols-4 gap-2 text-xs">
+                    {unified.valor && (
+                      <div>
+                        <span className="text-muted-foreground">Valor:</span>
+                        <span className="ml-1 font-medium">{unified.valor}</span>
+                      </div>
+                    )}
+                    {unified.dataPagamento && (
+                      <div>
+                        <span className="text-muted-foreground">Data Pagamento:</span>
+                        <span className="ml-1 font-medium">{unified.dataPagamento}</span>
+                      </div>
+                    )}
+                    {unified.dataVencimento && (
+                      <div>
+                        <span className="text-muted-foreground">Vencimento:</span>
+                        <span className="ml-1 font-medium">{unified.dataVencimento}</span>
+                      </div>
+                    )}
+                    {unified.cnpj && (
+                      <div>
+                        <span className="text-muted-foreground">CNPJ/CPF:</span>
+                        <span className="ml-1 font-medium">{unified.cnpj}</span>
+                      </div>
+                    )}
+                    {originalDoc.confidence && (
+                      <div>
+                        <span className="text-muted-foreground">Confiança:</span>
+                        <span className="ml-1 font-medium">{Math.round(originalDoc.confidence)}%</span>
+                      </div>
+                    )}
+                    {unified.isVirtual && unified.boletoInfo?.payerName && (
+                      <div>
+                        <span className="text-muted-foreground">Pagador:</span>
+                        <span className="ml-1 font-medium">{unified.boletoInfo.payerName}</span>
+                      </div>
+                    )}
+                  </div>
                 </div>
               ))}
             </div>
@@ -274,8 +305,12 @@ export function ClientDocuments() {
         <DialogContent className="max-w-7xl max-h-[90vh] overflow-hidden">
           <DialogHeader className="flex flex-row items-center justify-between">
             <DialogTitle className="flex items-center gap-2">
-              <FileText className="h-5 w-5" />
-              {selectedDocument?.originalName}
+              {selectedDocument?.isVirtualDocument || ['EMITIR_BOLETO', 'EMITIR_NF'].includes(selectedDocument?.documentType) ? (
+                <Receipt className="h-5 w-5 text-[#E40064]" />
+              ) : (
+                <FileText className="h-5 w-5" />
+              )}
+              {selectedDocument?.originalName || DocumentMapperFactory.mapDocument(selectedDocument || {}).displayName}
             </DialogTitle>
             <Button
               variant="ghost"
