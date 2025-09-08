@@ -3,7 +3,13 @@
 export interface PaymentInfo {
   bankName?: string;
   transactionId?: string;
-  reconciliationData?: any;
+  reconciliationData?: {
+    paymentDate?: string;
+    paymentMethod?: string;
+    account?: string;
+    agency?: string;
+    [key: string]: any;
+  };
 }
 
 export interface ScheduleInfo {
@@ -43,6 +49,13 @@ export interface UnifiedDocumentData {
   endereco?: string;
   telefone?: string;
   email?: string;
+  
+  // Campos específicos para comprovantes de pagamento
+  metodoPagamento?: string;
+  contaOrigem?: string;
+  agencia?: string;
+  numeroOperacao?: string;
+  banco?: string;
   
   // Seções específicas por tipo
   paymentInfo?: PaymentInfo;
@@ -104,44 +117,146 @@ export class PhysicalDocumentMapper extends DocumentMapper {
   map(document: any): UnifiedDocumentData {
     const extracted = this.parseExtractedData(document.extractedData);
     
+    // Implementar fallbacks robustos usando múltiplas fontes de dados
+    const getValue = (extractedField: string, fallbackField?: string, transform?: (val: any) => any) => {
+      let value = extracted[extractedField] || document[fallbackField || extractedField];
+      
+      // Fallbacks específicos baseados no nome do documento
+      if (!value && document.originalName) {
+        value = this.extractFromFilename(document.originalName, extractedField);
+      }
+      
+      return transform ? transform(value) : value;
+    };
+    
+    const getFormattedCurrency = (...fields: string[]) => {
+      for (const field of fields) {
+        const value = extracted[field] || document[field];
+        if (value) return this.formatCurrency(value);
+      }
+      return '';
+    };
+    
+    const getFormattedDate = (...fields: string[]) => {
+      for (const field of fields) {
+        const value = extracted[field] || document[field];
+        if (value) return this.formatDate(value);
+      }
+      return '';
+    };
+    
     return {
       displayName: document.originalName || 'Documento Físico',
-      amount: this.formatCurrency(extracted.valor || document.amount),
-      supplier: extracted.razao_social || document.supplier,
-      dueDate: this.formatDate(extracted.data_vencimento || document.dueDate),
+      amount: getFormattedCurrency('valor', 'amount'),
+      supplier: getValue('razao_social', 'supplier') || getValue('fornecedor', 'supplier'),
+      dueDate: getFormattedDate('data_vencimento', 'dueDate'),
       status: document.status,
       documentType: document.documentType || document.bpoType,
       isVirtual: false,
       
-      // Campos básicos mapeados
-      razaoSocial: extracted.razao_social,
-      cnpj: extracted.cnpj || extracted.cpf,
-      valor: this.formatCurrency(extracted.valor),
-      dataEmissao: this.formatDate(extracted.data_emissao),
-      dataVencimento: this.formatDate(extracted.data_vencimento),
-      dataPagamento: this.formatDate(extracted.data_pagamento),
-      descricao: extracted.descricao || document.description,
-      endereco: extracted.endereco,
-      telefone: extracted.telefone,
-      email: extracted.email,
+      // Campos básicos com fallbacks inteligentes
+      razaoSocial: getValue('razao_social', 'supplier') || getValue('fornecedor', 'supplier') || getValue('empresa'),
+      cnpj: getValue('cnpj') || getValue('cpf') || getValue('documento'),
+      valor: getFormattedCurrency('valor', 'amount', 'total', 'value'),
+      dataEmissao: getFormattedDate('data_emissao', 'createdAt', 'data_documento'),
+      dataVencimento: getFormattedDate('data_vencimento', 'dueDate', 'vencimento'),
+      dataPagamento: getFormattedDate('data_pagamento', 'paidDate', 'data_pago'),
+      descricao: getValue('descricao', 'description') || getValue('observacao') || getValue('detalhes') || this.generateDescription(document),
+      endereco: getValue('endereco') || getValue('address'),
+      telefone: getValue('telefone') || getValue('phone'),
+      email: getValue('email'),
       
-      // Seções específicas
-      paymentInfo: document.documentType === 'PAGO' ? {
-        bankName: extracted.banco || extracted.bank_name,
-        transactionId: extracted.transacao_id,
-        reconciliationData: extracted.reconciliation_data
-      } : undefined,
+      // Seções específicas aprimoradas
+      paymentInfo: this.buildPaymentInfo(document, extracted),
       
       scheduleInfo: document.documentType === 'AGENDADO' ? {
-        scheduledDate: this.formatDate(extracted.data_agendamento || document.scheduledDate),
-        paymentMethod: extracted.forma_pagamento,
-        instructions: extracted.instrucoes || document.instructions
+        scheduledDate: getFormattedDate('data_agendamento', 'scheduledDate', 'data_agenda'),
+        paymentMethod: getValue('forma_pagamento') || getValue('metodo_pagamento') || getValue('payment_method'),
+        instructions: getValue('instrucoes', 'instructions') || getValue('observacoes')
       } : undefined,
       
       // Para debug
       rawExtractedData: extracted,
       rawDocument: document
     };
+  }
+  
+  private buildPaymentInfo(document: any, extracted: any): PaymentInfo | undefined {
+    if (document.documentType !== 'PAGO' && document.bpoType !== 'PAGO') {
+      return undefined;
+    }
+    
+    return {
+      bankName: extracted.banco || extracted.bank_name || extracted.instituicao_financeira || 
+                document.bank || this.extractBankFromText(extracted),
+      transactionId: extracted.transacao_id || extracted.transaction_id || extracted.protocolo || 
+                     extracted.comprovante || extracted.numero_operacao,
+      reconciliationData: extracted.reconciliation_data || {
+        paymentDate: this.formatDate(extracted.data_pagamento || document.paidDate),
+        paymentMethod: extracted.forma_pagamento || extracted.metodo || 'Transferência',
+        account: extracted.conta_origem || extracted.account_origin,
+        agency: extracted.agencia || extracted.agency
+      }
+    };
+  }
+  
+  private extractFromFilename(filename: string, field: string): string | undefined {
+    if (!filename) return undefined;
+    
+    const lower = filename.toLowerCase();
+    
+    // Padrões comuns em nomes de arquivo
+    switch (field) {
+      case 'razao_social':
+      case 'fornecedor':
+        // Extrair nome da empresa do nome do arquivo
+        const companyMatch = filename.match(/^([^-_\d]+)/);
+        return companyMatch ? companyMatch[1].trim() : undefined;
+        
+      case 'valor':
+        // Extrair valor se presente no nome
+        const valueMatch = filename.match(/([R$\s]*[\d.,]+)/i);
+        return valueMatch ? valueMatch[1] : undefined;
+        
+      case 'data_pagamento':
+        // Extrair data do nome do arquivo
+        const dateMatch = filename.match(/(\d{1,2}[/-]\d{1,2}[/-]\d{2,4})/);
+        return dateMatch ? dateMatch[1] : undefined;
+        
+      default:
+        return undefined;
+    }
+  }
+  
+  private extractBankFromText(extracted: any): string | undefined {
+    const text = JSON.stringify(extracted).toLowerCase();
+    
+    const banks = [
+      'itau', 'bradesco', 'banco do brasil', 'santander', 'caixa',
+      'nubank', 'inter', 'c6', 'original', 'safra', 'sicoob'
+    ];
+    
+    for (const bank of banks) {
+      if (text.includes(bank)) {
+        return bank.charAt(0).toUpperCase() + bank.slice(1);
+      }
+    }
+    
+    return undefined;
+  }
+  
+  private generateDescription(document: any): string {
+    const type = document.documentType || document.bpoType;
+    const supplier = document.supplier || 'Fornecedor';
+    
+    switch (type) {
+      case 'PAGO':
+        return `Comprovante de pagamento - ${supplier}`;
+      case 'AGENDADO':
+        return `Agendamento de pagamento - ${supplier}`;
+      default:
+        return `Documento ${type} - ${supplier}`;
+    }
   }
 }
 
