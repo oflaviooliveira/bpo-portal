@@ -267,7 +267,7 @@ export function UploadBpo() {
     }
   };
 
-  const { data: contrapartes = [] as any[] } = useQuery({
+  const { data: contrapartes = [] } = useQuery<any[]>({
     queryKey: ["/api/fornecedores", documentType],
     enabled: !!documentType, // Só busca quando tem tipo de documento
   });
@@ -498,14 +498,14 @@ export function UploadBpo() {
   const detectAndHandleSupplier = async (name: string, document?: string, confidence?: number) => {
     try {
       console.log("🔍 Detectando fornecedor:", name, document);
-      console.log("📋 Total de fornecedores disponíveis:", contrapartes.length);
-      console.log("📋 Lista de fornecedores:", contrapartes.map((c: any) => ({ id: c.id, name: c.name })));
+      console.log("📋 Total de fornecedores disponíveis:", contrapartes?.length || 0);
+      console.log("📋 Lista de fornecedores:", contrapartes?.map((c: any) => ({ id: c.id, name: c.name })) || []);
       
       // Verificar se os dados estão carregados, mas evitar loop infinito
       if (!contrapartes || contrapartes.length === 0) {
         console.log("⏳ Fornecedores não carregados, criando novo fornecedor...");
         // Se não conseguir carregar fornecedores, proceder com criação de novo
-        setAutoSupplierModalState({
+        setAutoSupplierModal({
           isOpen: true,
           supplierName: name,
           supplierDocument: document,
@@ -517,7 +517,7 @@ export function UploadBpo() {
       }
 
       // Primeiro buscar fornecedor existente por nome
-      const existingFornecedor = contrapartes.find((c: any) => 
+      const existingFornecedor = contrapartes?.find((c: any) => 
         c.name.toLowerCase().includes(name.toLowerCase()) || 
         name.toLowerCase().includes(c.name.toLowerCase())
       );
@@ -793,7 +793,7 @@ export function UploadBpo() {
 
     // 🎯 CORREÇÃO ADICIONAL: Buscar nome da contraparte pelo ID
     if (completeData.contraparteId && contrapartes) {
-      const contraparte = contrapartes.find((c: any) => c.id === completeData.contraparteId);
+      const contraparte = contrapartes?.find((c: any) => c.id === completeData.contraparteId);
       if (contraparte) {
         completeData.contraparteName = contraparte.name;
         console.log("✅ Nome da contraparte adicionado:", contraparte.name);
