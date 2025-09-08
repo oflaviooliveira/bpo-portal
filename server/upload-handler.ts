@@ -3,59 +3,9 @@ import { storage } from "./storage";
 import { parseFileName, validateBusinessRules, performCrossValidation } from "./validation";
 import { ContraparteService } from "./services/contraparte-service";
 import { detectDocumentType, formatDocument, validateDocument } from "../shared/document-utils";
+import { documentUploadSchema } from "./validation/schemas";
 
-// Schema completo para upload - Nova versão com contrapartes
-const uploadDocumentSchema = z.object({
-  // Nova estrutura com contrapartes
-  contraparteId: z.string().uuid().optional(),
-  contraparteName: z.string().optional(), // Para buscar/criar contraparte
-  contraparteDocument: z.string().optional(), // CPF/CNPJ da contraparte
-  
-  // Campos legacy (manter compatibilidade)
-  clientId: z.string().uuid().optional(),
-  
-  bankId: z.string().uuid().optional(),
-  categoryId: z.string().uuid().optional(),
-  costCenterId: z.string().uuid().optional(),
-  documentType: z.enum(['PAGO', 'AGENDADO', 'EMITIR_BOLETO', 'EMITIR_NF']),
-  amount: z.string().optional(),
-  supplier: z.string().optional(), // Legacy field
-  description: z.string().optional(),
-  notes: z.string().optional(),
-  // Campos condicionais por tipo  
-  competenceDate: z.string().optional(),
-  realPaidDate: z.string().optional(),
-  scheduledDate: z.string().optional(),
-  paymentDate: z.string().optional(),
-  paidDate: z.string().optional(),
-  dueDate: z.string().optional(),
-  // Campos para emissão de boleto/NF - dados do tomador (expandidos)
-  payerDocument: z.string().optional(),
-  payerName: z.string().optional(),
-  payerEmail: z.string().optional(),
-  payerPhone: z.string().optional(),
-  payerContactName: z.string().optional(),
-  payerStateRegistration: z.string().optional(), // IE - opcional
-  
-  // Endereço completo do tomador
-  payerStreet: z.string().optional(),
-  payerNumber: z.string().optional(),
-  payerComplement: z.string().optional(),
-  payerNeighborhood: z.string().optional(),
-  payerCity: z.string().optional(),
-  payerState: z.string().optional(), // UF
-  payerZipCode: z.string().optional(), // CEP
-  
-  // Compatibilidade (manter o campo legado)
-  payerAddress: z.string().optional(), // Para compatibilidade com código antigo
-  
-  // Campos de serviço
-  serviceCode: z.string().optional(),
-  serviceDescription: z.string().optional(),
-  instructions: z.string().optional(),
-});
-
-type UploadData = z.infer<typeof uploadDocumentSchema>;
+type UploadData = z.infer<typeof documentUploadSchema>;
 
 export class DocumentUploadHandler {
   async processUpload(file: Express.Multer.File | null, formData: any, user: any): Promise<{
@@ -79,7 +29,7 @@ export class DocumentUploadHandler {
 
       // 1. Validar dados do formulário
       console.log(`📋 Dados recebidos no formulário:`, JSON.stringify(formData, null, 2));
-      const validatedData = uploadDocumentSchema.parse(formData);
+      const validatedData = documentUploadSchema.parse(formData);
       console.log(`✅ Dados do formulário validados: ${validatedData.documentType}`);
 
       // 2. Analisar nome do arquivo (apenas para documentos com arquivo)
