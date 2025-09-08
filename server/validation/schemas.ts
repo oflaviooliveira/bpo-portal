@@ -66,8 +66,11 @@ const baseDocumentUploadSchema = z.object({
   // Observações
   notes: z.string().max(500, 'Observações muito longas').optional(),
   
-  // Flag para documentos virtuais (boletos/NF)
-  isVirtualDocument: z.string().optional().transform(val => val === 'true'),
+  // Flag para documentos virtuais (boletos/NF) - aceita string ou boolean
+  isVirtualDocument: z.union([
+    z.string().transform(val => val === 'true'),
+    z.boolean()
+  ]).optional(),
 });
 
 // Validação condicional para documentos PAGO - apenas competenceDate e paidDate obrigatórios

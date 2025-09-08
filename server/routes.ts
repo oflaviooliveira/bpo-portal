@@ -1034,20 +1034,27 @@ export async function registerRoutes(app: Express): Promise<Server> {
     try {
       const user = req.user!;
       const file = req.file;
-      const isVirtualDocument = req.body.isVirtualDocument === 'true';
+      // Parsing robusto para isVirtualDocument (aceita string ou boolean)
+      const isVirtualDocument = req.body.isVirtualDocument === 'true' || req.body.isVirtualDocument === true;
 
-      // 🔍 DEBUG: Log para diagnosticar problema
-      console.log(`🔍 Upload Debug:`, {
+      // 🔍 DEBUG: Log detalhado para diagnosticar problema de tipo
+      console.log(`🔍 Upload Debug Detalhado:`, {
         hasFile: !!file,
-        isVirtualDocument,
+        isVirtualDocument_raw: req.body.isVirtualDocument,
+        isVirtualDocument_type: typeof req.body.isVirtualDocument,
+        isVirtualDocument_parsed: isVirtualDocument,
         documentType: req.body.documentType,
         bodyKeys: Object.keys(req.body)
       });
 
       // Verificar se é um documento virtual válido ou se tem arquivo
       if (!file && !isVirtualDocument) {
-        console.log(`❌ Rejeitando: sem arquivo e não é virtual`);
+        console.log(`❌ Rejeitando: sem arquivo e não é virtual (isVirtualDocument=${isVirtualDocument})`);
         return res.status(400).json({ error: "Nenhum arquivo foi enviado" });
+      }
+      
+      if (isVirtualDocument) {
+        console.log(`✅ Documento virtual detectado: ${req.body.documentType}`);
       }
       
       // Verificar se documentos virtuais são apenas EMITIR_BOLETO/EMITIR_NF
