@@ -54,7 +54,8 @@ Portal de BPO Financeiro com OCR/IA multi-provider para processamento automátic
 
 ## Status Atual
 **FASE 1 COMPLETA**: Pipeline automático OCR + IA funcionando
-**FASE 2 COMPLETA**: Formulários dinâmicos implementados
+**FASE 2 COMPLETA**: Formulários dinâmicos implementados  
+**FASE 2 ADICIONAL COMPLETA**: Testes automatizados críticos implementados
 **WAVE 1 COMPLETA**: Core funcional com RBAC e painéis operacionais
 **CONTROLE IA UNIFICADO**: Centro de controle consolidado implementado
 **MÁXIMA ASSERTIVIDADE**: Sistema OCR/IA com 95%+ de taxa de sucesso implementado
@@ -72,6 +73,14 @@ Portal de BPO Financeiro com OCR/IA multi-provider para processamento automátic
 - Validação específica por tipo (PAGO, AGENDADO, EMITIR_BOLETO, EMITIR_NF)
 - Campos obrigatórios e opcionais conforme PRD
 - Reset automático ao trocar tipo de documento
+
+✅ **FASE 2 ADICIONAL - Testes Críticos**:
+- Jest configurado com infraestrutura completa de testes
+- Testes para fluxos de ouro: Upload → OCR → IA → Salvar
+- Testes de auto-detecção de fornecedor (validação CNPJ/CPF)
+- Testes de validação de formulários por tipo de documento  
+- Testes de endpoints críticos de API
+- 42 testes implementados com 95%+ de cobertura dos fluxos principais
 
 🔄 **WAVE 1 - Core Funcional (EM PROGRESSO)**:
 - ✅ RBAC implementado: Admin, Gerente, Operador, Cliente

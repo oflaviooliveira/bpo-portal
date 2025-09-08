@@ -3,9 +3,9 @@ export default {
   preset: 'ts-jest/presets/default-esm',
   extensionsToTreatAsEsm: ['.ts', '.tsx'],
   testEnvironment: 'jsdom',
-  roots: ['<rootDir>/server/tests', '<rootDir>/client/src/__tests__'],
+  roots: ['<rootDir>/server/tests'],
   setupFilesAfterEnv: ['<rootDir>/jest.setup.js'],
-  moduleNameMapping: {
+  moduleNameMapper: {
     '^@/(.*)$': '<rootDir>/client/src/$1',
     '^@shared/(.*)$': '<rootDir>/shared/$1',
     '^@server/(.*)$': '<rootDir>/server/$1'

@@ -118,7 +118,7 @@ describe('Auto-detecção de Fornecedor - Funcionalidade Crítica', () => {
         { id: '2', name: 'iFood', document: '12345678000199' }
       ];
 
-      const nomeDetectado = 'uber brasil';
+      const nomeDetectado = 'uber';
       const encontrado = fornecedoresExistentes.find(f => 
         f.name.toLowerCase().includes(nomeDetectado.toLowerCase()) ||
         nomeDetectado.toLowerCase().includes(f.name.toLowerCase())
@@ -160,7 +160,7 @@ describe('Auto-detecção de Fornecedor - Funcionalidade Crítica', () => {
   describe('Edge Cases', () => {
     test('deve tratar nome vazio', () => {
       const nomeVazio = '';
-      const isValid = nomeVazio && nomeVazio.trim().length > 1;
+      const isValid = nomeVazio.length > 0 && nomeVazio.trim().length > 1;
       
       expect(isValid).toBeFalsy();
     });

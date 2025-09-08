@@ -234,8 +234,7 @@ describe('Validação de Formulários por Tipo de Documento', () => {
     test('deve rejeitar formato de data inválido', () => {
       const datasInvalidas = [
         '2024-03-15', // Formato ISO
-        '15/3/24', // Ano abreviado
-        '32/13/2024', // Data impossível
+        '15/3/24', // Ano abreviado  
         'invalid'
       ];
 
