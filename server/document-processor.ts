@@ -520,7 +520,7 @@ export class DocumentProcessor {
           status: "PAGO_A_CONCILIAR",
           updates: {
             processedAt: new Date(),
-            extractedData: JSON.stringify(extractedData)
+            extractedData: extractedData // Salvar como JSONB direto
           },
           createTask: true,
           taskType: "CONCILIACAO",
@@ -532,7 +532,7 @@ export class DocumentProcessor {
           status: "AGENDADO", 
           updates: {
             processedAt: new Date(),
-            extractedData: JSON.stringify(extractedData)
+            extractedData: extractedData // Salvar como JSONB direto
           },
           createTask: true,
           taskType: "AGENDAMENTO",
@@ -544,10 +544,10 @@ export class DocumentProcessor {
 
       case "EMITIR_BOLETO":
         return {
-          status: "AGUARDANDO_RECEBIMENTO",
+          status: "PENDENTE_EMISSAO",
           updates: {
             processedAt: new Date(),
-            extractedData: JSON.stringify(extractedData)
+            extractedData: extractedData // Salvar como JSONB direto
           },
           createTask: true,
           taskType: "EMITIR_BOLETO",
@@ -556,10 +556,10 @@ export class DocumentProcessor {
 
       case "EMITIR_NF":
         return {
-          status: "AGUARDANDO_RECEBIMENTO",
+          status: "PENDENTE_EMISSAO",
           updates: {
             processedAt: new Date(),
-            extractedData: JSON.stringify(extractedData)
+            extractedData: extractedData // Salvar como JSONB direto
           },
           createTask: true,
           taskType: "EMITIR_NF", 
@@ -571,7 +571,7 @@ export class DocumentProcessor {
           status: "CLASSIFICADO",
           updates: {
             processedAt: new Date(),
-            extractedData: JSON.stringify(extractedData)
+            extractedData: extractedData // Salvar como JSONB direto
           },
           createTask: false
         };
