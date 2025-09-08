@@ -17,6 +17,14 @@ import { CloudUpload, Upload as UploadIcon, FileText, Calendar, DollarSign, Buil
 import { Alert, AlertDescription } from "@/components/ui/alert";
 import { Separator } from "@/components/ui/separator";
 import { AutoSupplierModal } from "@/components/client/auto-supplier-modal";
+import { 
+  DocumentSuggestion, 
+  ProcessingState, 
+  AutoSupplierModalState,
+  BpoUploadFormData,
+  ProcessFileResponse,
+  ApiResponse 
+} from "@shared/types";
 
 // Schema de validação inteligente
 const bpoUploadSchema = z.object({
@@ -153,18 +161,6 @@ const bpoUploadSchema = z.object({
 
 type BpoUploadData = z.infer<typeof bpoUploadSchema>;
 
-interface DocumentSuggestion {
-  field: string;
-  value: string;
-  confidence: number;
-  source: 'IA' | 'DOCUMENTO';
-}
-
-interface ProcessingState {
-  stage: 'ready' | 'processing' | 'analyzed' | 'submitting';
-  message: string;
-}
-
 export function UploadBpo() {
 
   const [selectedFile, setSelectedFile] = useState<File | null>(null);
@@ -180,16 +176,7 @@ export function UploadBpo() {
   const queryClient = useQueryClient();
 
   // Estado para auto-detecção de fornecedor
-  const [autoSupplierModal, setAutoSupplierModal] = useState<{
-    open: boolean;
-    detectedSupplier?: {
-      name: string;
-      document: string;
-      type: 'PF' | 'PJ';
-      confidence: number;
-      source: string;
-    };
-  }>({ open: false });
+  const [autoSupplierModal, setAutoSupplierModal] = useState<AutoSupplierModalState>({ open: false });
 
   // Estado para visualização de documento
   const [documentPreviewModal, setDocumentPreviewModal] = useState(false);
@@ -290,8 +277,8 @@ export function UploadBpo() {
   });
 
   // Mutation para processar arquivo com IA
-  const processFileMutation = useMutation({
-    mutationFn: async (file: File) => {
+  const processFileMutation = useMutation<ProcessFileResponse, Error, File>({
+    mutationFn: async (file: File): Promise<ProcessFileResponse> => {
       const formData = new FormData();
       formData.append("file", file);
 
@@ -628,8 +615,8 @@ export function UploadBpo() {
   };
 
   // Mutation para upload final
-  const uploadMutation = useMutation({
-    mutationFn: async (formData: FormData) => {
+  const uploadMutation = useMutation<ApiResponse, Error, FormData>({
+    mutationFn: async (formData: FormData): Promise<ApiResponse> => {
       const response = await fetch("/api/documents/upload", {
         method: "POST",
         body: formData,
