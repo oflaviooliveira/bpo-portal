@@ -408,18 +408,35 @@ export function UploadBpo() {
           console.log("📝 Descrição preenchida automaticamente:", data.suggestions.realData.description);
         }
         
+        // 🏢 DEBUG: Verificar dados recebidos do backend
+        console.log("🐛 DEBUG - Dados completos do backend:", JSON.stringify(data, null, 2));
+        console.log("🐛 DEBUG - data.suggestions:", data.suggestions);
+        console.log("🐛 DEBUG - data.suggestions?.realData:", data.suggestions?.realData);
+        console.log("🐛 DEBUG - data.suggestions?.realData?.supplier:", data.suggestions?.realData?.supplier);
+        
         // 🏢 NOVA LÓGICA: Detectar fornecedor uma única vez
         if (data.suggestions?.realData?.supplier) {
-          console.log("🏢 Detectando fornecedor automaticamente:", data.suggestions.realData.supplier);
+          console.log("✅ CONDIÇÃO ATENDIDA - Iniciando detecção de fornecedor:");
+          console.log("  📄 Supplier:", data.suggestions.realData.supplier);
+          console.log("  🆔 Document:", data.suggestions.realData.document);
           
           // Aguardar um momento para garantir que as queries foram carregadas
+          console.log("⏰ Agendando execução da detecção em 100ms...");
           setTimeout(() => {
+            console.log("🚀 EXECUTANDO detectAndHandleSupplier...");
             detectAndHandleSupplier(
               data.suggestions?.realData?.supplier || '', 
               data.suggestions?.realData?.document || '', 
               90
             );
           }, 100);
+        } else {
+          console.log("❌ CONDIÇÃO NÃO ATENDIDA - Não há supplier para detectar");
+          console.log("  🐛 Verificação detalhada:");
+          console.log("    data.suggestions existe?", !!data.suggestions);
+          console.log("    data.suggestions.realData existe?", !!data.suggestions?.realData);
+          console.log("    data.suggestions.realData.supplier existe?", !!data.suggestions?.realData?.supplier);
+          console.log("    Valor do supplier:", data.suggestions?.realData?.supplier);
         }
         
         // 📅 NOVA FUNCIONALIDADE: Auto-preencher data de agendamento com data de vencimento
