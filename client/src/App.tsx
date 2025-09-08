@@ -8,14 +8,12 @@ import { ProtectedRoute } from "@/lib/protected-route";
 import HomePage from "@/pages/home-page";
 import AuthPage from "@/pages/auth-page";
 import AIControlCenter from "@/pages/ai-control-center";
-import ClientsPage from "@/pages/clients";
 import NotFound from "@/pages/not-found";
 
 function Router() {
   return (
     <Switch>
       <ProtectedRoute path="/" component={HomePage} />
-      <ProtectedRoute path="/clients" component={ClientsPage} />
       <ProtectedRoute path="/ai-control" component={AIControlCenter} />
       <Route path="/auth" component={AuthPage} />
       <Route component={NotFound} />
