@@ -323,7 +323,7 @@ export function UploadBpo() {
       }
 
       if (data.suggestions?.supplier || data.suggestions?.contraparte) {
-        const contraparteValue = data.suggestions?.contraparte || data.suggestions?.supplier;
+        const contraparteValue = data.suggestions?.contraparte || data.suggestions?.supplier || '';
         newSuggestions.push({
           field: "contraparte", 
           value: contraparteValue,
