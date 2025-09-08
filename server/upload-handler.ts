@@ -68,7 +68,6 @@ export class DocumentUploadHandler {
     try {
       // Verificar se é documento virtual (parsing robusto)
       const isVirtualDocument = formData.isVirtualDocument === 'true' || formData.isVirtualDocument === true;
-      console.log(`🔍 Upload Handler Debug: isVirtualDocument=${formData.isVirtualDocument} (type: ${typeof formData.isVirtualDocument}) -> parsed: ${isVirtualDocument}`);
       
       if (file) {
         console.log(`📁 Processando upload: ${file.originalname} (${Math.round(file.size/1024)}KB)`);
