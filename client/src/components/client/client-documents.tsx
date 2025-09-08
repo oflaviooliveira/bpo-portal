@@ -21,7 +21,7 @@ export function ClientDocuments() {
   });
 
   // Debug log para verificar documentos carregados
-  console.log('Documentos carregados:', documents?.length, documents?.map(d => ({
+  console.log('Documentos carregados:', documents?.length, (documents as any[])?.map((d: any) => ({
     nome: d.originalName,
     bpoType: d.bpoType,
     documentType: d.documentType,
@@ -29,18 +29,15 @@ export function ClientDocuments() {
   })));
 
   const filteredDocuments = (documents as any[])?.filter((doc: any) => {
-    const matchesSearch = doc.originalName?.toLowerCase().includes(searchTerm.toLowerCase()) ||
+    // Corrigir filtro de busca para aceitar originalName null
+    const docName = doc.originalName || `Documento Virtual - ${getBpoTypeLabel(doc.bpoType || doc.documentType)}`;
+    const matchesSearch = docName.toLowerCase().includes(searchTerm.toLowerCase()) ||
                          doc.extractedData?.razao_social?.toLowerCase().includes(searchTerm.toLowerCase());
     const matchesStatus = statusFilter === "all" || doc.status === statusFilter;
     
     // Aceitar tanto bpoType quanto documentType para documentos virtuais
     const docType = doc.bpoType || doc.documentType;
     const matchesType = typeFilter === "all" || docType === typeFilter;
-    
-    // Debug log para identificar problemas
-    if (!matchesType && typeFilter !== "all") {
-      console.log(`Documento filtrado - Nome: ${doc.originalName}, bpoType: ${doc.bpoType}, documentType: ${doc.documentType}, filtro: ${typeFilter}`);
-    }
     
     return matchesSearch && matchesStatus && matchesType;
   }) || [];
@@ -59,6 +56,8 @@ export function ClientDocuments() {
         return "bg-purple-100 text-purple-800";
       case 'PENDENTE_EMISSAO':
         return "bg-orange-100 text-orange-800";
+      case 'PENDENTE_REVISAO':
+        return "bg-amber-100 text-amber-800";
       default:
         return "bg-gray-100 text-gray-800";
     }
@@ -121,6 +120,7 @@ export function ClientDocuments() {
                 <SelectItem value="RECEBIDO">Recebido</SelectItem>
                 <SelectItem value="VALIDANDO">Validando</SelectItem>
                 <SelectItem value="PENDENTE_EMISSAO">Pendente Emissão</SelectItem>
+                <SelectItem value="PENDENTE_REVISAO">Pendente Revisão</SelectItem>
                 <SelectItem value="VALID">Válido</SelectItem>
                 <SelectItem value="WARNING">Com Aviso</SelectItem>
                 <SelectItem value="ERROR">Com Erro</SelectItem>
@@ -180,7 +180,9 @@ export function ClientDocuments() {
                       <FileText className="h-8 w-8 text-muted-foreground" />
                       
                       <div className="flex-1 min-w-0">
-                        <h3 className="font-medium truncate">{doc.originalName}</h3>
+                        <h3 className="font-medium truncate">
+                          {doc.originalName || `Documento Virtual - ${getBpoTypeLabel(doc.bpoType || doc.documentType)}`}
+                        </h3>
                         <div className="flex items-center space-x-4 text-sm text-muted-foreground mt-1">
                           <span>{getBpoTypeLabel(doc.bpoType || doc.documentType)}</span>
                           <span>•</span>
