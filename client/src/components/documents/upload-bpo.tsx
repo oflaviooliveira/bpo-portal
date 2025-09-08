@@ -495,12 +495,20 @@ export function UploadBpo() {
     },
   });
 
+  // Função auxiliar para normalizar CNPJ/CPF
+  const normalizeCNPJ = (doc: string): string => {
+    if (!doc) return '';
+    return doc.replace(/[^\d]/g, '');
+  };
+
   // Função de detecção inteligente de fornecedor
   const detectAndHandleSupplier = async (name: string, document?: string, confidence?: number) => {
     try {
-      console.log("🔍 Detectando fornecedor:", name, document);
-      console.log("📋 Total de fornecedores disponíveis:", contrapartes?.length || 0);
-      console.log("📋 Lista de fornecedores:", contrapartes?.map((c: any) => ({ id: c.id, name: c.name })) || []);
+      console.log("🔍 DETECTANDO FORNECEDOR:");
+      console.log("  📄 Nome:", name);
+      console.log("  🆔 Documento:", document);
+      console.log("  📊 Confiança:", confidence);
+      console.log("  📋 Total de fornecedores disponíveis:", contrapartes?.length || 0);
       
       // Se modal já está aberto, não duplicar detecção
       if (autoSupplierModal.open) {
@@ -508,10 +516,9 @@ export function UploadBpo() {
         return;
       }
       
-      // Verificar se os dados estão carregados, mas evitar loop infinito
+      // Verificar se os dados estão carregados
       if (!contrapartes || contrapartes.length === 0) {
-        console.log("⏳ Fornecedores não carregados ou lista vazia, criando novo fornecedor...");
-        // Se não conseguir carregar fornecedores, proceder com criação de novo
+        console.log("⏳ Lista de fornecedores vazia, abrindo modal para criar novo...");
         setAutoSupplierModal({
           open: true,
           detectedSupplier: {
@@ -525,44 +532,95 @@ export function UploadBpo() {
         return;
       }
 
-      // Primeiro buscar fornecedor existente por nome
-      const existingFornecedor = contrapartes?.find((c: any) => 
-        c.name.toLowerCase().includes(name.toLowerCase()) || 
-        name.toLowerCase().includes(c.name.toLowerCase())
-      );
-
-      if (existingFornecedor) {
-        console.log("✅ Fornecedor existente encontrado:", existingFornecedor.name, "ID:", existingFornecedor.id);
-        console.log("🔄 Preenchendo campo contraparteId...");
+      console.log("🔎 INICIANDO BUSCA DE FORNECEDOR EXISTENTE...");
+      
+      // ESTRATÉGIA 1: Buscar por CNPJ/CPF primeiro (mais confiável)
+      let existingFornecedor = null;
+      
+      if (document && document !== "CNPJ não informado" && document !== "CNPJ não disponível") {
+        const cleanDocument = normalizeCNPJ(document);
+        console.log("  🔍 Buscando por documento:", cleanDocument);
         
-        // Preencher o campo com força
+        existingFornecedor = contrapartes?.find((c: any) => {
+          const fornecedorDoc = normalizeCNPJ(c.document || '');
+          const match = fornecedorDoc === cleanDocument;
+          if (match) {
+            console.log("    ✅ MATCH POR DOCUMENTO:", c.name, "Doc:", fornecedorDoc);
+          }
+          return match;
+        });
+      }
+      
+      // ESTRATÉGIA 2: Se não encontrou por documento, buscar por nome
+      if (!existingFornecedor && name) {
+        console.log("  🔍 Buscando por nome:", name);
+        const cleanName = name.toLowerCase().trim();
+        
+        existingFornecedor = contrapartes?.find((c: any) => {
+          const fornecedorName = c.name.toLowerCase().trim();
+          
+          // Match exato
+          const exactMatch = fornecedorName === cleanName;
+          if (exactMatch) {
+            console.log("    ✅ MATCH EXATO POR NOME:", c.name);
+            return true;
+          }
+          
+          // Match por inclusão (mais flexível)
+          const inclusionMatch = fornecedorName.includes(cleanName) || cleanName.includes(fornecedorName);
+          if (inclusionMatch) {
+            console.log("    ✅ MATCH POR INCLUSÃO:", c.name);
+            return true;
+          }
+          
+          return false;
+        });
+      }
+
+      // Se encontrou fornecedor existente, selecionar automaticamente
+      if (existingFornecedor) {
+        console.log("🎯 FORNECEDOR EXISTENTE ENCONTRADO:");
+        console.log("  📛 Nome:", existingFornecedor.name);
+        console.log("  🆔 ID:", existingFornecedor.id);
+        console.log("  📄 Documento:", existingFornecedor.document);
+        
+        console.log("🔄 SELECIONANDO AUTOMATICAMENTE...");
+        
+        // Seleção automática mais robusta
         form.setValue("contraparteId", existingFornecedor.id, { 
           shouldValidate: true, 
           shouldDirty: true,
           shouldTouch: true 
         });
         
-        // Forçar re-render do formulário
+        // Forçar atualização do formulário
         form.trigger("contraparteId");
         
-        // Verificar se foi preenchido após um delay
+        // Verificação após delay para garantir que foi aplicado
         setTimeout(() => {
           const currentValue = form.getValues("contraparteId");
-          console.log("🔍 Valor atual do campo contraparteId:", currentValue);
-          if (currentValue !== existingFornecedor.id) {
-            console.log("⚠️ Campo não foi preenchido, forçando novamente...");
+          console.log("✅ VERIFICAÇÃO PÓS-SELEÇÃO:");
+          console.log("  🎯 ID Esperado:", existingFornecedor.id);
+          console.log("  📋 ID Atual:", currentValue);
+          
+          if (currentValue === existingFornecedor.id) {
+            console.log("🎉 SUCESSO! Fornecedor selecionado automaticamente");
+            
+            toast({
+              title: "Fornecedor selecionado automaticamente",
+              description: `${existingFornecedor.name} foi encontrado e selecionado`,
+            });
+          } else {
+            console.log("⚠️ FALHA na seleção, tentando novamente...");
             form.setValue("contraparteId", existingFornecedor.id, { 
               shouldValidate: true, 
               shouldDirty: true,
               shouldTouch: true 
             });
-            form.trigger("contraparteId");
-          } else {
-            console.log("✅ Campo contraparteId preenchido com sucesso!");
           }
-        }, 500);
+        }, 300);
         
-        return;
+        return; // Não abrir modal
       }
 
       // Se não encontrou e temos um nome válido, sempre mostrar modal para confirmação
