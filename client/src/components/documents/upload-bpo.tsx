@@ -1825,7 +1825,7 @@ export function UploadBpo() {
       <AutoSupplierModal
         open={autoSupplierModal.open}
         onClose={() => setAutoSupplierModal({ open: false })}
-        detectedSupplier={autoSupplierModal.detectedSupplier}
+        detectedSupplier={autoSupplierModal.detectedSupplier || null}
         onSupplierCreated={handleSupplierCreated}
         onSkip={handleSupplierSkip}
       />

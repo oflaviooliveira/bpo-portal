@@ -32,8 +32,8 @@ interface DetectedSupplier {
 
 interface AutoSupplierModalProps {
   open: boolean;
-  onOpenChange: (open: boolean) => void;
-  detectedSupplier: DetectedSupplier;
+  onClose: (open: boolean) => void;
+  detectedSupplier: DetectedSupplier | null;
   onSupplierCreated: (supplier: any) => void;
   onSkip: () => void;
   documentFile?: File;
@@ -41,12 +41,14 @@ interface AutoSupplierModalProps {
 
 export function AutoSupplierModal({ 
   open, 
-  onOpenChange, 
+  onClose, 
   detectedSupplier, 
   onSupplierCreated,
   onSkip,
   documentFile 
 }: AutoSupplierModalProps) {
+  
+  if (!detectedSupplier) return null;
   const [action, setAction] = useState<'create' | 'skip' | null>(null);
   const [showPreview, setShowPreview] = useState(false);
   const { toast } = useToast();
@@ -73,7 +75,7 @@ export function AutoSupplierModal({
         description: "Novo fornecedor cadastrado com sucesso",
       });
       onSupplierCreated(newSupplier);
-      onOpenChange(false);
+      onClose(false);
     },
     onError: (error: Error) => {
       toast({
@@ -90,7 +92,7 @@ export function AutoSupplierModal({
 
   const handleSkip = () => {
     onSkip();
-    onOpenChange(false);
+    onClose(false);
   };
 
   const getConfidenceColor = (confidence: number) => {
@@ -106,7 +108,7 @@ export function AutoSupplierModal({
   };
 
   return (
-    <Dialog open={open} onOpenChange={onOpenChange}>
+    <Dialog open={open} onOpenChange={onClose}>
       <DialogContent className="max-w-lg">
         <DialogHeader>
           <DialogTitle className="flex items-center gap-2">
