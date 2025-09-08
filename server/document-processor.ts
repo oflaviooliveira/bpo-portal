@@ -42,44 +42,80 @@ export class DocumentProcessor {
         throw new Error("Documento não encontrado");
       }
 
-      console.log(`📄 Processando: ${document.originalName}`);
+      console.log(`📄 Processando: ${document.originalName || 'Documento Virtual'}`);
 
-      // 3. Processamento OCR Melhorado
-      console.log("🔍 Iniciando OCR melhorado com extração de PDF...");
-      const ocrResult = await this.performEnhancedOCR(document.filePath, document.originalName, documentId, tenantId);
-      
-      await storage.createDocumentLog({
-        documentId,
-        action: "OCR_COMPLETE",
-        status: "SUCCESS",
-        details: { 
-          strategy: ocrResult.strategy,
-          confidence: ocrResult.confidence, 
-          textLength: ocrResult.text.length,
-          strategiesAttempted: ocrResult.strategiesAttempted,
-          processingTime: ocrResult.processingTime
-        },
-      });
+      let ocrResult, aiResult, validationResult;
 
-      // 4. Análise com IA Melhorada
-      console.log("🤖 Iniciando análise IA melhorada...");
-      const aiResult = await this.performEnhancedAIAnalysis(ocrResult.text, document.originalName, documentId, tenantId);
-      
-      await storage.createDocumentLog({
-        documentId,
-        action: "AI_ANALYSIS_COMPLETE",
-        status: "SUCCESS",
-        details: { 
-          provider: aiResult.provider, 
-          extractedFields: Object.keys(aiResult.extractedData || {}),
-          processingCost: aiResult.processingCost,
-          confidence: aiResult.confidence
-        },
-      });
+      // 3. Verificar se é documento virtual (boleto/NF sem arquivo físico)
+      if (document.isVirtualDocument || !document.filePath || ['EMITIR_BOLETO', 'EMITIR_NF'].includes(document.documentType)) {
+        console.log("📋 Documento virtual detectado - pulando OCR e IA");
+        
+        // Para documentos virtuais, usar dados já fornecidos
+        ocrResult = {
+          text: '',
+          confidence: 1.0,
+          strategy: 'virtual',
+          strategiesAttempted: ['virtual'],
+          processingTime: 0
+        };
 
-      // 5. Validação cruzada OCR ↔ IA ↔ Metadados
-      console.log("✅ Executando validação cruzada...");
-      const validationResult = await this.performCrossValidation(ocrResult, aiResult, document);
+        aiResult = {
+          provider: 'VIRTUAL',
+          documentType: document.documentType,
+          confidence: 100,
+          extractedData: {} // Dados já estão nos campos diretos
+        };
+
+        validationResult = {
+          isValid: true,
+          errors: [],
+          confidence: 1.0
+        };
+
+        await storage.createDocumentLog({
+          documentId,
+          action: "VIRTUAL_DOCUMENT_PROCESSED",
+          status: "SUCCESS",
+          details: { message: "Documento virtual processado diretamente" },
+        });
+      } else {
+        // Processamento normal para documentos físicos
+        console.log("🔍 Iniciando OCR melhorado com extração de PDF...");
+        ocrResult = await this.performEnhancedOCR(document.filePath!, document.originalName!, documentId, tenantId);
+        
+        await storage.createDocumentLog({
+          documentId,
+          action: "OCR_COMPLETE",
+          status: "SUCCESS",
+          details: { 
+            strategy: ocrResult.strategy,
+            confidence: ocrResult.confidence, 
+            textLength: ocrResult.text.length,
+            strategiesAttempted: ocrResult.strategiesAttempted,
+            processingTime: ocrResult.processingTime
+          },
+        });
+
+        // 4. Análise com IA Melhorada
+        console.log("🤖 Iniciando análise IA melhorada...");
+        aiResult = await this.performEnhancedAIAnalysis(ocrResult.text, document.originalName!, documentId, tenantId);
+        
+        await storage.createDocumentLog({
+          documentId,
+          action: "AI_ANALYSIS_COMPLETE",
+          status: "SUCCESS",
+          details: { 
+            provider: aiResult.provider, 
+            extractedFields: Object.keys(aiResult.extractedData || {}),
+            processingCost: aiResult.processingCost,
+            confidence: aiResult.confidence
+          },
+        });
+
+        // 5. Validação cruzada OCR ↔ IA ↔ Metadados
+        console.log("✅ Executando validação cruzada...");
+        validationResult = await this.performCrossValidation(ocrResult, aiResult, document);
+      }
       
       await storage.createDocumentLog({
         documentId,
