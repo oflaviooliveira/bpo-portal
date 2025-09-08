@@ -30,6 +30,7 @@ export function DocumentsPage() {
       "PROCESSANDO": { variant: "outline", icon: Clock },
       "VALIDANDO": { variant: "outline", icon: AlertCircle },
       "PENDENTE_REVISAO": { variant: "destructive", icon: AlertCircle },
+      "PENDENTE_EMISSAO": { variant: "default", icon: Clock },
       "PAGO": { variant: "default", icon: CheckCircle },
       "AGENDADO": { variant: "secondary", icon: Clock },
       "ARQUIVADO": { variant: "outline", icon: FileText },
@@ -125,6 +126,11 @@ export function DocumentsPage() {
                         <div className="flex items-center gap-2 mt-2">
                           {getStatusBadge(doc.status)}
                           <Badge variant="outline">{getTypeLabel(doc.documentType)}</Badge>
+                          {doc.isVirtualDocument && (
+                            <Badge variant="secondary" className="text-xs">
+                              Solicitação Virtual
+                            </Badge>
+                          )}
                         </div>
                       </div>
                       <div className="flex items-center gap-2">
