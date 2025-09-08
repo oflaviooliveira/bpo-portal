@@ -1383,7 +1383,7 @@ export function UploadBpo() {
                 <div className="space-y-2">
                   <Label>Instruções especiais para o boleto/NF (opcional)</Label>
                   <Textarea
-                    {...form.register("specialInstructions")}
+                    {...form.register("instructions")}
                     placeholder="Instruções especiais para o boleto/NF (opcional)"
                     className="min-h-[80px]"
                     data-testid="textarea-special-instructions"
@@ -1425,20 +1425,20 @@ export function UploadBpo() {
                 )}
               </div>
 
-              {/* Data de Vencimento - NOVO CAMPO ESPECÍFICO PARA BOLETO */}
+              {/* Data de Vencimento - USAR scheduledDate */}
               {documentType === "EMITIR_BOLETO" && (
                 <div className="space-y-2">
                   <Label>Data de Vencimento *</Label>
                   <Input
-                    {...form.register("dueDate")}
+                    {...form.register("scheduledDate")}
                     type="date"
                     data-testid="input-due-date"
                   />
                   <p className="text-xs text-gray-600">
                     Data limite para pagamento do boleto
                   </p>
-                  {form.formState.errors.dueDate && (
-                    <p className="text-sm text-red-500">{form.formState.errors.dueDate.message}</p>
+                  {form.formState.errors.scheduledDate && (
+                    <p className="text-sm text-red-500">{form.formState.errors.scheduledDate.message}</p>
                   )}
                 </div>
               )}
@@ -1815,11 +1815,9 @@ export function UploadBpo() {
       </form>
 
       {/* Processamento em Tempo Real */}
-      {processingState.stage !== 'idle' && (
+      {processingState.stage !== 'ready' && (
         <ProcessingSteps 
           stage={processingState.stage}
-          progress={processingState.progress}
-          details={processingState.details}
         />
       )}
 
@@ -1829,20 +1827,16 @@ export function UploadBpo() {
 
 // Componente para mostrar o progresso do processamento
 interface ProcessingStepsProps {
-  stage: 'idle' | 'uploading' | 'ocr' | 'ai' | 'processing' | 'submitting' | 'success' | 'error';
-  progress?: number;
-  details?: string;
+  stage: 'ready' | 'processing' | 'analyzed' | 'submitting';
 }
 
-const ProcessingSteps: React.FC<ProcessingStepsProps> = ({ stage, progress, details }) => {
-  if (stage === 'idle') return null;
+const ProcessingSteps: React.FC<ProcessingStepsProps> = ({ stage }) => {
+  if (stage === 'ready') return null;
 
   const stages = [
-    { key: 'uploading', label: 'Fazendo upload do arquivo...', icon: UploadIcon },
-    { key: 'ocr', label: 'Extraindo texto do documento...', icon: FileText },
-    { key: 'ai', label: 'Analisando com Inteligência Artificial...', icon: Sparkles },
-    { key: 'processing', label: 'Processando informações...', icon: Cog },
-    { key: 'submitting', label: 'Finalizando envio...', icon: CheckCircle },
+    { key: 'processing', label: 'Processando com IA...', icon: Sparkles },
+    { key: 'analyzed', label: 'Análise concluída...', icon: CheckCircle },
+    { key: 'submitting', label: 'Finalizando envio...', icon: UploadIcon },
   ];
 
   const currentStageIndex = stages.findIndex(s => s.key === stage);

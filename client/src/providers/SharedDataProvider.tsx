@@ -43,7 +43,7 @@ export function SharedDataProvider({ children }: SharedDataProviderProps) {
   ).length;
   const processedToday = documents.filter(doc => {
     const today = new Date().toDateString();
-    const docDate = new Date(doc.updatedAt || doc.createdAt).toDateString();
+    const docDate = new Date(doc.updatedAt || doc.createdAt || new Date()).toDateString();
     return docDate === today && ['ARQUIVADO', 'PROCESSADO'].includes(doc.status);
   }).length;
 
