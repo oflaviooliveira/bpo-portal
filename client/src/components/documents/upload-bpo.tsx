@@ -409,7 +409,7 @@ export function UploadBpo() {
         }
         
         // 🏢 NOVA LÓGICA: Detectar fornecedor uma única vez
-        if (data.suggestions.realData.supplier) {
+        if (data.suggestions?.realData?.supplier) {
           console.log("🏢 Detectando fornecedor automaticamente:", data.suggestions.realData.supplier);
           
           // Aguardar um momento para garantir que as queries foram carregadas
