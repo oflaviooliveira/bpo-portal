@@ -269,11 +269,7 @@ export function UploadBpo() {
 
   const { data: contrapartes = [] as any[] } = useQuery({
     queryKey: ["/api/fornecedores", documentType],
-    queryFn: async () => {
-      const response = await fetch(`/api/fornecedores`);
-      if (!response.ok) throw new Error('Erro ao buscar fornecedores');
-      return response.json();
-    },
+    enabled: !!documentType, // Só busca quando tem tipo de documento
   });
 
   // Mutation para processar arquivo com IA
@@ -505,11 +501,18 @@ export function UploadBpo() {
       console.log("📋 Total de fornecedores disponíveis:", contrapartes.length);
       console.log("📋 Lista de fornecedores:", contrapartes.map((c: any) => ({ id: c.id, name: c.name })));
       
-      // Aguardar um momento para garantir que os dados estão carregados
+      // Verificar se os dados estão carregados, mas evitar loop infinito
       if (!contrapartes || contrapartes.length === 0) {
-        console.log("⏳ Aguardando carregamento dos fornecedores...");
-        // Aguardar 1 segundo e tentar novamente
-        setTimeout(() => detectAndHandleSupplier(name, document, confidence), 1000);
+        console.log("⏳ Fornecedores não carregados, criando novo fornecedor...");
+        // Se não conseguir carregar fornecedores, proceder com criação de novo
+        setAutoSupplierModalState({
+          isOpen: true,
+          supplierName: name,
+          supplierDocument: document,
+          confidence: confidence || 0,
+          isNewSupplier: true,
+          existingSupplier: null
+        });
         return;
       }
 
