@@ -1830,6 +1830,52 @@ export function UploadBpo() {
         onSkip={handleSupplierSkip}
       />
 
+      {/* Modal de Preview do Documento */}
+      <Dialog open={documentPreviewModal} onOpenChange={setDocumentPreviewModal}>
+        <DialogContent className="max-w-4xl max-h-[90vh] overflow-hidden">
+          <DialogHeader>
+            <DialogTitle className="flex items-center gap-2">
+              <FileText className="h-5 w-5 text-[#E40064]" />
+              Prévia do Documento
+            </DialogTitle>
+          </DialogHeader>
+          
+          {selectedFile && (
+            <div className="space-y-4">
+              <div className="text-sm text-gray-600">
+                <p><strong>Arquivo:</strong> {selectedFile.name}</p>
+                <p><strong>Tamanho:</strong> {Math.round(selectedFile.size/1024)}KB</p>
+                <p><strong>Tipo:</strong> {selectedFile.type}</p>
+              </div>
+              
+              {selectedFile.type.startsWith('image/') ? (
+                <div className="flex justify-center">
+                  <img 
+                    src={URL.createObjectURL(selectedFile)} 
+                    alt="Preview do documento"
+                    className="max-w-full max-h-[60vh] object-contain border rounded"
+                  />
+                </div>
+              ) : selectedFile.type === 'application/pdf' ? (
+                <div className="w-full h-[60vh] border rounded">
+                  <iframe
+                    src={URL.createObjectURL(selectedFile)}
+                    className="w-full h-full"
+                    title="Preview do PDF"
+                  />
+                </div>
+              ) : (
+                <div className="text-center py-8 text-gray-500">
+                  <FileText className="h-12 w-12 mx-auto mb-2" />
+                  <p>Prévia não disponível para este tipo de arquivo</p>
+                  <p className="text-sm">({selectedFile.type})</p>
+                </div>
+              )}
+            </div>
+          )}
+        </DialogContent>
+      </Dialog>
+
     </div>
   );
 };
