@@ -450,7 +450,10 @@ export function UploadBpo() {
         console.log("🏢 Sugestões operacionais recebidas:", data.suggestions.operationalSuggestions);
         const operationalFields = Object.entries(data.suggestions.operationalSuggestions).map(([key, value]) => ({
           field: key,
-          value: value
+          value: typeof value === 'object' ? JSON.stringify(value) : String(value),
+          confidence: 85,
+          source: 'ai_suggestion',
+          reasoning: 'Sugestão baseada em análise do documento'
         }));
         setAutoFilledFields(operationalFields);
         setShowAutoFillConfirmation(true);
@@ -506,7 +509,6 @@ export function UploadBpo() {
         console.log("⏳ Fornecedores não carregados, criando novo fornecedor...");
         // Se não conseguir carregar fornecedores, proceder com criação de novo
         setAutoSupplierModal({
-          isOpen: true,
           supplierName: name,
           supplierDocument: document,
           confidence: confidence || 0,
@@ -1643,7 +1645,7 @@ export function UploadBpo() {
                         {field.value}
                       </p>
                       <p className="text-xs text-gray-500 dark:text-gray-400 mt-1">
-                        {field.reasoning}
+                        {field.reasoning || "Sugestão automática"}
                       </p>
                     </div>
                     <div className="flex flex-col items-end gap-1">
