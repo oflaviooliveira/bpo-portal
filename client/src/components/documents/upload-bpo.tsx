@@ -327,12 +327,6 @@ export function UploadBpo() {
           source: "IA"
         });
 
-        // Detectar e processar fornecedor inteligentemente
-        detectAndHandleSupplier(
-          contraparteValue || '', 
-          data.suggestions?.documento || '',
-          data.suggestions?.confidence?.supplier || 95
-        );
         console.log("🏢 Processando fornecedor da IA:", contraparteValue);
       }
 
@@ -414,14 +408,18 @@ export function UploadBpo() {
           console.log("📝 Descrição preenchida automaticamente:", data.suggestions.realData.description);
         }
         
-        // 🏢 CORREÇÃO: Preencher fornecedor automaticamente 
+        // 🏢 NOVA LÓGICA: Detectar fornecedor uma única vez
         if (data.suggestions.realData.supplier) {
           console.log("🏢 Detectando fornecedor automaticamente:", data.suggestions.realData.supplier);
-          detectAndHandleSupplier(
-            data.suggestions.realData.supplier, 
-            data.suggestions.realData.document, 
-            90
-          );
+          
+          // Aguardar um momento para garantir que as queries foram carregadas
+          setTimeout(() => {
+            detectAndHandleSupplier(
+              data.suggestions.realData.supplier, 
+              data.suggestions.realData.document, 
+              90
+            );
+          }, 100);
         }
         
         // 📅 NOVA FUNCIONALIDADE: Auto-preencher data de agendamento com data de vencimento
@@ -504,9 +502,15 @@ export function UploadBpo() {
       console.log("📋 Total de fornecedores disponíveis:", contrapartes?.length || 0);
       console.log("📋 Lista de fornecedores:", contrapartes?.map((c: any) => ({ id: c.id, name: c.name })) || []);
       
+      // Se modal já está aberto, não duplicar detecção
+      if (autoSupplierModal.open) {
+        console.log("⏸️ Modal já aberto, ignorando detecção duplicada");
+        return;
+      }
+      
       // Verificar se os dados estão carregados, mas evitar loop infinito
       if (!contrapartes || contrapartes.length === 0) {
-        console.log("⏳ Fornecedores não carregados, criando novo fornecedor...");
+        console.log("⏳ Fornecedores não carregados ou lista vazia, criando novo fornecedor...");
         // Se não conseguir carregar fornecedores, proceder com criação de novo
         setAutoSupplierModal({
           open: true,
@@ -612,11 +616,16 @@ export function UploadBpo() {
   // Handlers do modal
   const handleSupplierCreated = (newSupplier: any) => {
     form.setValue("contraparteId", newSupplier.id);
+    
+    // CORREÇÃO: Invalidar cache corretamente
     queryClient.invalidateQueries({ queryKey: ["/api/fornecedores"] });
+    queryClient.invalidateQueries({ queryKey: ["/api/fornecedores", documentType] });
+    
+    console.log("✅ Fornecedor criado e selecionado automaticamente:", newSupplier.id, newSupplier.name);
     
     toast({
       title: "Fornecedor cadastrado",
-      description: `${newSupplier.name} foi adicionado com sucesso`,
+      description: `${newSupplier.name} foi adicionado com sucesso e selecionado`,
     });
   };
 
