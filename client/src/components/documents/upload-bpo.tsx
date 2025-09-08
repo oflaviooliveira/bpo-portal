@@ -328,6 +328,24 @@ export function UploadBpo() {
         });
 
         console.log("🏢 Processando fornecedor da IA:", contraparteValue);
+        
+        // 🚨 CRÍTICO: DETECÇÃO AUTOMÁTICA DE FORNECEDOR AQUI!
+        console.log("🔍 INICIANDO DETECÇÃO AUTOMÁTICA DE FORNECEDOR");
+        console.log("📄 Supplier detectado:", contraparteValue);
+        console.log("🆔 Document:", data.suggestions?.documento || data.suggestions?.document || '');
+        
+        // Aguardar queries carregarem e executar detecção automática
+        setTimeout(() => {
+          console.log("🚀 EXECUTANDO detectAndHandleSupplier COM DADOS REAIS:");
+          console.log("  Supplier:", contraparteValue);
+          console.log("  Document:", data.suggestions?.documento || data.suggestions?.document || '');
+          
+          detectAndHandleSupplier(
+            contraparteValue,
+            data.suggestions?.documento || data.suggestions?.document || '',
+            data.suggestions?.confidence?.supplier || 95
+          );
+        }, 200);
       }
 
       if (data.suggestions.description) {
