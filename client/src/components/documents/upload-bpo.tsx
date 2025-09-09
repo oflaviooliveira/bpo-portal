@@ -117,7 +117,14 @@ const bpoUploadSchema = z.object({
   }
 
   if (data.documentType === "EMITIR_BOLETO" || data.documentType === "EMITIR_NF") {
+    // 🔴 CAMPOS OBRIGATÓRIOS PARA BOLETO/NF (alinhados com backend)
     const requiredFields = [
+      // Campos de negócio obrigatórios
+      { field: "categoryId", name: "Categoria" },
+      { field: "costCenterId", name: "Centro de Custo" },
+      { field: "scheduledDate", name: "Data de Vencimento" }, // será mapeado para dueDate
+      
+      // Dados do tomador obrigatórios
       { field: "payerDocument", name: "CNPJ/CPF do Tomador" },
       { field: "payerName", name: "Nome/Razão Social" },
       { field: "payerEmail", name: "Email" },
