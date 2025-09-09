@@ -42,6 +42,9 @@ export interface IStorage {
   // Banks
   getBanks(): Promise<Bank[]>;
   getBank(id: string): Promise<Bank | undefined>;
+  createBank(bank: InsertBank): Promise<Bank>;
+  updateBank(id: string, updates: Partial<InsertBank>): Promise<Bank>;
+  deleteBank(id: string): Promise<void>;
   
   // Categories
   getCategories(tenantId: string): Promise<Category[]>;
@@ -266,6 +269,25 @@ export class DatabaseStorage implements IStorage {
   async getBank(id: string): Promise<Bank | undefined> {
     const [bank] = await db.select().from(banks).where(eq(banks.id, id));
     return bank || undefined;
+  }
+
+  async createBank(bank: InsertBank): Promise<Bank> {
+    const [newBank] = await db.insert(banks).values(bank).returning();
+    return newBank;
+  }
+
+  async updateBank(id: string, updates: Partial<InsertBank>): Promise<Bank> {
+    const [updated] = await db.update(banks)
+      .set(updates)
+      .where(eq(banks.id, id))
+      .returning();
+    return updated;
+  }
+
+  async deleteBank(id: string): Promise<void> {
+    await db.update(banks)
+      .set({ isActive: false })
+      .where(eq(banks.id, id));
   }
 
   async getCategories(tenantId: string): Promise<Category[]> {

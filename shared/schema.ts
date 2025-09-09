@@ -520,6 +520,13 @@ export const userSupplierPreferences = pgTable("user_supplier_preferences", {
 
 export const insertUserSupplierPreferencesSchema = createInsertSchema(userSupplierPreferences);
 
+export const insertBankSchema = createInsertSchema(banks).pick({
+  code: true,
+  name: true,
+  isActive: true,
+});
+
+export type InsertBank = z.infer<typeof insertBankSchema>;
 export type Bank = typeof banks.$inferSelect;
 export type Category = typeof categories.$inferSelect;
 export type CostCenter = typeof costCenters.$inferSelect;

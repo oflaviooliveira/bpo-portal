@@ -720,6 +720,40 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
+  // Create bank
+  app.post("/api/banks", ...authorize(["SUPER_ADMIN", "CLIENT_USER"], true), async (req, res) => {
+    try {
+      const bankData = req.body;
+      const newBank = await storage.createBank(bankData);
+      res.status(201).json(newBank);
+    } catch (error) {
+      console.error("Create bank error:", error);
+      res.status(500).json({ error: "Erro ao criar banco" });
+    }
+  });
+
+  // Update bank
+  app.patch("/api/banks/:id", ...authorize(["SUPER_ADMIN", "CLIENT_USER"], true), async (req, res) => {
+    try {
+      const bank = await storage.updateBank(req.params.id, req.body);
+      res.json(bank);
+    } catch (error) {
+      console.error("Update bank error:", error);
+      res.status(500).json({ error: "Erro ao atualizar banco" });
+    }
+  });
+
+  // Delete bank
+  app.delete("/api/banks/:id", ...authorize(["SUPER_ADMIN", "CLIENT_USER"], true), async (req, res) => {
+    try {
+      await storage.deleteBank(req.params.id);
+      res.status(204).send();
+    } catch (error) {
+      console.error("Delete bank error:", error);
+      res.status(500).json({ error: "Erro ao excluir banco" });
+    }
+  });
+
   // Get categories
   app.get("/api/categories", isAuthenticated, async (req, res) => {
     try {
