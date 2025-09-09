@@ -2012,7 +2012,7 @@ export function UploadBpo() {
 
               {/* Categoria */}
               <div className="space-y-2">
-                <Label>Categoria</Label>
+                <Label>Categoria {(documentType === "EMITIR_BOLETO" || documentType === "EMITIR_NF") && <span className="text-red-500">*</span>}</Label>
                 <Select 
                   value={form.watch("categoryId") || ""} 
                   onValueChange={(value) => form.setValue("categoryId", value)}
@@ -2028,11 +2028,14 @@ export function UploadBpo() {
                     ))}
                   </SelectContent>
                 </Select>
+                {form.formState.errors.categoryId && (
+                  <p className="text-sm text-red-500">{form.formState.errors.categoryId.message}</p>
+                )}
               </div>
 
               {/* Centro de Custo */}
               <div className="space-y-2">
-                <Label>Centro de Custo</Label>
+                <Label>Centro de Custo {(documentType === "EMITIR_BOLETO" || documentType === "EMITIR_NF") && <span className="text-red-500">*</span>}</Label>
                 <Select 
                   value={form.watch("costCenterId") || ""} 
                   onValueChange={(value) => form.setValue("costCenterId", value)}
@@ -2048,6 +2051,9 @@ export function UploadBpo() {
                     ))}
                   </SelectContent>
                 </Select>
+                {form.formState.errors.costCenterId && (
+                  <p className="text-sm text-red-500">{form.formState.errors.costCenterId.message}</p>
+                )}
               </div>
             </div>
 
