@@ -1,0 +1,648 @@
+The source list for the Content Security Policy directive 'default-src' contains an invalid source: ''unsafe-dynamic''. It will be ignored.Understand this error
+32The Content-Security-Policy directive 'default-src' contains 'report-uri' as a source expression. Did you want to add it as a directive and forget a semicolon?Understand this error
+32The source list for Content Security Policy directive 'default-src' contains a source with an invalid path: '/api/4509669501698048/security/?sentry_key=7eb3d90eb4660416caf507087367e67e'. The query component, including the '?', will be ignored.Understand this error
+PortalBPOSystem:1 The source list for the Content Security Policy directive 'default-src' contains an invalid source: ''unsafe-dynamic''. It will be ignored.Understand this error
+PortalBPOSystem:1 The Content-Security-Policy directive 'default-src' contains 'report-uri' as a source expression. Did you want to add it as a directive and forget a semicolon?Understand this error
+PortalBPOSystem:1 The source list for Content Security Policy directive 'default-src' contains a source with an invalid path: '/api/4509669501698048/security/?sentry_key=7eb3d90eb4660416caf507087367e67e'. The query component, including the '?', will be ignored.Understand this error
+_app-75eb6157eb4a4a69.js:38 
+      /////////////////////
+   ///////////////////////////
+  ////////@@@@@@@//////////////
+  ////////@@@@@@@//////////////
+  ////////@@@@@@@//////////////        Curious and driven?
+  ///////////////@@@@@@@///////        Work with us!
+  ///////////////@@@@@@@///////
+  ///////////////@@@@@@@///////        https://join.replit.com/hack.with.us
+  ////////@@@@@@@//////////////
+  ////////@@@@@@@//////////////
+  ////////@@@@@@#//////////////
+   ///////////////////////////
+      /////////////////////
+      
+PortalBPOSystem:1 Unchecked runtime.lastError: A listener indicated an asynchronous response by returning true, but the message channel closed before a response was receivedUnderstand this error
+_app-75eb6157eb4a4a69.js:38 [LaunchDarkly] LaunchDarkly client initialized
+PortalBPOSystem:1 Banner not shown: beforeinstallpromptevent.preventDefault() called. The page must call beforeinstallpromptevent.prompt() to show the banner.
+m.stripe.com/6:1  Failed to load resource: net::ERR_NAME_NOT_RESOLVEDUnderstand this error
+9Error while parsing the 'sandbox' attribute: 'allow-downloads-without-user-activation' is an invalid sandbox flag.Understand this error
+framework-9a9c6335dcff2872.js:1 Unrecognized feature: 'ambient-light-sensor'.
+_ @ framework-9a9c6335dcff2872.js:1Understand this warning
+framework-9a9c6335dcff2872.js:1 Unrecognized feature: 'battery'.
+_ @ framework-9a9c6335dcff2872.js:1Understand this warning
+framework-9a9c6335dcff2872.js:1 Unrecognized feature: 'execution-while-not-rendered'.
+_ @ framework-9a9c6335dcff2872.js:1Understand this warning
+framework-9a9c6335dcff2872.js:1 Unrecognized feature: 'execution-while-out-of-viewport'.
+_ @ framework-9a9c6335dcff2872.js:1Understand this warning
+framework-9a9c6335dcff2872.js:1 Unrecognized feature: 'layout-animations'.
+_ @ framework-9a9c6335dcff2872.js:1Understand this warning
+framework-9a9c6335dcff2872.js:1 Unrecognized feature: 'legacy-image-formats'.
+_ @ framework-9a9c6335dcff2872.js:1Understand this warning
+framework-9a9c6335dcff2872.js:1 Unrecognized feature: 'navigation-override'.
+_ @ framework-9a9c6335dcff2872.js:1Understand this warning
+framework-9a9c6335dcff2872.js:1 Unrecognized feature: 'oversized-images'.
+_ @ framework-9a9c6335dcff2872.js:1Understand this warning
+framework-9a9c6335dcff2872.js:1 Unrecognized feature: 'publickey-credentials'.
+_ @ framework-9a9c6335dcff2872.js:1Understand this warning
+framework-9a9c6335dcff2872.js:1 Unrecognized feature: 'speaker-selection'.
+_ @ framework-9a9c6335dcff2872.js:1Understand this warning
+framework-9a9c6335dcff2872.js:1 Unrecognized feature: 'unoptimized-images'.
+_ @ framework-9a9c6335dcff2872.js:1Understand this warning
+framework-9a9c6335dcff2872.js:1 Unrecognized feature: 'unsized-media'.
+_ @ framework-9a9c6335dcff2872.js:1Understand this warning
+framework-9a9c6335dcff2872.js:1 Unrecognized feature: 'pointer-lock'.
+_ @ framework-9a9c6335dcff2872.js:1Understand this warning
+framework-9a9c6335dcff2872.js:1 Allow attribute will take precedence over 'allowfullscreen'.
+_ @ framework-9a9c6335dcff2872.js:1Understand this warning
+framework-9a9c6335dcff2872.js:1 Allow attribute will take precedence over 'allowpaymentrequest'.
+_ @ framework-9a9c6335dcff2872.js:1Understand this warning
+15PortalBPOSystem:1 Uncaught (in promise) Error: A listener indicated an asynchronous response by returning true, but the message channel closed before a response was receivedUnderstand this error
+isolated.js:1 Uncaught (in promise) Error: Extension context invalidated.
+    at G.start (isolated.js:1:9235)
+    at new G (isolated.js:1:9042)
+    at <instance_members_initializer> (isolated.js:1:55322)
+    at new We (isolated.js:1:55253)
+    at at.handleVisibleChange [as cb] (isolated.js:1:92448)
+    at at.sync (isolated.js:1:77446)
+    at handleChange (isolated.js:1:77419)
+    at isolated.js:1:91379
+    at Set.forEach (<anonymous>)
+    at handleVisibilityChange (isolated.js:1:91366)Understand this error
+isolated.js:1 Uncaught (in promise) Error: Extension context invalidated.
+    at G.start (isolated.js:1:9235)
+    at new G (isolated.js:1:9042)
+    at <instance_members_initializer> (isolated.js:1:55434)
+    at new We (isolated.js:1:55253)
+    at at.handleVisibleChange [as cb] (isolated.js:1:92448)
+    at at.sync (isolated.js:1:77446)
+    at handleChange (isolated.js:1:77419)
+    at isolated.js:1:91379
+    at Set.forEach (<anonymous>)
+    at handleVisibilityChange (isolated.js:1:91366)Understand this error
+isolated.js:1 Uncaught (in promise) Error: Extension context invalidated.
+    at G.start (isolated.js:1:9235)
+    at new G (isolated.js:1:9042)
+    at <instance_members_initializer> (isolated.js:1:55709)
+    at new We (isolated.js:1:55253)
+    at at.handleVisibleChange [as cb] (isolated.js:1:92448)
+    at at.sync (isolated.js:1:77446)
+    at handleChange (isolated.js:1:77419)
+    at isolated.js:1:91379
+    at Set.forEach (<anonymous>)
+    at handleVisibilityChange (isolated.js:1:91366)Understand this error
+VM5 isolated.js:1 Uncaught (in promise) Error: Extension context invalidated.
+    at G.start (isolated.js:1:9235)
+    at new G (isolated.js:1:9042)
+    at <instance_members_initializer> (isolated.js:1:55322)
+    at new We (isolated.js:1:55253)
+    at at.handleVisibleChange [as cb] (isolated.js:1:92448)
+    at at.sync (isolated.js:1:77446)
+    at handleChange (isolated.js:1:77419)
+    at isolated.js:1:91379
+    at Set.forEach (<anonymous>)
+    at handleVisibilityChange (isolated.js:1:91366)Understand this error
+VM5 isolated.js:1 Uncaught (in promise) Error: Extension context invalidated.
+    at G.start (isolated.js:1:9235)
+    at new G (isolated.js:1:9042)
+    at <instance_members_initializer> (isolated.js:1:55434)
+    at new We (isolated.js:1:55253)
+    at at.handleVisibleChange [as cb] (isolated.js:1:92448)
+    at at.sync (isolated.js:1:77446)
+    at handleChange (isolated.js:1:77419)
+    at isolated.js:1:91379
+    at Set.forEach (<anonymous>)
+    at handleVisibilityChange (isolated.js:1:91366)Understand this error
+VM5 isolated.js:1 Uncaught (in promise) Error: Extension context invalidated.
+    at G.start (isolated.js:1:9235)
+    at new G (isolated.js:1:9042)
+    at <instance_members_initializer> (isolated.js:1:55709)
+    at new We (isolated.js:1:55253)
+    at at.handleVisibleChange [as cb] (isolated.js:1:92448)
+    at at.sync (isolated.js:1:77446)
+    at handleChange (isolated.js:1:77419)
+    at isolated.js:1:91379
+    at Set.forEach (<anonymous>)
+    at handleVisibilityChange (isolated.js:1:91366)Understand this error
+isolated.js:1 Uncaught (in promise) Error: Extension context invalidated.
+    at G.start (isolated.js:1:9235)
+    at new G (isolated.js:1:9042)
+    at <instance_members_initializer> (isolated.js:1:55322)
+    at new We (isolated.js:1:55253)
+    at at.handleVisibleChange [as cb] (isolated.js:1:92448)
+    at at.sync (isolated.js:1:77446)
+    at handleChange (isolated.js:1:77419)
+    at isolated.js:1:91379
+    at Set.forEach (<anonymous>)
+    at handleVisibilityChange (isolated.js:1:91366)Understand this error
+isolated.js:1 Uncaught (in promise) Error: Extension context invalidated.
+    at G.start (isolated.js:1:9235)
+    at new G (isolated.js:1:9042)
+    at <instance_members_initializer> (isolated.js:1:55434)
+    at new We (isolated.js:1:55253)
+    at at.handleVisibleChange [as cb] (isolated.js:1:92448)
+    at at.sync (isolated.js:1:77446)
+    at handleChange (isolated.js:1:77419)
+    at isolated.js:1:91379
+    at Set.forEach (<anonymous>)
+    at handleVisibilityChange (isolated.js:1:91366)Understand this error
+isolated.js:1 Uncaught (in promise) Error: Extension context invalidated.
+    at G.start (isolated.js:1:9235)
+    at new G (isolated.js:1:9042)
+    at <instance_members_initializer> (isolated.js:1:55709)
+    at new We (isolated.js:1:55253)
+    at at.handleVisibleChange [as cb] (isolated.js:1:92448)
+    at at.sync (isolated.js:1:77446)
+    at handleChange (isolated.js:1:77419)
+    at isolated.js:1:91379
+    at Set.forEach (<anonymous>)
+    at handleVisibilityChange (isolated.js:1:91366)Understand this error
+VM83 isolated.js:1 Uncaught (in promise) Error: Extension context invalidated.
+    at G.start (isolated.js:1:9235)
+    at new G (isolated.js:1:9042)
+    at <instance_members_initializer> (isolated.js:1:55322)
+    at new We (isolated.js:1:55253)
+    at at.handleVisibleChange [as cb] (isolated.js:1:92448)
+    at at.sync (isolated.js:1:77446)
+    at handleChange (isolated.js:1:77419)
+    at isolated.js:1:91379
+    at Set.forEach (<anonymous>)
+    at handleVisibilityChange (isolated.js:1:91366)Understand this error
+VM83 isolated.js:1 Uncaught (in promise) Error: Extension context invalidated.
+    at G.start (isolated.js:1:9235)
+    at new G (isolated.js:1:9042)
+    at <instance_members_initializer> (isolated.js:1:55434)
+    at new We (isolated.js:1:55253)
+    at at.handleVisibleChange [as cb] (isolated.js:1:92448)
+    at at.sync (isolated.js:1:77446)
+    at handleChange (isolated.js:1:77419)
+    at isolated.js:1:91379
+    at Set.forEach (<anonymous>)
+    at handleVisibilityChange (isolated.js:1:91366)Understand this error
+VM83 isolated.js:1 Uncaught (in promise) Error: Extension context invalidated.
+    at G.start (isolated.js:1:9235)
+    at new G (isolated.js:1:9042)
+    at <instance_members_initializer> (isolated.js:1:55709)
+    at new We (isolated.js:1:55253)
+    at at.handleVisibleChange [as cb] (isolated.js:1:92448)
+    at at.sync (isolated.js:1:77446)
+    at handleChange (isolated.js:1:77419)
+    at isolated.js:1:91379
+    at Set.forEach (<anonymous>)
+    at handleVisibilityChange (isolated.js:1:91366)Understand this error
+isolated.js:1 Uncaught (in promise) Error: Extension context invalidated.
+    at G.start (isolated.js:1:9235)
+    at new G (isolated.js:1:9042)
+    at <instance_members_initializer> (isolated.js:1:55322)
+    at new We (isolated.js:1:55253)
+    at at.handleVisibleChange [as cb] (isolated.js:1:92448)
+    at at.sync (isolated.js:1:77446)
+    at handleChange (isolated.js:1:77419)
+    at isolated.js:1:91379
+    at Set.forEach (<anonymous>)
+    at handleVisibilityChange (isolated.js:1:91366)Understand this error
+isolated.js:1 Uncaught (in promise) Error: Extension context invalidated.
+    at G.start (isolated.js:1:9235)
+    at new G (isolated.js:1:9042)
+    at <instance_members_initializer> (isolated.js:1:55434)
+    at new We (isolated.js:1:55253)
+    at at.handleVisibleChange [as cb] (isolated.js:1:92448)
+    at at.sync (isolated.js:1:77446)
+    at handleChange (isolated.js:1:77419)
+    at isolated.js:1:91379
+    at Set.forEach (<anonymous>)
+    at handleVisibilityChange (isolated.js:1:91366)Understand this error
+isolated.js:1 Uncaught (in promise) Error: Extension context invalidated.
+    at G.start (isolated.js:1:9235)
+    at new G (isolated.js:1:9042)
+    at <instance_members_initializer> (isolated.js:1:55709)
+    at new We (isolated.js:1:55253)
+    at at.handleVisibleChange [as cb] (isolated.js:1:92448)
+    at at.sync (isolated.js:1:77446)
+    at handleChange (isolated.js:1:77419)
+    at isolated.js:1:91379
+    at Set.forEach (<anonymous>)
+    at handleVisibilityChange (isolated.js:1:91366)Understand this error
+isolated.js:1 Uncaught (in promise) Error: Extension context invalidated.
+    at G.start (isolated.js:1:9235)
+    at new G (isolated.js:1:9042)
+    at <instance_members_initializer> (isolated.js:1:55322)
+    at new We (isolated.js:1:55253)
+    at at.handleVisibleChange [as cb] (isolated.js:1:92448)
+    at at.sync (isolated.js:1:77446)
+    at handleChange (isolated.js:1:77419)
+    at isolated.js:1:91379
+    at Set.forEach (<anonymous>)
+    at handleVisibilityChange (isolated.js:1:91366)Understand this error
+isolated.js:1 Uncaught (in promise) Error: Extension context invalidated.
+    at G.start (isolated.js:1:9235)
+    at new G (isolated.js:1:9042)
+    at <instance_members_initializer> (isolated.js:1:55434)
+    at new We (isolated.js:1:55253)
+    at at.handleVisibleChange [as cb] (isolated.js:1:92448)
+    at at.sync (isolated.js:1:77446)
+    at handleChange (isolated.js:1:77419)
+    at isolated.js:1:91379
+    at Set.forEach (<anonymous>)
+    at handleVisibilityChange (isolated.js:1:91366)Understand this error
+isolated.js:1 Uncaught (in promise) Error: Extension context invalidated.
+    at G.start (isolated.js:1:9235)
+    at new G (isolated.js:1:9042)
+    at <instance_members_initializer> (isolated.js:1:55709)
+    at new We (isolated.js:1:55253)
+    at at.handleVisibleChange [as cb] (isolated.js:1:92448)
+    at at.sync (isolated.js:1:77446)
+    at handleChange (isolated.js:1:77419)
+    at isolated.js:1:91379
+    at Set.forEach (<anonymous>)
+    at handleVisibilityChange (isolated.js:1:91366)Understand this error
+isolated.js:1 Uncaught (in promise) Error: Extension context invalidated.
+    at G.start (isolated.js:1:9235)
+    at new G (isolated.js:1:9042)
+    at <instance_members_initializer> (isolated.js:1:55322)
+    at new We (isolated.js:1:55253)
+    at at.handleVisibleChange [as cb] (isolated.js:1:92448)
+    at at.sync (isolated.js:1:77446)
+    at handleChange (isolated.js:1:77419)
+    at isolated.js:1:91379
+    at Set.forEach (<anonymous>)
+    at handleVisibilityChange (isolated.js:1:91366)Understand this error
+isolated.js:1 Uncaught (in promise) Error: Extension context invalidated.
+    at G.start (isolated.js:1:9235)
+    at new G (isolated.js:1:9042)
+    at <instance_members_initializer> (isolated.js:1:55434)
+    at new We (isolated.js:1:55253)
+    at at.handleVisibleChange [as cb] (isolated.js:1:92448)
+    at at.sync (isolated.js:1:77446)
+    at handleChange (isolated.js:1:77419)
+    at isolated.js:1:91379
+    at Set.forEach (<anonymous>)
+    at handleVisibilityChange (isolated.js:1:91366)Understand this error
+isolated.js:1 Uncaught (in promise) Error: Extension context invalidated.
+    at G.start (isolated.js:1:9235)
+    at new G (isolated.js:1:9042)
+    at <instance_members_initializer> (isolated.js:1:55709)
+    at new We (isolated.js:1:55253)
+    at at.handleVisibleChange [as cb] (isolated.js:1:92448)
+    at at.sync (isolated.js:1:77446)
+    at handleChange (isolated.js:1:77419)
+    at isolated.js:1:91379
+    at Set.forEach (<anonymous>)
+    at handleVisibilityChange (isolated.js:1:91366)Understand this error
+3isolated.js:1 Uncaught (in promise) Error: Extension context invalidated.Understand this error
+2isolated.js:1 Uncaught Error: Extension context invalidated.
+    at Q (isolated.js:1:18564)
+    at handleBlur (isolated.js:1:61330)Understand this error
+isolated.js:1 Uncaught (in promise) Error: Extension context invalidated.
+    at G.start (isolated.js:1:9235)
+    at new G (isolated.js:1:9042)
+    at <instance_members_initializer> (isolated.js:1:55322)
+    at new We (isolated.js:1:55253)
+    at at.handleVisibleChange [as cb] (isolated.js:1:92448)
+    at at.sync (isolated.js:1:77446)
+    at handleChange (isolated.js:1:77419)
+    at isolated.js:1:91379
+    at Set.forEach (<anonymous>)
+    at handleVisibilityChange (isolated.js:1:91366)Understand this error
+isolated.js:1 Uncaught (in promise) Error: Extension context invalidated.
+    at G.start (isolated.js:1:9235)
+    at new G (isolated.js:1:9042)
+    at <instance_members_initializer> (isolated.js:1:55434)
+    at new We (isolated.js:1:55253)
+    at at.handleVisibleChange [as cb] (isolated.js:1:92448)
+    at at.sync (isolated.js:1:77446)
+    at handleChange (isolated.js:1:77419)
+    at isolated.js:1:91379
+    at Set.forEach (<anonymous>)
+    at handleVisibilityChange (isolated.js:1:91366)Understand this error
+isolated.js:1 Uncaught (in promise) Error: Extension context invalidated.
+    at G.start (isolated.js:1:9235)
+    at new G (isolated.js:1:9042)
+    at <instance_members_initializer> (isolated.js:1:55709)
+    at new We (isolated.js:1:55253)
+    at at.handleVisibleChange [as cb] (isolated.js:1:92448)
+    at at.sync (isolated.js:1:77446)
+    at handleChange (isolated.js:1:77419)
+    at isolated.js:1:91379
+    at Set.forEach (<anonymous>)
+    at handleVisibilityChange (isolated.js:1:91366)Understand this error
+VM5 isolated.js:1 Uncaught (in promise) Error: Extension context invalidated.
+    at G.start (isolated.js:1:9235)
+    at new G (isolated.js:1:9042)
+    at <instance_members_initializer> (isolated.js:1:55322)
+    at new We (isolated.js:1:55253)
+    at at.handleVisibleChange [as cb] (isolated.js:1:92448)
+    at at.sync (isolated.js:1:77446)
+    at handleChange (isolated.js:1:77419)
+    at isolated.js:1:91379
+    at Set.forEach (<anonymous>)
+    at handleVisibilityChange (isolated.js:1:91366)Understand this error
+VM5 isolated.js:1 Uncaught (in promise) Error: Extension context invalidated.
+    at G.start (isolated.js:1:9235)
+    at new G (isolated.js:1:9042)
+    at <instance_members_initializer> (isolated.js:1:55434)
+    at new We (isolated.js:1:55253)
+    at at.handleVisibleChange [as cb] (isolated.js:1:92448)
+    at at.sync (isolated.js:1:77446)
+    at handleChange (isolated.js:1:77419)
+    at isolated.js:1:91379
+    at Set.forEach (<anonymous>)
+    at handleVisibilityChange (isolated.js:1:91366)Understand this error
+VM5 isolated.js:1 Uncaught (in promise) Error: Extension context invalidated.
+    at G.start (isolated.js:1:9235)
+    at new G (isolated.js:1:9042)
+    at <instance_members_initializer> (isolated.js:1:55709)
+    at new We (isolated.js:1:55253)
+    at at.handleVisibleChange [as cb] (isolated.js:1:92448)
+    at at.sync (isolated.js:1:77446)
+    at handleChange (isolated.js:1:77419)
+    at isolated.js:1:91379
+    at Set.forEach (<anonymous>)
+    at handleVisibilityChange (isolated.js:1:91366)Understand this error
+isolated.js:1 Uncaught (in promise) Error: Extension context invalidated.
+    at G.start (isolated.js:1:9235)
+    at new G (isolated.js:1:9042)
+    at <instance_members_initializer> (isolated.js:1:55322)
+    at new We (isolated.js:1:55253)
+    at at.handleVisibleChange [as cb] (isolated.js:1:92448)
+    at at.sync (isolated.js:1:77446)
+    at handleChange (isolated.js:1:77419)
+    at isolated.js:1:91379
+    at Set.forEach (<anonymous>)
+    at handleVisibilityChange (isolated.js:1:91366)Understand this error
+isolated.js:1 Uncaught (in promise) Error: Extension context invalidated.
+    at G.start (isolated.js:1:9235)
+    at new G (isolated.js:1:9042)
+    at <instance_members_initializer> (isolated.js:1:55434)
+    at new We (isolated.js:1:55253)
+    at at.handleVisibleChange [as cb] (isolated.js:1:92448)
+    at at.sync (isolated.js:1:77446)
+    at handleChange (isolated.js:1:77419)
+    at isolated.js:1:91379
+    at Set.forEach (<anonymous>)
+    at handleVisibilityChange (isolated.js:1:91366)Understand this error
+isolated.js:1 Uncaught (in promise) Error: Extension context invalidated.
+    at G.start (isolated.js:1:9235)
+    at new G (isolated.js:1:9042)
+    at <instance_members_initializer> (isolated.js:1:55709)
+    at new We (isolated.js:1:55253)
+    at at.handleVisibleChange [as cb] (isolated.js:1:92448)
+    at at.sync (isolated.js:1:77446)
+    at handleChange (isolated.js:1:77419)
+    at isolated.js:1:91379
+    at Set.forEach (<anonymous>)
+    at handleVisibilityChange (isolated.js:1:91366)Understand this error
+VM83 isolated.js:1 Uncaught (in promise) Error: Extension context invalidated.
+    at G.start (isolated.js:1:9235)
+    at new G (isolated.js:1:9042)
+    at <instance_members_initializer> (isolated.js:1:55322)
+    at new We (isolated.js:1:55253)
+    at at.handleVisibleChange [as cb] (isolated.js:1:92448)
+    at at.sync (isolated.js:1:77446)
+    at handleChange (isolated.js:1:77419)
+    at isolated.js:1:91379
+    at Set.forEach (<anonymous>)
+    at handleVisibilityChange (isolated.js:1:91366)Understand this error
+VM83 isolated.js:1 Uncaught (in promise) Error: Extension context invalidated.
+    at G.start (isolated.js:1:9235)
+    at new G (isolated.js:1:9042)
+    at <instance_members_initializer> (isolated.js:1:55434)
+    at new We (isolated.js:1:55253)
+    at at.handleVisibleChange [as cb] (isolated.js:1:92448)
+    at at.sync (isolated.js:1:77446)
+    at handleChange (isolated.js:1:77419)
+    at isolated.js:1:91379
+    at Set.forEach (<anonymous>)
+    at handleVisibilityChange (isolated.js:1:91366)Understand this error
+VM83 isolated.js:1 Uncaught (in promise) Error: Extension context invalidated.
+    at G.start (isolated.js:1:9235)
+    at new G (isolated.js:1:9042)
+    at <instance_members_initializer> (isolated.js:1:55709)
+    at new We (isolated.js:1:55253)
+    at at.handleVisibleChange [as cb] (isolated.js:1:92448)
+    at at.sync (isolated.js:1:77446)
+    at handleChange (isolated.js:1:77419)
+    at isolated.js:1:91379
+    at Set.forEach (<anonymous>)
+    at handleVisibilityChange (isolated.js:1:91366)Understand this error
+isolated.js:1 Uncaught (in promise) Error: Extension context invalidated.
+    at G.start (isolated.js:1:9235)
+    at new G (isolated.js:1:9042)
+    at <instance_members_initializer> (isolated.js:1:55322)
+    at new We (isolated.js:1:55253)
+    at at.handleVisibleChange [as cb] (isolated.js:1:92448)
+    at at.sync (isolated.js:1:77446)
+    at handleChange (isolated.js:1:77419)
+    at isolated.js:1:91379
+    at Set.forEach (<anonymous>)
+    at handleVisibilityChange (isolated.js:1:91366)Understand this error
+isolated.js:1 Uncaught (in promise) Error: Extension context invalidated.
+    at G.start (isolated.js:1:9235)
+    at new G (isolated.js:1:9042)
+    at <instance_members_initializer> (isolated.js:1:55434)
+    at new We (isolated.js:1:55253)
+    at at.handleVisibleChange [as cb] (isolated.js:1:92448)
+    at at.sync (isolated.js:1:77446)
+    at handleChange (isolated.js:1:77419)
+    at isolated.js:1:91379
+    at Set.forEach (<anonymous>)
+    at handleVisibilityChange (isolated.js:1:91366)Understand this error
+isolated.js:1 Uncaught (in promise) Error: Extension context invalidated.
+    at G.start (isolated.js:1:9235)
+    at new G (isolated.js:1:9042)
+    at <instance_members_initializer> (isolated.js:1:55709)
+    at new We (isolated.js:1:55253)
+    at at.handleVisibleChange [as cb] (isolated.js:1:92448)
+    at at.sync (isolated.js:1:77446)
+    at handleChange (isolated.js:1:77419)
+    at isolated.js:1:91379
+    at Set.forEach (<anonymous>)
+    at handleVisibilityChange (isolated.js:1:91366)Understand this error
+isolated.js:1 Uncaught (in promise) Error: Extension context invalidated.
+    at G.start (isolated.js:1:9235)
+    at new G (isolated.js:1:9042)
+    at <instance_members_initializer> (isolated.js:1:55322)
+    at new We (isolated.js:1:55253)
+    at at.handleVisibleChange [as cb] (isolated.js:1:92448)
+    at at.sync (isolated.js:1:77446)
+    at handleChange (isolated.js:1:77419)
+    at isolated.js:1:91379
+    at Set.forEach (<anonymous>)
+    at handleVisibilityChange (isolated.js:1:91366)Understand this error
+isolated.js:1 Uncaught (in promise) Error: Extension context invalidated.
+    at G.start (isolated.js:1:9235)
+    at new G (isolated.js:1:9042)
+    at <instance_members_initializer> (isolated.js:1:55434)
+    at new We (isolated.js:1:55253)
+    at at.handleVisibleChange [as cb] (isolated.js:1:92448)
+    at at.sync (isolated.js:1:77446)
+    at handleChange (isolated.js:1:77419)
+    at isolated.js:1:91379
+    at Set.forEach (<anonymous>)
+    at handleVisibilityChange (isolated.js:1:91366)Understand this error
+isolated.js:1 Uncaught (in promise) Error: Extension context invalidated.
+    at G.start (isolated.js:1:9235)
+    at new G (isolated.js:1:9042)
+    at <instance_members_initializer> (isolated.js:1:55709)
+    at new We (isolated.js:1:55253)
+    at at.handleVisibleChange [as cb] (isolated.js:1:92448)
+    at at.sync (isolated.js:1:77446)
+    at handleChange (isolated.js:1:77419)
+    at isolated.js:1:91379
+    at Set.forEach (<anonymous>)
+    at handleVisibilityChange (isolated.js:1:91366)Understand this error
+isolated.js:1 Uncaught (in promise) Error: Extension context invalidated.
+    at G.start (isolated.js:1:9235)
+    at new G (isolated.js:1:9042)
+    at <instance_members_initializer> (isolated.js:1:55322)
+    at new We (isolated.js:1:55253)
+    at at.handleVisibleChange [as cb] (isolated.js:1:92448)
+    at at.sync (isolated.js:1:77446)
+    at handleChange (isolated.js:1:77419)
+    at isolated.js:1:91379
+    at Set.forEach (<anonymous>)
+    at handleVisibilityChange (isolated.js:1:91366)Understand this error
+isolated.js:1 Uncaught (in promise) Error: Extension context invalidated.
+    at G.start (isolated.js:1:9235)
+    at new G (isolated.js:1:9042)
+    at <instance_members_initializer> (isolated.js:1:55434)
+    at new We (isolated.js:1:55253)
+    at at.handleVisibleChange [as cb] (isolated.js:1:92448)
+    at at.sync (isolated.js:1:77446)
+    at handleChange (isolated.js:1:77419)
+    at isolated.js:1:91379
+    at Set.forEach (<anonymous>)
+    at handleVisibilityChange (isolated.js:1:91366)Understand this error
+isolated.js:1 Uncaught (in promise) Error: Extension context invalidated.
+    at G.start (isolated.js:1:9235)
+    at new G (isolated.js:1:9042)
+    at <instance_members_initializer> (isolated.js:1:55709)
+    at new We (isolated.js:1:55253)
+    at at.handleVisibleChange [as cb] (isolated.js:1:92448)
+    at at.sync (isolated.js:1:77446)
+    at handleChange (isolated.js:1:77419)
+    at isolated.js:1:91379
+    at Set.forEach (<anonymous>)
+    at handleVisibilityChange (isolated.js:1:91366)Understand this error
+3isolated.js:1 Uncaught (in promise) Error: Extension context invalidated.Understand this error
+8isolated.js:1 Uncaught Error: Extension context invalidated.
+    at Q (isolated.js:1:18564)
+    at handleBlur (isolated.js:1:61330)Understand this error
+isolated.js:1 Uncaught (in promise) Error: Extension context invalidated.
+    at G.start (isolated.js:1:9235)
+    at new G (isolated.js:1:9042)
+    at <instance_members_initializer> (isolated.js:1:55322)
+    at new We (isolated.js:1:55253)
+    at at.handleVisibleChange [as cb] (isolated.js:1:92448)
+    at at.sync (isolated.js:1:77446)
+    at handleChange (isolated.js:1:77419)
+    at isolated.js:1:91379
+    at Set.forEach (<anonymous>)
+    at handleVisibilityChange (isolated.js:1:91366)Understand this error
+isolated.js:1 Uncaught (in promise) Error: Extension context invalidated.
+    at G.start (isolated.js:1:9235)
+    at new G (isolated.js:1:9042)
+    at <instance_members_initializer> (isolated.js:1:55434)
+    at new We (isolated.js:1:55253)
+    at at.handleVisibleChange [as cb] (isolated.js:1:92448)
+    at at.sync (isolated.js:1:77446)
+    at handleChange (isolated.js:1:77419)
+    at isolated.js:1:91379
+    at Set.forEach (<anonymous>)
+    at handleVisibilityChange (isolated.js:1:91366)Understand this error
+isolated.js:1 Uncaught (in promise) Error: Extension context invalidated.
+    at G.start (isolated.js:1:9235)
+    at new G (isolated.js:1:9042)
+    at <instance_members_initializer> (isolated.js:1:55709)
+    at new We (isolated.js:1:55253)
+    at at.handleVisibleChange [as cb] (isolated.js:1:92448)
+    at at.sync (isolated.js:1:77446)
+    at handleChange (isolated.js:1:77419)
+    at isolated.js:1:91379
+    at Set.forEach (<anonymous>)
+    at handleVisibilityChange (isolated.js:1:91366)Understand this error
+VM5 isolated.js:1 Uncaught (in promise) Error: Extension context invalidated.
+    at G.start (isolated.js:1:9235)
+    at new G (isolated.js:1:9042)
+    at <instance_members_initializer> (isolated.js:1:55322)
+    at new We (isolated.js:1:55253)
+    at at.handleVisibleChange [as cb] (isolated.js:1:92448)
+    at at.sync (isolated.js:1:77446)
+    at handleChange (isolated.js:1:77419)
+    at isolated.js:1:91379
+    at Set.forEach (<anonymous>)
+    at handleVisibilityChange (isolated.js:1:91366)Understand this error
+VM5 isolated.js:1 Uncaught (in promise) Error: Extension context invalidated.
+    at G.start (isolated.js:1:9235)
+    at new G (isolated.js:1:9042)
+    at <instance_members_initializer> (isolated.js:1:55434)
+    at new We (isolated.js:1:55253)
+    at at.handleVisibleChange [as cb] (isolated.js:1:92448)
+    at at.sync (isolated.js:1:77446)
+    at handleChange (isolated.js:1:77419)
+    at isolated.js:1:91379
+    at Set.forEach (<anonymous>)
+    at handleVisibilityChange (isolated.js:1:91366)Understand this error
+VM5 isolated.js:1 Uncaught (in promise) Error: Extension context invalidated.
+    at G.start (isolated.js:1:9235)
+    at new G (isolated.js:1:9042)
+    at <instance_members_initializer> (isolated.js:1:55709)
+    at new We (isolated.js:1:55253)
+    at at.handleVisibleChange [as cb] (isolated.js:1:92448)
+    at at.sync (isolated.js:1:77446)
+    at handleChange (isolated.js:1:77419)
+    at isolated.js:1:91379
+    at Set.forEach (<anonymous>)
+    at handleVisibilityChange (isolated.js:1:91366)Understand this error
+isolated.js:1 Uncaught (in promise) Error: Extension context invalidated.
+    at G.start (isolated.js:1:9235)
+    at new G (isolated.js:1:9042)
+    at <instance_members_initializer> (isolated.js:1:55322)
+    at new We (isolated.js:1:55253)
+    at at.handleVisibleChange [as cb] (isolated.js:1:92448)
+    at at.sync (isolated.js:1:77446)
+    at handleChange (isolated.js:1:77419)
+    at isolated.js:1:91379
+    at Set.forEach (<anonymous>)
+    at handleVisibilityChange (isolated.js:1:91366)Understand this error
+isolated.js:1 Uncaught (in promise) Error: Extension context invalidated.
+    at G.start (isolated.js:1:9235)
+    at new G (isolated.js:1:9042)
+    at <instance_members_initializer> (isolated.js:1:55434)
+    at new We (isolated.js:1:55253)
+    at at.handleVisibleChange [as cb] (isolated.js:1:92448)
+    at at.sync (isolated.js:1:77446)
+    at handleChange (isolated.js:1:77419)
+    at isolated.js:1:91379
+    at Set.forEach (<anonymous>)
+    at handleVisibilityChange (isolated.js:1:91366)Understand this error
+isolated.js:1 Uncaught (in promise) Error: Extension context invalidated.
+    at G.start (isolated.js:1:9235)
+    at new G (isolated.js:1:9042)
+    at <instance_members_initializer> (isolated.js:1:55709)
+    at new We (isolated.js:1:55253)
+    at at.handleVisibleChange [as cb] (isolated.js:1:92448)
+    at at.sync (isolated.js:1:77446)
+    at handleChange (isolated.js:1:77419)
+    at isolated.js:1:91379
+    at Set.forEach (<anonymous>)
+    at handleVisibilityChange (isolated.js:1:91366)Understand this error
+VM83 isolated.js:1 Uncaught (in promise) Error: Extension context invalidated.
+    at G.start (isolated.js:1:9235)
+    at new G (isolated.js:1:9042)
+    at <instance_members_initializer> (isolated.js:1:55322)
+    at new We (isolated.js:1:55253)
+    at at.handleVisibleChange [as cb] (isolated.js:1:92448)
+    at at.sync (isolated.js:1:77446)
+    at handleChange (isolated.js:1:77419)
+    at isolated.js:1:91379
+    at Set.forEach (<anonymous>)
+    at handleVisibilityChange (isolated.js:1:91366)Understand this error
+VM83 isolated.js:1 Uncaught (in promise) Error: Extension context invalidated.
+    at G.start (isolated.js:1:9235)
+    at new G (isolated.js:1:9042)
+    at <instance_members_initializer> (isolated.js:1:55434)
+    at new We (isolated.js:1:55253)
+    at at.handleVisibleChange [as cb] (isolated.js:1:92448)
+    at at.sync (isolated.js:1:77446)
+    at handleChange (isolated.js:1:77419)
+    at isolated.js:1:91379
+    at Set.forEach (<anonymous>)
+    at handleVisibilityChange (isolated.js:1:91366)Understand this error

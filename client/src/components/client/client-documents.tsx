@@ -36,9 +36,7 @@ export function ClientDocuments() {
   // Mutation para exclusão individual
   const deleteDocumentMutation = useMutation({
     mutationFn: async (documentId: string) => {
-      await apiRequest(`/api/documents/${documentId}`, {
-        method: 'DELETE',
-      });
+      await apiRequest('DELETE', `/api/documents/${documentId}`);
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['/api/documents'] });
@@ -61,13 +59,7 @@ export function ClientDocuments() {
   // Mutation para exclusão em lote
   const bulkDeleteMutation = useMutation({
     mutationFn: async (documentIds: string[]) => {
-      await apiRequest('/api/documents/bulk-delete', {
-        method: 'DELETE',
-        body: JSON.stringify({ documentIds }),
-        headers: {
-          'Content-Type': 'application/json',
-        },
-      });
+      await apiRequest('DELETE', '/api/documents/bulk-delete', { documentIds });
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['/api/documents'] });
