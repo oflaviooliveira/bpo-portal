@@ -1717,20 +1717,18 @@ export function UploadBpo() {
               </div>
 
               {/* Instruções Especiais - Esconder para EMITIR_NF (já tem campos específicos) */}
-              {documentType !== "EMITIR_NF" && (
-                <div className="space-y-4">
-                  <h4 className="text-sm font-semibold text-[#0B0E30] border-b pb-2">Instruções Especiais</h4>
-                  <div className="space-y-2">
-                    <Label>Instruções especiais para o boleto/NF (opcional)</Label>
-                    <Textarea
-                      {...form.register("instructions")}
-                      placeholder="Instruções especiais para o boleto/NF (opcional)"
-                      className="min-h-[80px]"
-                      data-testid="textarea-special-instructions"
-                    />
-                  </div>
+              <div className={`space-y-4 ${documentType === "EMITIR_NF" ? "hidden" : ""}`}>
+                <h4 className="text-sm font-semibold text-[#0B0E30] border-b pb-2">Instruções Especiais</h4>
+                <div className="space-y-2">
+                  <Label>Instruções especiais para o boleto/NF (opcional)</Label>
+                  <Textarea
+                    {...form.register("instructions")}
+                    placeholder="Instruções especiais para o boleto/NF (opcional)"
+                    className="min-h-[80px]"
+                    data-testid="textarea-special-instructions"
+                  />
                 </div>
-              )}
+              </div>
 
             </CardContent>
           </Card>
