@@ -1146,7 +1146,7 @@ export function UploadBpo() {
     return suggestions.some(s => s.field === fieldName);
   };
 
-  // Reset form when document type changes
+  // 🔧 CORREÇÃO CRÍTICA: Reset form when document type changes (sem loop infinito)
   useEffect(() => {
     const currentValues = form.getValues();
     form.reset({
@@ -1155,25 +1155,25 @@ export function UploadBpo() {
       contraparteId: currentValues.contraparteId,
       description: currentValues.description,
     });
-  }, [documentType, form]);
+  }, [documentType]); // ← Removido 'form' para evitar loop infinito
 
-  // Auto-preencher contraparte para EMITIR_BOLETO com cliente selecionado
+  // 🔧 CORREÇÃO CRÍTICA: Auto-preencher contraparte (sem loop infinito)
   useEffect(() => {
     if ((documentType === "EMITIR_BOLETO" || documentType === "EMITIR_NF") && selectedClient) {
       form.setValue("contraparteId", selectedClient.id, { 
-        shouldValidate: true, 
+        shouldValidate: false, // ← Reduzido para evitar re-validações excessivas
         shouldDirty: true,
         shouldTouch: true 
       });
     } else if (documentType === "PAGO" || documentType === "AGENDADO") {
       // Limpar contraparteId para que o usuário selecione manualmente
       form.setValue("contraparteId", "", { 
-        shouldValidate: true, 
+        shouldValidate: false, // ← Reduzido para evitar re-validações excessivas
         shouldDirty: true,
         shouldTouch: true 
       });
     }
-  }, [documentType, selectedClient, form]);
+  }, [documentType, selectedClient]); // ← Removido 'form' para evitar loop infinito
 
   return (
     <div className="space-y-6">
