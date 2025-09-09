@@ -774,10 +774,15 @@ export function UploadBpo() {
         
         // Criar mensagem detalhada se houver details
         if (errorData.details && Array.isArray(errorData.details)) {
-          const fieldErrors = errorData.details.map((detail: any) => 
-            `• ${detail.field}: ${detail.message}`
-          ).join('\n');
-          throw new Error(`${errorData.error}\n\nCampos com problema:\n${fieldErrors}`);
+          const fieldErrors = errorData.details.map((detail: any) => {
+            // Se detail é uma string simples
+            if (typeof detail === 'string') {
+              return `• ${detail}`;
+            }
+            // Se detail é um objeto com field e message
+            return `• ${detail.field || 'Campo'}: ${detail.message || detail}`;
+          }).join('\n');
+          throw new Error(`${errorData.error}\n\nProblemas encontrados:\n${fieldErrors}`);
         }
         
         throw new Error(errorData.message || errorData.error || 'Erro no upload');
