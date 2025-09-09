@@ -10,9 +10,10 @@ import { ClientSettings } from "@/components/client/client-settings";
 import { ClientFornecedores } from "@/components/client/client-fornecedores";
 import { ClientCategorias } from "@/components/client/client-categorias";
 import { ClientCentrosCusto } from "@/components/client/client-centros-custo";
+import { ClientBancos } from "@/components/client/client-bancos";
 import ClientsPage from "@/pages/clients";
 
-type ClientSection = 'dashboard' | 'upload' | 'documents' | 'clients' | 'fornecedores' | 'categorias' | 'centros-custo' | 'reports' | 'settings';
+type ClientSection = 'dashboard' | 'upload' | 'documents' | 'clients' | 'fornecedores' | 'categorias' | 'centros-custo' | 'bancos' | 'reports' | 'settings';
 
 export function ClientLayout() {
   const [activeSection, setActiveSection] = useState<ClientSection>('dashboard');
@@ -37,6 +38,8 @@ export function ClientLayout() {
         return <ClientCategorias />;
       case 'centros-custo':
         return <ClientCentrosCusto />;
+      case 'bancos':
+        return <ClientBancos />;
       case 'reports':
         return <ClientReports />;
       case 'settings':

@@ -19,7 +19,8 @@ import {
   Activity,
   Zap,
   Clock,
-  RefreshCw
+  RefreshCw,
+  Landmark
 } from "lucide-react";
 
 interface SidebarProps {
@@ -201,6 +202,12 @@ export function Sidebar({ activeSection, onSectionChange }: SidebarProps) {
       section: 'centros-custo',
       label: 'Centros de Custo',
       icon: TrendingUp,
+      category: 'CADASTROS',
+    },
+    {
+      section: 'bancos',
+      label: 'Bancos',
+      icon: Landmark,
       category: 'CADASTROS',
     },
     {
