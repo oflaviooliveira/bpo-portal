@@ -258,17 +258,17 @@ export function UploadBpo() {
   const { data: categories = [] as any[] } = useQuery({ queryKey: ["/api/categories"] });
   const { data: costCenters = [] as any[] } = useQuery({ queryKey: ["/api/cost-centers"] });
 
-  // Buscar contrapartes filtradas por tipo de documento
-  const getContraparteFilters = () => {
+  // Buscar contrapartes filtradas por tipo de documento - ENDPOINT DINÂMICO
+  const getContraparteEndpoint = () => {
     if (documentType === "PAGO" || documentType === "AGENDADO") {
-      return { canBeSupplier: true };
+      return "/api/fornecedores"; // Para documentos PAGO/AGENDADO, busca fornecedores (canBeSupplier: true)
     } else {
-      return { canBeClient: true };
+      return "/api/clientes"; // Para EMITIR_BOLETO/EMITIR_NF, busca clientes (canBeClient: true)
     }
   };
 
   const { data: contrapartes = [] } = useQuery<any[]>({
-    queryKey: ["/api/fornecedores", documentType],
+    queryKey: [getContraparteEndpoint()],
     enabled: !!documentType, // Só busca quando tem tipo de documento
   });
 
@@ -743,9 +743,10 @@ export function UploadBpo() {
   const handleSupplierCreated = (newSupplier: any) => {
     form.setValue("contraparteId", newSupplier.id);
     
-    // CORREÇÃO: Invalidar cache corretamente
+    // CORREÇÃO: Invalidar cache corretamente usando endpoint dinâmico
     queryClient.invalidateQueries({ queryKey: ["/api/fornecedores"] });
-    queryClient.invalidateQueries({ queryKey: ["/api/fornecedores", documentType] });
+    queryClient.invalidateQueries({ queryKey: ["/api/clientes"] });
+    queryClient.invalidateQueries({ queryKey: [getContraparteEndpoint()] });
     
     console.log("✅ Fornecedor criado e selecionado automaticamente:", newSupplier.id, newSupplier.name);
     
