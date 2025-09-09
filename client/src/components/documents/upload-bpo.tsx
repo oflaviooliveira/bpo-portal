@@ -960,6 +960,41 @@ export function UploadBpo() {
     console.log("🚀 ===== INICIANDO ENVIO BPO =====");
     console.log("📋 Dados completos:", data);
     console.log("🔍 Erros de validação:", form.formState.errors);
+    
+    // 🚨 FEEDBACK MELHORADO: Verificar e mostrar erros específicos
+    const formErrors = form.formState.errors;
+    if (Object.keys(formErrors).length > 0) {
+      const missingFields = Object.entries(formErrors)
+        .map(([field, error]: [string, any]) => {
+          const fieldNames: { [key: string]: string } = {
+            'categoryId': 'Categoria',
+            'costCenterId': 'Centro de Custo', 
+            'scheduledDate': 'Data de Vencimento',
+            'payerDocument': 'CNPJ/CPF do Tomador',
+            'payerName': 'Nome/Razão Social',
+            'payerEmail': 'Email',
+            'payerPhone': 'Telefone',
+            'payerStreet': 'Rua/Avenida',
+            'payerNumber': 'Número',
+            'payerNeighborhood': 'Bairro',
+            'payerCity': 'Cidade',
+            'payerState': 'Estado',
+            'payerZipCode': 'CEP'
+          };
+          return `• ${fieldNames[field] || field}: ${error.message}`;
+        })
+        .join('\n');
+
+      toast({
+        title: `⚠️ Campos obrigatórios faltando (${Object.keys(formErrors).length})`,
+        description: missingFields,
+        variant: "destructive",
+        duration: 8000,
+      });
+      console.log("❌ Formulário inválido. Erros:", formErrors);
+      return;
+    }
+    
     console.log("📊 Estado do formulário:", {
       isValid: form.formState.isValid,
       isDirty: form.formState.isDirty,
