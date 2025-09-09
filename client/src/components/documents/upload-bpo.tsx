@@ -1048,6 +1048,12 @@ export function UploadBpo() {
 
     // 🎯 CORREÇÃO: Usar form.getValues() para capturar TODOS os campos (incluindo Select controlados)
     const completeData: any = form.getValues();
+
+    // 🔧 CORREÇÃO CRÍTICA: Backend espera clientId obrigatório para EMITIR_NF
+    if (documentType === 'EMITIR_NF' && completeData.contraparteId) {
+      completeData.clientId = completeData.contraparteId;
+      console.log("✅ Mapeamento EMITIR_NF: contraparteId → clientId:", completeData.contraparteId);
+    }
     
     // Adicionar campos essenciais que podem estar faltando
     const essentialFields: Array<keyof BpoUploadData> = ['bankId', 'categoryId', 'costCenterId', 'contraparteId'];
@@ -1095,6 +1101,21 @@ export function UploadBpo() {
         completeData.contraparteName = contraparte.name;
         console.log("✅ Nome da contraparte adicionado:", contraparte.name);
       }
+    }
+
+    // 🔧 CORREÇÃO CRÍTICA: Backend espera payerAddress concatenado obrigatório para EMITIR_NF
+    if (documentType === 'EMITIR_NF') {
+      const addressParts = [
+        completeData.payerStreet,
+        completeData.payerNumber,
+        completeData.payerComplement ? `- ${completeData.payerComplement}` : '',
+        completeData.payerNeighborhood,
+        `${completeData.payerCity} - ${completeData.payerState}`,
+        `CEP: ${completeData.payerZipCode}`
+      ].filter(part => part && part.trim() !== '' && part !== '-');
+      
+      completeData.payerAddress = addressParts.join(', ');
+      console.log("✅ Endereço concatenado para EMITIR_NF:", completeData.payerAddress);
     }
 
     // Processar todos os campos
