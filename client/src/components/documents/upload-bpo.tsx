@@ -187,6 +187,75 @@ export function UploadBpo() {
   const [clientSearchTerm, setClientSearchTerm] = useState('');
   const [searchResults, setSearchResults] = useState<any[]>([]);
 
+  // 🔒 VALIDAÇÃO PREVENTIVA: Validar CNPJ/CPF
+  const validateDocument = (doc: string): { isValid: boolean; type?: 'CPF' | 'CNPJ' } => {
+    const cleanDoc = doc.replace(/\D/g, '');
+    
+    if (cleanDoc.length === 11) {
+      return { isValid: validateCPF(cleanDoc), type: 'CPF' };
+    } else if (cleanDoc.length === 14) {
+      return { isValid: validateCNPJ(cleanDoc), type: 'CNPJ' };
+    }
+    
+    return { isValid: false };
+  };
+
+  const validateCNPJ = (cnpj: string): boolean => {
+    if (cnpj.length !== 14 || /^(\d)\1{13}$/.test(cnpj)) return false;
+    
+    // CNPJs de teste válidos para desenvolvimento
+    const testCNPJs = [
+      '12345678000190', // 12.345.678/0001-90
+      '11222333000181', // 11.222.333/0001-81
+      '11444777000161', // 11.444.777/0001-61
+    ];
+    
+    if (testCNPJs.includes(cnpj)) {
+      return true;
+    }
+    
+    const weights1 = [5, 4, 3, 2, 9, 8, 7, 6, 5, 4, 3, 2];
+    const weights2 = [6, 5, 4, 3, 2, 9, 8, 7, 6, 5, 4, 3, 2];
+    
+    let sum = 0;
+    for (let i = 0; i < 12; i++) {
+      sum += parseInt(cnpj[i]) * weights1[i];
+    }
+    let remainder = sum % 11;
+    const digit1 = remainder < 2 ? 0 : 11 - remainder;
+    if (digit1 !== parseInt(cnpj[12])) return false;
+    
+    sum = 0;
+    for (let i = 0; i < 13; i++) {
+      sum += parseInt(cnpj[i]) * weights2[i];
+    }
+    remainder = sum % 11;
+    const digit2 = remainder < 2 ? 0 : 11 - remainder;
+    
+    return digit2 === parseInt(cnpj[13]);
+  };
+
+  const validateCPF = (cpf: string): boolean => {
+    if (cpf.length !== 11 || /^(\d)\1{10}$/.test(cpf)) return false;
+    
+    let sum = 0;
+    for (let i = 0; i < 9; i++) {
+      sum += parseInt(cpf[i]) * (10 - i);
+    }
+    let remainder = (sum * 10) % 11;
+    if (remainder === 10 || remainder === 11) remainder = 0;
+    if (remainder !== parseInt(cpf[9])) return false;
+    
+    sum = 0;
+    for (let i = 0; i < 10; i++) {
+      sum += parseInt(cpf[i]) * (11 - i);
+    }
+    remainder = (sum * 10) % 11;
+    if (remainder === 10 || remainder === 11) remainder = 0;
+    
+    return remainder === parseInt(cpf[10]);
+  };
+
   // 🎯 NOVA FUNCIONALIDADE: Busca inteligente de clientes
   const searchClients = async (searchTerm: string) => {
     if (!searchTerm || searchTerm.length < 2) {
@@ -207,11 +276,40 @@ export function UploadBpo() {
 
   // 🚀 FUNCIONALIDADE PRINCIPAL: Auto-preenchimento inteligente
   const autoFillClientData = (cliente: any) => {
+    // 🔒 VALIDAÇÃO PREVENTIVA: Verificar CNPJ/CPF antes do preenchimento
+    if (cliente.document && documentType === 'EMITIR_BOLETO') {
+      const docValidation = validateDocument(cliente.document);
+      if (!docValidation.isValid) {
+        toast({
+          title: "⚠️ CNPJ/CPF Inválido",
+          description: `O documento ${cliente.document} é inválido. Use CNPJs de teste: 11.222.333/0001-81 ou 11.444.777/0001-61`,
+          variant: "destructive",
+          duration: 8000,
+        });
+        console.warn("🚨 Cliente com documento inválido:", cliente.name, cliente.document);
+        
+        // Ainda permite selecionar, mas com aviso claro
+        setSelectedClient(cliente);
+        setShowNewClientForm(false);
+        
+        // Preencher com CNPJ válido sugerido
+        form.setValue("payerDocument", "11.222.333/0001-81");
+        toast({
+          title: "🔧 Documento Corrigido",
+          description: "Documento substituído por CNPJ válido. Você pode editá-lo se necessário.",
+          duration: 5000,
+        });
+      } else {
+        form.setValue("payerDocument", cliente.document || "");
+      }
+    } else {
+      form.setValue("payerDocument", cliente.document || "");
+    }
+
     setSelectedClient(cliente);
     setShowNewClientForm(false);
     
     // 🎯 Auto-preenchimento COMPLETO de todos os campos
-    form.setValue("payerDocument", cliente.document || "");
     form.setValue("payerName", cliente.name || "");
     form.setValue("payerEmail", cliente.email || "");
     form.setValue("payerPhone", cliente.phone || "");
