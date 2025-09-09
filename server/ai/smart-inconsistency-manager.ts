@@ -221,7 +221,8 @@ export class SmartInconsistencyManager {
   // Utilitários
   private parseAmount(value: string): number {
     if (!value) return 0;
-    const cleaned = value.toString().replace(/[R$\s]/g, '').replace(',', '.');
+    // Ordem correta: Remove R$/espaços → Remove pontos de milhares → Converte vírgula decimal
+    const cleaned = value.toString().replace(/[R$\s]/g, '').replace(/\./g, '').replace(',', '.');
     return parseFloat(cleaned) || 0;
   }
 

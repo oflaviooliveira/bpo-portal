@@ -226,7 +226,8 @@ export class InconsistencyDetector {
 
   private normalizeAmount(amount: string | undefined): number | undefined {
     if (!amount) return undefined;
-    const cleaned = amount.replace(/[R$\s]/g, '').replace('.', '').replace(',', '.');
+    // Ordem correta: Remove R$/espaços → Remove pontos de milhares → Converte vírgula decimal
+    const cleaned = amount.replace(/[R$\s]/g, '').replace(/\./g, '').replace(',', '.');
     const num = parseFloat(cleaned);
     return isNaN(num) ? undefined : num;
   }

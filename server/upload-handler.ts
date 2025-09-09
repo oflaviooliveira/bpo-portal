@@ -196,7 +196,8 @@ export class DocumentUploadHandler {
 
   private parseAmount(amount: string): string | null {
     if (!amount) return null;
-    const cleaned = amount.replace(/[R$\s]/g, '').replace(',', '.');
+    // Ordem correta: Remove R$/espaços → Remove pontos de milhares → Converte vírgula decimal
+    const cleaned = amount.replace(/[R$\s]/g, '').replace(/\./g, '').replace(',', '.');
     const parsed = parseFloat(cleaned);
     return isNaN(parsed) ? null : parsed.toString();
   }

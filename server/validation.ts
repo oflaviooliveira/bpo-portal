@@ -277,9 +277,10 @@ export function performCrossValidation(
   
   // Validar valor monetário
   if (ocrData.valor && filenameData.value && formData.amount) {
-    const ocrValue = parseFloat(ocrData.valor.toString().replace(',', '.'));
+    // Ordem correta: Remove R$/espaços → Remove pontos de milhares → Converte vírgula decimal
+    const ocrValue = parseFloat(ocrData.valor.toString().replace(/[R$\s]/g, '').replace(/\./g, '').replace(',', '.'));
     const filenameValue = parseFloat(filenameData.value.toString());
-    const formValue = parseFloat(formData.amount.replace('R$', '').replace(',', '.').replace(/\s/g, ''));
+    const formValue = parseFloat(formData.amount.replace(/[R$\s]/g, '').replace(/\./g, '').replace(',', '.'));
     
     const tolerance = 0.01; // 1 centavo de tolerância
     
