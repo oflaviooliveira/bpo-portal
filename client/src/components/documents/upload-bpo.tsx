@@ -979,7 +979,9 @@ export function UploadBpo() {
             'payerNeighborhood': 'Bairro',
             'payerCity': 'Cidade',
             'payerState': 'Estado',
-            'payerZipCode': 'CEP'
+            'payerZipCode': 'CEP',
+            'serviceCode': 'Código do Serviço',
+            'serviceDescription': 'Descrição do Serviço'
           };
           return `• ${fieldNames[field] || field}: ${error.message}`;
         })
@@ -2066,6 +2068,53 @@ export function UploadBpo() {
                 data-testid="input-competence-date"
               />
             </div>
+
+            {/* Campos específicos para EMITIR_NF */}
+            {documentType === "EMITIR_NF" && (
+              <>
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                  {/* Código do Serviço */}
+                  <div className="space-y-2">
+                    <Label>Código do Serviço <span className="text-red-500">*</span></Label>
+                    <Input
+                      {...form.register("serviceCode")}
+                      placeholder="Ex: 1.01, 14.01, etc."
+                      data-testid="input-service-code"
+                    />
+                    {form.formState.errors.serviceCode && (
+                      <p className="text-sm text-red-500">{form.formState.errors.serviceCode.message}</p>
+                    )}
+                  </div>
+
+                  {/* Data de Vencimento para NF */}
+                  <div className="space-y-2">
+                    <Label>Data de Vencimento <span className="text-red-500">*</span></Label>
+                    <Input
+                      {...form.register("scheduledDate")}
+                      type="date"
+                      data-testid="input-scheduled-date-nf"
+                    />
+                    {form.formState.errors.scheduledDate && (
+                      <p className="text-sm text-red-500">{form.formState.errors.scheduledDate.message}</p>
+                    )}
+                  </div>
+                </div>
+
+                {/* Descrição do Serviço */}
+                <div className="space-y-2">
+                  <Label>Descrição do Serviço <span className="text-red-500">*</span></Label>
+                  <Textarea
+                    {...form.register("serviceDescription")}
+                    placeholder="Descreva detalhadamente o serviço prestado..."
+                    className="min-h-[100px]"
+                    data-testid="textarea-service-description"
+                  />
+                  {form.formState.errors.serviceDescription && (
+                    <p className="text-sm text-red-500">{form.formState.errors.serviceDescription.message}</p>
+                  )}
+                </div>
+              </>
+            )}
 
             {/* Observações */}
             <div className="space-y-2">
