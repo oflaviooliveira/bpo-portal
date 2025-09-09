@@ -13,7 +13,7 @@ import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
 import { Badge } from "@/components/ui/badge";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { useToast } from "@/hooks/use-toast";
-import { CloudUpload, Upload as UploadIcon, FileText, Calendar, DollarSign, Building2, Sparkles, AlertTriangle, CheckCircle2, Bot, CheckCircle, X, RotateCcw, Eye, Plus, Cog, Info } from "lucide-react";
+import { CloudUpload, Upload as UploadIcon, FileText, Calendar, DollarSign, Building2, Sparkles, AlertTriangle, CheckCircle2, Bot, CheckCircle, X, RotateCcw, Eye, Plus, Cog, Info, MessageSquare } from "lucide-react";
 import { Alert, AlertDescription } from "@/components/ui/alert";
 import { Separator } from "@/components/ui/separator";
 import { AutoSupplierModal } from "@/components/client/auto-supplier-modal";
@@ -1825,22 +1825,24 @@ export function UploadBpo() {
               )}
             </div>
 
-            {/* Descrição */}
-            <div className="space-y-2">
-              <Label className="flex items-center">
-                Descrição *
-                {getSuggestionBadge('description')}
-              </Label>
-              <Textarea
-                {...form.register("description")}
-                placeholder="Descrição detalhada da transação"
-                className={isFieldSuggested('description') ? 'border-[#E40064]/30 bg-[#E40064]/5' : ''}
-                data-testid="textarea-description"
-              />
-              {form.formState.errors.description && (
-                <p className="text-sm text-red-500">{form.formState.errors.description.message}</p>
-              )}
-            </div>
+            {/* Descrição - Esconder para EMITIR_NF (evita confusão com "Descrição do Serviço") */}
+            {documentType !== "EMITIR_NF" && (
+              <div className="space-y-2">
+                <Label className="flex items-center">
+                  Descrição *
+                  {getSuggestionBadge('description')}
+                </Label>
+                <Textarea
+                  {...form.register("description")}
+                  placeholder="Descrição detalhada da transação"
+                  className={isFieldSuggested('description') ? 'border-[#E40064]/30 bg-[#E40064]/5' : ''}
+                  data-testid="textarea-description"
+                />
+                {form.formState.errors.description && (
+                  <p className="text-sm text-red-500">{form.formState.errors.description.message}</p>
+                )}
+              </div>
+            )}
           </CardContent>
         </Card>
 
@@ -2121,15 +2123,22 @@ export function UploadBpo() {
             {/* Campos específicos para EMITIR_NF */}
             {documentType === "EMITIR_NF" && (
               <>
-                {/* Descrição do Serviço - Campo principal */}
+                {/* Descrição do Serviço - Campo ÚNICO para EMITIR_NF (evita confusão) */}
                 <div className="space-y-2">
-                  <Label>Descrição do Serviço <span className="text-red-500">*</span></Label>
+                  <Label className="flex items-center gap-2">
+                    <FileText className="h-4 w-4 text-[#E40064]" />
+                    Descrição do Serviço <span className="text-red-500">*</span>
+                    <Badge variant="outline" className="text-xs">Campo Principal</Badge>
+                  </Label>
                   <Textarea
                     {...form.register("serviceDescription")}
-                    placeholder="Descreva detalhadamente o serviço prestado (inclua valores individuais se necessário)..."
+                    placeholder="Descreva detalhadamente o serviço prestado. Ex: Consultoria em tecnologia, desenvolvimento de sistema, manutenção, etc. (inclua valores individuais se necessário)..."
                     className="min-h-[100px]"
                     data-testid="textarea-service-description"
                   />
+                  <p className="text-xs text-gray-600">
+                    💡 Esta é a descrição principal que aparecerá na Nota Fiscal. Seja específico e detalhado.
+                  </p>
                   {form.formState.errors.serviceDescription && (
                     <p className="text-sm text-red-500">{form.formState.errors.serviceDescription.message}</p>
                   )}
@@ -2152,12 +2161,24 @@ export function UploadBpo() {
 
             {/* Observações */}
             <div className="space-y-2">
-              <Label>Observações</Label>
+              <Label className="flex items-center gap-2">
+                <MessageSquare className="h-4 w-4 text-gray-500" />
+                {documentType === "EMITIR_NF" ? "Observações Internas" : "Observações"}
+                <Badge variant="secondary" className="text-xs">Opcional</Badge>
+              </Label>
               <Textarea
                 {...form.register("notes")}
-                placeholder="Observações adicionais (opcional)"
+                placeholder={documentType === "EMITIR_NF" ? 
+                  "Anotações internas para controle (não aparece na NF)..." : 
+                  "Observações adicionais (opcional)"
+                }
                 data-testid="textarea-notes"
               />
+              {documentType === "EMITIR_NF" && (
+                <p className="text-xs text-gray-500">
+                  ℹ️ Campo para anotações internas da equipe. Não aparece na Nota Fiscal.
+                </p>
+              )}
             </div>
 
           </CardContent>
