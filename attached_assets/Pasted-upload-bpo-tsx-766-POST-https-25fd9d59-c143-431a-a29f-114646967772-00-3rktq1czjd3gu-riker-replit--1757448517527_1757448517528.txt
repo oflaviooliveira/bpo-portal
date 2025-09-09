@@ -1,0 +1,60 @@
+upload-bpo.tsx:766  POST https://25fd9d59-c143-431a-a29f-114646967772-00-3rktq1czjd3gu.riker.replit.dev/api/documents/upload 400 (Bad Request)
+mutationFn @ upload-bpo.tsx:766
+fn @ @tanstack_react-query.js?v=41b27340:1189
+run @ @tanstack_react-query.js?v=41b27340:494
+start @ @tanstack_react-query.js?v=41b27340:536
+execute @ @tanstack_react-query.js?v=41b27340:1225
+await in execute
+mutate @ @tanstack_react-query.js?v=41b27340:2630
+(anonymous) @ @tanstack_react-query.js?v=41b27340:3295
+onSubmit @ upload-bpo.tsx:967
+(anonymous) @ chunk-CXJMC5RA.js?v=41b27340:1465
+await in (anonymous)
+callCallback2 @ chunk-WERSD76P.js?v=41b27340:3674
+invokeGuardedCallbackDev @ chunk-WERSD76P.js?v=41b27340:3699
+invokeGuardedCallback @ chunk-WERSD76P.js?v=41b27340:3733
+invokeGuardedCallbackAndCatchFirstError @ chunk-WERSD76P.js?v=41b27340:3736
+executeDispatch @ chunk-WERSD76P.js?v=41b27340:7014
+processDispatchQueueItemsInOrder @ chunk-WERSD76P.js?v=41b27340:7034
+processDispatchQueue @ chunk-WERSD76P.js?v=41b27340:7043
+dispatchEventsForPlugins @ chunk-WERSD76P.js?v=41b27340:7051
+(anonymous) @ chunk-WERSD76P.js?v=41b27340:7174
+batchedUpdates$1 @ chunk-WERSD76P.js?v=41b27340:18913
+batchedUpdates @ chunk-WERSD76P.js?v=41b27340:3579
+dispatchEventForPluginEventSystem @ chunk-WERSD76P.js?v=41b27340:7173
+dispatchEventWithEnableCapturePhaseSelectiveHydrationWithoutDiscreteEventReplay @ chunk-WERSD76P.js?v=41b27340:5478
+dispatchEvent @ chunk-WERSD76P.js?v=41b27340:5472
+dispatchDiscreteEvent @ chunk-WERSD76P.js?v=41b27340:5449Understand this error
+upload-bpo.tsx:773 🔍 Detalhes completos do erro do servidor: {error: 'Dados inválidos', details: Array(1), warnings: Array(0)}
+upload-bpo.tsx:807 ❌ Erro no upload BPO: Error: Dados inválidos
+
+Campos com problema:
+• undefined: undefined
+    at Object.mutationFn (upload-bpo.tsx:780:17)
+onError @ upload-bpo.tsx:807
+execute @ @tanstack_react-query.js?v=41b27340:1254
+await in execute
+mutate @ @tanstack_react-query.js?v=41b27340:2630
+(anonymous) @ @tanstack_react-query.js?v=41b27340:3295
+onSubmit @ upload-bpo.tsx:967
+(anonymous) @ chunk-CXJMC5RA.js?v=41b27340:1465
+await in (anonymous)
+callCallback2 @ chunk-WERSD76P.js?v=41b27340:3674
+invokeGuardedCallbackDev @ chunk-WERSD76P.js?v=41b27340:3699
+invokeGuardedCallback @ chunk-WERSD76P.js?v=41b27340:3733
+invokeGuardedCallbackAndCatchFirstError @ chunk-WERSD76P.js?v=41b27340:3736
+executeDispatch @ chunk-WERSD76P.js?v=41b27340:7014
+processDispatchQueueItemsInOrder @ chunk-WERSD76P.js?v=41b27340:7034
+processDispatchQueue @ chunk-WERSD76P.js?v=41b27340:7043
+dispatchEventsForPlugins @ chunk-WERSD76P.js?v=41b27340:7051
+(anonymous) @ chunk-WERSD76P.js?v=41b27340:7174
+batchedUpdates$1 @ chunk-WERSD76P.js?v=41b27340:18913
+batchedUpdates @ chunk-WERSD76P.js?v=41b27340:3579
+dispatchEventForPluginEventSystem @ chunk-WERSD76P.js?v=41b27340:7173
+dispatchEventWithEnableCapturePhaseSelectiveHydrationWithoutDiscreteEventReplay @ chunk-WERSD76P.js?v=41b27340:5478
+dispatchEvent @ chunk-WERSD76P.js?v=41b27340:5472
+dispatchDiscreteEvent @ chunk-WERSD76P.js?v=41b27340:5449Understand this error
+upload-bpo.tsx:823 📋 Mensagem de erro completa: Dados inválidos
+
+Campos com problema:
+• undefined: undefined
