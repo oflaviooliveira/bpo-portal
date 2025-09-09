@@ -405,7 +405,7 @@ export function UploadBpo() {
       console.log("🏢 data.suggestions.supplier:", data.suggestions?.supplier);
       console.log("🏢 data.suggestions.contraparte:", data.suggestions?.contraparte);
       console.log("📄 data.suggestions.documento:", data.suggestions?.documento);
-      console.log("📄 data.suggestions.document:", data.suggestions?.document);
+      console.log("📄 data.suggestions.documento:", data.suggestions?.documento);
       console.log("🔑 data.suggestions.realData:", data.suggestions?.realData);
       console.log("✅ data.suggestions.hasRealData:", data.suggestions?.hasRealData);
       console.log("🏢 data.suggestions.realData?.supplier:", data.suggestions?.realData?.supplier);
@@ -452,17 +452,17 @@ export function UploadBpo() {
         // 🚨 CRÍTICO: DETECÇÃO AUTOMÁTICA DE FORNECEDOR AQUI!
         console.log("🔍 INICIANDO DETECÇÃO AUTOMÁTICA DE FORNECEDOR");
         console.log("📄 Supplier detectado:", contraparteValue);
-        console.log("🆔 Document:", data.suggestions?.documento || data.suggestions?.document || '');
+        console.log("🆔 Document:", data.suggestions?.documento || '');
         
         // Aguardar queries carregarem e executar detecção automática
         setTimeout(() => {
           console.log("🚀 EXECUTANDO detectAndHandleSupplier COM DADOS REAIS:");
           console.log("  Supplier:", contraparteValue);
-          console.log("  Document:", data.suggestions?.documento || data.suggestions?.document || '');
+          console.log("  Document:", data.suggestions?.documento || '');
           
           detectAndHandleSupplier(
             contraparteValue,
-            data.suggestions?.documento || data.suggestions?.document || '',
+            data.suggestions?.documento || '',
             data.suggestions?.confidence?.supplier || 95
           );
         }, 200);
@@ -606,8 +606,8 @@ export function UploadBpo() {
           let displayValue = '';
           if (typeof value === 'object' && value !== null) {
             // Se for objeto, extrair informação útil
-            if (value.name) displayValue = value.name;
-            else if (value.label) displayValue = value.label;
+            if ((value as any).name) displayValue = (value as any).name;
+            else if ((value as any).label) displayValue = (value as any).label;
             else displayValue = '[Objeto complexo]';
           } else {
             displayValue = String(value || '');
