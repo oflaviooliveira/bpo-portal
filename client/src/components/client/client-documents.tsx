@@ -1,12 +1,17 @@
 import { useState, useMemo } from "react";
-import { useQuery } from "@tanstack/react-query";
+import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
-import { FileText, Search, Filter, Download, Eye, X, Receipt } from "lucide-react";
+import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle } from "@/components/ui/alert-dialog";
+import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuSeparator, DropdownMenuTrigger } from "@/components/ui/dropdown-menu";
+import { Checkbox } from "@/components/ui/checkbox";
+import { FileText, Search, Filter, Download, Eye, X, Receipt, Trash2, MoreHorizontal, RefreshCw } from "lucide-react";
 import { Button } from "@/components/ui/button";
+import { useToast } from "@/hooks/use-toast";
 import { cn } from "@/lib/utils";
+import { apiRequest } from "@/lib/queryClient";
 import { DocumentPreview } from "./document-preview";
 import { DocumentMapperFactory, type UnifiedDocumentData } from "@/lib/document-mappers";
 
@@ -16,10 +21,108 @@ export function ClientDocuments() {
   const [typeFilter, setTypeFilter] = useState("all");
   const [selectedDocument, setSelectedDocument] = useState<any>(null);
   const [previewOpen, setPreviewOpen] = useState(false);
+  const [selectedDocuments, setSelectedDocuments] = useState<string[]>([]);
+  const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
+  const [documentToDelete, setDocumentToDelete] = useState<any>(null);
+  const [bulkDeleteDialogOpen, setBulkDeleteDialogOpen] = useState(false);
+
+  const { toast } = useToast();
+  const queryClient = useQueryClient();
 
   const { data: documents, isLoading } = useQuery({
     queryKey: ['/api/documents'],
   });
+
+  // Mutation para exclusão individual
+  const deleteDocumentMutation = useMutation({
+    mutationFn: async (documentId: string) => {
+      await apiRequest(`/api/documents/${documentId}`, {
+        method: 'DELETE',
+      });
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['/api/documents'] });
+      toast({
+        title: "Documento excluído",
+        description: "O documento foi excluído com sucesso.",
+      });
+      setDeleteDialogOpen(false);
+      setDocumentToDelete(null);
+    },
+    onError: (error: any) => {
+      toast({
+        title: "Erro ao excluir",
+        description: error.message || "Ocorreu um erro ao excluir o documento.",
+        variant: "destructive",
+      });
+    },
+  });
+
+  // Mutation para exclusão em lote
+  const bulkDeleteMutation = useMutation({
+    mutationFn: async (documentIds: string[]) => {
+      await apiRequest('/api/documents/bulk-delete', {
+        method: 'DELETE',
+        body: JSON.stringify({ documentIds }),
+        headers: {
+          'Content-Type': 'application/json',
+        },
+      });
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['/api/documents'] });
+      toast({
+        title: "Documentos excluídos",
+        description: `${selectedDocuments.length} documento(s) excluído(s) com sucesso.`,
+      });
+      setSelectedDocuments([]);
+      setBulkDeleteDialogOpen(false);
+    },
+    onError: (error: any) => {
+      toast({
+        title: "Erro ao excluir",
+        description: error.message || "Ocorreu um erro ao excluir os documentos.",
+        variant: "destructive",
+      });
+    },
+  });
+
+  const handleDeleteDocument = (document: any) => {
+    setDocumentToDelete(document);
+    setDeleteDialogOpen(true);
+  };
+
+  const confirmDelete = () => {
+    if (documentToDelete) {
+      deleteDocumentMutation.mutate(documentToDelete.id);
+    }
+  };
+
+  const handleBulkDelete = () => {
+    if (selectedDocuments.length > 0) {
+      setBulkDeleteDialogOpen(true);
+    }
+  };
+
+  const confirmBulkDelete = () => {
+    bulkDeleteMutation.mutate(selectedDocuments);
+  };
+
+  const toggleDocumentSelection = (documentId: string) => {
+    setSelectedDocuments(prev => 
+      prev.includes(documentId) 
+        ? prev.filter(id => id !== documentId)
+        : [...prev, documentId]
+    );
+  };
+
+  const toggleSelectAll = () => {
+    if (selectedDocuments.length === filteredDocuments.length) {
+      setSelectedDocuments([]);
+    } else {
+      setSelectedDocuments(filteredDocuments.map(doc => doc.originalDoc.id));
+    }
+  };
 
   // Mapear todos os documentos para dados unificados
   const unifiedDocuments = useMemo(() => {
@@ -192,10 +295,43 @@ export function ClientDocuments() {
       {/* Documents List */}
       <Card>
         <CardHeader>
-          <CardTitle>Documentos ({filteredDocuments.length})</CardTitle>
-          <CardDescription>
-            Lista completa dos seus documentos processados
-          </CardDescription>
+          <div className="flex items-center justify-between">
+            <div>
+              <CardTitle>Documentos ({filteredDocuments.length})</CardTitle>
+              <CardDescription>
+                Lista completa dos seus documentos processados
+              </CardDescription>
+            </div>
+            {selectedDocuments.length > 0 && (
+              <div className="flex items-center space-x-2">
+                <span className="text-sm text-muted-foreground">
+                  {selectedDocuments.length} selecionado(s)
+                </span>
+                <Button
+                  variant="destructive"
+                  size="sm"
+                  onClick={handleBulkDelete}
+                  disabled={bulkDeleteMutation.isPending}
+                  data-testid="button-bulk-delete"
+                >
+                  <Trash2 className="h-4 w-4 mr-2" />
+                  Excluir Selecionados
+                </Button>
+              </div>
+            )}
+          </div>
+          {filteredDocuments.length > 0 && (
+            <div className="flex items-center space-x-2 pt-2">
+              <Checkbox
+                checked={selectedDocuments.length === filteredDocuments.length}
+                onCheckedChange={toggleSelectAll}
+                data-testid="checkbox-select-all"
+              />
+              <span className="text-sm text-muted-foreground">
+                Selecionar todos
+              </span>
+            </div>
+          )}
         </CardHeader>
         <CardContent>
           {isLoading ? (
@@ -219,10 +355,18 @@ export function ClientDocuments() {
               {filteredDocuments.map(({ originalDoc, unified }) => (
                 <div
                   key={originalDoc.id}
-                  className="border rounded-lg p-4 hover:bg-muted/50 transition-colors"
+                  className={cn(
+                    "border rounded-lg p-4 hover:bg-muted/50 transition-colors",
+                    selectedDocuments.includes(originalDoc.id) && "bg-muted/30 border-[#E40064]"
+                  )}
                 >
                   <div className="flex items-center justify-between">
                     <div className="flex items-center space-x-4 flex-1">
+                      <Checkbox
+                        checked={selectedDocuments.includes(originalDoc.id)}
+                        onCheckedChange={() => toggleDocumentSelection(originalDoc.id)}
+                        data-testid={`checkbox-select-${originalDoc.id}`}
+                      />
                       {unified.isVirtual ? (
                         <Receipt className="h-8 w-8 text-[#E40064]" />
                       ) : (
@@ -262,24 +406,46 @@ export function ClientDocuments() {
                         {unified.status}
                       </span>
                       
-                      <div className="flex items-center space-x-1">
-                        <Button 
-                          variant="ghost" 
-                          size="sm" 
-                          data-testid={`button-view-${originalDoc.id}`}
-                          onClick={() => {
+                      <DropdownMenu>
+                        <DropdownMenuTrigger asChild>
+                          <Button 
+                            variant="ghost" 
+                            size="sm"
+                            data-testid={`button-actions-${originalDoc.id}`}
+                          >
+                            <MoreHorizontal className="h-4 w-4" />
+                          </Button>
+                        </DropdownMenuTrigger>
+                        <DropdownMenuContent align="end">
+                          <DropdownMenuItem onClick={() => {
                             setSelectedDocument(originalDoc);
                             setPreviewOpen(true);
-                          }}
-                        >
-                          <Eye className="h-4 w-4" />
-                        </Button>
-                        {!unified.isVirtual && (
-                          <Button variant="ghost" size="sm" data-testid={`button-download-${originalDoc.id}`}>
-                            <Download className="h-4 w-4" />
-                          </Button>
-                        )}
-                      </div>
+                          }}>
+                            <Eye className="h-4 w-4 mr-2" />
+                            Visualizar
+                          </DropdownMenuItem>
+                          {!unified.isVirtual && (
+                            <DropdownMenuItem>
+                              <Download className="h-4 w-4 mr-2" />
+                              Download
+                            </DropdownMenuItem>
+                          )}
+                          {(unified.status === 'ERROR' || unified.status === 'PENDENTE_REVISAO') && (
+                            <DropdownMenuItem>
+                              <RefreshCw className="h-4 w-4 mr-2" />
+                              Reprocessar
+                            </DropdownMenuItem>
+                          )}
+                          <DropdownMenuSeparator />
+                          <DropdownMenuItem 
+                            onClick={() => handleDeleteDocument(originalDoc)}
+                            className="text-red-600 focus:text-red-600"
+                          >
+                            <Trash2 className="h-4 w-4 mr-2" />
+                            Excluir
+                          </DropdownMenuItem>
+                        </DropdownMenuContent>
+                      </DropdownMenu>
                     </div>
                   </div>
 
@@ -328,6 +494,52 @@ export function ClientDocuments() {
           )}
         </CardContent>
       </Card>
+
+      {/* Delete Confirmation Dialog */}
+      <AlertDialog open={deleteDialogOpen} onOpenChange={setDeleteDialogOpen}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>Excluir Documento</AlertDialogTitle>
+            <AlertDialogDescription>
+              Tem certeza que deseja excluir o documento "{documentToDelete?.originalName || 'sem nome'}"?
+              Esta ação não pode ser desfeita.
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel>Cancelar</AlertDialogCancel>
+            <AlertDialogAction
+              onClick={confirmDelete}
+              disabled={deleteDocumentMutation.isPending}
+              className="bg-red-600 hover:bg-red-700"
+            >
+              {deleteDocumentMutation.isPending ? "Excluindo..." : "Excluir"}
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
+
+      {/* Bulk Delete Confirmation Dialog */}
+      <AlertDialog open={bulkDeleteDialogOpen} onOpenChange={setBulkDeleteDialogOpen}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>Excluir Documentos Selecionados</AlertDialogTitle>
+            <AlertDialogDescription>
+              Tem certeza que deseja excluir {selectedDocuments.length} documento(s) selecionado(s)?
+              Esta ação não pode ser desfeita.
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel>Cancelar</AlertDialogCancel>
+            <AlertDialogAction
+              onClick={confirmBulkDelete}
+              disabled={bulkDeleteMutation.isPending}
+              className="bg-red-600 hover:bg-red-700"
+            >
+              {bulkDeleteMutation.isPending ? "Excluindo..." : "Excluir Selecionados"}
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
 
       {/* Document Preview Dialog */}
       <Dialog open={previewOpen} onOpenChange={setPreviewOpen}>
