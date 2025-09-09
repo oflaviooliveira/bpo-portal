@@ -896,7 +896,7 @@ export function UploadBpo() {
     const fieldMapping: Record<string, string> = {
       contraparteId: 'supplier',
       realPaidDate: 'paidDate',
-      scheduledDate: 'scheduledDate'
+      scheduledDate: documentType === 'EMITIR_BOLETO' ? 'dueDate' : 'scheduledDate'
     };
 
     // 🎯 CORREÇÃO: Usar form.getValues() para capturar TODOS os campos (incluindo Select controlados)
