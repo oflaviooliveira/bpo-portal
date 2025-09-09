@@ -536,7 +536,7 @@ export function ClientDocuments() {
       {/* Document Preview Dialog */}
       <Dialog open={previewOpen} onOpenChange={setPreviewOpen}>
         <DialogContent className="max-w-7xl max-h-[90vh] overflow-hidden">
-          <DialogHeader className="flex flex-row items-center justify-between">
+          <DialogHeader>
             <DialogTitle className="flex items-center gap-2">
               {selectedDocument?.isVirtualDocument || ['EMITIR_BOLETO', 'EMITIR_NF'].includes(selectedDocument?.documentType) ? (
                 <Receipt className="h-5 w-5 text-[#E40064]" />
@@ -545,14 +545,6 @@ export function ClientDocuments() {
               )}
               {selectedDocument?.originalName || DocumentMapperFactory.mapDocument(selectedDocument || {}).displayName}
             </DialogTitle>
-            <Button
-              variant="ghost"
-              size="sm"
-              onClick={() => setPreviewOpen(false)}
-              className="h-6 w-6 p-0"
-            >
-              <X className="h-4 w-4" />
-            </Button>
           </DialogHeader>
           
           {selectedDocument && (

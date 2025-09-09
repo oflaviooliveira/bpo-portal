@@ -1117,6 +1117,7 @@ export function UploadBpo() {
                             {selectedFile.name} ({Math.round(selectedFile.size/1024)}KB)
                           </span>
                           <Button
+                            type="button"
                             variant="outline"
                             size="sm"
                             onClick={() => setDocumentPreviewModal(true)}
