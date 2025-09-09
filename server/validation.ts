@@ -390,8 +390,9 @@ export const documentValidationSchemas = {
     optional: ['clientId', 'bankId', 'notes', 'instructions', 'payerContactName', 'payerStateRegistration', 'payerComplement', 'payerAddress']
   },
   EMITIR_NF: {
-    required: ['clientId', 'categoryId', 'costCenterId', 'amount', 'serviceCode', 'serviceDescription', 'payerDocument', 'payerName', 'payerAddress', 'payerEmail'],
-    optional: ['supplier', 'notes', 'instructions']
+    // 🎯 VALIDAÇÃO SLA SIMPLIFICADA - Apenas campos essenciais conforme SLA real
+    required: ['amount', 'serviceDescription', 'payerDocument', 'payerName', 'payerAddress', 'payerContactName', 'payerPhone'],
+    optional: ['clientId', 'supplier', 'categoryId', 'costCenterId', 'serviceCode', 'payerEmail', 'payerStateRegistration', 'scheduledDate', 'notes', 'instructions']
   }
 };
 

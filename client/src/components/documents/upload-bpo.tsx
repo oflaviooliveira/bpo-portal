@@ -116,8 +116,8 @@ const bpoUploadSchema = z.object({
     }
   }
 
-  if (data.documentType === "EMITIR_BOLETO" || data.documentType === "EMITIR_NF") {
-    // 🔴 CAMPOS OBRIGATÓRIOS PARA BOLETO/NF (alinhados com backend)
+  if (data.documentType === "EMITIR_BOLETO") {
+    // 🔴 CAMPOS OBRIGATÓRIOS PARA BOLETO (mantém validação original)
     const requiredFields = [
       // Campos de negócio obrigatórios
       { field: "categoryId", name: "Categoria" },
@@ -146,22 +146,40 @@ const bpoUploadSchema = z.object({
         });
       }
     });
+  }
 
-    if (data.documentType === "EMITIR_NF") {
-      if (!data.serviceCode) {
+  if (data.documentType === "EMITIR_NF") {
+    // 🎯 VALIDAÇÃO SLA SIMPLIFICADA - Apenas campos essenciais conforme SLA
+    const requiredFieldsNF = [
+      { field: "payerDocument", name: "CNPJ/CPF do Tomador" },
+      { field: "payerName", name: "Nome/Razão Social" },
+      { field: "payerContactName", name: "Nome da Pessoa de Contato" },
+      { field: "payerPhone", name: "Telefone" },
+      { field: "payerStreet", name: "Rua/Avenida" },
+      { field: "payerNumber", name: "Número" },
+      { field: "payerNeighborhood", name: "Bairro" },
+      { field: "payerCity", name: "Cidade" },
+      { field: "payerState", name: "Estado" },
+      { field: "payerZipCode", name: "CEP" }
+    ];
+
+    requiredFieldsNF.forEach(({ field, name }) => {
+      if (!data[field as keyof typeof data]) {
         ctx.addIssue({
           code: z.ZodIssueCode.custom,
-          message: "Código do Serviço é obrigatório para emissão de NF",
-          path: ["serviceCode"]
+          message: `${name} é obrigatório para Nota Fiscal`,
+          path: [field]
         });
       }
-      if (!data.serviceDescription) {
-        ctx.addIssue({
-          code: z.ZodIssueCode.custom,
-          message: "Descrição do Serviço é obrigatória para emissão de NF",
-          path: ["serviceDescription"]
-        });
-      }
+    });
+
+    // Descrição do serviço obrigatória
+    if (!data.serviceDescription) {
+      ctx.addIssue({
+        code: z.ZodIssueCode.custom,
+        message: "Descrição do Serviço é obrigatória para emissão de NF",
+        path: ["serviceDescription"]
+      });
     }
   }
 });
@@ -1188,6 +1206,16 @@ export function UploadBpo() {
         shouldDirty: true,
         shouldTouch: true 
       });
+      
+      // 🎯 AUTO-PREENCHER EMAIL DO CLIENTE PARA EMITIR_NF (conforme SLA)
+      if (documentType === "EMITIR_NF" && selectedClient.email) {
+        form.setValue("payerEmail", selectedClient.email, {
+          shouldValidate: false,
+          shouldDirty: true,
+          shouldTouch: true
+        });
+        console.log("✅ Email auto-preenchido do cliente:", selectedClient.email);
+      }
     } else if (documentType === "PAGO" || documentType === "AGENDADO") {
       // Limpar contraparteId para que o usuário selecione manualmente
       form.setValue("contraparteId", "", { 
@@ -2035,7 +2063,7 @@ export function UploadBpo() {
 
               {/* Categoria */}
               <div className="space-y-2">
-                <Label>Categoria {(documentType === "EMITIR_BOLETO" || documentType === "EMITIR_NF") && <span className="text-red-500">*</span>}</Label>
+                <Label>Categoria {documentType === "EMITIR_BOLETO" && <span className="text-red-500">*</span>}{documentType === "EMITIR_NF" && <span className="text-gray-500">(Opcional)</span>}</Label>
                 <Select 
                   value={form.watch("categoryId") || ""} 
                   onValueChange={(value) => form.setValue("categoryId", value)}
@@ -2058,7 +2086,7 @@ export function UploadBpo() {
 
               {/* Centro de Custo */}
               <div className="space-y-2">
-                <Label>Centro de Custo {(documentType === "EMITIR_BOLETO" || documentType === "EMITIR_NF") && <span className="text-red-500">*</span>}</Label>
+                <Label>Centro de Custo {documentType === "EMITIR_BOLETO" && <span className="text-red-500">*</span>}{documentType === "EMITIR_NF" && <span className="text-gray-500">(Opcional)</span>}</Label>
                 <Select 
                   value={form.watch("costCenterId") || ""} 
                   onValueChange={(value) => form.setValue("costCenterId", value)}
@@ -2093,45 +2121,30 @@ export function UploadBpo() {
             {/* Campos específicos para EMITIR_NF */}
             {documentType === "EMITIR_NF" && (
               <>
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                  {/* Código do Serviço */}
-                  <div className="space-y-2">
-                    <Label>Código do Serviço <span className="text-red-500">*</span></Label>
-                    <Input
-                      {...form.register("serviceCode")}
-                      placeholder="Ex: 1.01, 14.01, etc."
-                      data-testid="input-service-code"
-                    />
-                    {form.formState.errors.serviceCode && (
-                      <p className="text-sm text-red-500">{form.formState.errors.serviceCode.message}</p>
-                    )}
-                  </div>
-
-                  {/* Data de Vencimento para NF */}
-                  <div className="space-y-2">
-                    <Label>Data de Vencimento <span className="text-red-500">*</span></Label>
-                    <Input
-                      {...form.register("scheduledDate")}
-                      type="date"
-                      data-testid="input-scheduled-date-nf"
-                    />
-                    {form.formState.errors.scheduledDate && (
-                      <p className="text-sm text-red-500">{form.formState.errors.scheduledDate.message}</p>
-                    )}
-                  </div>
-                </div>
-
-                {/* Descrição do Serviço */}
+                {/* Descrição do Serviço - Campo principal */}
                 <div className="space-y-2">
                   <Label>Descrição do Serviço <span className="text-red-500">*</span></Label>
                   <Textarea
                     {...form.register("serviceDescription")}
-                    placeholder="Descreva detalhadamente o serviço prestado..."
+                    placeholder="Descreva detalhadamente o serviço prestado (inclua valores individuais se necessário)..."
                     className="min-h-[100px]"
                     data-testid="textarea-service-description"
                   />
                   {form.formState.errors.serviceDescription && (
                     <p className="text-sm text-red-500">{form.formState.errors.serviceDescription.message}</p>
+                  )}
+                </div>
+
+                {/* Data de Vencimento - Opcional */}
+                <div className="space-y-2">
+                  <Label>Data de Vencimento (Opcional)</Label>
+                  <Input
+                    {...form.register("scheduledDate")}
+                    type="date"
+                    data-testid="input-scheduled-date-nf"
+                  />
+                  {form.formState.errors.scheduledDate && (
+                    <p className="text-sm text-red-500">{form.formState.errors.scheduledDate.message}</p>
                   )}
                 </div>
               </>
