@@ -1024,22 +1024,31 @@ export function UploadBpo() {
       }
     });
 
-    // Buscar dueDate nas sugestões processadas (pode estar em diferentes lugares)
-    let dueDate = null;
-    if (suggestions && Array.isArray(suggestions)) {
-      // Procurar por suggestion com dueDate
-      const dueDateSuggestion = suggestions.find((s: any) => s.field === 'dueDate' || (s as any).dueDate);
-      if (dueDateSuggestion) {
-        dueDate = dueDateSuggestion.value || (dueDateSuggestion as any).dueDate;
+    // 🔧 CORREÇÃO CRÍTICA: Garantir dueDate para EMITIR_BOLETO
+    if (documentType === 'EMITIR_BOLETO') {
+      // Para boleto, scheduledDate É a data de vencimento (dueDate)
+      if (completeData.scheduledDate && !completeData.dueDate) {
+        completeData.dueDate = formatDateForServer(completeData.scheduledDate);
+        console.log("📅 BOLETO: scheduledDate → dueDate:", completeData.scheduledDate);
       }
-    } else if (suggestions && typeof suggestions === 'object') {
-      // Se suggestions é um objeto, tentar acessar realData
-      dueDate = (suggestions as any)?.realData?.dueDate || (suggestions as any)?.dueDate;
-    }
+      
+      // Fallback: buscar nas sugestões se não tiver
+      if (!completeData.dueDate) {
+        let dueDate = null;
+        if (suggestions && Array.isArray(suggestions)) {
+          const dueDateSuggestion = suggestions.find((s: any) => s.field === 'dueDate' || (s as any).dueDate);
+          if (dueDateSuggestion) {
+            dueDate = dueDateSuggestion.value || (dueDateSuggestion as any).dueDate;
+          }
+        } else if (suggestions && typeof suggestions === 'object') {
+          dueDate = (suggestions as any)?.realData?.dueDate || (suggestions as any)?.dueDate;
+        }
 
-    if (dueDate && !completeData.dueDate) {
-      completeData.dueDate = formatDateForServer(dueDate);
-      console.log("📅 Data de vencimento adicionada das sugestões:", dueDate);
+        if (dueDate) {
+          completeData.dueDate = formatDateForServer(dueDate);
+          console.log("📅 Data de vencimento adicionada das sugestões:", dueDate);
+        }
+      }
     }
 
     // 🎯 CORREÇÃO ADICIONAL: Buscar nome da contraparte pelo ID
