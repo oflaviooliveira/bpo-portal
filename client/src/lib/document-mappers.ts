@@ -316,7 +316,21 @@ export class VirtualDocumentMapper extends DocumentMapper {
           'payerDocument': 'document', 
           'payerEmail': 'email',
           'payerAddress': 'address',
-          'serviceDescription': 'serviceDescription'
+          'payerPhone': 'phone',
+          'payerContactName': 'contactName',
+          'payerStateRegistration': 'stateRegistration',
+          'payerStreet': 'street',
+          'payerNumber': 'number',
+          'payerComplement': 'complement',
+          'payerNeighborhood': 'neighborhood',
+          'payerCity': 'city',
+          'payerState': 'state',
+          'payerZipCode': 'zipCode',
+          'serviceDescription': 'serviceDescription',
+          'competenceDate': 'competenceDate',
+          'categoryName': 'categoryName',
+          'costCenterName': 'costCenterName',
+          'instructions': 'instructions'
         };
         
         if (fieldMappings[field]) {
