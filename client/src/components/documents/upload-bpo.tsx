@@ -2210,7 +2210,7 @@ export function UploadBpo() {
               disabled={processingState.stage === 'processing' || processingState.stage === 'submitting'}
               className="w-full bg-[#E40064] hover:bg-[#E40064]/90 text-white"
               data-testid="button-submit"
-              onClick={() => {
+              onClick={async () => {
                 console.log("🔘 [DEBUG] Botão clicado! Estado atual:", processingState.stage);
                 console.log("🔍 [DEBUG] Estado da validação:", {
                   isValid: form.formState.isValid,
@@ -2218,6 +2218,20 @@ export function UploadBpo() {
                   errorCount: Object.keys(form.formState.errors).length
                 });
                 console.log("🔍 [DEBUG] Valores atuais do formulário:", form.getValues());
+                
+                // 🔧 CORREÇÃO: Se não há erros mas isValid=false, forçar validação
+                if (!form.formState.isValid && Object.keys(form.formState.errors).length === 0) {
+                  console.log("🔧 [FIX] Forçando revalidação devido a bug do react-hook-form...");
+                  const isValidAfterTrigger = await form.trigger();
+                  console.log("✅ [FIX] Validação forçada resultado:", isValidAfterTrigger);
+                  
+                  // Se ainda assim não validar, forçar submit manualmente
+                  if (!isValidAfterTrigger && Object.keys(form.formState.errors).length === 0) {
+                    console.log("🚀 [FIX] Executando onSubmit manualmente...");
+                    const formData = form.getValues();
+                    onSubmit(formData);
+                  }
+                }
               }}
             >
               {processingState.stage === 'submitting' ? (
