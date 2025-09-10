@@ -1,0 +1,78 @@
+26The source list for the Content Security Policy directive 'default-src' contains an invalid source: ''unsafe-dynamic''. It will be ignored.Understand this error
+26The Content-Security-Policy directive 'default-src' contains 'report-uri' as a source expression. Did you want to add it as a directive and forget a semicolon?Understand this error
+26The source list for Content Security Policy directive 'default-src' contains a source with an invalid path: '/api/4509669501698048/security/?sentry_key=7eb3d90eb4660416caf507087367e67e'. The query component, including the '?', will be ignored.Understand this error
+PortalBPOSystem:1 The source list for the Content Security Policy directive 'default-src' contains an invalid source: ''unsafe-dynamic''. It will be ignored.Understand this error
+PortalBPOSystem:1 The Content-Security-Policy directive 'default-src' contains 'report-uri' as a source expression. Did you want to add it as a directive and forget a semicolon?Understand this error
+PortalBPOSystem:1 The source list for Content Security Policy directive 'default-src' contains a source with an invalid path: '/api/4509669501698048/security/?sentry_key=7eb3d90eb4660416caf507087367e67e'. The query component, including the '?', will be ignored.Understand this error
+_app-3868c4534c64b96e.js:38 
+      /////////////////////
+   ///////////////////////////
+  ////////@@@@@@@//////////////
+  ////////@@@@@@@//////////////
+  ////////@@@@@@@//////////////        Curious and driven?
+  ///////////////@@@@@@@///////        Work with us!
+  ///////////////@@@@@@@///////
+  ///////////////@@@@@@@///////        https://join.replit.com/hack.with.us
+  ////////@@@@@@@//////////////
+  ////////@@@@@@@//////////////
+  ////////@@@@@@#//////////////
+   ///////////////////////////
+      /////////////////////
+      
+_app-3868c4534c64b96e.js:38 [LaunchDarkly] LaunchDarkly client initialized
+PortalBPOSystem:1 Banner not shown: beforeinstallpromptevent.preventDefault() called. The page must call beforeinstallpromptevent.prompt() to show the banner.
+13Error while parsing the 'sandbox' attribute: 'allow-downloads-without-user-activation' is an invalid sandbox flag.Understand this error
+framework-43cc7383a9c431be.js:1 Unrecognized feature: 'ambient-light-sensor'.
+_ @ framework-43cc7383a9c431be.js:1Understand this warning
+framework-43cc7383a9c431be.js:1 Unrecognized feature: 'battery'.
+_ @ framework-43cc7383a9c431be.js:1Understand this warning
+framework-43cc7383a9c431be.js:1 Unrecognized feature: 'execution-while-not-rendered'.
+_ @ framework-43cc7383a9c431be.js:1Understand this warning
+framework-43cc7383a9c431be.js:1 Unrecognized feature: 'execution-while-out-of-viewport'.
+_ @ framework-43cc7383a9c431be.js:1Understand this warning
+framework-43cc7383a9c431be.js:1 Unrecognized feature: 'layout-animations'.
+_ @ framework-43cc7383a9c431be.js:1Understand this warning
+framework-43cc7383a9c431be.js:1 Unrecognized feature: 'legacy-image-formats'.
+_ @ framework-43cc7383a9c431be.js:1Understand this warning
+framework-43cc7383a9c431be.js:1 Unrecognized feature: 'navigation-override'.
+_ @ framework-43cc7383a9c431be.js:1Understand this warning
+framework-43cc7383a9c431be.js:1 Unrecognized feature: 'oversized-images'.
+_ @ framework-43cc7383a9c431be.js:1Understand this warning
+framework-43cc7383a9c431be.js:1 Unrecognized feature: 'publickey-credentials'.
+_ @ framework-43cc7383a9c431be.js:1Understand this warning
+framework-43cc7383a9c431be.js:1 Unrecognized feature: 'speaker-selection'.
+_ @ framework-43cc7383a9c431be.js:1Understand this warning
+framework-43cc7383a9c431be.js:1 Unrecognized feature: 'unoptimized-images'.
+_ @ framework-43cc7383a9c431be.js:1Understand this warning
+framework-43cc7383a9c431be.js:1 Unrecognized feature: 'unsized-media'.
+_ @ framework-43cc7383a9c431be.js:1Understand this warning
+framework-43cc7383a9c431be.js:1 Unrecognized feature: 'pointer-lock'.
+_ @ framework-43cc7383a9c431be.js:1Understand this warning
+framework-43cc7383a9c431be.js:1 Allow attribute will take precedence over 'allowfullscreen'.
+_ @ framework-43cc7383a9c431be.js:1Understand this warning
+framework-43cc7383a9c431be.js:1 Allow attribute will take precedence over 'allowpaymentrequest'.
+_ @ framework-43cc7383a9c431be.js:1Understand this warning
+PortalBPOSystem:1 Unchecked runtime.lastError: A listener indicated an asynchronous response by returning true, but the message channel closed before a response was receivedUnderstand this error
+60PortalBPOSystem:1 Uncaught (in promise) Error: A listener indicated an asynchronous response by returning true, but the message channel closed before a response was receivedUnderstand this error
+workspace_iframe.html?initialPath=%2F&id=%3Ar17o%3A:32 Unrecognized feature: 'ambient-light-sensor'.Understand this warning
+workspace_iframe.html?initialPath=%2F&id=%3Ar17o%3A:32 Unrecognized feature: 'battery'.Understand this warning
+workspace_iframe.html?initialPath=%2F&id=%3Ar17o%3A:32 Unrecognized feature: 'execution-while-not-rendered'.Understand this warning
+workspace_iframe.html?initialPath=%2F&id=%3Ar17o%3A:32 Unrecognized feature: 'execution-while-out-of-viewport'.Understand this warning
+workspace_iframe.html?initialPath=%2F&id=%3Ar17o%3A:32 Unrecognized feature: 'layout-animations'.Understand this warning
+workspace_iframe.html?initialPath=%2F&id=%3Ar17o%3A:32 Unrecognized feature: 'legacy-image-formats'.Understand this warning
+workspace_iframe.html?initialPath=%2F&id=%3Ar17o%3A:32 Unrecognized feature: 'navigation-override'.Understand this warning
+workspace_iframe.html?initialPath=%2F&id=%3Ar17o%3A:32 Unrecognized feature: 'oversized-images'.Understand this warning
+workspace_iframe.html?initialPath=%2F&id=%3Ar17o%3A:32 Unrecognized feature: 'publickey-credentials'.Understand this warning
+workspace_iframe.html?initialPath=%2F&id=%3Ar17o%3A:32 Unrecognized feature: 'speaker-selection'.Understand this warning
+workspace_iframe.html?initialPath=%2F&id=%3Ar17o%3A:32 Unrecognized feature: 'unoptimized-images'.Understand this warning
+workspace_iframe.html?initialPath=%2F&id=%3Ar17o%3A:32 Unrecognized feature: 'unsized-media'.Understand this warning
+workspace_iframe.html?initialPath=%2F&id=%3Ar17o%3A:32 Allow attribute will take precedence over 'allowfullscreen'.Understand this warning
+workspace_iframe.html?initialPath=%2F&id=%3Ar17o%3A:32 Allow attribute will take precedence over 'allowpaymentrequest'.Understand this warning
+5PortalBPOSystem:1 Uncaught (in promise) Error: A listener indicated an asynchronous response by returning true, but the message channel closed before a response was receivedUnderstand this error
+Console.js:61 ✅ Email auto-preenchido do cliente: contato@techsolutions.com.br
+Console.js:61 🔘 [DEBUG] Botão clicado! Estado atual: ready
+Console.js:61 🔍 [DEBUG] Estado da validação: Object
+Console.js:61 🔍 [DEBUG] Valores atuais do formulário: Object
+Console.js:61 🔧 [FIX] Formulário inválido sem erros visíveis. Testando schema Zod...
+Console.js:61 ❌ [DEBUG] Schema Zod FALHOU! Erros: Array(1)
+Console.js:61 🔍 Campo: description - Erro: Descrição é obrigatória

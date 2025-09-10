@@ -34,7 +34,7 @@ const bpoUploadSchema = z.object({
   // Dados básicos sempre obrigatórios
   amount: z.string().min(1, "Valor é obrigatório"),
   contraparteId: z.string().optional(), // Será validado condicionalmente abaixo
-  description: z.string().min(1, "Descrição é obrigatória"),
+  description: z.string().optional(), // Será validado condicionalmente por tipo
 
   // Dados condicionais por tipo
   competenceDate: z.string().optional(),
@@ -78,6 +78,15 @@ const bpoUploadSchema = z.object({
       code: z.ZodIssueCode.custom,
       message: "Contraparte é obrigatória para documentos PAGO e AGENDADO",
       path: ["contraparteId"]
+    });
+  }
+
+  // Validação condicional: description obrigatória apenas para PAGO e AGENDADO
+  if ((data.documentType === "PAGO" || data.documentType === "AGENDADO") && !data.description) {
+    ctx.addIssue({
+      code: z.ZodIssueCode.custom,
+      message: "Descrição é obrigatória para documentos PAGO e AGENDADO",
+      path: ["description"]
     });
   }
 
@@ -962,8 +971,6 @@ export function UploadBpo() {
   };
 
   const onSubmit = async (data: BpoUploadData) => {
-    console.log("🎯 [DEBUG] onSubmit CHAMADO! Tipo de documento:", data.documentType);
-    
     // Para EMITIR_BOLETO e EMITIR_NF, arquivo não é obrigatório (documento virtual)
     const requiresFile = data.documentType === "PAGO" || data.documentType === "AGENDADO";
     
@@ -974,25 +981,6 @@ export function UploadBpo() {
         variant: "destructive",
       });
       return;
-    }
-
-    console.log("🚀 ===== INICIANDO ENVIO BPO =====");
-    console.log("📋 Dados completos:", data);
-    console.log("🔍 Erros de validação:", form.formState.errors);
-    
-    // 🎯 DEBUG ESPECÍFICO PARA EMITIR_NF
-    if (data.documentType === "EMITIR_NF") {
-      console.log("🔍 [EMITIR_NF] Campos obrigatórios:");
-      console.log("  - payerDocument:", data.payerDocument);
-      console.log("  - payerName:", data.payerName);
-      console.log("  - payerPhone:", data.payerPhone);
-      console.log("  - payerStreet:", data.payerStreet);
-      console.log("  - payerNumber:", data.payerNumber);
-      console.log("  - payerNeighborhood:", data.payerNeighborhood);
-      console.log("  - payerCity:", data.payerCity);
-      console.log("  - payerState:", data.payerState);
-      console.log("  - payerZipCode:", data.payerZipCode);
-      console.log("  - serviceDescription:", data.serviceDescription);
     }
     
     // 🚨 FEEDBACK MELHORADO: Verificar e mostrar erros específicos
@@ -2210,39 +2198,6 @@ export function UploadBpo() {
               disabled={processingState.stage === 'processing' || processingState.stage === 'submitting'}
               className="w-full bg-[#E40064] hover:bg-[#E40064]/90 text-white"
               data-testid="button-submit"
-              onClick={async () => {
-                console.log("🔘 [DEBUG] Botão clicado! Estado atual:", processingState.stage);
-                console.log("🔍 [DEBUG] Estado da validação:", {
-                  isValid: form.formState.isValid,
-                  errors: form.formState.errors,
-                  errorCount: Object.keys(form.formState.errors).length
-                });
-                console.log("🔍 [DEBUG] Valores atuais do formulário:", form.getValues());
-                
-                // 🔧 CORREÇÃO: Se não há erros mas isValid=false, testar schema Zod diretamente
-                if (!form.formState.isValid && Object.keys(form.formState.errors).length === 0) {
-                  console.log("🔧 [FIX] Formulário inválido sem erros visíveis. Testando schema Zod...");
-                  const formData = form.getValues();
-                  
-                  try {
-                    const zodResult = bpoUploadSchema.safeParse(formData);
-                    if (zodResult.success) {
-                      console.log("✅ [DEBUG] Schema Zod PASSOU! Forçando submit...");
-                      onSubmit(formData);
-                    } else {
-                      console.log("❌ [DEBUG] Schema Zod FALHOU! Erros:", zodResult.error.issues);
-                      // Mostrar erros específicos
-                      zodResult.error.issues.forEach(issue => {
-                        console.log(`🔍 Campo: ${issue.path.join('.')} - Erro: ${issue.message}`);
-                      });
-                    }
-                  } catch (error) {
-                    console.log("💥 [DEBUG] Erro ao testar schema:", error);
-                    console.log("🚀 [FIX] Executando onSubmit manualmente mesmo assim...");
-                    onSubmit(formData);
-                  }
-                }
-              }}
             >
               {processingState.stage === 'submitting' ? (
                 <>
