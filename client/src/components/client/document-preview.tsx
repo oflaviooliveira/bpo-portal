@@ -20,7 +20,9 @@ import {
   Info,
   Receipt,
   Clock,
-  CreditCard
+  CreditCard,
+  Hash,
+  Briefcase
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { DocumentMapperFactory, type UnifiedDocumentData } from "@/lib/document-mappers";
@@ -119,36 +121,36 @@ export function DocumentPreview({ document }: DocumentPreviewProps) {
   const renderSpecializedContent = () => {
     if (unifiedData.isVirtual && unifiedData.boletoInfo) {
       return (
-        <div className="space-y-4">
-          {/* Seção específica de Boletos */}
+        <div className="space-y-6">
+          {/* Seção de Dados Básicos do Boleto */}
           <div className="space-y-3">
             <h4 className="font-medium text-[#E40064] border-b border-[#E40064]/20 pb-1 flex items-center gap-2">
               <Receipt className="h-4 w-4" />
-              Dados do Boleto
+              Dados do Pagador
             </h4>
             
             {renderField(
-              "Pagador", 
+              "Nome/Razão Social", 
               unifiedData.boletoInfo.payerName,
               <User className="h-4 w-4" />,
               true
             )}
             
             {renderField(
-              "CPF/CNPJ do Pagador", 
+              "CPF/CNPJ", 
               unifiedData.boletoInfo.payerDocument,
               <FileText className="h-4 w-4" />,
               true
             )}
             
             {renderField(
-              "E-mail do Pagador", 
+              "E-mail", 
               unifiedData.boletoInfo.payerEmail,
               <Mail className="h-4 w-4" />
             )}
             
             {renderField(
-              "Telefone do Pagador", 
+              "Telefone", 
               unifiedData.boletoInfo.payerPhone,
               <Phone className="h-4 w-4" />
             )}
@@ -164,19 +166,87 @@ export function DocumentPreview({ document }: DocumentPreviewProps) {
               unifiedData.boletoInfo.payerStateRegistration,
               <FileText className="h-4 w-4" />
             )}
-            
-            {renderField(
-              "Endereço do Pagador", 
-              unifiedData.boletoInfo.payerAddress,
-              <MapPin className="h-4 w-4" />
-            )}
-            
-            {renderField(
-              "Instruções", 
-              unifiedData.boletoInfo.instructions,
-              <FileText className="h-4 w-4" />
-            )}
           </div>
+
+          {/* Seção de Endereço Completo */}
+          {(unifiedData.boletoInfo.payerStreet || unifiedData.boletoInfo.payerAddress) && (
+            <div className="space-y-3">
+              <h4 className="font-medium text-[#0B0E30] border-b border-[#0B0E30]/20 pb-1 flex items-center gap-2">
+                <MapPin className="h-4 w-4" />
+                Endereço do Pagador
+              </h4>
+              
+              {unifiedData.boletoInfo.payerAddress && renderField(
+                "Endereço Completo", 
+                unifiedData.boletoInfo.payerAddress,
+                <MapPin className="h-4 w-4" />
+              )}
+              
+              <div className="grid grid-cols-2 gap-4">
+                {unifiedData.boletoInfo.payerStreet && renderField(
+                  "Rua/Avenida", 
+                  unifiedData.boletoInfo.payerStreet,
+                  <Building className="h-4 w-4" />
+                )}
+                
+                {unifiedData.boletoInfo.payerNumber && renderField(
+                  "Número", 
+                  unifiedData.boletoInfo.payerNumber,
+                  <Hash className="h-4 w-4" />
+                )}
+              </div>
+              
+              <div className="grid grid-cols-2 gap-4">
+                {unifiedData.boletoInfo.payerComplement && renderField(
+                  "Complemento", 
+                  unifiedData.boletoInfo.payerComplement,
+                  <Building className="h-4 w-4" />
+                )}
+                
+                {unifiedData.boletoInfo.payerNeighborhood && renderField(
+                  "Bairro", 
+                  unifiedData.boletoInfo.payerNeighborhood,
+                  <MapPin className="h-4 w-4" />
+                )}
+              </div>
+              
+              <div className="grid grid-cols-2 gap-4">
+                {unifiedData.boletoInfo.payerCity && renderField(
+                  "Cidade", 
+                  unifiedData.boletoInfo.payerCity,
+                  <Building className="h-4 w-4" />
+                )}
+                
+                {unifiedData.boletoInfo.payerState && renderField(
+                  "Estado", 
+                  unifiedData.boletoInfo.payerState,
+                  <MapPin className="h-4 w-4" />
+                )}
+              </div>
+              
+              {unifiedData.boletoInfo.payerZipCode && renderField(
+                "CEP", 
+                unifiedData.boletoInfo.payerZipCode,
+                <Hash className="h-4 w-4" />
+              )}
+            </div>
+          )}
+
+          {/* Seção de Instruções */}
+          {unifiedData.boletoInfo.instructions && (
+            <div className="space-y-3">
+              <h4 className="font-medium text-[#E40064] border-b border-[#E40064]/20 pb-1 flex items-center gap-2">
+                <FileText className="h-4 w-4" />
+                Instruções do Boleto
+              </h4>
+              
+              {renderField(
+                "Instruções", 
+                unifiedData.boletoInfo.instructions,
+                <FileText className="h-4 w-4" />
+              )}
+            </div>
+          )}
           
           <Separator />
         </div>
@@ -185,36 +255,36 @@ export function DocumentPreview({ document }: DocumentPreviewProps) {
     
     if (unifiedData.isVirtual && unifiedData.nfInfo) {
       return (
-        <div className="space-y-4">
-          {/* Seção específica de Nota Fiscal */}
+        <div className="space-y-6">
+          {/* Seção de Dados Básicos da NF */}
           <div className="space-y-3">
             <h4 className="font-medium text-[#0B0E30] border-b border-[#0B0E30]/20 pb-1 flex items-center gap-2">
               <FileText className="h-4 w-4" />
-              Dados da Nota Fiscal
+              Dados do Tomador do Serviço
             </h4>
             
             {renderField(
-              "Cliente / Tomador", 
+              "Nome/Razão Social", 
               unifiedData.nfInfo.payerName,
               <User className="h-4 w-4" />,
               true
             )}
             
             {renderField(
-              "CPF/CNPJ do Cliente", 
+              "CPF/CNPJ", 
               unifiedData.nfInfo.payerDocument,
               <FileText className="h-4 w-4" />,
               true
             )}
             
             {renderField(
-              "E-mail do Cliente", 
+              "E-mail", 
               unifiedData.nfInfo.payerEmail,
               <Mail className="h-4 w-4" />
             )}
             
             {renderField(
-              "Telefone do Cliente", 
+              "Telefone", 
               unifiedData.nfInfo.payerPhone,
               <Phone className="h-4 w-4" />
             )}
@@ -230,12 +300,78 @@ export function DocumentPreview({ document }: DocumentPreviewProps) {
               unifiedData.nfInfo.payerStateRegistration,
               <FileText className="h-4 w-4" />
             )}
-            
-            {renderField(
-              "Endereço do Cliente", 
-              unifiedData.nfInfo.payerAddress,
-              <MapPin className="h-4 w-4" />
-            )}
+          </div>
+
+          {/* Seção de Endereço Completo */}
+          {(unifiedData.nfInfo.payerStreet || unifiedData.nfInfo.payerAddress) && (
+            <div className="space-y-3">
+              <h4 className="font-medium text-[#0B0E30] border-b border-[#0B0E30]/20 pb-1 flex items-center gap-2">
+                <MapPin className="h-4 w-4" />
+                Endereço do Tomador
+              </h4>
+              
+              {unifiedData.nfInfo.payerAddress && renderField(
+                "Endereço Completo", 
+                unifiedData.nfInfo.payerAddress,
+                <MapPin className="h-4 w-4" />
+              )}
+              
+              <div className="grid grid-cols-2 gap-4">
+                {unifiedData.nfInfo.payerStreet && renderField(
+                  "Rua/Avenida", 
+                  unifiedData.nfInfo.payerStreet,
+                  <Building className="h-4 w-4" />
+                )}
+                
+                {unifiedData.nfInfo.payerNumber && renderField(
+                  "Número", 
+                  unifiedData.nfInfo.payerNumber,
+                  <Hash className="h-4 w-4" />
+                )}
+              </div>
+              
+              <div className="grid grid-cols-2 gap-4">
+                {unifiedData.nfInfo.payerComplement && renderField(
+                  "Complemento", 
+                  unifiedData.nfInfo.payerComplement,
+                  <Building className="h-4 w-4" />
+                )}
+                
+                {unifiedData.nfInfo.payerNeighborhood && renderField(
+                  "Bairro", 
+                  unifiedData.nfInfo.payerNeighborhood,
+                  <MapPin className="h-4 w-4" />
+                )}
+              </div>
+              
+              <div className="grid grid-cols-2 gap-4">
+                {unifiedData.nfInfo.payerCity && renderField(
+                  "Cidade", 
+                  unifiedData.nfInfo.payerCity,
+                  <Building className="h-4 w-4" />
+                )}
+                
+                {unifiedData.nfInfo.payerState && renderField(
+                  "Estado", 
+                  unifiedData.nfInfo.payerState,
+                  <MapPin className="h-4 w-4" />
+                )}
+              </div>
+              
+              {unifiedData.nfInfo.payerZipCode && renderField(
+                "CEP", 
+                unifiedData.nfInfo.payerZipCode,
+                <Hash className="h-4 w-4" />
+              )}
+            </div>
+          )}
+
+          {/* Seção de Informações do Serviço */}
+          <div className="space-y-3">
+            <h4 className="font-medium text-[#E40064] border-b border-[#E40064]/20 pb-1 flex items-center gap-2">
+              <Briefcase className="h-4 w-4" />
+              Dados do Serviço
+            </h4>
             
             {renderField(
               "Descrição do Serviço", 
@@ -250,17 +386,19 @@ export function DocumentPreview({ document }: DocumentPreviewProps) {
               <Calendar className="h-4 w-4" />
             )}
             
-            {renderField(
-              "Categoria", 
-              unifiedData.nfInfo.categoryName,
-              <FileText className="h-4 w-4" />
-            )}
-            
-            {renderField(
-              "Centro de Custo", 
-              unifiedData.nfInfo.costCenterName,
-              <Building className="h-4 w-4" />
-            )}
+            <div className="grid grid-cols-2 gap-4">
+              {unifiedData.nfInfo.categoryName && renderField(
+                "Categoria", 
+                unifiedData.nfInfo.categoryName,
+                <FileText className="h-4 w-4" />
+              )}
+              
+              {unifiedData.nfInfo.costCenterName && renderField(
+                "Centro de Custo", 
+                unifiedData.nfInfo.costCenterName,
+                <Building className="h-4 w-4" />
+              )}
+            </div>
           </div>
           
           <Separator />
