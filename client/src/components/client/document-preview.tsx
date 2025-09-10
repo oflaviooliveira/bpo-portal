@@ -154,6 +154,18 @@ export function DocumentPreview({ document }: DocumentPreviewProps) {
             )}
             
             {renderField(
+              "Nome do Contato", 
+              unifiedData.boletoInfo.payerContactName,
+              <User className="h-4 w-4" />
+            )}
+            
+            {renderField(
+              "Inscrição Estadual", 
+              unifiedData.boletoInfo.payerStateRegistration,
+              <FileText className="h-4 w-4" />
+            )}
+            
+            {renderField(
               "Endereço do Pagador", 
               unifiedData.boletoInfo.payerAddress,
               <MapPin className="h-4 w-4" />
@@ -163,6 +175,91 @@ export function DocumentPreview({ document }: DocumentPreviewProps) {
               "Instruções", 
               unifiedData.boletoInfo.instructions,
               <FileText className="h-4 w-4" />
+            )}
+          </div>
+          
+          <Separator />
+        </div>
+      );
+    }
+    
+    if (unifiedData.isVirtual && unifiedData.nfInfo) {
+      return (
+        <div className="space-y-4">
+          {/* Seção específica de Nota Fiscal */}
+          <div className="space-y-3">
+            <h4 className="font-medium text-[#0B0E30] border-b border-[#0B0E30]/20 pb-1 flex items-center gap-2">
+              <FileText className="h-4 w-4" />
+              Dados da Nota Fiscal
+            </h4>
+            
+            {renderField(
+              "Cliente / Tomador", 
+              unifiedData.nfInfo.payerName,
+              <User className="h-4 w-4" />,
+              true
+            )}
+            
+            {renderField(
+              "CPF/CNPJ do Cliente", 
+              unifiedData.nfInfo.payerDocument,
+              <FileText className="h-4 w-4" />,
+              true
+            )}
+            
+            {renderField(
+              "E-mail do Cliente", 
+              unifiedData.nfInfo.payerEmail,
+              <Mail className="h-4 w-4" />
+            )}
+            
+            {renderField(
+              "Telefone do Cliente", 
+              unifiedData.nfInfo.payerPhone,
+              <Phone className="h-4 w-4" />
+            )}
+            
+            {renderField(
+              "Nome do Contato", 
+              unifiedData.nfInfo.payerContactName,
+              <User className="h-4 w-4" />
+            )}
+            
+            {renderField(
+              "Inscrição Estadual", 
+              unifiedData.nfInfo.payerStateRegistration,
+              <FileText className="h-4 w-4" />
+            )}
+            
+            {renderField(
+              "Endereço do Cliente", 
+              unifiedData.nfInfo.payerAddress,
+              <MapPin className="h-4 w-4" />
+            )}
+            
+            {renderField(
+              "Descrição do Serviço", 
+              unifiedData.nfInfo.serviceDescription,
+              <FileText className="h-4 w-4" />,
+              true
+            )}
+            
+            {renderField(
+              "Data de Competência", 
+              unifiedData.nfInfo.competenceDate,
+              <Calendar className="h-4 w-4" />
+            )}
+            
+            {renderField(
+              "Categoria", 
+              unifiedData.nfInfo.categoryName,
+              <FileText className="h-4 w-4" />
+            )}
+            
+            {renderField(
+              "Centro de Custo", 
+              unifiedData.nfInfo.costCenterName,
+              <Building className="h-4 w-4" />
             )}
           </div>
           
