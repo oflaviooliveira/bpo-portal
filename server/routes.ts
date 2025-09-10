@@ -1240,7 +1240,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
   });
 
   // Bulk delete documents - Wave 1 RBAC (DEVE VIR ANTES DA ROTA /:id)
-  app.delete("/api/documents/bulk-delete", ...authorize(["SUPER_ADMIN"], true), async (req, res) => {
+  app.delete("/api/documents/bulk-delete", ...authorize(["SUPER_ADMIN", "CLIENT_USER"], true), async (req, res) => {
     try {
       const user = req.user!;
       const { documentIds } = req.body;
