@@ -2219,34 +2219,27 @@ export function UploadBpo() {
                 });
                 console.log("🔍 [DEBUG] Valores atuais do formulário:", form.getValues());
                 
-                // 🔧 CORREÇÃO: Se não há erros mas isValid=false, forçar validação
+                // 🔧 CORREÇÃO: Se não há erros mas isValid=false, testar schema Zod diretamente
                 if (!form.formState.isValid && Object.keys(form.formState.errors).length === 0) {
-                  console.log("🔧 [FIX] Forçando revalidação devido a bug do react-hook-form...");
-                  const isValidAfterTrigger = await form.trigger();
-                  console.log("✅ [FIX] Validação forçada resultado:", isValidAfterTrigger);
+                  console.log("🔧 [FIX] Formulário inválido sem erros visíveis. Testando schema Zod...");
+                  const formData = form.getValues();
                   
-                  // Se ainda assim não validar, testar schema Zod diretamente
-                  if (!isValidAfterTrigger && Object.keys(form.formState.errors).length === 0) {
-                    console.log("🔍 [DEBUG] Testando schema Zod diretamente...");
-                    const formData = form.getValues();
-                    
-                    try {
-                      const zodResult = bpoUploadSchema.safeParse(formData);
-                      if (zodResult.success) {
-                        console.log("✅ [DEBUG] Schema Zod PASSOU! Forçando submit...");
-                        onSubmit(formData);
-                      } else {
-                        console.log("❌ [DEBUG] Schema Zod FALHOU! Erros:", zodResult.error.issues);
-                        // Mostrar erros específicos
-                        zodResult.error.issues.forEach(issue => {
-                          console.log(`🔍 Campo: ${issue.path.join('.')} - Erro: ${issue.message}`);
-                        });
-                      }
-                    } catch (error) {
-                      console.log("💥 [DEBUG] Erro ao testar schema:", error);
-                      console.log("🚀 [FIX] Executando onSubmit manualmente mesmo assim...");
+                  try {
+                    const zodResult = bpoUploadSchema.safeParse(formData);
+                    if (zodResult.success) {
+                      console.log("✅ [DEBUG] Schema Zod PASSOU! Forçando submit...");
                       onSubmit(formData);
+                    } else {
+                      console.log("❌ [DEBUG] Schema Zod FALHOU! Erros:", zodResult.error.issues);
+                      // Mostrar erros específicos
+                      zodResult.error.issues.forEach(issue => {
+                        console.log(`🔍 Campo: ${issue.path.join('.')} - Erro: ${issue.message}`);
+                      });
                     }
+                  } catch (error) {
+                    console.log("💥 [DEBUG] Erro ao testar schema:", error);
+                    console.log("🚀 [FIX] Executando onSubmit manualmente mesmo assim...");
+                    onSubmit(formData);
                   }
                 }
               }}
