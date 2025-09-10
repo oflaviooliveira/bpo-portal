@@ -1239,42 +1239,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
-  // Delete individual document - Wave 1 RBAC
-  app.delete("/api/documents/:id", ...authorize(["SUPER_ADMIN", "CLIENT_USER"], true), async (req, res) => {
-    try {
-      const user = req.user!;
-      const documentId = req.params.id;
-
-      // Verificar se o documento existe e pertence ao tenant do usuário
-      const document = await storage.getDocument(documentId, user.tenantId);
-      if (!document) {
-        return res.status(404).json({ error: "Documento não encontrado" });
-      }
-
-      // Deletar documento individual
-      await storage.deleteDocuments([documentId], user.tenantId);
-
-      // Log da exclusão
-      await storage.createDocumentLog({
-        documentId,
-        action: "DELETE",
-        status: "SUCCESS",
-        details: { deletedBy: user.id, deletedAt: new Date() },
-        userId: user.id,
-        tenantId: user.tenantId
-      });
-
-      res.json({ 
-        success: true, 
-        message: "Documento excluído com sucesso"
-      });
-    } catch (error) {
-      console.error("Delete document error:", error);
-      res.status(500).json({ error: "Erro ao excluir documento" });
-    }
-  });
-
-  // Bulk delete documents - Wave 1 RBAC
+  // Bulk delete documents - Wave 1 RBAC (DEVE VIR ANTES DA ROTA /:id)
   app.delete("/api/documents/bulk-delete", ...authorize(["SUPER_ADMIN"], true), async (req, res) => {
     try {
       const user = req.user!;
@@ -1318,6 +1283,41 @@ export async function registerRoutes(app: Express): Promise<Server> {
     } catch (error) {
       console.error("Bulk delete documents error:", error);
       res.status(500).json({ error: "Erro ao excluir documentos" });
+    }
+  });
+
+  // Delete individual document - Wave 1 RBAC (APÓS bulk-delete para evitar conflito)
+  app.delete("/api/documents/:id", ...authorize(["SUPER_ADMIN", "CLIENT_USER"], true), async (req, res) => {
+    try {
+      const user = req.user!;
+      const documentId = req.params.id;
+
+      // Verificar se o documento existe e pertence ao tenant do usuário
+      const document = await storage.getDocument(documentId, user.tenantId);
+      if (!document) {
+        return res.status(404).json({ error: "Documento não encontrado" });
+      }
+
+      // Deletar documento individual
+      await storage.deleteDocuments([documentId], user.tenantId);
+
+      // Log da exclusão
+      await storage.createDocumentLog({
+        documentId,
+        action: "DELETE",
+        status: "SUCCESS",
+        details: { deletedBy: user.id, deletedAt: new Date() },
+        userId: user.id,
+        tenantId: user.tenantId
+      });
+
+      res.json({ 
+        success: true, 
+        message: "Documento excluído com sucesso"
+      });
+    } catch (error) {
+      console.error("Delete document error:", error);
+      res.status(500).json({ error: "Erro ao excluir documento" });
     }
   });
 
