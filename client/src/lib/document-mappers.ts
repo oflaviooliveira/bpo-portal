@@ -23,9 +23,25 @@ export interface BoletoInfo {
   payerDocument?: string;
   payerEmail?: string;
   payerPhone?: string;
+  payerContactName?: string;
+  payerStateRegistration?: string;
   payerAddress?: string;
   instructions?: string;
   dueDate?: string;
+}
+
+export interface NfInfo {
+  payerName?: string;
+  payerDocument?: string;
+  payerEmail?: string;
+  payerPhone?: string;
+  payerContactName?: string;
+  payerStateRegistration?: string;
+  payerAddress?: string;
+  serviceDescription?: string;
+  competenceDate?: string;
+  categoryName?: string;
+  costCenterName?: string;
 }
 
 export interface UnifiedDocumentData {
@@ -61,6 +77,7 @@ export interface UnifiedDocumentData {
   paymentInfo?: PaymentInfo;
   scheduleInfo?: ScheduleInfo;
   boletoInfo?: BoletoInfo;
+  nfInfo?: NfInfo;
   
   // Dados originais para debug
   rawExtractedData?: any;
@@ -271,31 +288,59 @@ export class VirtualDocumentMapper extends DocumentMapper {
   map(document: any): UnifiedDocumentData {
     const issuerData = document.issuerData || {};
     
+    // Helper para buscar dados com fallback entre issuerData e document
+    const getValue = (field: string, transform?: (val: any) => any) => {
+      let value = document[field] || issuerData[field];
+      return transform ? transform(value) : value;
+    };
+    
     return {
       displayName: `Documento Virtual - ${this.getTypeLabel(document.documentType || document.bpoType)}`,
       amount: this.formatCurrency(document.amount),
-      supplier: document.supplier,
-      dueDate: this.formatDate(document.dueDate),
+      supplier: document.supplier || getValue('payerName'),
+      dueDate: this.formatDate(document.dueDate || document.competenceDate),
       status: document.status,
       documentType: document.documentType || document.bpoType,
       isVirtual: true,
       
-      // Campos básicos para documentos virtuais
-      razaoSocial: document.supplier,
+      // Campos básicos para documentos virtuais - com mapeamento correto
+      razaoSocial: getValue('payerName') || document.supplier,
+      cnpj: getValue('payerDocument'),
       valor: this.formatCurrency(document.amount),
-      dataVencimento: this.formatDate(document.dueDate),
-      dataPagamento: this.formatDate(document.paidDate),
-      descricao: document.description,
+      dataEmissao: this.formatDate(document.createdAt),
+      dataVencimento: this.formatDate(document.dueDate || document.competenceDate),
+      dataPagamento: this.formatDate(document.paidDate || document.realPaidDate),
+      descricao: getValue('serviceDescription') || document.description,
+      endereco: getValue('payerAddress') || this.buildAddress(document),
+      telefone: getValue('payerPhone'),
+      email: getValue('payerEmail'),
       
-      // Seção específica para boletos
+      // Seção específica para boletos - CORRIGIDA
       boletoInfo: document.documentType === 'EMITIR_BOLETO' ? {
-        payerName: issuerData.payerName,
-        payerDocument: issuerData.payerDocument,
-        payerEmail: issuerData.payerEmail,
-        payerPhone: issuerData.payerPhone,
-        payerAddress: issuerData.payerAddress || this.buildAddress(issuerData),
-        instructions: document.instructions,
-        dueDate: this.formatDate(document.dueDate)
+        payerName: getValue('payerName'),
+        payerDocument: getValue('payerDocument'),
+        payerEmail: getValue('payerEmail'),
+        payerPhone: getValue('payerPhone'),
+        payerContactName: getValue('payerContactName'),
+        payerStateRegistration: getValue('payerStateRegistration'),
+        payerAddress: getValue('payerAddress') || this.buildAddress(document),
+        instructions: getValue('instructions') || getValue('serviceDescription'),
+        dueDate: this.formatDate(document.dueDate || document.competenceDate)
+      } : undefined,
+      
+      // Seção específica para NF - NOVA
+      nfInfo: document.documentType === 'EMITIR_NF' ? {
+        payerName: getValue('payerName'),
+        payerDocument: getValue('payerDocument'),
+        payerEmail: getValue('payerEmail'),
+        payerPhone: getValue('payerPhone'),
+        payerContactName: getValue('payerContactName'),
+        payerStateRegistration: getValue('payerStateRegistration'),
+        payerAddress: getValue('payerAddress') || this.buildAddress(document),
+        serviceDescription: getValue('serviceDescription'),
+        competenceDate: this.formatDate(document.competenceDate),
+        categoryName: document.category?.name,
+        costCenterName: document.costCenter?.name
       } : undefined,
       
       // Para debug
@@ -315,15 +360,18 @@ export class VirtualDocumentMapper extends DocumentMapper {
     }
   }
   
-  private buildAddress(issuerData: any): string {
+  private buildAddress(data: any): string {
+    // Buscar campos tanto em data quanto em issuerData se existir
+    const issuerData = data.issuerData || {};
+    
     const parts = [
-      issuerData.payerStreet,
-      issuerData.payerNumber,
-      issuerData.payerComplement,
-      issuerData.payerNeighborhood,
-      issuerData.payerCity,
-      issuerData.payerState,
-      issuerData.payerZipCode
+      data.payerStreet || issuerData.payerStreet,
+      data.payerNumber || issuerData.payerNumber,
+      data.payerComplement || issuerData.payerComplement,
+      data.payerNeighborhood || issuerData.payerNeighborhood,
+      data.payerCity || issuerData.payerCity,
+      data.payerState || issuerData.payerState,
+      data.payerZipCode || issuerData.payerZipCode
     ].filter(Boolean);
     
     return parts.length > 0 ? parts.join(', ') : '';
