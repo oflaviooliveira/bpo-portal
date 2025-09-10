@@ -100,8 +100,7 @@ export class DocumentUploadHandler {
         if (validatedData.documentType === 'AGENDADO') {
           issuerData = {
             ...issuerData,
-            scheduledDate: validatedData.dueDate,
-            paymentMethod: validatedData.paymentMethod
+            scheduledDate: validatedData.dueDate
           };
         }
       }
@@ -153,7 +152,6 @@ export class DocumentUploadHandler {
         fileSize: file?.size || null,
         mimeType: file?.mimetype || null,
         filePath: file?.path || null,
-        isVirtualDocument: isVirtualDocument,
         documentType: validatedData.documentType,
         amount: this.parseAmount(validatedData.amount || '') || '0',
         supplier: validatedData.supplier || validatedData.contraparteName,
