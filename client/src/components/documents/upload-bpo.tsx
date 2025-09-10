@@ -2210,7 +2210,15 @@ export function UploadBpo() {
               disabled={processingState.stage === 'processing' || processingState.stage === 'submitting'}
               className="w-full bg-[#E40064] hover:bg-[#E40064]/90 text-white"
               data-testid="button-submit"
-              onClick={() => console.log("🔘 [DEBUG] Botão clicado! Estado atual:", processingState.stage)}
+              onClick={() => {
+                console.log("🔘 [DEBUG] Botão clicado! Estado atual:", processingState.stage);
+                console.log("🔍 [DEBUG] Estado da validação:", {
+                  isValid: form.formState.isValid,
+                  errors: form.formState.errors,
+                  errorCount: Object.keys(form.formState.errors).length
+                });
+                console.log("🔍 [DEBUG] Valores atuais do formulário:", form.getValues());
+              }}
             >
               {processingState.stage === 'submitting' ? (
                 <>
