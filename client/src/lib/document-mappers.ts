@@ -498,7 +498,7 @@ export class DocumentMapperFactory {
   static create(document: any): DocumentMapper {
     const isVirtual = document.isVirtualDocument || 
                      document.filePath === null || 
-                     ['EMITIR_BOLETO', 'EMITIR_NF'].includes(document.documentType || document.bpoType);
+                     ['EMITIR_BOLETO', 'EMITIR_NF', 'AGENDADO'].includes(document.documentType || document.bpoType);
     
     return isVirtual 
       ? new VirtualDocumentMapper()

@@ -22,7 +22,8 @@ import {
   Clock,
   CreditCard,
   Hash,
-  Briefcase
+  Briefcase,
+  Download
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { DocumentMapperFactory, type UnifiedDocumentData } from "@/lib/document-mappers";
@@ -624,6 +625,29 @@ export function DocumentPreview({ document }: DocumentPreviewProps) {
                   <div>
                     <p className="text-gray-600">Documento Virtual</p>
                     <p className="text-sm text-gray-500">{unifiedData.displayName}</p>
+                  </div>
+                  <div className="flex gap-2 justify-center">
+                    <Button 
+                      variant="outline" 
+                      size="sm"
+                      onClick={() => window.open(`/api/documents/${document.id}/virtual-preview`, '_blank')}
+                    >
+                      <Eye className="h-4 w-4 mr-2" />
+                      Visualizar
+                    </Button>
+                    <Button 
+                      variant="outline" 
+                      size="sm"
+                      onClick={() => {
+                        const link = window.document.createElement('a');
+                        link.href = `/api/documents/${document.id}/virtual-download`;
+                        link.download = `${unifiedData.displayName}.pdf`;
+                        link.click();
+                      }}
+                    >
+                      <Download className="h-4 w-4 mr-2" />
+                      Baixar PDF
+                    </Button>
                   </div>
                 </div>
               ) : document.filePath?.endsWith('.pdf') ? (
