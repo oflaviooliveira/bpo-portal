@@ -306,8 +306,20 @@ export class VirtualDocumentMapper extends DocumentMapper {
     
     // Helper melhorado para buscar dados com fallback inteligente
     const getValue = (field: string, transform?: (val: any) => any) => {
-      // Prioridade: document raiz → issuerData → null
+      // Prioridade: document raiz → issuerData → issuerData sem prefix
       let value = document[field] || issuerData[field] || issuerData[field.replace('payer', '')];
+      
+      // Log para debug
+      if (field === 'payerName' || field === 'payerDocument') {
+        console.log(`🔍 Debug getValue(${field}):`, {
+          documentValue: document[field],
+          issuerDataValue: issuerData[field], 
+          issuerDataAlt: issuerData[field.replace('payer', '')],
+          finalValue: value,
+          issuerDataKeys: Object.keys(issuerData)
+        });
+      }
+      
       return transform ? transform(value) : value;
     };
     
