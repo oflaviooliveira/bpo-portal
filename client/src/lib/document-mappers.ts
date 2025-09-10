@@ -16,6 +16,22 @@ export interface ScheduleInfo {
   scheduledDate?: string;
   paymentMethod?: string;
   instructions?: string;
+  
+  // Dados completos do pagador (igual aos boletos)
+  payerName?: string;
+  payerDocument?: string;
+  payerEmail?: string;
+  payerPhone?: string;
+  payerContactName?: string;
+  payerStateRegistration?: string;
+  payerAddress?: string;
+  payerStreet?: string;
+  payerNumber?: string;
+  payerComplement?: string;
+  payerNeighborhood?: string;
+  payerCity?: string;
+  payerState?: string;
+  payerZipCode?: string;
 }
 
 export interface BoletoInfo {
@@ -330,7 +346,9 @@ export class VirtualDocumentMapper extends DocumentMapper {
           'competenceDate': 'competenceDate',
           'categoryName': 'categoryName',
           'costCenterName': 'costCenterName',
-          'instructions': 'instructions'
+          'instructions': 'instructions',
+          'scheduledDate': 'scheduledDate',
+          'paymentMethod': 'paymentMethod'
         };
         
         if (fieldMappings[field]) {
@@ -416,6 +434,29 @@ export class VirtualDocumentMapper extends DocumentMapper {
         competenceDate: this.formatDate(document.competenceDate),
         categoryName: document.category?.name,
         costCenterName: document.costCenter?.name
+      } : undefined,
+      
+      // Seção específica para AGENDADO - COMPLETA
+      scheduleInfo: document.documentType === 'AGENDADO' ? {
+        scheduledDate: this.formatDate(document.dueDate || getValue('scheduledDate')),
+        paymentMethod: getValue('paymentMethod') || 'Transferência Bancária',
+        instructions: getValue('instructions'),
+        
+        // Dados completos do pagador (igual aos boletos)
+        payerName: getValue('payerName'),
+        payerDocument: getValue('payerDocument'),
+        payerEmail: getValue('payerEmail'),
+        payerPhone: getValue('payerPhone'),
+        payerContactName: getValue('payerContactName'),
+        payerStateRegistration: getValue('payerStateRegistration'),
+        payerAddress: getFullAddress(),
+        payerStreet: getValue('payerStreet'),
+        payerNumber: getValue('payerNumber'),
+        payerComplement: getValue('payerComplement'),
+        payerNeighborhood: getValue('payerNeighborhood'),
+        payerCity: getValue('payerCity'),
+        payerState: getValue('payerState'),
+        payerZipCode: getValue('payerZipCode')
       } : undefined,
       
       // Para debug e auditoria

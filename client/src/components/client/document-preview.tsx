@@ -408,8 +408,8 @@ export function DocumentPreview({ document }: DocumentPreviewProps) {
     
     if (unifiedData.scheduleInfo) {
       return (
-        <div className="space-y-4">
-          {/* Seção específica de Agendamentos */}
+        <div className="space-y-6">
+          {/* Seção de Dados Básicos do Agendamento */}
           <div className="space-y-3">
             <h4 className="font-medium text-[#0B0E30] border-b border-[#0B0E30]/20 pb-1 flex items-center gap-2">
               <Clock className="h-4 w-4" />
@@ -435,6 +435,116 @@ export function DocumentPreview({ document }: DocumentPreviewProps) {
               <FileText className="h-4 w-4" />
             )}
           </div>
+
+          {/* Seção de Dados do Pagador */}
+          <div className="space-y-3">
+            <h4 className="font-medium text-[#E40064] border-b border-[#E40064]/20 pb-1 flex items-center gap-2">
+              <User className="h-4 w-4" />
+              Dados do Pagador
+            </h4>
+            
+            {renderField(
+              "Nome/Razão Social", 
+              unifiedData.scheduleInfo.payerName,
+              <User className="h-4 w-4" />,
+              true
+            )}
+            
+            {renderField(
+              "CPF/CNPJ", 
+              unifiedData.scheduleInfo.payerDocument,
+              <FileText className="h-4 w-4" />,
+              true
+            )}
+            
+            {renderField(
+              "E-mail", 
+              unifiedData.scheduleInfo.payerEmail,
+              <Mail className="h-4 w-4" />
+            )}
+            
+            {renderField(
+              "Telefone", 
+              unifiedData.scheduleInfo.payerPhone,
+              <Phone className="h-4 w-4" />
+            )}
+            
+            {renderField(
+              "Nome do Contato", 
+              unifiedData.scheduleInfo.payerContactName,
+              <User className="h-4 w-4" />
+            )}
+            
+            {renderField(
+              "Inscrição Estadual", 
+              unifiedData.scheduleInfo.payerStateRegistration,
+              <FileText className="h-4 w-4" />
+            )}
+          </div>
+
+          {/* Seção de Endereço Completo */}
+          {(unifiedData.scheduleInfo.payerStreet || unifiedData.scheduleInfo.payerAddress) && (
+            <div className="space-y-3">
+              <h4 className="font-medium text-[#0B0E30] border-b border-[#0B0E30]/20 pb-1 flex items-center gap-2">
+                <MapPin className="h-4 w-4" />
+                Endereço do Pagador
+              </h4>
+              
+              {unifiedData.scheduleInfo.payerAddress && renderField(
+                "Endereço Completo", 
+                unifiedData.scheduleInfo.payerAddress,
+                <MapPin className="h-4 w-4" />
+              )}
+              
+              <div className="grid grid-cols-2 gap-4">
+                {unifiedData.scheduleInfo.payerStreet && renderField(
+                  "Rua/Avenida", 
+                  unifiedData.scheduleInfo.payerStreet,
+                  <Building className="h-4 w-4" />
+                )}
+                
+                {unifiedData.scheduleInfo.payerNumber && renderField(
+                  "Número", 
+                  unifiedData.scheduleInfo.payerNumber,
+                  <Hash className="h-4 w-4" />
+                )}
+              </div>
+              
+              <div className="grid grid-cols-2 gap-4">
+                {unifiedData.scheduleInfo.payerComplement && renderField(
+                  "Complemento", 
+                  unifiedData.scheduleInfo.payerComplement,
+                  <Building className="h-4 w-4" />
+                )}
+                
+                {unifiedData.scheduleInfo.payerNeighborhood && renderField(
+                  "Bairro", 
+                  unifiedData.scheduleInfo.payerNeighborhood,
+                  <MapPin className="h-4 w-4" />
+                )}
+              </div>
+              
+              <div className="grid grid-cols-2 gap-4">
+                {unifiedData.scheduleInfo.payerCity && renderField(
+                  "Cidade", 
+                  unifiedData.scheduleInfo.payerCity,
+                  <Building className="h-4 w-4" />
+                )}
+                
+                {unifiedData.scheduleInfo.payerState && renderField(
+                  "Estado", 
+                  unifiedData.scheduleInfo.payerState,
+                  <MapPin className="h-4 w-4" />
+                )}
+              </div>
+              
+              {unifiedData.scheduleInfo.payerZipCode && renderField(
+                "CEP", 
+                unifiedData.scheduleInfo.payerZipCode,
+                <Hash className="h-4 w-4" />
+              )}
+            </div>
+          )}
           
           <Separator />
         </div>

@@ -68,14 +68,25 @@ export class DocumentUploadHandler {
         warnings.push(...businessValidation.warnings);
       }
 
-      // 4. Preparar dados do tomador para boletos/NF
+      // 4. Preparar dados do tomador para boletos/NF/AGENDADO
       let issuerData = null;
-      if (['EMITIR_BOLETO', 'EMITIR_NF'].includes(validatedData.documentType)) {
+      if (['EMITIR_BOLETO', 'EMITIR_NF', 'AGENDADO'].includes(validatedData.documentType)) {
         issuerData = {
           document: validatedData.payerDocument,
           name: validatedData.payerName,
           address: validatedData.payerAddress,
           email: validatedData.payerEmail,
+          phone: validatedData.payerPhone,
+          contactName: validatedData.payerContactName,
+          stateRegistration: validatedData.payerStateRegistration,
+          street: validatedData.payerStreet,
+          number: validatedData.payerNumber,
+          complement: validatedData.payerComplement,
+          neighborhood: validatedData.payerNeighborhood,
+          city: validatedData.payerCity,
+          state: validatedData.payerState,
+          zipCode: validatedData.payerZipCode,
+          instructions: validatedData.instructions
         };
         
         if (validatedData.documentType === 'EMITIR_NF') {
@@ -83,6 +94,14 @@ export class DocumentUploadHandler {
             ...issuerData,
             serviceCode: validatedData.serviceCode,
             serviceDescription: validatedData.serviceDescription
+          };
+        }
+        
+        if (validatedData.documentType === 'AGENDADO') {
+          issuerData = {
+            ...issuerData,
+            scheduledDate: validatedData.dueDate,
+            paymentMethod: validatedData.paymentMethod
           };
         }
       }
