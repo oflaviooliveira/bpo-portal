@@ -153,7 +153,6 @@ const bpoUploadSchema = z.object({
     const requiredFieldsNF = [
       { field: "payerDocument", name: "CNPJ/CPF do Tomador" },
       { field: "payerName", name: "Nome/Razão Social" },
-      { field: "payerContactName", name: "Nome da Pessoa de Contato" },
       { field: "payerPhone", name: "Telefone" },
       { field: "payerStreet", name: "Rua/Avenida" },
       { field: "payerNumber", name: "Número" },
