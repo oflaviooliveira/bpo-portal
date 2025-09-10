@@ -962,6 +962,8 @@ export function UploadBpo() {
   };
 
   const onSubmit = async (data: BpoUploadData) => {
+    console.log("🎯 [DEBUG] onSubmit CHAMADO! Tipo de documento:", data.documentType);
+    
     // Para EMITIR_BOLETO e EMITIR_NF, arquivo não é obrigatório (documento virtual)
     const requiresFile = data.documentType === "PAGO" || data.documentType === "AGENDADO";
     
@@ -977,6 +979,21 @@ export function UploadBpo() {
     console.log("🚀 ===== INICIANDO ENVIO BPO =====");
     console.log("📋 Dados completos:", data);
     console.log("🔍 Erros de validação:", form.formState.errors);
+    
+    // 🎯 DEBUG ESPECÍFICO PARA EMITIR_NF
+    if (data.documentType === "EMITIR_NF") {
+      console.log("🔍 [EMITIR_NF] Campos obrigatórios:");
+      console.log("  - payerDocument:", data.payerDocument);
+      console.log("  - payerName:", data.payerName);
+      console.log("  - payerPhone:", data.payerPhone);
+      console.log("  - payerStreet:", data.payerStreet);
+      console.log("  - payerNumber:", data.payerNumber);
+      console.log("  - payerNeighborhood:", data.payerNeighborhood);
+      console.log("  - payerCity:", data.payerCity);
+      console.log("  - payerState:", data.payerState);
+      console.log("  - payerZipCode:", data.payerZipCode);
+      console.log("  - serviceDescription:", data.serviceDescription);
+    }
     
     // 🚨 FEEDBACK MELHORADO: Verificar e mostrar erros específicos
     const formErrors = form.formState.errors;
@@ -2193,6 +2210,7 @@ export function UploadBpo() {
               disabled={processingState.stage === 'processing' || processingState.stage === 'submitting'}
               className="w-full bg-[#E40064] hover:bg-[#E40064]/90 text-white"
               data-testid="button-submit"
+              onClick={() => console.log("🔘 [DEBUG] Botão clicado! Estado atual:", processingState.stage)}
             >
               {processingState.stage === 'submitting' ? (
                 <>
