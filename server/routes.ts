@@ -1456,6 +1456,62 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
+  // Virtual document preview endpoint - NEW
+  app.get("/api/documents/:id/virtual-preview", isAuthenticated, async (req, res) => {
+    try {
+      const user = req.user!;
+      const documentId = req.params.id;
+
+      const document = await storage.getDocument(documentId, user.tenantId);
+      if (!document) {
+        return res.status(404).json({ error: "Documento não encontrado" });
+      }
+
+      // Verificar se é documento virtual
+      if (!document.isVirtualDocument && document.filePath) {
+        return res.status(400).json({ error: "Este endpoint é apenas para documentos virtuais" });
+      }
+
+      // Gerar HTML do documento virtual
+      const html = generateVirtualDocumentHTML(document);
+      
+      res.setHeader('Content-Type', 'text/html; charset=utf-8');
+      res.send(html);
+    } catch (error) {
+      console.error("Virtual preview error:", error);
+      res.status(500).json({ error: "Erro ao gerar visualização" });
+    }
+  });
+
+  // Virtual document download endpoint - NEW
+  app.get("/api/documents/:id/virtual-download", isAuthenticated, async (req, res) => {
+    try {
+      const user = req.user!;
+      const documentId = req.params.id;
+
+      const document = await storage.getDocument(documentId, user.tenantId);
+      if (!document) {
+        return res.status(404).json({ error: "Documento não encontrado" });
+      }
+
+      // Verificar se é documento virtual
+      if (!document.isVirtualDocument && document.filePath) {
+        return res.status(400).json({ error: "Este endpoint é apenas para documentos virtuais" });
+      }
+
+      // Gerar HTML para download
+      const html = generateVirtualDocumentHTML(document);
+      const fileName = `${getDocumentDisplayName(document)}.html`;
+      
+      res.setHeader('Content-Type', 'text/html; charset=utf-8');
+      res.setHeader('Content-Disposition', `attachment; filename="${fileName}"`);
+      res.send(html);
+    } catch (error) {
+      console.error("Virtual download error:", error);
+      res.status(500).json({ error: "Erro ao gerar download" });
+    }
+  });
+
   // Document reprocess endpoint - NEW
   app.post("/api/documents/:id/reprocess", ...authorize(["SUPER_ADMIN"]), async (req, res) => {
     try {
@@ -3276,4 +3332,273 @@ export async function registerRoutes(app: Express): Promise<Server> {
 
   const httpServer = createServer(app);
   return httpServer;
+}
+
+// ========================
+// UTILITY FUNCTIONS - Virtual Document Handling
+// ========================
+
+function generateVirtualDocumentHTML(document: any): string {
+  const formatCurrency = (value: any) => {
+    if (!value) return 'R$ 0,00';
+    const num = typeof value === 'string' ? parseFloat(value.replace(/[^\d,.-]/g, '').replace(',', '.')) : value;
+    return new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL' }).format(num || 0);
+  };
+
+  const formatDate = (dateStr: any) => {
+    if (!dateStr) return 'N/A';
+    try {
+      const date = new Date(dateStr);
+      return date.toLocaleDateString('pt-BR');
+    } catch {
+      return dateStr;
+    }
+  };
+
+  const issuerData = document.issuerData || {};
+  const documentTypeLabels = {
+    'AGENDADO': 'Agendamento de Pagamento',
+    'EMITIR_BOLETO': 'Boleto Bancário',
+    'EMITIR_NF': 'Nota Fiscal'
+  };
+
+  const documentTypeLabel = documentTypeLabels[document.documentType] || document.documentType;
+
+  let html = `
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>${documentTypeLabel} - ${issuerData.name || 'Documento'}</title>
+  <style>
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+    body { 
+      font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; 
+      line-height: 1.6; 
+      color: #333; 
+      background: #f8f9fa;
+      padding: 20px;
+    }
+    .container { 
+      max-width: 800px; 
+      margin: 0 auto; 
+      background: white; 
+      padding: 40px; 
+      border-radius: 8px; 
+      box-shadow: 0 4px 6px rgba(0,0,0,0.1);
+    }
+    .header { 
+      border-bottom: 3px solid #E40064; 
+      padding-bottom: 20px; 
+      margin-bottom: 30px;
+      text-align: center;
+    }
+    .header h1 { 
+      color: #0B0E30; 
+      font-size: 28px; 
+      margin-bottom: 5px;
+    }
+    .header .subtitle { 
+      color: #E40064; 
+      font-size: 16px; 
+      font-weight: 500;
+    }
+    .section { 
+      margin-bottom: 25px; 
+      padding: 20px; 
+      background: #f8f9fa; 
+      border-radius: 6px; 
+      border-left: 4px solid #E40064;
+    }
+    .section h2 { 
+      color: #0B0E30; 
+      font-size: 18px; 
+      margin-bottom: 15px; 
+      display: flex; 
+      align-items: center;
+    }
+    .section h2::before { 
+      content: "▶"; 
+      color: #E40064; 
+      margin-right: 8px; 
+      font-size: 14px;
+    }
+    .field { 
+      display: flex; 
+      margin-bottom: 10px; 
+      align-items: flex-start;
+    }
+    .field-label { 
+      font-weight: 600; 
+      color: #0B0E30; 
+      min-width: 180px; 
+      margin-right: 15px;
+    }
+    .field-value { 
+      color: #555; 
+      flex: 1;
+      word-break: break-word;
+    }
+    .highlight { 
+      background: #E40064; 
+      color: white; 
+      padding: 2px 6px; 
+      border-radius: 3px; 
+      font-weight: 500;
+    }
+    .amount { 
+      font-size: 24px; 
+      font-weight: bold; 
+      color: #E40064; 
+      text-align: center; 
+      padding: 15px; 
+      background: white; 
+      border: 2px solid #E40064; 
+      border-radius: 6px; 
+      margin: 20px 0;
+    }
+    .footer {
+      margin-top: 30px;
+      padding-top: 20px;
+      border-top: 1px solid #ddd;
+      font-size: 12px;
+      color: #666;
+      text-align: center;
+    }
+    @media print {
+      body { background: white; padding: 0; }
+      .container { box-shadow: none; }
+    }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <div class="header">
+      <h1>${documentTypeLabel}</h1>
+      <div class="subtitle">Portal BPO Financeiro - Gquicks</div>
+    </div>
+
+    <div class="amount">
+      ${formatCurrency(document.amount)}
+    </div>`;
+
+  if (document.documentType === 'AGENDADO') {
+    html += `
+    <div class="section">
+      <h2>Dados do Agendamento</h2>
+      <div class="field">
+        <div class="field-label">Data Agendada:</div>
+        <div class="field-value highlight">${formatDate(document.dueDate)}</div>
+      </div>
+      <div class="field">
+        <div class="field-label">Forma de Pagamento:</div>
+        <div class="field-value">${issuerData.paymentMethod || 'Transferência Bancária'}</div>
+      </div>
+      <div class="field">
+        <div class="field-label">Instruções:</div>
+        <div class="field-value">${issuerData.instructions || document.instructions || 'N/A'}</div>
+      </div>
+    </div>`;
+  }
+
+  // Seção de dados do pagador/beneficiário
+  html += `
+    <div class="section">
+      <h2>Dados do ${document.documentType === 'AGENDADO' ? 'Pagador' : 'Beneficiário'}</h2>
+      <div class="field">
+        <div class="field-label">Nome/Razão Social:</div>
+        <div class="field-value">${issuerData.name || document.supplier || 'N/A'}</div>
+      </div>
+      <div class="field">
+        <div class="field-label">CPF/CNPJ:</div>
+        <div class="field-value">${issuerData.document || 'N/A'}</div>
+      </div>
+      <div class="field">
+        <div class="field-label">E-mail:</div>
+        <div class="field-value">${issuerData.email || 'N/A'}</div>
+      </div>
+      <div class="field">
+        <div class="field-label">Telefone:</div>
+        <div class="field-value">${issuerData.phone || 'N/A'}</div>
+      </div>
+    </div>`;
+
+  // Seção de endereço (se houver)
+  if (issuerData.address || issuerData.street) {
+    html += `
+    <div class="section">
+      <h2>Endereço</h2>
+      <div class="field">
+        <div class="field-label">Endereço Completo:</div>
+        <div class="field-value">${issuerData.address || 'N/A'}</div>
+      </div>
+      <div class="field">
+        <div class="field-label">Rua/Avenida:</div>
+        <div class="field-value">${issuerData.street || 'N/A'}</div>
+      </div>
+      <div class="field">
+        <div class="field-label">Número:</div>
+        <div class="field-value">${issuerData.number || 'N/A'}</div>
+      </div>
+      <div class="field">
+        <div class="field-label">Bairro:</div>
+        <div class="field-value">${issuerData.neighborhood || 'N/A'}</div>
+      </div>
+      <div class="field">
+        <div class="field-label">Cidade:</div>
+        <div class="field-value">${issuerData.city || 'N/A'}</div>
+      </div>
+      <div class="field">
+        <div class="field-label">Estado:</div>
+        <div class="field-value">${issuerData.state || 'N/A'}</div>
+      </div>
+      <div class="field">
+        <div class="field-label">CEP:</div>
+        <div class="field-value">${issuerData.zipCode || 'N/A'}</div>
+      </div>
+    </div>`;
+  }
+
+  // Informações do documento
+  html += `
+    <div class="section">
+      <h2>Informações do Documento</h2>
+      <div class="field">
+        <div class="field-label">Status:</div>
+        <div class="field-value highlight">${document.status}</div>
+      </div>
+      <div class="field">
+        <div class="field-label">Data de Criação:</div>
+        <div class="field-value">${formatDate(document.createdAt)}</div>
+      </div>
+      <div class="field">
+        <div class="field-label">Descrição:</div>
+        <div class="field-value">${document.description || 'N/A'}</div>
+      </div>
+    </div>
+
+    <div class="footer">
+      Documento virtual gerado em ${new Date().toLocaleString('pt-BR')} pelo Portal BPO Financeiro Gquicks
+    </div>
+  </div>
+</body>
+</html>`;
+
+  return html;
+}
+
+function getDocumentDisplayName(document: any): string {
+  const typeLabels = {
+    'AGENDADO': 'Agendamento',
+    'EMITIR_BOLETO': 'Boleto',
+    'EMITIR_NF': 'NotaFiscal'
+  };
+  
+  const typeLabel = typeLabels[document.documentType] || 'Documento';
+  const issuerData = document.issuerData || {};
+  const name = issuerData.name || document.supplier || 'SemNome';
+  const date = new Date().toISOString().split('T')[0]; // YYYY-MM-DD
+  
+  return `${typeLabel}_${name.replace(/[^a-zA-Z0-9]/g, '')}_${date}`;
 }
