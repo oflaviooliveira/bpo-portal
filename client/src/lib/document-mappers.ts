@@ -26,6 +26,14 @@ export interface BoletoInfo {
   payerContactName?: string;
   payerStateRegistration?: string;
   payerAddress?: string;
+  // Campos individuais de endereço
+  payerStreet?: string;
+  payerNumber?: string;
+  payerComplement?: string;
+  payerNeighborhood?: string;
+  payerCity?: string;
+  payerState?: string;
+  payerZipCode?: string;
   instructions?: string;
   dueDate?: string;
 }
@@ -38,6 +46,14 @@ export interface NfInfo {
   payerContactName?: string;
   payerStateRegistration?: string;
   payerAddress?: string;
+  // Campos individuais de endereço
+  payerStreet?: string;
+  payerNumber?: string;
+  payerComplement?: string;
+  payerNeighborhood?: string;
+  payerCity?: string;
+  payerState?: string;
+  payerZipCode?: string;
   serviceDescription?: string;
   competenceDate?: string;
   categoryName?: string;
@@ -288,10 +304,25 @@ export class VirtualDocumentMapper extends DocumentMapper {
   map(document: any): UnifiedDocumentData {
     const issuerData = document.issuerData || {};
     
-    // Helper para buscar dados com fallback entre issuerData e document
+    // Helper melhorado para buscar dados com fallback inteligente
     const getValue = (field: string, transform?: (val: any) => any) => {
-      let value = document[field] || issuerData[field];
+      // Prioridade: document raiz → issuerData → null
+      let value = document[field] || issuerData[field] || issuerData[field.replace('payer', '')];
       return transform ? transform(value) : value;
+    };
+    
+    // Helper específico para endereço completo
+    const getFullAddress = () => {
+      const addressParts = [
+        getValue('payerStreet'),
+        getValue('payerNumber'),
+        getValue('payerComplement') ? `- ${getValue('payerComplement')}` : '',
+        getValue('payerNeighborhood'),
+        getValue('payerCity') && getValue('payerState') ? `${getValue('payerCity')} - ${getValue('payerState')}` : '',
+        getValue('payerZipCode') ? `CEP: ${getValue('payerZipCode')}` : ''
+      ].filter(part => part && part.trim() !== '' && part !== '-');
+      
+      return addressParts.length > 0 ? addressParts.join(', ') : (getValue('payerAddress') || this.buildAddress(document));
     };
     
     return {
@@ -303,7 +334,7 @@ export class VirtualDocumentMapper extends DocumentMapper {
       documentType: document.documentType || document.bpoType,
       isVirtual: true,
       
-      // Campos básicos para documentos virtuais - com mapeamento correto
+      // Campos básicos para documentos virtuais - MAPEAMENTO COMPLETO
       razaoSocial: getValue('payerName') || document.supplier,
       cnpj: getValue('payerDocument'),
       valor: this.formatCurrency(document.amount),
@@ -311,11 +342,11 @@ export class VirtualDocumentMapper extends DocumentMapper {
       dataVencimento: this.formatDate(document.dueDate || document.competenceDate),
       dataPagamento: this.formatDate(document.paidDate || document.realPaidDate),
       descricao: getValue('serviceDescription') || document.description,
-      endereco: getValue('payerAddress') || this.buildAddress(document),
+      endereco: getFullAddress(),
       telefone: getValue('payerPhone'),
       email: getValue('payerEmail'),
       
-      // Seção específica para boletos - CORRIGIDA
+      // Seção específica para boletos - COMPLETA
       boletoInfo: document.documentType === 'EMITIR_BOLETO' ? {
         payerName: getValue('payerName'),
         payerDocument: getValue('payerDocument'),
@@ -323,12 +354,19 @@ export class VirtualDocumentMapper extends DocumentMapper {
         payerPhone: getValue('payerPhone'),
         payerContactName: getValue('payerContactName'),
         payerStateRegistration: getValue('payerStateRegistration'),
-        payerAddress: getValue('payerAddress') || this.buildAddress(document),
+        payerAddress: getFullAddress(),
+        payerStreet: getValue('payerStreet'),
+        payerNumber: getValue('payerNumber'),
+        payerComplement: getValue('payerComplement'),
+        payerNeighborhood: getValue('payerNeighborhood'),
+        payerCity: getValue('payerCity'),
+        payerState: getValue('payerState'),
+        payerZipCode: getValue('payerZipCode'),
         instructions: getValue('instructions') || getValue('serviceDescription'),
         dueDate: this.formatDate(document.dueDate || document.competenceDate)
       } : undefined,
       
-      // Seção específica para NF - NOVA
+      // Seção específica para NF - COMPLETA
       nfInfo: document.documentType === 'EMITIR_NF' ? {
         payerName: getValue('payerName'),
         payerDocument: getValue('payerDocument'),
@@ -336,14 +374,21 @@ export class VirtualDocumentMapper extends DocumentMapper {
         payerPhone: getValue('payerPhone'),
         payerContactName: getValue('payerContactName'),
         payerStateRegistration: getValue('payerStateRegistration'),
-        payerAddress: getValue('payerAddress') || this.buildAddress(document),
+        payerAddress: getFullAddress(),
+        payerStreet: getValue('payerStreet'),
+        payerNumber: getValue('payerNumber'),
+        payerComplement: getValue('payerComplement'),
+        payerNeighborhood: getValue('payerNeighborhood'),
+        payerCity: getValue('payerCity'),
+        payerState: getValue('payerState'),
+        payerZipCode: getValue('payerZipCode'),
         serviceDescription: getValue('serviceDescription'),
         competenceDate: this.formatDate(document.competenceDate),
         categoryName: document.category?.name,
         costCenterName: document.costCenter?.name
       } : undefined,
       
-      // Para debug
+      // Para debug e auditoria
       rawExtractedData: issuerData,
       rawDocument: document
     };
