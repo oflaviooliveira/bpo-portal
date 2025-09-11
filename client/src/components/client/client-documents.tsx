@@ -417,7 +417,13 @@ export function ClientDocuments() {
                             Visualizar
                           </DropdownMenuItem>
                           {!unified.isVirtual && (
-                            <DropdownMenuItem>
+                            <DropdownMenuItem onClick={() => {
+                              // Download direto do documento (arquivo físico)
+                              const link = window.document.createElement('a');
+                              link.href = `/api/documents/${originalDoc.id}/download`;
+                              link.download = unified.displayName;
+                              link.click();
+                            }}>
                               <Download className="h-4 w-4 mr-2" />
                               Download
                             </DropdownMenuItem>

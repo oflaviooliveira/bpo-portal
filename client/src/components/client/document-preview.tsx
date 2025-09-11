@@ -658,7 +658,7 @@ export function DocumentPreview({ document }: DocumentPreviewProps) {
                     <Button 
                       variant="outline" 
                       className="mt-2"
-                      onClick={() => window.open(`/api/files/${document.id}`, '_blank')}
+                      onClick={() => window.open(`/api/documents/${document.id}/preview`, '_blank')}
                     >
                       <Eye className="h-4 w-4 mr-2" />
                       Abrir PDF
@@ -667,7 +667,7 @@ export function DocumentPreview({ document }: DocumentPreviewProps) {
                 </div>
               ) : (
                 <img
-                  src={`/api/files/${document.id}`}
+                  src={`/api/documents/${document.id}/preview`}
                   alt={document.originalName || 'Documento'}
                   className="max-w-full max-h-full object-contain"
                   onError={(e) => {

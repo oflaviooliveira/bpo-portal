@@ -1418,38 +1418,74 @@ export async function registerRoutes(app: Express): Promise<Server> {
       const user = req.user!;
       const documentId = req.params.id;
 
-      const document = await storage.getDocument(documentId, user.tenantId);
+      console.log(`📄 Preview request for document ${documentId} by user ${user.id} in tenant ${user.tenantId}`);
+
+      const document = await storage.getDocument(user.tenantId, documentId);
       if (!document) {
+        console.log(`❌ Document ${documentId} not found in tenant ${user.tenantId}`);
         return res.status(404).json({ error: "Documento não encontrado" });
       }
 
+      console.log(`📁 Document found: ${document.originalName}, filePath: ${document.filePath}, isVirtual: ${document.isVirtualDocument}`);
+
       const filePath = document.filePath;
       if (!filePath) {
+        console.log(`❌ No filePath for document ${documentId}`);
         return res.status(404).json({ error: "Arquivo não encontrado" });
       }
 
-      // Check if file exists
+      // Check if file exists using fileStorage interface
       try {
-        await fs.access(filePath);
-      } catch {
+        const exists = await fileStorage.exists(filePath);
+        if (!exists) {
+          console.log(`❌ File ${filePath} does not exist in storage`);
+          return res.status(404).json({ error: "Arquivo físico não encontrado" });
+        }
+        console.log(`✅ File ${filePath} exists in storage`);
+      } catch (error) {
+        console.log(`❌ Error checking file existence: ${error}`);
         return res.status(404).json({ error: "Arquivo físico não encontrado" });
       }
 
-      // Set appropriate content type
-      if (document.mimeType) {
-        res.setHeader('Content-Type', document.mimeType);
-      }
+      // Use fileStorage to download file
+      try {
+        const fileBuffer = await fileStorage.download(filePath);
+        console.log(`✅ File downloaded successfully, size: ${fileBuffer.length} bytes`);
 
-      // For PDFs, set proper headers for inline viewing
-      if (document.mimeType?.includes('pdf')) {
-        res.setHeader('Content-Disposition', 'inline');
-        res.setHeader('X-Content-Type-Options', 'nosniff');
-        res.setHeader('Access-Control-Allow-Origin', '*');
-      }
+        // Set appropriate content type
+        if (document.mimeType) {
+          res.setHeader('Content-Type', document.mimeType);
+        } else {
+          // Detectar tipo baseado na extensão
+          const ext = path.extname(document.originalName || '').toLowerCase();
+          let contentType = 'application/octet-stream';
+          switch (ext) {
+            case '.pdf':
+              contentType = 'application/pdf';
+              break;
+            case '.jpg':
+            case '.jpeg':
+              contentType = 'image/jpeg';
+              break;
+            case '.png':
+              contentType = 'image/png';
+              break;
+          }
+          res.setHeader('Content-Type', contentType);
+        }
 
-      // Stream the file with proper content handling
-      const fileBuffer = await fs.readFile(filePath);
-      res.end(fileBuffer);
+        // For PDFs, set proper headers for inline viewing
+        if (document.mimeType?.includes('pdf') || document.originalName?.toLowerCase().endsWith('.pdf')) {
+          res.setHeader('Content-Disposition', 'inline');
+          res.setHeader('X-Content-Type-Options', 'nosniff');
+          res.setHeader('Access-Control-Allow-Origin', '*');
+        }
+
+        res.send(fileBuffer);
+      } catch (error) {
+        console.error(`❌ Error downloading file ${filePath}:`, error);
+        res.status(500).json({ error: "Erro ao carregar arquivo" });
+      }
     } catch (error) {
       console.error("Document preview error:", error);
       res.status(500).json({ error: "Erro ao visualizar documento" });
