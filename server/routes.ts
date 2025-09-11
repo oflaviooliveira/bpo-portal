@@ -68,6 +68,12 @@ function extractRealDataFromDocument(data: any) {
     console.log(`📄 Documento real: ${realData.document}`);
   }
   
+  // 🏦 BANCO - sempre do documento (fato) - NOVA FUNCIONALIDADE  
+  if (data.banco || data.bank_name || data.instituicao_financeira || data.bank) {
+    realData.bankName = data.banco || data.bank_name || data.instituicao_financeira || data.bank;
+    console.log(`🏦 Banco real: ${realData.bankName}`);
+  }
+  
   // DESCRIÇÃO - extrair do contexto do documento (melhorar extração)
   realData.description = extractSmartDescription(data);
   
@@ -1024,6 +1030,9 @@ export async function registerRoutes(app: Express): Promise<Server> {
           documento: isDANFE ? (data.cnpj_emitente || '') : (realData.document || ''),
           numeroNF: isDANFE ? (data.documento || '') : '', // Número da NF para DANFEs
           cnpjEmitente: data.cnpj_emitente || '', // CNPJ sempre disponível
+          
+          // 🏦 BANCO - persistir no documento para visualização
+          banco: realData.bankName || data.banco || data.bank_name || data.instituicao_financeira || '',
           
           // 🏢 SUGESTÕES OPERACIONAIS (decisões empresariais)
           ...operationalSuggestions.suggestions,

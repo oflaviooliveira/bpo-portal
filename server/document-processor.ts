@@ -161,6 +161,13 @@ export class DocumentProcessor {
         if (aiResult.extractedData.supplier && validationResult.isValid) {
           updates.supplier = aiResult.extractedData.supplier;
         }
+        // 🏦 NOVA FUNCIONALIDADE: Persistir banco extraído pela IA
+        const bankFromAI = aiResult.extractedData.banco || aiResult.extractedData.bank_name || 
+                          aiResult.extractedData.instituicao_financeira || aiResult.extractedData.bank;
+        if (bankFromAI && validationResult.isValid) {
+          updates.bankName = bankFromAI;
+          console.log(`🏦 Banco persistido no documento: ${bankFromAI}`);
+        }
       }
 
       await storage.updateDocument(documentId, tenantId, updates);

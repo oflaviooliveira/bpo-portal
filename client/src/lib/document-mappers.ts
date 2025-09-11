@@ -265,8 +265,8 @@ export class PhysicalDocumentMapper extends DocumentMapper {
     }
     
     return {
-      bankName: document.bank?.name || document.bankName || 
-                extracted.banco || extracted.bank_name || extracted.instituicao_financeira || 
+      bankName: document.bank?.name || document.bankName || document.metadata?.bankName || 
+                extracted.banco || extracted.bank_name || extracted.instituicao_financeira || extracted.bank ||
                 this.extractBankFromText(extracted) || 'Não informado',
       transactionId: extracted.transacao_id || extracted.transaction_id || extracted.protocolo || 
                      extracted.comprovante || extracted.numero_operacao,
