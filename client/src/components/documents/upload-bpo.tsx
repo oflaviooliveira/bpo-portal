@@ -1877,38 +1877,72 @@ export function UploadBpo() {
               )}
 
               {documentType === "PAGO" && (
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                  <div className="space-y-2">
-                    <Label>Data de Competência *</Label>
-                    <Input
-                      {...form.register("competenceDate")}
-                      type="date"
-                      data-testid="input-competence-date"
-                    />
-                    <p className="text-xs text-gray-600">
-                      Quando a despesa/receita pertence (mês de competência)
-                    </p>
-                    {/* 💡 NOVA FUNCIONALIDADE: Dica sobre auto-preenchimento da data */}
-                    <p className="text-xs text-blue-600 bg-blue-50 p-2 rounded">
-                      💡 Data preenchida automaticamente com vencimento do documento. Você pode alterar se preferir pagar em outro dia.
-                    </p>
-                    {form.formState.errors.competenceDate && (
-                      <p className="text-sm text-red-500">{form.formState.errors.competenceDate.message}</p>
-                    )}
+                <div className="space-y-4">
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                    <div className="space-y-2">
+                      <Label>Data de Competência *</Label>
+                      <Input
+                        {...form.register("competenceDate")}
+                        type="date"
+                        data-testid="input-competence-date"
+                      />
+                      <p className="text-xs text-gray-600">
+                        Quando a despesa/receita pertence (mês de competência)
+                      </p>
+                      {/* 💡 NOVA FUNCIONALIDADE: Dica sobre auto-preenchimento da data */}
+                      <p className="text-xs text-blue-600 bg-blue-50 p-2 rounded">
+                        💡 Data preenchida automaticamente com vencimento do documento. Você pode alterar se preferir pagar em outro dia.
+                      </p>
+                      {form.formState.errors.competenceDate && (
+                        <p className="text-sm text-red-500">{form.formState.errors.competenceDate.message}</p>
+                      )}
+                    </div>
+
+                    <div className="space-y-2">
+                      <Label>Data Real de Pagamento *</Label>
+                      <Input
+                        {...form.register("realPaidDate")}
+                        type="date"
+                        data-testid="input-real-paid-date"
+                      />
+                      <p className="text-xs text-gray-600">
+                        Quando o pagamento foi realmente efetuado
+                      </p>
+                      {form.formState.errors.realPaidDate && (
+                        <p className="text-sm text-red-500">{form.formState.errors.realPaidDate.message}</p>
+                      )}
+                    </div>
                   </div>
 
+                  {/* 🏦 NOVA FUNCIONALIDADE: Campo Banco para Comprovantes de Pagamento */}
                   <div className="space-y-2">
-                    <Label>Data Real de Pagamento *</Label>
-                    <Input
-                      {...form.register("realPaidDate")}
-                      type="date"
-                      data-testid="input-real-paid-date"
-                    />
+                    <Label>Banco do Pagamento</Label>
+                    <Select 
+                      value={form.watch("bankId") || ""} 
+                      onValueChange={(value) => form.setValue("bankId", value)}
+                    >
+                      <SelectTrigger data-testid="select-bank-pago">
+                        <SelectValue placeholder="Selecione o banco que efetuou o pagamento" />
+                      </SelectTrigger>
+                      <SelectContent>
+                        {Array.isArray(banks) && banks.map((bank: any) => (
+                          <SelectItem key={bank.id} value={bank.id}>
+                            {bank.name}
+                          </SelectItem>
+                        ))}
+                      </SelectContent>
+                    </Select>
                     <p className="text-xs text-gray-600">
-                      Quando o pagamento foi realmente efetuado
+                      Banco de origem do pagamento (preenchido automaticamente quando detectado)
                     </p>
-                    {form.formState.errors.realPaidDate && (
-                      <p className="text-sm text-red-500">{form.formState.errors.realPaidDate.message}</p>
+                    {!form.watch("bankId") && (
+                      <div className="text-xs text-amber-600 bg-amber-50 p-2 rounded flex items-center gap-2">
+                        <AlertTriangle className="h-3 w-3" />
+                        <span>💡 Se possível, informe o banco para melhor rastreabilidade do pagamento</span>
+                      </div>
+                    )}
+                    {form.formState.errors.bankId && (
+                      <p className="text-sm text-red-500">{form.formState.errors.bankId.message}</p>
                     )}
                   </div>
                 </div>
