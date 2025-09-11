@@ -57,6 +57,13 @@ export interface BoletoInfo {
   payerZipCode?: string;
   instructions?: string;
   dueDate?: string;
+  
+  // CORREÇÃO: Novos campos essenciais para boleto
+  bankName?: string;
+  categoryName?: string;
+  costCenterName?: string;
+  description?: string;
+  competenceDate?: string;
 }
 
 export interface NfInfo {
@@ -415,8 +422,15 @@ export class VirtualDocumentMapper extends DocumentMapper {
         payerCity: getValue('payerCity'),
         payerState: getValue('payerState'),
         payerZipCode: getValue('payerZipCode'),
-        instructions: getValue('instructions') || getValue('serviceDescription'),
-        dueDate: this.formatDate(document.dueDate || document.competenceDate)
+        instructions: document.notes || getValue('notes') || getValue('instructions') || getValue('serviceDescription'),
+        dueDate: this.formatDate(document.dueDate || document.competenceDate),
+        
+        // CORREÇÃO: Novos campos essenciais para boleto
+        bankName: document.bank?.name || document.bankName || getValue('bankName') || 'Não informado',
+        categoryName: document.category?.name || document.categoryName || getValue('categoryName'),
+        costCenterName: document.costCenter?.name || document.costCenterName || getValue('costCenterName'),
+        description: document.description || getValue('description'),
+        competenceDate: this.formatDate(document.competenceDate || document.dueDate)
       } : undefined,
       
       // Seção específica para NF - COMPLETA
