@@ -17,6 +17,11 @@ export interface ScheduleInfo {
   paymentMethod?: string;
   instructions?: string;
   
+  // CORREÇÃO: Novos campos para documentos AGENDADO
+  bankName?: string;
+  categoryName?: string;
+  costCenterName?: string;
+  
   // Dados completos do pagador (igual aos boletos)
   payerName?: string;
   payerDocument?: string;
@@ -438,9 +443,21 @@ export class VirtualDocumentMapper extends DocumentMapper {
       
       // Seção específica para AGENDADO - COMPLETA
       scheduleInfo: document.documentType === 'AGENDADO' ? {
+        // CORREÇÃO 1: Data de Agendamento - usar dueDate como fallback primário
         scheduledDate: this.formatDate(document.dueDate || getValue('scheduledDate')),
+        
+        // CORREÇÃO 2: Banco - resolver nome do banco
+        bankName: document.bank?.name || document.bankName || getValue('bankName') || 'Não informado',
+        
+        // CORREÇÃO 3: Observações - usar document.notes como fallback
+        instructions: document.notes || getValue('notes') || getValue('instructions') || getValue('observacoes'),
+        
+        // CORREÇÃO 4: Categoria e Centro de Custo
+        categoryName: document.category?.name || document.categoryName,
+        costCenterName: document.costCenter?.name || document.costCenterName,
+        
+        // Método de pagamento padrão para agendamentos
         paymentMethod: getValue('paymentMethod') || 'Transferência Bancária',
-        instructions: getValue('instructions'),
         
         // Dados completos do pagador (igual aos boletos)
         payerName: getValue('payerName'),

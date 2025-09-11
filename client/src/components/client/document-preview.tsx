@@ -23,7 +23,8 @@ import {
   CreditCard,
   Hash,
   Briefcase,
-  Download
+  Download,
+  Folder
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { DocumentMapperFactory, type UnifiedDocumentData } from "@/lib/document-mappers";
@@ -417,23 +418,50 @@ export function DocumentPreview({ document }: DocumentPreviewProps) {
               Dados do Agendamento
             </h4>
             
+            {/* CORREÇÃO 1: Data de Agendamento com fallback para dueDate */}
             {renderField(
-              "Data Agendada", 
-              unifiedData.scheduleInfo.scheduledDate,
+              "Data para Agendamento", 
+              unifiedData.scheduleInfo.scheduledDate || unifiedData.dueDate,
               <Calendar className="h-4 w-4" />,
               true
             )}
             
+            {/* CORREÇÃO 2: Banco */}
+            {renderField(
+              "Banco", 
+              unifiedData.scheduleInfo.bankName,
+              <Building className="h-4 w-4" />
+            )}
+            
+            {/* CORREÇÃO 3: Forma de Pagamento */}
             {renderField(
               "Forma de Pagamento", 
               unifiedData.scheduleInfo.paymentMethod,
               <CreditCard className="h-4 w-4" />
             )}
             
+            {/* CORREÇÃO 4: Observações (document.notes) */}
             {renderField(
-              "Instruções", 
+              "Observações", 
               unifiedData.scheduleInfo.instructions,
               <FileText className="h-4 w-4" />
+            )}
+            
+            {/* CORREÇÃO 5: Categoria e Centro de Custo (se preenchidos) */}
+            {(unifiedData.scheduleInfo.categoryName || unifiedData.scheduleInfo.costCenterName) && (
+              <>
+                {renderField(
+                  "Categoria", 
+                  unifiedData.scheduleInfo.categoryName,
+                  <Folder className="h-4 w-4" />
+                )}
+                
+                {renderField(
+                  "Centro de Custo", 
+                  unifiedData.scheduleInfo.costCenterName,
+                  <Building className="h-4 w-4" />
+                )}
+              </>
             )}
           </div>
 
