@@ -242,7 +242,8 @@ export class PhysicalDocumentMapper extends DocumentMapper {
       contaOrigem: getValue('conta_origem') || getValue('account_origin') || getValue('conta'),
       agencia: getValue('agencia') || getValue('agency'),
       numeroOperacao: getValue('numero_operacao') || getValue('transacao_id') || getValue('protocolo'),
-      banco: getValue('banco') || getValue('bank_name') || getValue('instituicao_financeira'),
+      banco: document.bank?.name || document.bankName || document.metadata?.bankName || 
+             getValue('banco') || getValue('bank_name') || getValue('instituicao_financeira'),
       
       // Seções específicas aprimoradas
       paymentInfo: this.buildPaymentInfo(document, extracted),
