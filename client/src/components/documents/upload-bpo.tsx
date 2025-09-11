@@ -1272,7 +1272,7 @@ export function UploadBpo() {
               <div className="flex items-center space-x-2 p-3 border rounded-lg hover:bg-[#E40064]/5 transition-colors">
                 <RadioGroupItem value="AGENDADO" id="AGENDADO" />
                 <Label htmlFor="AGENDADO" className="flex-1 cursor-pointer">
-                  <div className="font-medium text-[#0B0E30]">Agendado (AGD)</div>
+                  <div className="font-medium text-[#0B0E30]">Agendamento</div>
                   <div className="text-sm text-gray-600">Pagamento agendado</div>
                 </Label>
               </div>
