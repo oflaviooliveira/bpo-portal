@@ -10,6 +10,16 @@ export interface PaymentInfo {
     agency?: string;
     [key: string]: any;
   };
+  
+  // CORREÇÃO: Novos campos essenciais para PAGO
+  categoryName?: string;
+  costCenterName?: string;
+  beneficiaryName?: string;
+  beneficiaryDocument?: string;
+  beneficiaryEmail?: string;
+  beneficiaryPhone?: string;
+  description?: string;
+  competenceDate?: string;
 }
 
 export interface ScheduleInfo {
@@ -255,16 +265,29 @@ export class PhysicalDocumentMapper extends DocumentMapper {
     }
     
     return {
-      bankName: extracted.banco || extracted.bank_name || extracted.instituicao_financeira || 
-                document.bank || this.extractBankFromText(extracted),
+      bankName: document.bank?.name || document.bankName || 
+                extracted.banco || extracted.bank_name || extracted.instituicao_financeira || 
+                this.extractBankFromText(extracted) || 'Não informado',
       transactionId: extracted.transacao_id || extracted.transaction_id || extracted.protocolo || 
                      extracted.comprovante || extracted.numero_operacao,
       reconciliationData: extracted.reconciliation_data || {
-        paymentDate: this.formatDate(extracted.data_pagamento || document.paidDate),
+        paymentDate: this.formatDate(document.realPaidDate || extracted.data_pagamento || document.paidDate),
         paymentMethod: extracted.forma_pagamento || extracted.metodo || 'Transferência',
         account: extracted.conta_origem || extracted.account_origin,
         agency: extracted.agencia || extracted.agency
-      }
+      },
+      
+      // CORREÇÃO: Novos campos essenciais para PAGO
+      categoryName: document.category?.name || document.categoryName || extracted.categoria,
+      costCenterName: document.costCenter?.name || document.costCenterName || extracted.centro_custo,
+      beneficiaryName: document.contraparte?.name || document.contraparteName || 
+                       extracted.favorecido || extracted.beneficiario || extracted.razao_social,
+      beneficiaryDocument: document.contraparte?.document || document.contraparteDocument || 
+                          extracted.cnpj_favorecido || extracted.cpf_favorecido || extracted.documento_favorecido,
+      beneficiaryEmail: document.contraparte?.email || extracted.email_favorecido,
+      beneficiaryPhone: document.contraparte?.phone || extracted.telefone_favorecido,
+      description: document.description || extracted.descricao || extracted.description,
+      competenceDate: this.formatDate(document.competenceDate || extracted.data_competencia)
     };
   }
   

@@ -288,6 +288,148 @@ export function DocumentPreview({ document }: DocumentPreviewProps) {
       );
     }
     
+    if (unifiedData.isVirtual && unifiedData.paymentInfo) {
+      return (
+        <div className="space-y-6">
+          {/* SEÇÃO 1: Dados do Pagamento */}
+          <div className="space-y-3">
+            <h4 className="font-medium text-[#E40064] border-b border-[#E40064]/20 pb-1 flex items-center gap-2">
+              <CreditCard className="h-4 w-4" />
+              Dados do Pagamento
+            </h4>
+            
+            {renderField(
+              "Valor", 
+              unifiedData.amount,
+              <DollarSign className="h-4 w-4" />,
+              true
+            )}
+            
+            {renderField(
+              "Data do Pagamento", 
+              unifiedData.paymentInfo.reconciliationData?.paymentDate || unifiedData.dataPagamento,
+              <Calendar className="h-4 w-4" />,
+              true
+            )}
+            
+            {renderField(
+              "Método de Pagamento", 
+              unifiedData.paymentInfo.reconciliationData?.paymentMethod || unifiedData.metodoPagamento,
+              <CreditCard className="h-4 w-4" />
+            )}
+            
+            {renderField(
+              "Data de Competência", 
+              unifiedData.paymentInfo.competenceDate || unifiedData.dataEmissao,
+              <Calendar className="h-4 w-4" />
+            )}
+          </div>
+
+          {/* SEÇÃO 2: Dados do Favorecido */}
+          <div className="space-y-3">
+            <h4 className="font-medium text-[#0B0E30] border-b border-[#0B0E30]/20 pb-1 flex items-center gap-2">
+              <User className="h-4 w-4" />
+              Dados do Favorecido
+            </h4>
+            
+            {renderField(
+              "Nome/Razão Social", 
+              unifiedData.paymentInfo.beneficiaryName || unifiedData.razaoSocial,
+              <User className="h-4 w-4" />,
+              true
+            )}
+            
+            {renderField(
+              "CPF/CNPJ", 
+              unifiedData.paymentInfo.beneficiaryDocument || unifiedData.cnpj,
+              <FileText className="h-4 w-4" />,
+              true
+            )}
+            
+            {renderField(
+              "E-mail", 
+              unifiedData.paymentInfo.beneficiaryEmail || unifiedData.email,
+              <Mail className="h-4 w-4" />
+            )}
+            
+            {renderField(
+              "Telefone", 
+              unifiedData.paymentInfo.beneficiaryPhone || unifiedData.telefone,
+              <Phone className="h-4 w-4" />
+            )}
+          </div>
+
+          {/* SEÇÃO 3: Origem do Pagamento */}
+          <div className="space-y-3">
+            <h4 className="font-medium text-[#E40064] border-b border-[#E40064]/20 pb-1 flex items-center gap-2">
+              <Building className="h-4 w-4" />
+              Origem do Pagamento
+            </h4>
+            
+            {renderField(
+              "Banco", 
+              unifiedData.paymentInfo.bankName || unifiedData.banco,
+              <Building className="h-4 w-4" />
+            )}
+            
+            {renderField(
+              "Conta", 
+              unifiedData.paymentInfo.reconciliationData?.account || unifiedData.contaOrigem,
+              <Hash className="h-4 w-4" />
+            )}
+            
+            {renderField(
+              "Agência", 
+              unifiedData.paymentInfo.reconciliationData?.agency || unifiedData.agencia,
+              <Hash className="h-4 w-4" />
+            )}
+            
+            {renderField(
+              "Nº da Operação", 
+              unifiedData.paymentInfo.transactionId || unifiedData.numeroOperacao,
+              <Hash className="h-4 w-4" />
+            )}
+          </div>
+
+          {/* SEÇÃO 4: Informações do Documento */}
+          <div className="space-y-3">
+            <h4 className="font-medium text-gray-700 border-b border-gray-300 pb-1 flex items-center gap-2">
+              <FileText className="h-4 w-4" />
+              Informações do Documento
+            </h4>
+            
+            {renderField(
+              "Descrição", 
+              unifiedData.paymentInfo.description || unifiedData.descricao,
+              <FileText className="h-4 w-4" />
+            )}
+            
+            <div className="grid grid-cols-2 gap-4">
+              {renderField(
+                "Categoria", 
+                unifiedData.paymentInfo.categoryName,
+                <Folder className="h-4 w-4" />
+              )}
+              
+              {renderField(
+                "Centro de Custo", 
+                unifiedData.paymentInfo.costCenterName,
+                <Briefcase className="h-4 w-4" />
+              )}
+            </div>
+            
+            {unifiedData.descricao && renderField(
+              "Observações", 
+              unifiedData.descricao,
+              <FileText className="h-4 w-4" />
+            )}
+          </div>
+          
+          <Separator />
+        </div>
+      );
+    }
+    
     if (unifiedData.isVirtual && unifiedData.nfInfo) {
       return (
         <div className="space-y-6">
@@ -711,7 +853,7 @@ export function DocumentPreview({ document }: DocumentPreviewProps) {
                     </Button>
                   </div>
                 </div>
-              ) : (document.filePath?.endsWith('.pdf') || document.originalName?.toLowerCase().endsWith('.pdf') || document.mimeType?.includes('pdf')) ? (
+              ) : (document.filePath?.endsWith('.pdf') || document.originalName?.toLowerCase().endsWith('.pdf')) ? (
                 <div className="text-center space-y-4">
                   <FileText className="h-16 w-16 text-gray-400 mx-auto" />
                   <div>
