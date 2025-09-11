@@ -660,6 +660,29 @@ export function UploadBpo() {
         if (data.suggestions?.costCenterId) {
           form.setValue('costCenterId', data.suggestions.costCenterId);
         }
+        
+        // 🎯 VALIDAÇÃO INTELIGENTE: Verificar se campos críticos foram detectados
+        if (documentType === "PAGO") {
+          const criticalFieldsStatus = {
+            banco: !!data.suggestions?.bankId,
+            categoria: !!data.suggestions?.categoryId,
+            centroCusto: !!data.suggestions?.costCenterId
+          };
+          
+          const missingCritical = Object.entries(criticalFieldsStatus)
+            .filter(([_, detected]) => !detected)
+            .map(([field, _]) => field);
+            
+          if (missingCritical.length > 0) {
+            console.log("⚠️ AVISO: Campos críticos não detectados automaticamente:", missingCritical);
+            toast({
+              title: "⚠️ Atenção aos Campos Obrigatórios",
+              description: `Alguns campos importantes não foram detectados automaticamente: ${missingCritical.join(", ")}. Verifique se estão preenchidos corretamente.`,
+              variant: "default",
+              duration: 5000,
+            });
+          }
+        }
       }
 
       setProcessingState({ 
@@ -1916,12 +1939,30 @@ export function UploadBpo() {
 
                   {/* 🏦 NOVA FUNCIONALIDADE: Campo Banco para Comprovantes de Pagamento */}
                   <div className="space-y-2">
-                    <Label>Banco do Pagamento</Label>
+                    <div className="flex items-center gap-2">
+                      <Label>Banco do Pagamento</Label>
+                      {(() => {
+                        const autoField = autoFilledFields.find(field => field.field === 'bankId');
+                        const currentValue = form.watch("bankId");
+                        const isStillAutoFilled = autoField && currentValue === autoField.originalValue;
+                        
+                        return isStillAutoFilled && (
+                          <div className="flex items-center gap-1 text-xs text-blue-600 bg-blue-50 px-2 py-1 rounded-full">
+                            <CheckCircle className="h-3 w-3" />
+                            <span>Detectado automaticamente</span>
+                          </div>
+                        );
+                      })()}
+                    </div>
                     <Select 
                       value={form.watch("bankId") || ""} 
                       onValueChange={(value) => form.setValue("bankId", value)}
                     >
-                      <SelectTrigger data-testid="select-bank-pago">
+                      <SelectTrigger 
+                        data-testid="select-bank-pago"
+                        className={autoFilledFields.some(field => field.field === 'bankId') ? 
+                          "border-blue-200 bg-blue-50/30" : ""}
+                      >
                         <SelectValue placeholder="Selecione o banco que efetuou o pagamento" />
                       </SelectTrigger>
                       <SelectContent>
@@ -1932,15 +1973,25 @@ export function UploadBpo() {
                         ))}
                       </SelectContent>
                     </Select>
-                    <p className="text-xs text-gray-600">
-                      Banco de origem do pagamento (preenchido automaticamente quando detectado)
-                    </p>
-                    {!form.watch("bankId") && (
+                    
+                    {/* Feedback dinâmico baseado no estado */}
+                    {form.watch("bankId") && autoFilledFields.some(field => field.field === 'bankId') ? (
+                      <div className="text-xs text-blue-600 bg-blue-50 p-2 rounded flex items-center gap-2">
+                        <CheckCircle className="h-3 w-3" />
+                        <span>✨ Banco identificado automaticamente pela IA. Você pode alterar se necessário.</span>
+                      </div>
+                    ) : form.watch("bankId") ? (
+                      <div className="text-xs text-green-600 bg-green-50 p-2 rounded flex items-center gap-2">
+                        <CheckCircle className="h-3 w-3" />
+                        <span>✅ Banco selecionado manualmente</span>
+                      </div>
+                    ) : (
                       <div className="text-xs text-amber-600 bg-amber-50 p-2 rounded flex items-center gap-2">
                         <AlertTriangle className="h-3 w-3" />
                         <span>💡 Se possível, informe o banco para melhor rastreabilidade do pagamento</span>
                       </div>
                     )}
+                    
                     {form.formState.errors.bankId && (
                       <p className="text-sm text-red-500">{form.formState.errors.bankId.message}</p>
                     )}
