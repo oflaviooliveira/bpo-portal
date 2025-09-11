@@ -27,7 +27,13 @@ export class LocalFileStorage implements FileStorage {
   }
 
   async download(key: string): Promise<Buffer> {
-    const fullPath = path.join(this.baseDir, key);
+    // Se a key já inclui o baseDir, usar diretamente
+    const fullPath = key.startsWith('./') || key.startsWith('/') || key.includes(this.baseDir.replace('./', ''))
+      ? key
+      : path.join(this.baseDir, key);
+    
+    console.log(`🔍 LocalFileStorage.download() - key: ${key}, fullPath: ${fullPath}`);
+    
     return fs.readFile(fullPath);
   }
 
@@ -48,11 +54,19 @@ export class LocalFileStorage implements FileStorage {
   }
 
   async exists(key: string): Promise<boolean> {
-    const fullPath = path.join(this.baseDir, key);
+    // Se a key já inclui o baseDir, usar diretamente
+    const fullPath = key.startsWith('./') || key.startsWith('/') || key.includes(this.baseDir.replace('./', ''))
+      ? key
+      : path.join(this.baseDir, key);
+    
+    console.log(`🔍 LocalFileStorage.exists() - key: ${key}, fullPath: ${fullPath}`);
+    
     try {
       await fs.access(fullPath);
+      console.log(`✅ File exists at: ${fullPath}`);
       return true;
     } catch {
+      console.log(`❌ File not found at: ${fullPath}`);
       return false;
     }
   }

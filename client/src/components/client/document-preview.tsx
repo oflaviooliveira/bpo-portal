@@ -650,7 +650,7 @@ export function DocumentPreview({ document }: DocumentPreviewProps) {
                     </Button>
                   </div>
                 </div>
-              ) : document.filePath?.endsWith('.pdf') ? (
+              ) : (document.filePath?.endsWith('.pdf') || document.originalName?.toLowerCase().endsWith('.pdf') || document.mimeType?.includes('pdf')) ? (
                 <div className="text-center space-y-4">
                   <FileText className="h-16 w-16 text-gray-400 mx-auto" />
                   <div>

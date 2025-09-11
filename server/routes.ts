@@ -1420,9 +1420,14 @@ export async function registerRoutes(app: Express): Promise<Server> {
 
       console.log(`📄 Preview request for document ${documentId} by user ${user.id} in tenant ${user.tenantId}`);
 
-      const document = await storage.getDocument(user.tenantId, documentId);
+      console.log(`🔍 Calling storage.getDocument with documentId: ${documentId}, tenantId: ${user.tenantId}`);
+      const document = await storage.getDocument(documentId, user.tenantId);
+      console.log(`🔍 getDocument result:`, document ? `Found document: ${document.originalName}` : 'NOT FOUND');
+      
       if (!document) {
         console.log(`❌ Document ${documentId} not found in tenant ${user.tenantId}`);
+        console.log(`🔍 Debug: Let's check if document exists in database regardless of tenant...`);
+        // This should not happen anymore with correct parameter order
         return res.status(404).json({ error: "Documento não encontrado" });
       }
 

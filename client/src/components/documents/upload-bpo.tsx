@@ -1264,7 +1264,7 @@ export function UploadBpo() {
               <div className="flex items-center space-x-2 p-3 border rounded-lg hover:bg-[#E40064]/5 transition-colors">
                 <RadioGroupItem value="PAGO" id="PAGO" />
                 <Label htmlFor="PAGO" className="flex-1 cursor-pointer">
-                  <div className="font-medium text-[#0B0E30]">Pago (PG)</div>
+                  <div className="font-medium text-[#0B0E30]">Pago</div>
                   <div className="text-sm text-gray-600">Documento já pago</div>
                 </Label>
               </div>
