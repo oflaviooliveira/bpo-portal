@@ -1,4 +1,5 @@
 import { useState } from "react";
+import { useQuery } from "@tanstack/react-query";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Separator } from "@/components/ui/separator";
@@ -54,8 +55,40 @@ interface DocumentPreviewProps {
 export function DocumentPreview({ document }: DocumentPreviewProps) {
   const [activeTab, setActiveTab] = useState<'extracted' | 'raw'>('extracted');
   
+  // Carregar bancos para resolução de bankId
+  const { data: banks = [] } = useQuery<Array<{id: string, name: string}>>({
+    queryKey: ["/api/banks"]
+  });
+  
+  // Função helper para resolver bankId → nome do banco
+  const resolveBankName = (bankId?: string): string => {
+    if (!bankId || !banks.length) return 'Não informado';
+    const bank = banks.find(b => b.id === bankId);
+    return bank?.name || 'Não informado';
+  };
+  
   // Usar mapper para unificar dados independente do tipo
   const unifiedData: UnifiedDocumentData = DocumentMapperFactory.mapDocument(document);
+  
+  // 🏦 CORREÇÃO: Resolver bankId → nome do banco para documentos físicos PAGO
+  if (!unifiedData.isVirtual && document.documentType === 'PAGO' && (document as any).bankId) {
+    const bankName = resolveBankName((document as any).bankId);
+    // Aplicar correção no campo banco para seção "Informações Adicionais"
+    (unifiedData as any).banco = bankName;
+    
+    // Também aplicar na paymentInfo se existir
+    if (unifiedData.paymentInfo) {
+      unifiedData.paymentInfo.bankName = bankName;
+    } else {
+      // Criar paymentInfo se não existir para documentos PAGO físicos
+      unifiedData.paymentInfo = {
+        bankName: bankName,
+        reconciliationData: {
+          paymentMethod: 'Transferência'
+        }
+      };
+    }
+  }
 
   const getStatusIcon = (status: string) => {
     switch (status) {
