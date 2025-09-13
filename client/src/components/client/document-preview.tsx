@@ -111,22 +111,25 @@ export function DocumentPreview({ document }: DocumentPreviewProps) {
   }
   
   // 🏦 CORREÇÃO: Resolver bankId → nome do banco para documentos físicos PAGO
-  if (!unifiedData.isVirtual && document.documentType === 'PAGO' && (document as any).bankId) {
-    const bankName = resolveBankName((document as any).bankId);
+  // Garantir que TODOS os documentos PAGO tenham paymentInfo
+  if (!unifiedData.isVirtual && document.documentType === 'PAGO') {
+    const bankName = (document as any).bankId ? resolveBankName((document as any).bankId) : 'Não informado';
+    
     // Aplicar correção no campo banco para seção "Informações Adicionais"
     (unifiedData as any).banco = bankName;
     
-    // Também aplicar na paymentInfo se existir
-    if (unifiedData.paymentInfo) {
-      unifiedData.paymentInfo.bankName = bankName;
-    } else {
-      // Criar paymentInfo se não existir para documentos PAGO físicos
+    // Garantir que paymentInfo sempre exista para PAGO
+    if (!unifiedData.paymentInfo) {
       unifiedData.paymentInfo = {
         bankName: bankName,
+        competenceDate: unifiedData.dataEmissao,
         reconciliationData: {
-          paymentMethod: 'Transferência'
+          paymentMethod: unifiedData.metodoPagamento || 'Transferência'
         }
       };
+    } else {
+      // Atualizar bankName se paymentInfo já existir
+      unifiedData.paymentInfo.bankName = bankName;
     }
   }
 
@@ -361,7 +364,7 @@ export function DocumentPreview({ document }: DocumentPreviewProps) {
       );
     }
     
-    if (unifiedData.isVirtual && unifiedData.paymentInfo) {
+    if (unifiedData.paymentInfo) {
       return (
         <div className="space-y-6">
           {/* SEÇÃO 1: Dados do Pagamento */}
@@ -828,53 +831,6 @@ export function DocumentPreview({ document }: DocumentPreviewProps) {
       );
     }
     
-    if (unifiedData.paymentInfo) {
-      return (
-        <div className="space-y-4">
-          {/* Seção específica de Pagamentos */}
-          <div className="space-y-3">
-            <h4 className="font-medium text-green-700 border-b border-green-200 pb-1 flex items-center gap-2">
-              <CheckCircle className="h-4 w-4" />
-              Dados da Conciliação
-            </h4>
-            
-            {renderField(
-              "Banco / Instituição", 
-              unifiedData.paymentInfo.bankName,
-              <Building className="h-4 w-4" />,
-              true
-            )}
-            
-            {renderField(
-              "ID da Transação / Protocolo", 
-              unifiedData.paymentInfo.transactionId,
-              <FileText className="h-4 w-4" />,
-              true
-            )}
-            
-            {unifiedData.paymentInfo.reconciliationData?.account && renderField(
-              "Conta Origem", 
-              unifiedData.paymentInfo.reconciliationData.account,
-              <CreditCard className="h-4 w-4" />
-            )}
-            
-            {unifiedData.paymentInfo.reconciliationData?.agency && renderField(
-              "Agência", 
-              unifiedData.paymentInfo.reconciliationData.agency,
-              <Building className="h-4 w-4" />
-            )}
-            
-            {unifiedData.paymentInfo.reconciliationData?.paymentMethod && renderField(
-              "Forma de Pagamento", 
-              unifiedData.paymentInfo.reconciliationData.paymentMethod,
-              <CreditCard className="h-4 w-4" />
-            )}
-          </div>
-          
-          <Separator />
-        </div>
-      );
-    }
     
     return null;
   };
