@@ -13,7 +13,7 @@ import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
 import { Badge } from "@/components/ui/badge";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { useToast } from "@/hooks/use-toast";
-import { CloudUpload, Upload as UploadIcon, FileText, Calendar, DollarSign, Building2, Sparkles, AlertTriangle, CheckCircle2, Bot, CheckCircle, X, RotateCcw, Eye, Plus, Cog, Info, MessageSquare, Clock } from "lucide-react";
+import { CloudUpload, Upload as UploadIcon, FileText, Calendar, DollarSign, Building2, Sparkles, AlertTriangle, CheckCircle2, Bot, CheckCircle, X, RotateCcw, Eye, Plus, Cog, Info, MessageSquare, Clock, BarChart3 } from "lucide-react";
 import { Alert, AlertDescription } from "@/components/ui/alert";
 import { Separator } from "@/components/ui/separator";
 import { AutoSupplierModal } from "@/components/client/auto-supplier-modal";
@@ -1873,12 +1873,12 @@ export function UploadBpo() {
           </CardContent>
         </Card>
 
-        {/* 📅 SEÇÃO: Datas Contábeis - Campo unificado para todos os tipos */}
+        {/* 📅 SEÇÃO: Datas & Pagamento - Inclui banco para AGENDADO */}
         <Card>
           <CardHeader>
             <CardTitle className="flex items-center gap-2 text-[#0B0E30]">
               <Calendar className="h-5 w-5 text-[#E40064]" />
-              Datas Contábeis
+              Datas & Pagamento
               {(documentType === "PAGO" || documentType === "AGENDADO") && (
                 <Badge variant="destructive">Obrigatório</Badge>
               )}
@@ -1956,23 +1956,73 @@ export function UploadBpo() {
             )}
 
             {documentType === "AGENDADO" && (
-              <div className="space-y-2">
-                <Label className="flex items-center gap-2">
-                  <Clock className="h-4 w-4 text-orange-600" />
-                  Data para Agendamento *
-                </Label>
-                <Input
-                  {...form.register("scheduledDate")}
-                  type="date"
-                  data-testid="input-scheduled-date"
-                  className="max-w-sm"
-                />
-                <p className="text-xs text-gray-600">
-                  Quando o pagamento deve ser executado
-                </p>
-                {form.formState.errors.scheduledDate && (
-                  <p className="text-sm text-red-500">{form.formState.errors.scheduledDate.message}</p>
-                )}
+              <div className="space-y-4">
+                <div className="space-y-2">
+                  <Label className="flex items-center gap-2">
+                    <Clock className="h-4 w-4 text-orange-600" />
+                    Data para Agendamento *
+                  </Label>
+                  <Input
+                    {...form.register("scheduledDate")}
+                    type="date"
+                    data-testid="input-scheduled-date"
+                    className="max-w-sm"
+                  />
+                  <p className="text-xs text-gray-600">
+                    Quando o pagamento deve ser executado
+                  </p>
+                  {form.formState.errors.scheduledDate && (
+                    <p className="text-sm text-red-500">{form.formState.errors.scheduledDate.message}</p>
+                  )}
+                </div>
+
+                {/* Banco - Obrigatório para AGENDADO */}
+                <div className="space-y-2">
+                  <Label className="flex items-center gap-2">
+                    <Building2 className="h-4 w-4 text-blue-600" />
+                    Banco para Agendamento *
+                  </Label>
+                  <Select 
+                    value={form.watch("bankId") || ""} 
+                    onValueChange={(value) => form.setValue("bankId", value)}
+                  >
+                    <SelectTrigger data-testid="select-bank">
+                      <SelectValue placeholder="Selecione o banco" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      {Array.isArray(banks) && banks.map((bank: any) => (
+                        <SelectItem key={bank.id} value={bank.id}>
+                          {bank.name}
+                        </SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                  <p className="text-xs text-gray-600">
+                    Banco onde o agendamento será processado
+                  </p>
+                  
+                  {/* Feedback dinâmico baseado no estado */}
+                  {form.watch("bankId") && autoFilledFields.some(field => field.field === 'bankId') ? (
+                    <div className="text-xs text-blue-600 bg-blue-50 p-2 rounded flex items-center gap-2">
+                      <CheckCircle className="h-3 w-3" />
+                      <span>✨ Banco identificado automaticamente pela IA</span>
+                    </div>
+                  ) : form.watch("bankId") ? (
+                    <div className="text-xs text-green-600 bg-green-50 p-2 rounded flex items-center gap-2">
+                      <CheckCircle className="h-3 w-3" />
+                      <span>✅ Banco selecionado</span>
+                    </div>
+                  ) : (
+                    <div className="text-xs text-amber-600 bg-amber-50 p-2 rounded flex items-center gap-2">
+                      <AlertTriangle className="h-3 w-3" />
+                      <span>⚠️ Banco obrigatório para agendamento</span>
+                    </div>
+                  )}
+                  
+                  {form.formState.errors.bankId && (
+                    <p className="text-sm text-red-500">{form.formState.errors.bankId.message}</p>
+                  )}
+                </div>
               </div>
             )}
 
@@ -1996,87 +2046,22 @@ export function UploadBpo() {
           </CardContent>
         </Card>
 
-        {/* 🏢 SEÇÃO: Classificação BPO - Banco e dados operacionais */}
+        {/* 📊 SEÇÃO: Classificação Contábil - Categoria e Centro de Custo (fonte única) */}
         <Card>
           <CardHeader>
             <CardTitle className="flex items-center gap-2 text-[#0B0E30]">
-              <Building2 className="h-5 w-5 text-[#E40064]" />
-              Classificação BPO
-              {documentType === "AGENDADO" && <Badge variant="destructive">Banco Obrigatório</Badge>}
-              {documentType !== "AGENDADO" && <Badge variant="outline">Opcional</Badge>}
+              <BarChart3 className="h-5 w-5 text-[#E40064]" />
+              Classificação Contábil
+              {documentType === "EMITIR_BOLETO" && <Badge variant="destructive">Obrigatório</Badge>}
+              {documentType !== "EMITIR_BOLETO" && <Badge variant="outline">Opcional</Badge>}
             </CardTitle>
+            <p className="text-sm text-gray-600 mt-1">
+              Categorização para relatórios contábeis e controle de custos
+            </p>
           </CardHeader>
           <CardContent className="space-y-4">
 
-            {/* Banco - Obrigatório para AGENDADO, opcional para outros */}
-            <div className="space-y-2">
-              <div className="flex items-center gap-2">
-                <Label>
-                  {documentType === "PAGO" && "Banco do Pagamento"}
-                  {documentType === "AGENDADO" && "Banco para Agendamento *"}
-                  {(documentType === "EMITIR_BOLETO" || documentType === "EMITIR_NF") && "Banco (Opcional)"}
-                </Label>
-                {(() => {
-                  const autoField = autoFilledFields.find(field => field.field === 'bankId');
-                  const currentValue = form.watch("bankId");
-                  const isStillAutoFilled = autoField && currentValue === autoField.originalValue;
-                  
-                  return isStillAutoFilled && (
-                    <div className="flex items-center gap-1 text-xs text-blue-600 bg-blue-50 px-2 py-1 rounded-full">
-                      <CheckCircle className="h-3 w-3" />
-                      <span>Detectado automaticamente</span>
-                    </div>
-                  );
-                })()}
-              </div>
-              <Select 
-                value={form.watch("bankId") || ""} 
-                onValueChange={(value) => form.setValue("bankId", value)}
-              >
-                <SelectTrigger 
-                  data-testid="select-bank"
-                  className={autoFilledFields.some(field => field.field === 'bankId') ? 
-                    "border-blue-200 bg-blue-50/30" : ""}
-                >
-                  <SelectValue placeholder={
-                    documentType === "PAGO" ? "Selecione o banco que efetuou o pagamento" :
-                    documentType === "AGENDADO" ? "Selecione o banco para agendamento" :
-                    "Selecione o banco (opcional)"
-                  } />
-                </SelectTrigger>
-                <SelectContent>
-                  {Array.isArray(banks) && banks.map((bank: any) => (
-                    <SelectItem key={bank.id} value={bank.id}>
-                      {bank.name}
-                    </SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
-              
-              {/* Feedback dinâmico baseado no estado */}
-              {form.watch("bankId") && autoFilledFields.some(field => field.field === 'bankId') ? (
-                <div className="text-xs text-blue-600 bg-blue-50 p-2 rounded flex items-center gap-2">
-                  <CheckCircle className="h-3 w-3" />
-                  <span>✨ Banco identificado automaticamente pela IA. Você pode alterar se necessário.</span>
-                </div>
-              ) : form.watch("bankId") ? (
-                <div className="text-xs text-green-600 bg-green-50 p-2 rounded flex items-center gap-2">
-                  <CheckCircle className="h-3 w-3" />
-                  <span>✅ Banco selecionado manualmente</span>
-                </div>
-              ) : (
-                <div className="text-xs text-amber-600 bg-amber-50 p-2 rounded flex items-center gap-2">
-                  <AlertTriangle className="h-3 w-3" />
-                  <span>💡 Se possível, informe o banco para melhor rastreabilidade do pagamento</span>
-                </div>
-              )}
-              
-              {form.formState.errors.bankId && (
-                <p className="text-sm text-red-500">{form.formState.errors.bankId.message}</p>
-              )}
-            </div>
-
-            {/* Categoria e Centro de Custo */}
+            {/* Categoria e Centro de Custo - Fonte única para classificação contábil */}
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
               {/* Categoria */}
               <div className="space-y-2">
@@ -2218,107 +2203,21 @@ export function UploadBpo() {
 
         {/* SEÇÃO ÓRFÃ COMPLETAMENTE REMOVIDA */}
 
-        {/* Dados Opcionais BPO */}
+        {/* 💬 SEÇÃO: Informações Complementares - Apenas observações e anotações */}
         <Card>
           <CardHeader>
             <CardTitle className="flex items-center gap-2 text-[#0B0E30]">
-              <Building2 className="h-5 w-5 text-[#E40064]" />
+              <MessageSquare className="h-5 w-5 text-[#E40064]" />
               Informações Complementares
               <Badge variant="outline">Opcional</Badge>
             </CardTitle>
+            <p className="text-sm text-gray-600 mt-1">
+              Observações internas e instruções específicas para o BPO
+            </p>
           </CardHeader>
           <CardContent className="space-y-4">
 
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-
-              {/* Categoria */}
-              <div className="space-y-2">
-                <Label>Categoria {documentType === "EMITIR_BOLETO" && <span className="text-red-500">*</span>}{documentType === "EMITIR_NF" && <span className="text-gray-500">(Opcional)</span>}</Label>
-                <Select 
-                  value={form.watch("categoryId") || ""} 
-                  onValueChange={(value) => form.setValue("categoryId", value)}
-                >
-                  <SelectTrigger data-testid="select-category">
-                    <SelectValue placeholder="Selecione a categoria" />
-                  </SelectTrigger>
-                  <SelectContent>
-                    {Array.isArray(categories) && categories.map((category: any) => (
-                      <SelectItem key={category.id} value={category.id}>
-                        {category.name}
-                      </SelectItem>
-                    ))}
-                  </SelectContent>
-                </Select>
-                {form.formState.errors.categoryId && (
-                  <p className="text-sm text-red-500">{form.formState.errors.categoryId.message}</p>
-                )}
-              </div>
-
-              {/* Centro de Custo */}
-              <div className="space-y-2">
-                <Label>Centro de Custo {documentType === "EMITIR_BOLETO" && <span className="text-red-500">*</span>}{documentType === "EMITIR_NF" && <span className="text-gray-500">(Opcional)</span>}</Label>
-                <Select 
-                  value={form.watch("costCenterId") || ""} 
-                  onValueChange={(value) => form.setValue("costCenterId", value)}
-                >
-                  <SelectTrigger data-testid="select-cost-center">
-                    <SelectValue placeholder="Selecione o centro de custo" />
-                  </SelectTrigger>
-                  <SelectContent>
-                    {Array.isArray(costCenters) && costCenters.map((costCenter: any) => (
-                      <SelectItem key={costCenter.id} value={costCenter.id}>
-                        {costCenter.name}
-                      </SelectItem>
-                    ))}
-                  </SelectContent>
-                </Select>
-                {form.formState.errors.costCenterId && (
-                  <p className="text-sm text-red-500">{form.formState.errors.costCenterId.message}</p>
-                )}
-              </div>
-            </div>
-
-
-            {/* Campos específicos para EMITIR_NF */}
-            {documentType === "EMITIR_NF" && (
-              <>
-                {/* Descrição do Serviço - Campo ÚNICO para EMITIR_NF (evita confusão) */}
-                <div className="space-y-2">
-                  <Label className="flex items-center gap-2">
-                    <FileText className="h-4 w-4 text-[#E40064]" />
-                    Descrição do Serviço <span className="text-red-500">*</span>
-                    <Badge variant="outline" className="text-xs">Campo Principal</Badge>
-                  </Label>
-                  <Textarea
-                    {...form.register("serviceDescription")}
-                    placeholder="Descreva detalhadamente o serviço prestado. Ex: Consultoria em tecnologia, desenvolvimento de sistema, manutenção, etc. (inclua valores individuais se necessário)..."
-                    className="min-h-[100px]"
-                    data-testid="textarea-service-description"
-                  />
-                  <p className="text-xs text-gray-600">
-                    💡 Esta é a descrição principal que aparecerá na Nota Fiscal. Seja específico e detalhado.
-                  </p>
-                  {form.formState.errors.serviceDescription && (
-                    <p className="text-sm text-red-500">{form.formState.errors.serviceDescription.message}</p>
-                  )}
-                </div>
-
-                {/* Data de Vencimento - Opcional */}
-                <div className="space-y-2">
-                  <Label>Data de Vencimento (Opcional)</Label>
-                  <Input
-                    {...form.register("scheduledDate")}
-                    type="date"
-                    data-testid="input-scheduled-date-nf"
-                  />
-                  {form.formState.errors.scheduledDate && (
-                    <p className="text-sm text-red-500">{form.formState.errors.scheduledDate.message}</p>
-                  )}
-                </div>
-              </>
-            )}
-
-            {/* Observações */}
+            {/* Observações - Campo único desta seção */}
             <div className="space-y-2">
               <Label className="flex items-center gap-2">
                 <MessageSquare className="h-4 w-4 text-gray-500" />
