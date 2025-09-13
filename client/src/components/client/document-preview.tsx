@@ -55,20 +55,60 @@ interface DocumentPreviewProps {
 export function DocumentPreview({ document }: DocumentPreviewProps) {
   const [activeTab, setActiveTab] = useState<'extracted' | 'raw'>('extracted');
   
-  // Carregar bancos para resolução de bankId
+  // Carregar dados para resolução de IDs → nomes
   const { data: banks = [] } = useQuery<Array<{id: string, name: string}>>({
     queryKey: ["/api/banks"]
   });
   
-  // Função helper para resolver bankId → nome do banco
+  const { data: categories = [] } = useQuery<Array<{id: string, name: string}>>({
+    queryKey: ["/api/categories"]
+  });
+  
+  const { data: costCenters = [] } = useQuery<Array<{id: string, name: string}>>({
+    queryKey: ["/api/cost-centers"]
+  });
+  
+  // Funções helper para resolver IDs → nomes
   const resolveBankName = (bankId?: string): string => {
     if (!bankId || !banks.length) return 'Não informado';
     const bank = banks.find(b => b.id === bankId);
     return bank?.name || 'Não informado';
   };
+
+  const resolveCategoryName = (categoryId?: string): string => {
+    if (!categoryId || !categories.length) return 'Não informado';
+    const category = categories.find(c => c.id === categoryId);
+    return category?.name || 'Não informado';
+  };
+
+  const resolveCostCenterName = (costCenterId?: string): string => {
+    if (!costCenterId || !costCenters.length) return 'Não informado';
+    const costCenter = costCenters.find(cc => cc.id === costCenterId);
+    return costCenter?.name || 'Não informado';
+  };
   
   // Usar mapper para unificar dados independente do tipo
   const unifiedData: UnifiedDocumentData = DocumentMapperFactory.mapDocument(document);
+
+  // CORREÇÃO: Aplicar resolução de IDs → nomes para AGENDADO (similar ao PAGO)
+  if (unifiedData.scheduleInfo && (document.documentType === 'AGENDADO' || (document as any).bpoType === 'AGENDADO')) {
+    const docAny = document as any;
+    
+    // Resolver bankId → bankName se não resolvido pelo mapper
+    if ((!unifiedData.scheduleInfo.bankName || unifiedData.scheduleInfo.bankName === 'Não informado') && docAny.bankId) {
+      unifiedData.scheduleInfo.bankName = resolveBankName(docAny.bankId);
+    }
+    
+    // Resolver categoryId → categoryName se não resolvido pelo mapper  
+    if ((!unifiedData.scheduleInfo.categoryName || unifiedData.scheduleInfo.categoryName === 'Não informado') && docAny.categoryId) {
+      unifiedData.scheduleInfo.categoryName = resolveCategoryName(docAny.categoryId);
+    }
+    
+    // Resolver costCenterId → costCenterName se não resolvido pelo mapper
+    if ((!unifiedData.scheduleInfo.costCenterName || unifiedData.scheduleInfo.costCenterName === 'Não informado') && docAny.costCenterId) {
+      unifiedData.scheduleInfo.costCenterName = resolveCostCenterName(docAny.costCenterId);
+    }
+  }
   
   // 🏦 CORREÇÃO: Resolver bankId → nome do banco para documentos físicos PAGO
   if (!unifiedData.isVirtual && document.documentType === 'PAGO' && (document as any).bankId) {

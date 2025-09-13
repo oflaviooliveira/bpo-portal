@@ -248,11 +248,7 @@ export class PhysicalDocumentMapper extends DocumentMapper {
       // Seções específicas aprimoradas
       paymentInfo: this.buildPaymentInfo(document, extracted),
       
-      scheduleInfo: document.documentType === 'AGENDADO' ? {
-        scheduledDate: getFormattedDate('data_agendamento', 'scheduledDate', 'data_agenda'),
-        paymentMethod: getValue('forma_pagamento') || getValue('metodo_pagamento') || getValue('payment_method'),
-        instructions: getValue('instrucoes', 'instructions') || getValue('observacoes')
-      } : undefined,
+      scheduleInfo: this.buildScheduleInfo(document, extracted),
       
       // Para debug
       rawExtractedData: extracted,
@@ -289,6 +285,61 @@ export class PhysicalDocumentMapper extends DocumentMapper {
       beneficiaryPhone: document.contraparte?.phone || extracted.telefone_favorecido,
       description: document.description || extracted.descricao || extracted.description,
       competenceDate: this.formatDate(document.competenceDate || extracted.data_competencia)
+    };
+  }
+
+  private buildScheduleInfo(document: any, extracted: any): ScheduleInfo | undefined {
+    if (document.documentType !== 'AGENDADO' && document.bpoType !== 'AGENDADO') {
+      return undefined;
+    }
+
+    const getValue = (key: string, fallback?: string) => {
+      return extracted?.[key] || (fallback ? extracted?.[fallback] : undefined);
+    };
+
+    const getFormattedDate = (...keys: string[]) => {
+      for (const key of keys) {
+        const value = extracted?.[key] || document[key];
+        if (value) {
+          return this.formatDate(value);
+        }
+      }
+      return undefined;
+    };
+
+    return {
+      scheduledDate: getFormattedDate('data_agendamento', 'scheduledDate', 'data_agenda'),
+      paymentMethod: getValue('forma_pagamento') || getValue('metodo_pagamento') || getValue('payment_method') || 'Não informado',
+      instructions: getValue('instrucoes', 'instructions') || getValue('observacoes') || document.notes || 'Não informado',
+      
+      // CORREÇÃO: Resolução de IDs → nomes (similar ao buildPaymentInfo)
+      bankName: document.bank?.name || document.bankName || document.metadata?.bankName || 
+                extracted.banco || extracted.bank_name || extracted.instituicao_financeira || extracted.bank ||
+                this.extractBankFromText(extracted) || 'Não informado',
+      categoryName: document.category?.name || document.categoryName || extracted.categoria || 'Não informado',
+      costCenterName: document.costCenter?.name || document.costCenterName || extracted.centro_custo || 'Não informado',
+      
+      // Dados básicos do beneficiário/pagador (se disponível)
+      payerName: document.contraparte?.name || document.contraparteName || 
+                 extracted.favorecido || extracted.beneficiario || extracted.razao_social,
+      payerDocument: document.contraparte?.document || document.contraparteDocument || 
+                     extracted.cnpj_favorecido || extracted.cpf_favorecido || extracted.documento_favorecido,
+      payerEmail: document.contraparte?.email || extracted.email_favorecido,
+      payerPhone: document.contraparte?.phone || extracted.telefone_favorecido,
+      
+      // Endereço (se disponível nos dados extraídos)
+      payerAddress: extracted.endereco_completo || extracted.endereco,
+      payerStreet: extracted.rua || extracted.logradouro,
+      payerNumber: extracted.numero,
+      payerComplement: extracted.complemento,
+      payerNeighborhood: extracted.bairro,
+      payerCity: extracted.cidade,
+      payerState: extracted.estado || extracted.uf,
+      payerZipCode: extracted.cep,
+      
+      // Outros campos específicos
+      payerContactName: extracted.contato || extracted.responsavel,
+      payerStateRegistration: extracted.inscricao_estadual || extracted.ie
     };
   }
   
