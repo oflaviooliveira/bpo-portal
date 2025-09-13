@@ -713,11 +713,11 @@ export function DocumentPreview({ document }: DocumentPreviewProps) {
             )}
           </div>
 
-          {/* Seção de Dados do Pagador */}
+          {/* Seção de Dados do Beneficiário */}
           <div className="space-y-3">
             <h4 className="font-medium text-[#E40064] border-b border-[#E40064]/20 pb-1 flex items-center gap-2">
               <User className="h-4 w-4" />
-              Dados do Pagador
+              Dados do Beneficiário
             </h4>
             
             {renderField(
@@ -764,7 +764,7 @@ export function DocumentPreview({ document }: DocumentPreviewProps) {
             <div className="space-y-3">
               <h4 className="font-medium text-[#0B0E30] border-b border-[#0B0E30]/20 pb-1 flex items-center gap-2">
                 <MapPin className="h-4 w-4" />
-                Endereço do Pagador
+                Endereço do Beneficiário
               </h4>
               
               {unifiedData.scheduleInfo.payerAddress && renderField(
