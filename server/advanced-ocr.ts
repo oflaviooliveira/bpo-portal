@@ -145,6 +145,10 @@ export class AdvancedOCRProcessor {
 
       const result = await convert(1, { responseType: "image" });
       const pngPath = result.path;
+      
+      if (!pngPath) {
+        throw new Error('Failed to generate PNG from PDF');
+      }
 
       const ocrResult = await this.performTesseractOCR(pngPath, 'PDF_TO_PNG_HIGH_RES');
       
@@ -171,6 +175,10 @@ export class AdvancedOCRProcessor {
 
       const result = await convert(1, { responseType: "image" });
       const pngPath = result.path;
+      
+      if (!pngPath) {
+        throw new Error('Failed to generate PNG from PDF');
+      }
 
       const ocrResult = await this.performTesseractOCR(pngPath, 'PDF_TO_PNG_MEDIUM_RES');
       
@@ -195,6 +203,10 @@ export class AdvancedOCRProcessor {
 
       const result = await convert(1, { responseType: "image" });
       const pngPath = result.path;
+      
+      if (!pngPath) {
+        throw new Error('Failed to generate PNG from PDF');
+      }
 
       const ocrResult = await this.performTesseractOCR(pngPath, 'PDF_TO_PNG_LOW_RES');
       
@@ -215,8 +227,8 @@ export class AdvancedOCRProcessor {
         name: 'PORTUGUES_PADRAO',
         options: {
           lang: 'por',
-          tessedit_pageseg_mode: '1',
-          tessedit_ocr_engine_mode: '3'
+          tessedit_pageseg_mode: 1,
+          tessedit_ocr_engine_mode: 3
         }
       },
       // Auto-detect melhorado
@@ -224,8 +236,8 @@ export class AdvancedOCRProcessor {
         name: 'AUTO_DETECT',
         options: {
           lang: 'por',
-          tessedit_pageseg_mode: '3',
-          tessedit_ocr_engine_mode: '1'
+          tessedit_pageseg_mode: 3,
+          tessedit_ocr_engine_mode: 1
         }
       },
       // Bloco único de texto
@@ -233,8 +245,8 @@ export class AdvancedOCRProcessor {
         name: 'BLOCO_UNICO',
         options: {
           lang: 'por',
-          tessedit_pageseg_mode: '6',
-          tessedit_ocr_engine_mode: '3'
+          tessedit_pageseg_mode: 6,
+          tessedit_ocr_engine_mode: 3
         }
       },
       // Multi-idioma (português + inglês)
@@ -242,8 +254,8 @@ export class AdvancedOCRProcessor {
         name: 'MULTI_IDIOMA',
         options: {
           lang: 'por+eng',
-          tessedit_pageseg_mode: '1',
-          tessedit_ocr_engine_mode: '2'
+          tessedit_pageseg_mode: 1,
+          tessedit_ocr_engine_mode: 2
         }
       },
       // Texto denso
@@ -251,8 +263,8 @@ export class AdvancedOCRProcessor {
         name: 'TEXTO_DENSO',
         options: {
           lang: 'por',
-          tessedit_pageseg_mode: '2',
-          tessedit_ocr_engine_mode: '3'
+          tessedit_pageseg_mode: 2,
+          tessedit_ocr_engine_mode: 3
         }
       },
       // Linha única
@@ -260,8 +272,8 @@ export class AdvancedOCRProcessor {
         name: 'LINHA_UNICA',
         options: {
           lang: 'por',
-          tessedit_pageseg_mode: '7',
-          tessedit_ocr_engine_mode: '2'
+          tessedit_pageseg_mode: 7,
+          tessedit_ocr_engine_mode: 2
         }
       }
     ];
@@ -272,7 +284,7 @@ export class AdvancedOCRProcessor {
       try {
         const worker = await createWorker('por');
         
-        await worker.setParameters(config.options);
+        await worker.setParameters(config.options as any);
         const { data } = await worker.recognize(imagePath);
         await worker.terminate();
 

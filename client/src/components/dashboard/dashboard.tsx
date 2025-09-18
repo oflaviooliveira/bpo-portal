@@ -9,11 +9,11 @@ export function Dashboard() {
   const { user } = useAuth();
   const isGlobalAdmin = user?.tenantId === '00000000-0000-0000-0000-000000000001' && user?.role === 'ADMIN';
   
-  const { data: stats, isLoading } = useQuery({
+  const { data: stats, isLoading } = useQuery<any>({
     queryKey: ["/api/dashboard/stats"],
   });
 
-  const { data: documents } = useQuery({
+  const { data: documents } = useQuery<any[]>({
     queryKey: ["/api/documents"],
   });
 
@@ -108,7 +108,7 @@ export function Dashboard() {
                 <div>
                   <p className="text-sm font-medium text-gray-600">Equipe Total</p>
                   <p className="text-2xl font-bold text-blue-600">
-                    {tenants?.reduce((total, tenant) => total + (tenant._count?.users || 0), 0) || 0}
+                    {tenants?.reduce((total: number, tenant: any) => total + (tenant._count?.users || 0), 0) || 0}
                   </p>
                   <p className="text-xs text-gray-500">usuários ativos</p>
                 </div>
@@ -121,7 +121,7 @@ export function Dashboard() {
                 <div>
                   <p className="text-sm font-medium text-gray-600">Operações</p>
                   <p className="text-2xl font-bold text-green-600">
-                    {tenants?.reduce((total, tenant) => total + (tenant._count?.documents || 0), 0) || 0}
+                    {tenants?.reduce((total: number, tenant: any) => total + (tenant._count?.documents || 0), 0) || 0}
                   </p>
                   <p className="text-xs text-gray-500">docs processados</p>
                 </div>
@@ -199,7 +199,7 @@ export function Dashboard() {
                   <span className="text-sm text-foreground">Processados Automaticamente</span>
                 </div>
                 <span className="font-medium text-foreground">
-                  {stats?.totalDocuments ? Math.floor(stats.totalDocuments * 0.94) : 1170} (94%)
+                  {(stats as any)?.totalDocuments ? Math.floor((stats as any).totalDocuments * 0.94) : 1170} (94%)
                 </span>
               </div>
               <div className="flex items-center justify-between">
@@ -208,7 +208,7 @@ export function Dashboard() {
                   <span className="text-sm text-foreground">Pendente de Revisão</span>
                 </div>
                 <span className="font-medium text-foreground">
-                  {stats?.pendingReview || 60} (5%)
+                  {(stats as any)?.pendingReview || 60} (5%)
                 </span>
               </div>
               <div className="flex items-center justify-between">

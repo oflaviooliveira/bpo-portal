@@ -22,6 +22,11 @@ async function testFullPipeline() {
     console.log(`   ID: ${testDocument.id}`);
 
     // Verificar se arquivo existe
+    if (!testDocument.filePath) {
+      console.log(`❌ Caminho do arquivo não definido para documento: ${testDocument.originalName}`);
+      return;
+    }
+    
     try {
       await fs.access(testDocument.filePath);
       console.log(`✅ Arquivo encontrado: ${testDocument.filePath}`);

@@ -36,17 +36,21 @@ describe('Multi-tenant Isolation', () => {
     const user1 = await db.insert(users).values({
       username: 'user1',
       email: 'user1@test.com',
+      password: 'hashed_password',
+      firstName: 'User',
+      lastName: 'One',
       tenantId: tenant1Id,
-      role: 'ADMIN',
-      name: 'User 1',
+      role: 'CLIENT_USER',
     }).returning();
 
     const user2 = await db.insert(users).values({
       username: 'user2',
       email: 'user2@test.com',
+      password: 'hashed_password',
+      firstName: 'User',
+      lastName: 'Two',
       tenantId: tenant2Id,
-      role: 'ADMIN',
-      name: 'User 2',
+      role: 'CLIENT_USER',
     }).returning();
 
     user1Id = user1[0].id;
@@ -105,13 +109,11 @@ describe('Multi-tenant Isolation', () => {
     await db.insert(categories).values([
       {
         tenantId: tenant1Id,
-        code: 'COMB1',
         name: sameCategoryName,
         description: 'Combustível Tenant 1',
       },
       {
         tenantId: tenant2Id,
-        code: 'COMB2',
         name: sameCategoryName,
         description: 'Combustível Tenant 2',
       }
@@ -162,7 +164,6 @@ describe('Multi-tenant Isolation', () => {
     // Criar primeira categoria
     await db.insert(categories).values({
       tenantId: tenant1Id,
-      code: 'COMB1',
       name: sameName,
       description: 'Primeira categoria',
     });
@@ -171,7 +172,6 @@ describe('Multi-tenant Isolation', () => {
     await expect(async () => {
       await db.insert(categories).values({
         tenantId: tenant1Id,
-        code: 'COMB2',
         name: sameName,
         description: 'Segunda categoria',
       });

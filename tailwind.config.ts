@@ -109,7 +109,7 @@ export default {
         sans: ["var(--font-sans)", "Poppins", "system-ui", "sans-serif"],
         serif: ["var(--font-serif)", "Georgia", "serif"],
         mono: ["var(--font-mono)", "Menlo", "monospace"],
-        gilroy: ["var(--font-gilroy)", "Gilroy", "sans-serif"],
+        gilroy: ["var(--font-gilroy)", "Montserrat", "sans-serif"],
         poppins: ["Poppins", "system-ui", "sans-serif"],
       },
       keyframes: {

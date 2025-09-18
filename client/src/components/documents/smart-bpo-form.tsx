@@ -287,19 +287,19 @@ function getFieldConfigsForDocumentType(documentType: string) {
           {
             name: 'competenceDate',
             label: 'Data de Competência',
-            type: 'date',
+            type: 'date' as const,
             required: true,
             description: 'Quando a despesa/receita pertence',
             icon: <Calendar className="h-4 w-4" />
-          },
+          } as FieldConfig,
           {
             name: 'paidDate',
             label: 'Data de Pagamento',
-            type: 'date',
+            type: 'date' as const,
             required: true,
             description: 'Quando o pagamento foi efetuado',
             icon: <Calendar className="h-4 w-4" />
-          }
+          } as FieldConfig
         ],
         specificFields: [],
         optionalFields: [
@@ -320,27 +320,27 @@ function getFieldConfigsForDocumentType(documentType: string) {
           {
             name: 'dueDate',
             label: 'Data de Vencimento',
-            type: 'date',
+            type: 'date' as const,
             required: true,
             description: 'Quando o pagamento deve ser efetuado'
-          }
+          } as FieldConfig
         ],
         specificFields: [],
         optionalFields: [
           {
             name: 'paymentDate',
             label: 'Data de Pagamento',
-            type: 'date',
+            type: 'date' as const,
             required: false,
             description: 'Deixar em branco - será preenchida após pagamento'
-          },
+          } as FieldConfig,
           {
             name: 'notes',
             label: 'Observações',
-            type: 'textarea',
+            type: 'textarea' as const,
             required: false,
             placeholder: 'Instruções especiais para pagamento'
-          }
+          } as FieldConfig
         ]
       };
 
@@ -351,40 +351,40 @@ function getFieldConfigsForDocumentType(documentType: string) {
           {
             name: 'dueDate',
             label: 'Data de Vencimento',
-            type: 'date',
+            type: 'date' as const,
             required: true,
             description: 'Vencimento do boleto a ser emitido'
-          }
+          } as FieldConfig
         ],
         specificFields: [
           {
             name: 'payerName',
             label: 'Nome do Pagador',
-            type: 'text',
+            type: 'text' as const,
             required: true,
             placeholder: 'Nome completo do cliente'
-          },
+          } as FieldConfig,
           {
             name: 'payerDocument',
             label: 'CPF/CNPJ do Pagador',
-            type: 'text',
+            type: 'text' as const,
             required: true,
             placeholder: 'Documento do cliente'
-          },
+          } as FieldConfig,
           {
             name: 'payerEmail',
             label: 'Email do Pagador',
-            type: 'text',
+            type: 'text' as const,
             required: false,
             placeholder: 'email@cliente.com'
-          },
+          } as FieldConfig,
           {
             name: 'instructions',
             label: 'Instruções do Boleto',
-            type: 'textarea',
+            type: 'textarea' as const,
             required: false,
             placeholder: 'Instruções específicas para o boleto'
-          }
+          } as FieldConfig
         ],
         optionalFields: []
       };
@@ -396,40 +396,40 @@ function getFieldConfigsForDocumentType(documentType: string) {
           {
             name: 'serviceCode',
             label: 'Código do Serviço',
-            type: 'text',
+            type: 'text' as const,
             required: true,
             placeholder: 'Código do serviço prestado'
-          },
+          } as FieldConfig,
           {
             name: 'serviceDescription',
             label: 'Descrição do Serviço',
-            type: 'textarea',
+            type: 'textarea' as const,
             required: true,
             placeholder: 'Descrição detalhada do serviço para NF'
-          }
+          } as FieldConfig
         ],
         specificFields: [
           {
             name: 'payerName',
             label: 'Nome do Tomador',
-            type: 'text',
+            type: 'text' as const,
             required: true,
             placeholder: 'Razão social do tomador do serviço'
-          },
+          } as FieldConfig,
           {
             name: 'payerDocument',
             label: 'CNPJ do Tomador',
-            type: 'text',
+            type: 'text' as const,
             required: true,
             placeholder: 'CNPJ do tomador'
-          },
+          } as FieldConfig,
           {
             name: 'payerAddress',
             label: 'Endereço do Tomador',
-            type: 'text',
+            type: 'text' as const,
             required: false,
             placeholder: 'Endereço completo'
-          }
+          } as FieldConfig
         ],
         optionalFields: []
       };

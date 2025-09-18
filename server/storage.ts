@@ -2,7 +2,7 @@ import {
   users, clients, contrapartes, tenants, banks, categories, costCenters, documents, documentLogs, aiRuns, documentInconsistencies, ocrMetrics,
   type User, type InsertUser, type Tenant, type InsertTenant, 
   type Client, type InsertClient, type Contraparte, type InsertContraparte, type Document, type InsertDocument,
-  type Bank, type Category, type CostCenter, type DocumentLog,
+  type Bank, type InsertBank, type Category, type CostCenter, type DocumentLog,
   type InsertCategory, type InsertCostCenter, type AiRun, type DocumentInconsistency
 } from "@shared/schema";
 import { db } from "./db";
@@ -129,10 +129,15 @@ export class DatabaseStorage implements IStorage {
   sessionStore: session.Store;
 
   constructor() {
-    this.sessionStore = new PostgresSessionStore({ 
-      pool, 
-      createTableIfMissing: true 
-    });
+    // Use memory store for development to avoid WebSocket issues
+    if (process.env.NODE_ENV === 'development') {
+      this.sessionStore = new session.MemoryStore();
+    } else {
+      this.sessionStore = new PostgresSessionStore({ 
+        pool, 
+        createTableIfMissing: true 
+      });
+    }
   }
 
   async getUser(id: string): Promise<User | undefined> {
@@ -553,7 +558,8 @@ export class DatabaseStorage implements IStorage {
       contraparteDocument: doc.contraparteDocument,
       updatedAt: doc.updatedAt,
       extractedData: doc.aiAnalysis, // aiAnalysis contém os dados extraídos
-      tasks: doc.inconsistencies || []
+      tasks: doc.inconsistencies || [],
+      isVirtualDocument: false // Adicionar propriedade obrigatória
     }));
   }
 

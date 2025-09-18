@@ -2,6 +2,7 @@ import { db } from "./db";
 import { banks, categories, costCenters, clients, tenants, users } from "@shared/schema";
 import { scrypt, randomBytes } from "crypto";
 import { promisify } from "util";
+import { sql } from "drizzle-orm";
 
 const scryptAsync = promisify(scrypt);
 
@@ -118,6 +119,26 @@ export async function seedDatabase() {
         firstName: "Administrador",
         lastName: "Gquicks",
         role: "ADMIN",
+        tenantId,
+      });
+    }
+
+    // 7. Verificar se usuário cliente já existe, senão criar
+    const existingClientUser = await db.query.users.findFirst({
+      where: (users, { eq }) => eq(users.username, "cliente@teste.com"),
+    });
+
+    if (!existingClientUser) {
+      console.log("👤 Criando usuário cliente de teste...");
+      const hashedPassword = await hashPassword("cliente123");
+      
+      await db.insert(users).values({
+        username: "cliente@teste.com",
+        password: hashedPassword,
+        email: "cliente@teste.com",
+        firstName: "Cliente",
+        lastName: "Teste",
+        role: "CLIENT_USER",
         tenantId,
       });
     }

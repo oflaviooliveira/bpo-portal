@@ -76,12 +76,20 @@ export function Inbox() {
   });
 
   // Queries para dropdowns
-  const { data: categories } = useQuery({
+  const { data: categories = [] } = useQuery({
     queryKey: ["/api/categories"],
+    queryFn: async () => {
+      const response = await apiRequest("GET", "/api/categories");
+      return response.json();
+    }
   });
 
-  const { data: costCenters } = useQuery({
+  const { data: costCenters = [] } = useQuery({
     queryKey: ["/api/cost-centers"],
+    queryFn: async () => {
+      const response = await apiRequest("GET", "/api/cost-centers");
+      return response.json();
+    }
   });
 
   // Ensure documents is always an array to prevent filter errors

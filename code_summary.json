@@ -1,0 +1,301 @@
+{
+  "project_name": "BPO Portal",
+  "description": "Sistema de gestão de documentos BPO com processamento OCR, análise de IA e multi-tenancy",
+  "tech_stack": {
+    "backend": {
+      "framework": "Express.js",
+      "language": "TypeScript",
+      "database": "Supabase (PostgreSQL)",
+      "authentication": "Passport.js + Express Session",
+      "file_processing": "Multer + Tesseract.js",
+      "ai_integration": "OpenAI GPT",
+      "validation": "Zod"
+    },
+    "frontend": {
+      "framework": "React",
+      "build_tool": "Vite",
+      "styling": "Tailwind CSS",
+      "ui_components": "Shadcn/ui"
+    },
+    "infrastructure": {
+      "deployment": "Docker",
+      "storage": "Local File System",
+      "session_store": "Express Session"
+    }
+  },
+  "core_features": {
+    "authentication": {
+      "description": "Sistema de autenticação multi-tenant com controle de acesso baseado em roles",
+      "endpoints": [
+        "POST /api/login",
+        "POST /api/logout",
+        "GET /api/user"
+      ],
+      "roles": ["SUPER_ADMIN", "CLIENT_USER"]
+    },
+    "document_management": {
+      "description": "Gestão completa de documentos com OCR e análise de IA",
+      "endpoints": [
+        "GET /api/documents",
+        "POST /api/documents/upload",
+        "POST /api/documents/process-file",
+        "PUT /api/documents/:id",
+        "DELETE /api/documents/:id"
+      ],
+      "features": [
+        "Upload de arquivos PDF/imagem",
+        "Processamento OCR com Tesseract",
+        "Análise de IA para extração de dados",
+        "Documentos virtuais (boletos/NF)",
+        "Validação de qualidade de arquivo"
+      ]
+    },
+    "supplier_management": {
+      "description": "Gestão de fornecedores (contrapartes)",
+      "endpoints": [
+        "GET /api/fornecedores",
+        "POST /api/fornecedores",
+        "PUT /api/fornecedores/:id",
+        "DELETE /api/fornecedores/:id"
+      ]
+    },
+    "client_management": {
+      "description": "Gestão de clientes com busca inteligente",
+      "endpoints": [
+        "GET /api/clientes",
+        "POST /api/clientes",
+        "PUT /api/clientes/:id",
+        "DELETE /api/clientes/:id",
+        "GET /api/clientes/search"
+      ]
+    },
+    "financial_data": {
+      "description": "Gestão de bancos, categorias e centros de custo",
+      "endpoints": [
+        "GET /api/banks",
+        "POST /api/banks",
+        "PATCH /api/banks/:id",
+        "DELETE /api/banks/:id",
+        "GET /api/categories",
+        "POST /api/categories",
+        "GET /api/cost-centers",
+        "POST /api/cost-centers"
+      ]
+    },
+    "dashboard": {
+      "description": "Estatísticas e métricas do sistema",
+      "endpoints": [
+        "GET /api/dashboard/stats",
+        "GET /api/client/dashboard/stats"
+      ]
+    }
+  },
+  "architecture": {
+    "pattern": "MVC com middleware de autenticação e tenant context",
+    "security": {
+      "authentication": "Session-based com Passport.js",
+      "authorization": "Role-based access control (RBAC)",
+      "tenant_isolation": "Multi-tenant com isolamento por tenantId"
+    },
+    "data_flow": {
+      "upload": "Client -> Multer -> File Validation -> OCR -> AI Analysis -> Database",
+      "processing": "OCR (Tesseract/PDF) -> AI Analysis (OpenAI) -> Data Extraction -> Suggestions"
+    }
+  },
+  "api_endpoints": {
+    "authentication": [
+      {
+        "method": "POST",
+        "path": "/api/login",
+        "description": "Autenticação de usuário",
+        "auth_required": false
+      },
+      {
+        "method": "POST",
+        "path": "/api/logout",
+        "description": "Logout do usuário",
+        "auth_required": true
+      },
+      {
+        "method": "GET",
+        "path": "/api/user",
+        "description": "Informações do usuário logado",
+        "auth_required": true
+      }
+    ],
+    "documents": [
+      {
+        "method": "GET",
+        "path": "/api/documents",
+        "description": "Listar documentos com filtros",
+        "auth_required": true,
+        "roles": ["SUPER_ADMIN", "CLIENT_USER"]
+      },
+      {
+        "method": "POST",
+        "path": "/api/documents/upload",
+        "description": "Upload e processamento de documento",
+        "auth_required": true,
+        "roles": ["SUPER_ADMIN", "CLIENT_USER"]
+      },
+      {
+        "method": "POST",
+        "path": "/api/documents/process-file",
+        "description": "Processar arquivo para preview (OCR + IA)",
+        "auth_required": true,
+        "roles": ["SUPER_ADMIN", "CLIENT_USER"]
+      }
+    ],
+    "suppliers": [
+      {
+        "method": "GET",
+        "path": "/api/fornecedores",
+        "description": "Listar fornecedores",
+        "auth_required": true,
+        "roles": ["SUPER_ADMIN", "CLIENT_USER"]
+      },
+      {
+        "method": "POST",
+        "path": "/api/fornecedores",
+        "description": "Criar fornecedor",
+        "auth_required": true,
+        "roles": ["SUPER_ADMIN", "CLIENT_USER"]
+      },
+      {
+        "method": "PUT",
+        "path": "/api/fornecedores/:id",
+        "description": "Atualizar fornecedor",
+        "auth_required": true,
+        "roles": ["SUPER_ADMIN", "CLIENT_USER"]
+      },
+      {
+        "method": "DELETE",
+        "path": "/api/fornecedores/:id",
+        "description": "Excluir fornecedor (soft delete)",
+        "auth_required": true,
+        "roles": ["SUPER_ADMIN", "CLIENT_USER"]
+      }
+    ],
+    "clients": [
+      {
+        "method": "GET",
+        "path": "/api/clientes",
+        "description": "Listar clientes",
+        "auth_required": true,
+        "roles": ["SUPER_ADMIN", "CLIENT_USER"]
+      },
+      {
+        "method": "POST",
+        "path": "/api/clientes",
+        "description": "Criar cliente",
+        "auth_required": true,
+        "roles": ["SUPER_ADMIN", "CLIENT_USER"]
+      },
+      {
+        "method": "PUT",
+        "path": "/api/clientes/:id",
+        "description": "Atualizar cliente",
+        "auth_required": true,
+        "roles": ["SUPER_ADMIN", "CLIENT_USER"]
+      },
+      {
+        "method": "DELETE",
+        "path": "/api/clientes/:id",
+        "description": "Excluir cliente (soft delete)",
+        "auth_required": true,
+        "roles": ["SUPER_ADMIN", "CLIENT_USER"]
+      },
+      {
+        "method": "GET",
+        "path": "/api/clientes/search",
+        "description": "Busca rápida de clientes para auto-complete",
+        "auth_required": true,
+        "roles": ["SUPER_ADMIN", "CLIENT_USER"]
+      }
+    ],
+    "financial": [
+      {
+        "method": "GET",
+        "path": "/api/banks",
+        "description": "Listar bancos",
+        "auth_required": true
+      },
+      {
+        "method": "POST",
+        "path": "/api/banks",
+        "description": "Criar banco",
+        "auth_required": true,
+        "roles": ["SUPER_ADMIN", "CLIENT_USER"]
+      },
+      {
+        "method": "GET",
+        "path": "/api/categories",
+        "description": "Listar categorias",
+        "auth_required": true
+      },
+      {
+        "method": "POST",
+        "path": "/api/categories",
+        "description": "Criar categoria",
+        "auth_required": true,
+        "roles": ["SUPER_ADMIN", "CLIENT_USER"]
+      },
+      {
+        "method": "GET",
+        "path": "/api/cost-centers",
+        "description": "Listar centros de custo",
+        "auth_required": true
+      },
+      {
+        "method": "POST",
+        "path": "/api/cost-centers",
+        "description": "Criar centro de custo",
+        "auth_required": true,
+        "roles": ["SUPER_ADMIN", "CLIENT_USER"]
+      }
+    ],
+    "dashboard": [
+      {
+        "method": "GET",
+        "path": "/api/dashboard/stats",
+        "description": "Estatísticas do dashboard (SUPER_ADMIN)",
+        "auth_required": true,
+        "roles": ["SUPER_ADMIN"]
+      },
+      {
+        "method": "GET",
+        "path": "/api/client/dashboard/stats",
+        "description": "Estatísticas do dashboard para clientes",
+        "auth_required": true,
+        "roles": ["CLIENT_USER"]
+      }
+    ]
+  },
+  "test_data": {
+    "users": [
+      {
+        "email": "admin@gquicks.com",
+        "password": "admin123",
+        "role": "SUPER_ADMIN"
+      },
+      {
+        "email": "cliente@teste.com",
+        "password": "cliente123",
+        "role": "CLIENT_USER"
+      }
+    ]
+  },
+  "validation_schemas": {
+    "document_upload": {
+      "required_fields": ["documentType", "contraparteName"],
+      "optional_fields": ["amount", "description", "dueDate", "paymentDate", "notes"],
+      "document_types": ["PAGO", "AGENDADO", "EMITIR_BOLETO", "EMITIR_NF"]
+    }
+  },
+  "file_processing": {
+    "supported_formats": ["PDF", "JPG", "PNG", "JPEG"],
+    "max_file_size": "10MB",
+    "ocr_engines": ["Tesseract.js", "PDF Text Extraction"],
+    "ai_providers": ["OpenAI GPT"]
+  }
+}

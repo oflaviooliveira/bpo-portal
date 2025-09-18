@@ -135,7 +135,7 @@ export function Upload() {
       amount: "",
       supplier: "",
       notes: "",
-    });
+    } as any);
   }, [watchedDocumentType, form]);
 
   // Data fetching
@@ -310,8 +310,8 @@ export function Upload() {
                 Sugerido pela IA — revise antes de confirmar
               </p>
             )}
-            {form.formState.errors.paymentDate && (
-              <p className="text-sm text-red-600">{form.formState.errors.paymentDate.message}</p>
+            {(form.formState.errors as any).paymentDate && (
+              <p className="text-sm text-red-600">{(form.formState.errors as any).paymentDate.message}</p>
             )}
           </div>
         );
@@ -337,8 +337,8 @@ export function Upload() {
                 Sugerido pela IA — revise antes de confirmar
               </p>
             )}
-            {form.formState.errors.dueDate && (
-              <p className="text-sm text-red-600">{form.formState.errors.dueDate.message}</p>
+            {(form.formState.errors as any).dueDate && (
+              <p className="text-sm text-red-600">{(form.formState.errors as any).dueDate.message}</p>
             )}
           </div>
         );

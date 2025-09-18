@@ -1,0 +1,52 @@
+[
+  {
+    "id": "TC001",
+    "title": "test authentication system with multi tenant and rbac",
+    "description": "Verify that the authentication system correctly supports multi-tenant login and enforces role-based access control for SUPER_ADMIN and CLIENT_USER roles, ensuring tenant isolation and proper access restrictions."
+  },
+  {
+    "id": "TC002",
+    "title": "test document upload and lifecycle management",
+    "description": "Validate the complete document lifecycle including upload, automated OCR and AI processing, validation, status tracking, and archival, ensuring correct workflow transitions and data accuracy."
+  },
+  {
+    "id": "TC003",
+    "title": "test ocr processing with multiple strategies and fallback",
+    "description": "Test the OCR processing endpoint to ensure it uses multiple extraction strategies with confidence scoring and fallback mechanisms, providing accurate text extraction from various document formats."
+  },
+  {
+    "id": "TC004",
+    "title": "test ai multi provider document analysis and validation",
+    "description": "Verify the AI integration endpoint correctly analyzes, categorizes, and validates document data using multiple AI providers like OpenAI GPT and GLM-4.5, ensuring high accuracy and proper prompt usage per document type."
+  },
+  {
+    "id": "TC005",
+    "title": "test multi tenant data isolation and row level security",
+    "description": "Ensure that all API endpoints enforce multi-tenant data isolation using Row Level Security policies, preventing any cross-tenant data access or leaks."
+  },
+  {
+    "id": "TC006",
+    "title": "test dashboard api for real time financial and operational metrics",
+    "description": "Validate the dashboard API endpoints provide accurate real-time financial statistics, document processing metrics, and AI performance data for authorized users."
+  },
+  {
+    "id": "TC007",
+    "title": "test financial management endpoints for expense and supplier tracking",
+    "description": "Test the financial management APIs to ensure correct handling of expense tracking, supplier and client management, cost centers, and category hierarchies."
+  },
+  {
+    "id": "TC008",
+    "title": "test document workflow status transitions",
+    "description": "Verify that document workflow APIs correctly automate status transitions based on business rules and dates, reflecting accurate document lifecycle states."
+  },
+  {
+    "id": "TC009",
+    "title": "test file storage and upload handling",
+    "description": "Test the file storage and upload endpoints to ensure support for multiple document formats, local and cloud storage integration, and file integrity validation."
+  },
+  {
+    "id": "TC010",
+    "title": "test api endpoints for authentication document and entity operations",
+    "description": "Validate all RESTful API endpoints for authentication, document management, and entity operations to ensure correct request handling, response structure, and error management."
+  }
+]

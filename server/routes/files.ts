@@ -2,14 +2,87 @@ import type { Express } from "express";
 import { isAuthenticated } from "../auth";
 import { createFileStorage } from "../storage/local-storage";
 import path from "path";
+import multer from "multer";
+import fs from "fs/promises";
 
 const fileStorage = createFileStorage();
+
+// Configure multer for file uploads
+const upload = multer({
+  dest: "uploads/",
+  limits: {
+    fileSize: 10 * 1024 * 1024, // 10MB
+  },
+  fileFilter: (req, file, cb) => {
+    // Accept common file types
+    const allowedTypes = /\.(pdf|jpg|jpeg|png|gif|webp|txt|doc|docx)$/i;
+    if (allowedTypes.test(file.originalname)) {
+      cb(null, true);
+    } else {
+      cb(new Error('Tipo de arquivo não permitido'));
+    }
+  },
+});
 
 /**
  * Endpoints para servir arquivos via storage interface
  * Pronto para migração para S3 quando necessário
  */
 export function registerFileRoutes(app: Express) {
+  // Endpoint para upload de arquivos
+  app.post("/api/file/upload", isAuthenticated, upload.single('file'), async (req, res) => {
+    try {
+      const user = req.user!;
+      const file = req.file;
+      
+      if (!file) {
+        return res.status(400).json({ error: "Nenhum arquivo foi enviado" });
+      }
+
+      // Generate unique filename
+      const timestamp = Date.now();
+      const ext = path.extname(file.originalname);
+      const filename = `${timestamp}_${Math.random().toString(36).substring(7)}${ext}`;
+      const filePath = `uploads/${filename}`;
+
+      try {
+        // Read uploaded file
+        const fileBuffer = await fs.readFile(file.path);
+        
+        // Store file using storage interface
+        const storedPath = await fileStorage.upload(fileBuffer, filePath, {
+          originalName: file.originalname,
+          mimeType: file.mimetype,
+          size: file.size,
+          tenantId: user.tenantId || 'default',
+          userId: user.id
+        });
+
+        // Clean up temporary file
+        await fs.unlink(file.path).catch(() => {});
+
+        // Return success response with file info
+        res.json({
+          success: true,
+          fileId: filename,
+          originalName: file.originalname,
+          size: file.size,
+          mimeType: file.mimetype,
+          path: storedPath,
+          message: "Arquivo enviado com sucesso"
+        });
+      } catch (error) {
+        console.error("Erro ao armazenar arquivo:", error);
+        // Clean up temporary file on error
+        await fs.unlink(file.path).catch(() => {});
+        res.status(500).json({ error: "Erro ao armazenar arquivo" });
+      }
+    } catch (error) {
+      console.error("Erro no upload de arquivo:", error);
+      res.status(500).json({ error: "Erro interno do servidor" });
+    }
+  });
+
   // Endpoint para servir arquivos com autenticação
   app.get("/api/files/*", isAuthenticated, async (req, res) => {
     try {

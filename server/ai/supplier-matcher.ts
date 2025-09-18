@@ -237,8 +237,7 @@ export class SupplierMatcher {
       // Campos opcionais que podem ser preenchidos depois
       email: '',
       phone: '',
-      address: '',
-      notes: `Auto-sugerido a partir do documento processado em ${new Date().toLocaleDateString('pt-BR')}`
+      address: ''
     };
   }
 

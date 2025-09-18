@@ -1177,7 +1177,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
 
       // Usar o handler de upload estruturado
       const { uploadHandler } = await import("./upload-handler");
-      const result = await uploadHandler.processUpload(file, req.body, user);
+      const result = await uploadHandler.processUpload(file || null, req.body, user);
 
       if (result.success) {
         res.json({
@@ -1316,8 +1316,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
         action: "DELETE",
         status: "SUCCESS",
         details: { deletedBy: user.id, deletedAt: new Date() },
-        userId: user.id,
-        tenantId: user.tenantId
+        userId: user.id
       });
 
       res.json({ 
@@ -2376,7 +2375,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
       if (search) {
         const searchTerm = (search as string).toLowerCase();
         documents = documents.filter(d => 
-          d.originalName.toLowerCase().includes(searchTerm) ||
+          (d.originalName && d.originalName.toLowerCase().includes(searchTerm)) ||
           (d.notes && d.notes.toLowerCase().includes(searchTerm))
         );
       }
@@ -3151,7 +3150,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
       if (text) {
         const searchText = text.toLowerCase();
         documents = documents.filter(doc => 
-          doc.originalName.toLowerCase().includes(searchText) ||
+          (doc.originalName && doc.originalName.toLowerCase().includes(searchText)) ||
           (doc.notes && doc.notes.toLowerCase().includes(searchText)) ||
           (doc.ocrText && doc.ocrText.toLowerCase().includes(searchText))
         );
@@ -3412,7 +3411,7 @@ function generateVirtualDocumentHTML(document: any): string {
     'EMITIR_NF': 'Nota Fiscal'
   };
 
-  const documentTypeLabel = documentTypeLabels[document.documentType] || document.documentType;
+  const documentTypeLabel = (documentTypeLabels as any)[document.documentType] || document.documentType;
 
   let html = `
 <!DOCTYPE html>
@@ -3645,7 +3644,7 @@ function getDocumentDisplayName(document: any): string {
     'EMITIR_NF': 'NotaFiscal'
   };
   
-  const typeLabel = typeLabels[document.documentType] || 'Documento';
+  const typeLabel = (typeLabels as any)[document.documentType] || 'Documento';
   const issuerData = document.issuerData || {};
   const name = issuerData.name || document.supplier || 'SemNome';
   const date = new Date().toISOString().split('T')[0]; // YYYY-MM-DD

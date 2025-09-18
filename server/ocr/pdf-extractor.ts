@@ -86,7 +86,7 @@ export class PdfTextExtractor {
   private async extractNativeText(filePath: string): Promise<PdfExtractionResult> {
     try {
       const dataBuffer = await fs.readFile(filePath);
-      const pdf = (await import('pdf-parse')).default;
+      const pdf = (await import('pdf-parse') as any).default;
       const data = await pdf(dataBuffer);
       
       if (data.text && data.text.trim().length > 0) {

@@ -24,16 +24,31 @@ export function Scheduled() {
   const [activeTab, setActiveTab] = useState("hoje");
 
   // Queries para diferentes filtros de agendados
-  const { data: todayDocs, isLoading: loadingToday, refetch: refetchToday } = useQuery({
+  const { data: todayDocs = [], isLoading: loadingToday, refetch: refetchToday } = useQuery({
     queryKey: ["/api/documents/scheduled/today"],
+    queryFn: async () => {
+      const response = await fetch("/api/documents/scheduled/today", { credentials: "include" });
+      if (!response.ok) throw new Error('Failed to fetch');
+      return response.json();
+    }
   });
 
-  const { data: next7Days, isLoading: loading7Days, refetch: refetch7Days } = useQuery({
+  const { data: next7Days = [], isLoading: loading7Days, refetch: refetch7Days } = useQuery({
     queryKey: ["/api/documents/scheduled/next7days"],
+    queryFn: async () => {
+      const response = await fetch("/api/documents/scheduled/next7days", { credentials: "include" });
+      if (!response.ok) throw new Error('Failed to fetch');
+      return response.json();
+    }
   });
 
-  const { data: overdue, isLoading: loadingOverdue, refetch: refetchOverdue } = useQuery({
+  const { data: overdue = [], isLoading: loadingOverdue, refetch: refetchOverdue } = useQuery({
     queryKey: ["/api/documents/scheduled/overdue"],
+    queryFn: async () => {
+      const response = await fetch("/api/documents/scheduled/overdue", { credentials: "include" });
+      if (!response.ok) throw new Error('Failed to fetch');
+      return response.json();
+    }
   });
 
   const handleRefreshAll = () => {
@@ -279,15 +294,15 @@ export function Scheduled() {
             </div>
 
             <TabsContent value="hoje" className="p-6">
-              {renderDocumentTable(todayDocs, loadingToday)}
+              {renderDocumentTable(todayDocs as any[], loadingToday)}
             </TabsContent>
 
             <TabsContent value="proximos7" className="p-6">
-              {renderDocumentTable(next7Days, loading7Days)}
+              {renderDocumentTable(next7Days as any[], loading7Days)}
             </TabsContent>
 
             <TabsContent value="atrasados" className="p-6">
-              {renderDocumentTable(overdue, loadingOverdue)}
+              {renderDocumentTable(overdue as any[], loadingOverdue)}
             </TabsContent>
           </Tabs>
         </CardContent>

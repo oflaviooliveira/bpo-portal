@@ -1,6 +1,16 @@
 
 import { db } from '../db';
 import { tenants, users, contrapartes, categories, costCenters } from '../../shared/schema';
+import { scrypt, randomBytes } from "crypto";
+import { promisify } from "util";
+
+const scryptAsync = promisify(scrypt);
+
+async function hashPassword(password: string) {
+  const salt = randomBytes(16).toString('hex');
+  const derivedKey = (await scryptAsync(password, salt, 64)) as Buffer;
+  return `${derivedKey.toString('hex')}.${salt}`;
+}
 
 export async function seedTenants() {
   console.log('🌱 Iniciando seeds de tenants...');
@@ -20,10 +30,12 @@ export async function seedTenants() {
     console.log('✅ Tenants criados:', tenant1[0].name, tenant2[0].name);
 
     // Criar usuários admin para cada tenant
+    const hashedPassword = await hashPassword('admin123');
+    
     await db.insert(users).values([
       {
-        username: 'admin@acme',
-        password: '$2b$10$demo.password.hash.for.testing.purposes.only',
+        username: 'admin@acme-log.com',
+        password: hashedPassword,
         email: 'admin@acme-log.com',
         firstName: 'Administrador',
         lastName: 'ACME',
@@ -31,8 +43,8 @@ export async function seedTenants() {
         role: 'ADMIN',
       },
       {
-        username: 'admin@beta',
-        password: '$2b$10$demo.password.hash.for.testing.purposes.only',
+        username: 'admin@beta-cargo.com',
+        password: hashedPassword,
         email: 'admin@beta-cargo.com',
         firstName: 'Administrador',
         lastName: 'Beta',

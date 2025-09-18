@@ -11,7 +11,7 @@ export class PdfDirectTextStrategy implements OcrStrategy {
     
     try {
       // Importação dinâmica para evitar problemas de inicialização
-      const pdfParse = await import('pdf-parse');
+      const pdfParse = await import('pdf-parse') as any;
       
       const dataBuffer = fs.readFileSync(filePath);
       const data = await pdfParse.default(dataBuffer);

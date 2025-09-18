@@ -48,7 +48,6 @@ export function AutoSupplierModal({
   documentFile 
 }: AutoSupplierModalProps) {
   
-  if (!detectedSupplier) return null;
   const [action, setAction] = useState<'create' | 'skip' | null>(null);
   const [showPreview, setShowPreview] = useState(false);
   const { toast } = useToast();
@@ -57,11 +56,13 @@ export function AutoSupplierModal({
   const form = useForm<SupplierFormData>({
     resolver: zodResolver(supplierSchema),
     defaultValues: {
-      type: detectedSupplier.type,
-      document: detectedSupplier.document,
-      name: detectedSupplier.name,
+      type: detectedSupplier?.type || 'PJ',
+      document: detectedSupplier?.document || '',
+      name: detectedSupplier?.name || '',
     },
   });
+  
+  if (!detectedSupplier) return null;
 
   const createMutation = useMutation({
     mutationFn: async (data: SupplierFormData) => {

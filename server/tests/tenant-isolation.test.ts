@@ -1,7 +1,7 @@
 import { describe, test, expect, beforeAll, afterAll } from '@jest/globals';
 import { db } from '../db';
 import { sql } from 'drizzle-orm';
-import { tenants, users, documents, contrapartes } from '@shared/schema';
+import { tenants, users, documents, contrapartes } from '../../shared/schema';
 
 describe('Tenant Isolation Tests', () => {
   let tenant1Id: string;
@@ -59,26 +59,26 @@ describe('Tenant Isolation Tests', () => {
     // Documento do Tenant 1
     const [d1] = await db.insert(documents).values({
       tenantId: tenant1Id,
-      filename: 'doc1.pdf',
-      originalFilename: 'documento1.pdf',
+      fileName: 'doc1.pdf',
+      originalName: 'documento1.pdf',
       mimeType: 'application/pdf',
       fileSize: 1024,
       status: 'RECEBIDO',
       documentType: 'PAGO',
-      uploadedAt: new Date(),
+      createdBy: user1Id,
     }).returning();
     document1Id = d1.id;
 
     // Documento do Tenant 2
     const [d2] = await db.insert(documents).values({
       tenantId: tenant2Id,
-      filename: 'doc2.pdf',
-      originalFilename: 'documento2.pdf',
+      fileName: 'doc2.pdf',
+      originalName: 'documento2.pdf',
       mimeType: 'application/pdf',
       fileSize: 2048,
       status: 'RECEBIDO',
       documentType: 'AGENDADO',
-      uploadedAt: new Date(),
+      createdBy: user2Id,
     }).returning();
     document2Id = d2.id;
 
@@ -167,10 +167,10 @@ describe('Tenant Isolation Tests', () => {
     await db.execute(sql.raw(`SET app.current_user = ''`));
 
     // Tentar buscar dados (deveria retornar vazio devido ao RLS)
-    const users = await db.select().from(users);
+    const usersResult = await db.select().from(users);
     const docs = await db.select().from(documents);
     
-    expect(users.length).toBe(0);
+    expect(usersResult.length).toBe(0);
     expect(docs.length).toBe(0);
   });
 

@@ -121,7 +121,7 @@ export class FilenameAnalysisStrategy implements OcrStrategy {
       extractedData.patternsFound.push('category');
     }
     if (categories.length > 0) {
-      extractedData.categories = [...new Set(categories)]; // Remove duplicatas
+      extractedData.categories = Array.from(new Set(categories as string[])); // Remove duplicatas
       extractedData.confidence += 15;
     }
 

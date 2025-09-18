@@ -1,0 +1,536 @@
+[
+  {
+    "id": "TC001",
+    "title": "Successful document upload by CLIENT with valid format",
+    "description": "Verify that a CLIENT role user can upload a financial document with supported formats and the system accepts and begins processing.",
+    "category": "functional",
+    "priority": "High",
+    "steps": [
+      {
+        "type": "action",
+        "description": "Authenticate as CLIENT role user"
+      },
+      {
+        "type": "action",
+        "description": "Navigate to document upload page"
+      },
+      {
+        "type": "action",
+        "description": "Upload a valid financial document file (e.g. PDF, JPEG) compliant with accepted formats"
+      },
+      {
+        "type": "assertion",
+        "description": "System accepts the file and initiates the document pre-processing stage"
+      },
+      {
+        "type": "assertion",
+        "description": "User is shown a confirmation of successful upload with document status RECEBIDO"
+      }
+    ]
+  },
+  {
+    "id": "TC002",
+    "title": "Reject unsupported document file format on upload",
+    "description": "Validate the system rejects document upload attempts with unsupported or corrupt file formats and prompts an appropriate error message.",
+    "category": "error handling",
+    "priority": "High",
+    "steps": [
+      {
+        "type": "action",
+        "description": "Authenticate as CLIENT role user"
+      },
+      {
+        "type": "action",
+        "description": "Navigate to document upload page"
+      },
+      {
+        "type": "action",
+        "description": "Attempt to upload a file with unsupported extension or corrupted contents"
+      },
+      {
+        "type": "assertion",
+        "description": "System displays a clear validation error indicating invalid file format or corrupt document"
+      },
+      {
+        "type": "assertion",
+        "description": "Upload is blocked and no further processing occurs"
+      }
+    ]
+  },
+  {
+    "id": "TC003",
+    "title": "OCR extraction with fallback to alternative methods",
+    "description": "Verify OCR processing uses primary strategy and gracefully falls back to alternate OCR engines when confidence score is below threshold.",
+    "category": "functional",
+    "priority": "High",
+    "steps": [
+      {
+        "type": "action",
+        "description": "Upload scanned financial document with varying text quality"
+      },
+      {
+        "type": "assertion",
+        "description": "Primary OCR strategy (e.g. Tesseract.js) processes document and produces confidence scores"
+      },
+      {
+        "type": "assertion",
+        "description": "If confidence score is below defined threshold, alternate OCR methods (e.g. PDF text extraction) are triggered"
+      },
+      {
+        "type": "assertion",
+        "description": "Final extracted text data is a merged output with highest confidence possible"
+      }
+    ]
+  },
+  {
+    "id": "TC004",
+    "title": "AI multi-provider validation and categorization of documents",
+    "description": "Test that extracted OCR text is correctly sent to multi-provider AI services (OpenAI GPT, GLM-4.5) for document categorization, data extraction, and validation with fallback.",
+    "category": "functional",
+    "priority": "High",
+    "steps": [
+      {
+        "type": "action",
+        "description": "Submit OCR extracted data for AI processing"
+      },
+      {
+        "type": "assertion",
+        "description": "Data is sent to both AI providers"
+      },
+      {
+        "type": "assertion",
+        "description": "AI responses are received and merged or fallback provider used in case of failure"
+      },
+      {
+        "type": "assertion",
+        "description": "Document is categorized and key data fields are extracted as per document type"
+      }
+    ]
+  },
+  {
+    "id": "TC005",
+    "title": "Data validation for Brazilian CNPJ/CPF, dates, and monetary values",
+    "description": "Ensure extracted and user-input data fields conform to Brazilian-specific validation rules for identifiers, date formats, and currency values.",
+    "category": "functional",
+    "priority": "High",
+    "steps": [
+      {
+        "type": "action",
+        "description": "Upload document containing CNPJ, CPF, dates, and currency fields"
+      },
+      {
+        "type": "assertion",
+        "description": "System validates each field against Brazilian business rules and format standards"
+      },
+      {
+        "type": "assertion",
+        "description": "Validation errors are displayed with descriptive messages for invalid data"
+      },
+      {
+        "type": "action",
+        "description": "Correct invalid data fields"
+      },
+      {
+        "type": "assertion",
+        "description": "Validation passes allowing progression in workflow"
+      }
+    ]
+  },
+  {
+    "id": "TC006",
+    "title": "Automated document status workflow transitions",
+    "description": "Verify that document statuses transition automatically through states RECEBIDO, VALIDANDO, PAGO_A_CONCILIAR, EM_CONCILIACAO, and ARQUIVADO based on business rules and dates.",
+    "category": "functional",
+    "priority": "High",
+    "steps": [
+      {
+        "type": "action",
+        "description": "Upload and submit a new document"
+      },
+      {
+        "type": "assertion",
+        "description": "Document status is RECEBIDO initially"
+      },
+      {
+        "type": "assertion",
+        "description": "Based on validation success, document status automatically moves to VALIDANDO"
+      },
+      {
+        "type": "action",
+        "description": "Supply or simulate data triggering payment reconciliation"
+      },
+      {
+        "type": "assertion",
+        "description": "Status transitions to PAGO_A_CONCILIAR then EM_CONCILIACAO as per rules and dates"
+      },
+      {
+        "type": "action",
+        "description": "Simulate end of workflow conditions"
+      },
+      {
+        "type": "assertion",
+        "description": "Document status automatically changes to ARQUIVADO"
+      }
+    ]
+  },
+  {
+    "id": "TC007",
+    "title": "Role-based access control enforcement for document operations",
+    "description": "Confirm users with different RBAC roles have correct permissions and restrictions for document upload, validation, approvals, and administration.",
+    "category": "security",
+    "priority": "High",
+    "steps": [
+      {
+        "type": "action",
+        "description": "Login as CLIENT user and attempt document upload and status viewing"
+      },
+      {
+        "type": "assertion",
+        "description": "CLIENT can upload documents and view their own documents and statuses only"
+      },
+      {
+        "type": "action",
+        "description": "Login as OPERADOR and attempt to validate and approve documents"
+      },
+      {
+        "type": "assertion",
+        "description": "OPERADOR can access and modify document validation status but cannot access tenant management"
+      },
+      {
+        "type": "action",
+        "description": "Login as GERENTE and access financial reports and approvals"
+      },
+      {
+        "type": "assertion",
+        "description": "GERENTE can view dashboard KPIs and approve workflows, but cannot perform system administration"
+      },
+      {
+        "type": "action",
+        "description": "Login as SUPER_ADMIN and try to manage tenants, users, and platform-wide settings"
+      },
+      {
+        "type": "assertion",
+        "description": "SUPER_ADMIN has access to administrative interfaces and data of all tenants"
+      }
+    ]
+  },
+  {
+    "id": "TC008",
+    "title": "Multi-tenant data isolation and Row Level Security validation",
+    "description": "Ensure data access is strictly limited to the tenant context and no cross-tenant data leakage occurs because of incorrect RLS policies.",
+    "category": "security",
+    "priority": "High",
+    "steps": [
+      {
+        "type": "action",
+        "description": "Login as user in Tenant A"
+      },
+      {
+        "type": "action",
+        "description": "Attempt to query documents, clients, or reports belonging to Tenant B via API or UI"
+      },
+      {
+        "type": "assertion",
+        "description": "Access is denied or no data from Tenant B is shown"
+      },
+      {
+        "type": "action",
+        "description": "Repeat with various roles across tenants"
+      },
+      {
+        "type": "assertion",
+        "description": "Row Level Security enforcement consistently prevents cross-tenant data access"
+      }
+    ]
+  },
+  {
+    "id": "TC009",
+    "title": "User interface real-time validation and auto-fill feedback",
+    "description": "Verify that user input forms provide intelligent auto-fill, real-time validation errors, and contextual suggestions during document upload and editing.",
+    "category": "ui",
+    "priority": "Medium",
+    "steps": [
+      {
+        "type": "action",
+        "description": "Open document upload form as CLIENT"
+      },
+      {
+        "type": "action",
+        "description": "Fill fields partially or with invalid data"
+      },
+      {
+        "type": "assertion",
+        "description": "Fields show real-time validation errors with descriptive tooltips"
+      },
+      {
+        "type": "action",
+        "description": "Type partial CNPJ or CPF numbers"
+      },
+      {
+        "type": "assertion",
+        "description": "Form offers suggestions or auto-fills based on previous entries or AI predictions"
+      },
+      {
+        "type": "action",
+        "description": "Correct the invalid inputs"
+      },
+      {
+        "type": "assertion",
+        "description": "Validation messages disappear allowing submission"
+      }
+    ]
+  },
+  {
+    "id": "TC010",
+    "title": "API authentication and authorization enforcement",
+    "description": "Test API endpoints require valid authentication tokens with proper RBAC enforcement and tenant scoping.",
+    "category": "security",
+    "priority": "High",
+    "steps": [
+      {
+        "type": "action",
+        "description": "Attempt to access API endpoints without authentication token"
+      },
+      {
+        "type": "assertion",
+        "description": "API returns 401 Unauthorized for protected endpoints"
+      },
+      {
+        "type": "action",
+        "description": "Attempt access with expired or invalid token"
+      },
+      {
+        "type": "assertion",
+        "description": "API returns 401 Unauthorized or 403 Forbidden as appropriate"
+      },
+      {
+        "type": "action",
+        "description": "Perform operations with a valid user token but insufficient role"
+      },
+      {
+        "type": "assertion",
+        "description": "API returns 403 Forbidden for restricted operations"
+      },
+      {
+        "type": "action",
+        "description": "Perform permitted operations with correct role"
+      },
+      {
+        "type": "assertion",
+        "description": "API returns 200 OK and performs action successfully"
+      }
+    ]
+  },
+  {
+    "id": "TC011",
+    "title": "Dashboard KPI metrics accuracy and real-time updates",
+    "description": "Verify the dashboard displays correct financial KPIs, document volume metrics, and AI processing statistics with real-time updates.",
+    "category": "functional",
+    "priority": "Medium",
+    "steps": [
+      {
+        "type": "action",
+        "description": "Login as GERENTE role"
+      },
+      {
+        "type": "assertion",
+        "description": "Dashboard loads with current KPI and metric values consistent with backend data"
+      },
+      {
+        "type": "action",
+        "description": "Upload new documents and perform relevant status updates"
+      },
+      {
+        "type": "assertion",
+        "description": "Dashboard metrics update in real-time or on refresh to reflect new data"
+      },
+      {
+        "type": "action",
+        "description": "Simulate AI performance changes and errors"
+      },
+      {
+        "type": "assertion",
+        "description": "AI performance monitoring sections reflect changes and statuses accurately"
+      }
+    ]
+  },
+  {
+    "id": "TC012",
+    "title": "Test system handles document processing within required 30 seconds",
+    "description": "Ensure typical financial document processing from upload to status VALIDANDO completes within 30 seconds average time.",
+    "category": "performance",
+    "priority": "High",
+    "steps": [
+      {
+        "type": "action",
+        "description": "Upload a typical valid financial document"
+      },
+      {
+        "type": "assertion",
+        "description": "Document processing stages OCR and AI completed, and status changed to VALIDANDO within 30 seconds"
+      }
+    ]
+  },
+  {
+    "id": "TC013",
+    "title": "Security test for injection and sanitization on document data inputs",
+    "description": "Validate that all user inputs and OCR/AI extracted fields are sanitized to prevent injection attacks and security risks.",
+    "category": "security",
+    "priority": "High",
+    "steps": [
+      {
+        "type": "action",
+        "description": "Input document fields with SQL injection patterns, script tags or malicious payloads"
+      },
+      {
+        "type": "assertion",
+        "description": "System sanitizes inputs and prevents injection execution"
+      },
+      {
+        "type": "action",
+        "description": "Upload OCR or AI outputs containing malicious content"
+      },
+      {
+        "type": "assertion",
+        "description": "Malicious content is sanitized or rejected before storage or display"
+      }
+    ]
+  },
+  {
+    "id": "TC014",
+    "title": "Administrative panel tenant and user management functions",
+    "description": "Verify SUPER_ADMIN can create, update, delete tenants and users with correct role assignments, and that changes reflect in access permissions.",
+    "category": "functional",
+    "priority": "High",
+    "steps": [
+      {
+        "type": "action",
+        "description": "Login as SUPER_ADMIN"
+      },
+      {
+        "type": "action",
+        "description": "Access tenant management panel and create a new tenant"
+      },
+      {
+        "type": "assertion",
+        "description": "Tenant is created and visible in tenant list"
+      },
+      {
+        "type": "action",
+        "description": "Create a user assigned to the newly created tenant with role GERENTE"
+      },
+      {
+        "type": "assertion",
+        "description": "User is created with correct role and tenant assignment"
+      },
+      {
+        "type": "action",
+        "description": "Edit tenant and user details"
+      },
+      {
+        "type": "assertion",
+        "description": "Changes persist and affect access rights accordingly"
+      },
+      {
+        "type": "action",
+        "description": "Delete tenant and confirm associated users become inactive or removed"
+      },
+      {
+        "type": "assertion",
+        "description": "Deleted tenant and users no longer accessible"
+      }
+    ]
+  },
+  {
+    "id": "TC015",
+    "title": "Automated test coverage and isolation for core document processing",
+    "description": "Verify automated integration and unit tests comprehensively cover document upload, OCR, AI validation, workflows, and RBAC with proper isolation and reliability.",
+    "category": "functional",
+    "priority": "Medium",
+    "steps": [
+      {
+        "type": "action",
+        "description": "Run full automated test suite"
+      },
+      {
+        "type": "assertion",
+        "description": "All tests pass without failures"
+      },
+      {
+        "type": "assertion",
+        "description": "Tests cover key scenarios of multi-tenant isolation, workflow transitions, RBAC, and data validation"
+      },
+      {
+        "type": "assertion",
+        "description": "Test suite runs isolated instances avoiding cross-test data contamination"
+      }
+    ]
+  },
+  {
+    "id": "TC016",
+    "title": "Error handling for AI service unavailability or failures",
+    "description": "Confirm the system gracefully handles AI provider failures, timeouts, or invalid responses and informs users appropriately.",
+    "category": "error handling",
+    "priority": "High",
+    "steps": [
+      {
+        "type": "action",
+        "description": "Simulate AI service unavailability or return invalid data"
+      },
+      {
+        "type": "assertion",
+        "description": "System logs errors and falls back to alternate AI provider or manual validation steps"
+      },
+      {
+        "type": "assertion",
+        "description": "User receives notification about processing delays or errors requiring attention"
+      }
+    ]
+  },
+  {
+    "id": "TC017",
+    "title": "Role restrictions on financial management entities modification",
+    "description": "Ensure only authorized roles (e.g. GERENTE, SUPER_ADMIN) can create, update, or delete suppliers, cost centers, and category hierarchies.",
+    "category": "security",
+    "priority": "Medium",
+    "steps": [
+      {
+        "type": "action",
+        "description": "Login as CLIENT or OPERADOR role"
+      },
+      {
+        "type": "assertion",
+        "description": "Attempting modifications in suppliers or financial categories is rejected with permissions error"
+      },
+      {
+        "type": "action",
+        "description": "Login as GERENTE role and perform modifications"
+      },
+      {
+        "type": "assertion",
+        "description": "Modifications succeed and are reflected in the system"
+      }
+    ]
+  },
+  {
+    "id": "TC018",
+    "title": "Document status transition based on date triggers",
+    "description": "Verify system automatically updates document statuses as per configured date-based rules (e.g. status changes after due dates).",
+    "category": "functional",
+    "priority": "Medium",
+    "steps": [
+      {
+        "type": "action",
+        "description": "Create documents with specific dates triggering status changes"
+      },
+      {
+        "type": "action",
+        "description": "Simulate passage of time via system clocks or mocks"
+      },
+      {
+        "type": "assertion",
+        "description": "Documents automatically transition statuses at correct date thresholds"
+      }
+    ]
+  }
+]

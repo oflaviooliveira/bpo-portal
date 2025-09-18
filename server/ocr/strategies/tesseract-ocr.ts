@@ -52,9 +52,9 @@ export class TesseractOcrStrategy implements OcrStrategy {
           tesseractConfig: this.tesseractConfig.name,
           language: this.tesseractConfig.language,
           rawConfidence: data.confidence,
-          wordsCount: data.words?.length || 0,
-          linesCount: data.lines?.length || 0,
-          paragraphsCount: data.paragraphs?.length || 0
+          wordsCount: (data as any).words?.length || 0,
+          linesCount: (data as any).lines?.length || 0,
+          paragraphsCount: (data as any).paragraphs?.length || 0
         }
       };
     } catch (error) {

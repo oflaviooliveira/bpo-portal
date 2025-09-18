@@ -29,12 +29,14 @@ export function Emission() {
   const [showEmissionDialog, setShowEmissionDialog] = useState(false);
 
   // Queries para emissão
-  const { data: boletoDocs, isLoading: loadingBoletos, refetch: refetchBoletos } = useQuery({
+  const { data: boletoDocs = [], isLoading: loadingBoletos, refetch: refetchBoletos } = useQuery({
     queryKey: ["/api/documents/emission/boletos"],
+    queryFn: () => fetch("/api/documents/emission/boletos").then(res => res.json())
   });
 
-  const { data: nfDocs, isLoading: loadingNF, refetch: refetchNF } = useQuery({
+  const { data: nfDocs = [], isLoading: loadingNF, refetch: refetchNF } = useQuery({
     queryKey: ["/api/documents/emission/nf"],
+    queryFn: () => fetch("/api/documents/emission/nf").then(res => res.json())
   });
 
   const handleRefreshAll = () => {

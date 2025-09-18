@@ -191,24 +191,40 @@ export function UploadOld() {
     form.reset({
       clientId: currentClientId,
       documentType: watchedDocumentType,
-    });
+    } as any);
   }, [watchedDocumentType, form]);
 
   // Data fetching
   const { data: clientList = [] } = useQuery({
     queryKey: ["/api/clients"],
+    queryFn: async () => {
+      const response = await apiRequest("GET", "/api/clients");
+      return response.json();
+    }
   });
 
   const { data: bankList = [] } = useQuery({
     queryKey: ["/api/banks"],
+    queryFn: async () => {
+      const response = await apiRequest("GET", "/api/banks");
+      return response.json();
+    }
   });
 
   const { data: categoryList = [] } = useQuery({
     queryKey: ["/api/categories"],
+    queryFn: async () => {
+      const response = await apiRequest("GET", "/api/categories");
+      return response.json();
+    }
   });
 
   const { data: costCenterList = [] } = useQuery({
     queryKey: ["/api/cost-centers"],
+    queryFn: async () => {
+      const response = await apiRequest("GET", "/api/cost-centers");
+      return response.json();
+    }
   });
 
   // Upload mutation
@@ -353,15 +369,15 @@ export function UploadOld() {
                   <SelectValue placeholder="Selecione o banco" />
                 </SelectTrigger>
                 <SelectContent>
-                  {bankList.map((bank: any) => (
+                  {(bankList as any[]).map((bank: any) => (
                     <SelectItem key={bank.id} value={bank.id}>
                       {bank.name}
                     </SelectItem>
                   ))}
                 </SelectContent>
               </Select>
-              {form.formState.errors.bankId && (
-                <p className="text-destructive text-sm">{form.formState.errors.bankId.message}</p>
+              {(form.formState.errors as any).bankId && (
+                <p className="text-destructive text-sm">{(form.formState.errors as any).bankId.message}</p>
               )}
             </div>
 
@@ -376,15 +392,15 @@ export function UploadOld() {
                   <SelectValue placeholder="Selecione a categoria" />
                 </SelectTrigger>
                 <SelectContent>
-                  {categoryList.map((category: any) => (
+                  {(categoryList as any[]).map((category: any) => (
                     <SelectItem key={category.id} value={category.id}>
                       {category.name}
                     </SelectItem>
                   ))}
                 </SelectContent>
               </Select>
-              {form.formState.errors.categoryId && (
-                <p className="text-destructive text-sm">{form.formState.errors.categoryId.message}</p>
+              {(form.formState.errors as any).categoryId && (
+                <p className="text-destructive text-sm">{(form.formState.errors as any).categoryId.message}</p>
               )}
             </div>
 
@@ -401,8 +417,8 @@ export function UploadOld() {
                 }}
                 data-testid="input-amount"
               />
-              {form.formState.errors.amount && (
-                <p className="text-destructive text-sm">{form.formState.errors.amount.message}</p>
+              {(form.formState.errors as any).amount && (
+                <p className="text-destructive text-sm">{(form.formState.errors as any).amount.message}</p>
               )}
             </div>
 
@@ -419,8 +435,8 @@ export function UploadOld() {
                 }}
                 data-testid="input-payment-date"
               />
-              {form.formState.errors.paymentDate && (
-                <p className="text-destructive text-sm">{form.formState.errors.paymentDate.message}</p>
+              {(form.formState.errors as any).paymentDate && (
+                <p className="text-destructive text-sm">{(form.formState.errors as any).paymentDate.message}</p>
               )}
             </div>
 
@@ -433,8 +449,8 @@ export function UploadOld() {
                 {...form.register("supplier" as any)}
                 data-testid="input-supplier"
               />
-              {form.formState.errors.supplier && (
-                <p className="text-destructive text-sm">{form.formState.errors.supplier.message}</p>
+              {(form.formState.errors as any).supplier && (
+                <p className="text-destructive text-sm">{(form.formState.errors as any).supplier.message}</p>
               )}
             </div>
 
@@ -449,7 +465,7 @@ export function UploadOld() {
                   <SelectValue placeholder="Selecione o centro de custo" />
                 </SelectTrigger>
                 <SelectContent>
-                  {costCenterList.map((costCenter: any) => (
+                  {(costCenterList as any[]).map((costCenter: any) => (
                     <SelectItem key={costCenter.id} value={costCenter.id}>
                       {costCenter.name}
                     </SelectItem>
@@ -474,15 +490,15 @@ export function UploadOld() {
                   <SelectValue placeholder="Selecione o banco" />
                 </SelectTrigger>
                 <SelectContent>
-                  {bankList.map((bank: any) => (
+                  {(bankList as any[]).map((bank: any) => (
                     <SelectItem key={bank.id} value={bank.id}>
                       {bank.name}
                     </SelectItem>
                   ))}
                 </SelectContent>
               </Select>
-              {form.formState.errors.bankId && (
-                <p className="text-destructive text-sm">{form.formState.errors.bankId.message}</p>
+              {(form.formState.errors as any).bankId && (
+                <p className="text-destructive text-sm">{(form.formState.errors as any).bankId.message}</p>
               )}
             </div>
 
@@ -517,8 +533,8 @@ export function UploadOld() {
                 }}
                 data-testid="input-due-date"
               />
-              {form.formState.errors.dueDate && (
-                <p className="text-destructive text-sm">{form.formState.errors.dueDate.message}</p>
+              {(form.formState.errors as any).dueDate && (
+                <p className="text-destructive text-sm">{(form.formState.errors as any).dueDate.message}</p>
               )}
             </div>
 
@@ -531,8 +547,8 @@ export function UploadOld() {
                 {...form.register("beneficiary" as any)}
                 data-testid="input-beneficiary"
               />
-              {form.formState.errors.beneficiary && (
-                <p className="text-destructive text-sm">{form.formState.errors.beneficiary.message}</p>
+              {(form.formState.errors as any).beneficiary && (
+                <p className="text-destructive text-sm">{(form.formState.errors as any).beneficiary.message}</p>
               )}
             </div>
 
@@ -570,7 +586,7 @@ export function UploadOld() {
                   <SelectValue placeholder="Selecione o centro de custo" />
                 </SelectTrigger>
                 <SelectContent>
-                  {costCenterList.map((costCenter: any) => (
+                  {(costCenterList as any[]).map((costCenter: any) => (
                     <SelectItem key={costCenter.id} value={costCenter.id}>
                       {costCenter.name}
                     </SelectItem>
@@ -615,8 +631,8 @@ export function UploadOld() {
                 }}
                 data-testid="input-due-date"
               />
-              {form.formState.errors.dueDate && (
-                <p className="text-destructive text-sm">{form.formState.errors.dueDate.message}</p>
+              {(form.formState.errors as any).dueDate && (
+                <p className="text-destructive text-sm">{(form.formState.errors as any).dueDate.message}</p>
               )}
             </div>
 
@@ -629,8 +645,8 @@ export function UploadOld() {
                 {...form.register("payerDocument" as any)}
                 data-testid="input-payer-document"
               />
-              {form.formState.errors.payerDocument && (
-                <p className="text-destructive text-sm">{form.formState.errors.payerDocument.message}</p>
+              {(form.formState.errors as any).payerDocument && (
+                <p className="text-destructive text-sm">{(form.formState.errors as any).payerDocument?.message}</p>
               )}
             </div>
 
@@ -643,8 +659,8 @@ export function UploadOld() {
                 {...form.register("payerName" as any)}
                 data-testid="input-payer-name"
               />
-              {form.formState.errors.payerName && (
-                <p className="text-destructive text-sm">{form.formState.errors.payerName.message}</p>
+              {(form.formState.errors as any).payerName && (
+                <p className="text-destructive text-sm">{(form.formState.errors as any).payerName?.message}</p>
               )}
             </div>
 
@@ -657,8 +673,8 @@ export function UploadOld() {
                 {...form.register("payerAddress" as any)}
                 data-testid="input-payer-address"
               />
-              {form.formState.errors.payerAddress && (
-                <p className="text-destructive text-sm">{form.formState.errors.payerAddress.message}</p>
+              {(form.formState.errors as any).payerAddress && (
+                <p className="text-destructive text-sm">{(form.formState.errors as any).payerAddress?.message}</p>
               )}
             </div>
 
@@ -672,8 +688,8 @@ export function UploadOld() {
                 {...form.register("payerEmail" as any)}
                 data-testid="input-payer-email"
               />
-              {form.formState.errors.payerEmail && (
-                <p className="text-destructive text-sm">{form.formState.errors.payerEmail.message}</p>
+              {(form.formState.errors as any).payerEmail && (
+                <p className="text-destructive text-sm">{(form.formState.errors as any).payerEmail?.message}</p>
               )}
             </div>
 
@@ -721,8 +737,8 @@ export function UploadOld() {
                 {...form.register("serviceCode" as any)}
                 data-testid="input-service-code"
               />
-              {form.formState.errors.serviceCode && (
-                <p className="text-destructive text-sm">{form.formState.errors.serviceCode.message}</p>
+              {(form.formState.errors as any).serviceCode && (
+                <p className="text-destructive text-sm">{(form.formState.errors as any).serviceCode.message}</p>
               )}
             </div>
 
@@ -736,8 +752,8 @@ export function UploadOld() {
                 {...form.register("serviceDescription" as any)}
                 data-testid="textarea-service-description"
               />
-              {form.formState.errors.serviceDescription && (
-                <p className="text-destructive text-sm">{form.formState.errors.serviceDescription.message}</p>
+              {(form.formState.errors as any).serviceDescription && (
+                <p className="text-destructive text-sm">{(form.formState.errors as any).serviceDescription.message}</p>
               )}
             </div>
 
@@ -750,8 +766,8 @@ export function UploadOld() {
                 {...form.register("payerDocument" as any)}
                 data-testid="input-payer-document"
               />
-              {form.formState.errors.payerDocument && (
-                <p className="text-destructive text-sm">{form.formState.errors.payerDocument.message}</p>
+              {(form.formState.errors as any).payerDocument && (
+                <p className="text-destructive text-sm">{(form.formState.errors as any).payerDocument.message}</p>
               )}
             </div>
 
@@ -764,8 +780,8 @@ export function UploadOld() {
                 {...form.register("payerName" as any)}
                 data-testid="input-payer-name"
               />
-              {form.formState.errors.payerName && (
-                <p className="text-destructive text-sm">{form.formState.errors.payerName.message}</p>
+              {(form.formState.errors as any).payerName && (
+                <p className="text-destructive text-sm">{(form.formState.errors as any).payerName.message}</p>
               )}
             </div>
 
@@ -778,8 +794,8 @@ export function UploadOld() {
                 {...form.register("payerAddress" as any)}
                 data-testid="input-payer-address"
               />
-              {form.formState.errors.payerAddress && (
-                <p className="text-destructive text-sm">{form.formState.errors.payerAddress.message}</p>
+              {(form.formState.errors as any).payerAddress && (
+                <p className="text-destructive text-sm">{(form.formState.errors as any).payerAddress.message}</p>
               )}
             </div>
 
@@ -793,8 +809,8 @@ export function UploadOld() {
                 {...form.register("payerEmail" as any)}
                 data-testid="input-payer-email"
               />
-              {form.formState.errors.payerEmail && (
-                <p className="text-destructive text-sm">{form.formState.errors.payerEmail.message}</p>
+              {(form.formState.errors as any).payerEmail && (
+                <p className="text-destructive text-sm">{(form.formState.errors as any).payerEmail.message}</p>
               )}
             </div>
           </>
@@ -930,7 +946,7 @@ export function UploadOld() {
                     <SelectValue placeholder="Selecione o cliente" />
                   </SelectTrigger>
                   <SelectContent>
-                    {clientList.map((client: any) => (
+                    {(clientList as any[]).map((client: any) => (
                       <SelectItem key={client.id} value={client.id}>
                         {client.name}
                       </SelectItem>

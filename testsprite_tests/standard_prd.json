@@ -1,0 +1,224 @@
+{
+  "meta": {
+    "project": "Portal BPO Financeiro Gquicks",
+    "date": "2025-09-13",
+    "prepared_by": "Software Development Manager"
+  },
+  "product_overview": "Portal BPO Financeiro Gquicks is a multi-tenant BPO financial processing platform optimized for Brazilian financial operations. It automates document processing with advanced OCR and AI, offering high accuracy, workflow automation, role-based access control, and comprehensive dashboards for financial management and reporting.",
+  "core_goals": [
+    "Automate financial document processing with over 95% accuracy",
+    "Centralize BPO financial operations in a unified multi-tenant platform",
+    "Reduce manual processing time by at least 80%",
+    "Ensure compliance with Brazilian financial and tax regulations",
+    "Provide scalable operations for multiple simultaneous clients",
+    "Maintain high data security and tenant isolation using RBAC and Row Level Security",
+    "Deliver a modern, efficient, and user-friendly interface with intelligent data validation and auto-fill functionalities"
+  ],
+  "key_features": [
+    "Multi-tenant architecture with full tenant isolation and Row Level Security (RLS)",
+    "Role-based access control (RBAC) with defined user roles: SUPER_ADMIN, GERENTE, OPERADOR, CLIENTE",
+    "Comprehensive document lifecycle management including upload, automated OCR and AI analysis, validation, corrections, status tracking, and archival",
+    "Advanced OCR processing using multiple strategies with fallback mechanisms leveraging Tesseract.js and PDF text extraction",
+    "Multi-provider AI integration for enhanced document categorization, data extraction, and validation using OpenAI GPT and GLM-4.5",
+    "Automated document workflows with defined status states and smart automatic transitions based on business rules and dates",
+    "Financial management including expense tracking, supplier/client management, cost centers, and category hierarchies",
+    "Robust data validation including Brazilian-specific validations for CNPJ/CPF, dates, and monetary values",
+    "Real-time operational dashboards with KPI tracking, AI performance monitoring, and financial statistics",
+    "User interface with intelligent auto-fill, real-time validation, feedback, and contextual suggestions",
+    "Comprehensive security features including encryption, sanitization, audit logs, and controlled data access",
+    "Administrative interface for tenant, user, supplier, category, and bank management",
+    "RESTful API endpoints supporting document processing, user authentication, and operational reporting",
+    "Extensive testing infrastructure ensuring isolation, validation, and performance"
+  ],
+  "user_flow_summary": [
+    "A CLIENT role user uploads a financial document with an intelligent form adapting fields based on document type (PAGO, AGENDADO, EMITIR_BOLETO, EMITIR_NF)",
+    "The system pre-processes the document file validating format and integrity",
+    "Multiple OCR strategies extract text data from the document, with confidence scoring and fallback if needed",
+    "Extracted OCR data is passed to AI multi-provider integration which further analyzes, categorizes, and validates the data using specialized prompts per document type",
+    "Validation cross-checks the OCR and AI extracted data against user input and filename metadata, detecting inconsistencies and providing correction suggestions",
+    "Based on validation and document type, the document status automatically transitions through workflow states like RECEBIDO → VALIDANDO → PAGO_A_CONCILIAR → EM_CONCILIACAO → ARQUIVADO",
+    "Users with different RBAC roles interact with the system accordingly: CLIENT uploads and monitors documents, OPERADOR validates and processes documents, GERENTE oversees reports and approvals, and SUPER_ADMIN manages tenants and platform settings",
+    "Administrators access and manage tenants, users, suppliers, categories, banks, and system configurations via the admin panel",
+    "Users view dashboards with KPIs on processing success rates, document volumes, operational alerts, and AI performance metrics",
+    "Reports and exports can be generated for operational and executive insights"
+  ],
+  "validation_criteria": [
+    "Achieve OCR + AI processing accuracy exceeding 95% for key financial data fields",
+    "Maintain document processing time below 30 seconds for typical inputs",
+    "Ensure multi-tenant data isolation with no cross-tenant data leaks via RLS policies",
+    "Comply fully with Brazilian data validations for CNPJ, CPF, dates, and currency formats",
+    "Validate role-based access control correctly restricting data and actions as per user role",
+    "Provide zero critical security vulnerabilities in input validation and data access controls",
+    "Support automated status transitions correctly triggered by workflow rules and dates",
+    "Deliver a user-friendly interface with real-time validation errors, suggestions, and auto-fills",
+    "Ensure automated testing covers at least core document processing flows and multi-tenant behaviors",
+    "Maintain uptime above 99.9% and error rates below 2% in production"
+  ],
+  "code_summary": {
+    "tech_stack": [
+      "TypeScript",
+      "React 18.3.1",
+      "Node.js",
+      "Express 4.21.2",
+      "PostgreSQL",
+      "Drizzle ORM 0.39.1",
+      "Vite",
+      "Tailwind CSS",
+      "Radix UI",
+      "TanStack React Query 5.60.5",
+      "Wouter 3.3.5",
+      "Passport.js",
+      "Multer 2.0.2",
+      "OpenAI 5.19.1",
+      "Tesseract.js 6.0.1",
+      "Supabase 2.57.4",
+      "Framer Motion 11.13.1",
+      "React Hook Form 7.55.0"
+    ],
+    "features": [
+      {
+        "name": "Authentication System",
+        "description": "Multi-tenant authentication with role-based access control (RBAC) supporting SUPER_ADMIN and CLIENT_USER roles",
+        "files": [
+          "server/auth.ts",
+          "server/index.ts",
+          "client/src/pages/Login.tsx",
+          "client/src/providers/AuthProvider.tsx"
+        ]
+      },
+      {
+        "name": "Document Management",
+        "description": "Complete document lifecycle management with upload, processing, validation, and status tracking",
+        "files": [
+          "server/routes.ts",
+          "server/document-processor.ts",
+          "client/src/pages/Documents.tsx",
+          "client/src/components/DocumentUpload.tsx"
+        ]
+      },
+      {
+        "name": "OCR Processing",
+        "description": "Advanced OCR text extraction with multiple strategies and confidence scoring using Tesseract.js",
+        "files": [
+          "server/ocr.ts",
+          "server/advanced-ocr.ts",
+          "server/ocr/",
+          "server/ocr-processor-advanced.ts"
+        ]
+      },
+      {
+        "name": "AI Integration",
+        "description": "Multi-provider AI analysis for document categorization, validation, and data extraction with OpenAI and GLM-4-Plus",
+        "files": [
+          "server/ai.ts",
+          "server/ai-multi-provider.ts",
+          "server/ai/",
+          "server/ai-validation-schema.ts"
+        ]
+      },
+      {
+        "name": "Multi-Tenant Architecture",
+        "description": "Complete tenant isolation with Row Level Security (RLS) ensuring data separation between clients",
+        "files": [
+          "server/db/",
+          "server/middleware/tenant-context.ts",
+          "server/scripts/setup-multi-tenant.ts",
+          "shared/schema.ts"
+        ]
+      },
+      {
+        "name": "Dashboard and Analytics",
+        "description": "Real-time operational dashboards with financial statistics, document metrics, and AI performance monitoring",
+        "files": [
+          "client/src/pages/Dashboard.tsx",
+          "server/admin/dashboard-stats.ts",
+          "client/src/components/charts/"
+        ]
+      },
+      {
+        "name": "Financial Management",
+        "description": "Comprehensive financial document processing including expense tracking, cost centers, and supplier management",
+        "files": [
+          "server/services/contraparte-service.ts",
+          "client/src/pages/Suppliers.tsx",
+          "client/src/pages/Clients.tsx"
+        ]
+      },
+      {
+        "name": "Document Workflow",
+        "description": "Automated status transitions and workflow management for document processing lifecycle",
+        "files": [
+          "server/status-transitions.ts",
+          "server/inconsistency-detector.ts",
+          "client/src/components/DocumentStatus.tsx"
+        ]
+      },
+      {
+        "name": "File Storage",
+        "description": "Local and cloud storage integration with support for multiple document formats",
+        "files": [
+          "server/storage.ts",
+          "server/storage/",
+          "server/upload-handler.ts"
+        ]
+      },
+      {
+        "name": "API Endpoints",
+        "description": "RESTful API with comprehensive endpoints for authentication, document management, and entity operations",
+        "files": [
+          "server/routes.ts",
+          "server/routes/files.ts",
+          "server/index.ts"
+        ]
+      },
+      {
+        "name": "Database Schema",
+        "description": "Structured PostgreSQL schema with Drizzle ORM supporting multi-tenancy and complex relationships",
+        "files": [
+          "shared/schema.ts",
+          "server/db.ts",
+          "drizzle.config.ts",
+          "server/seed.ts"
+        ]
+      },
+      {
+        "name": "UI Components",
+        "description": "Modern React components with Radix UI, Tailwind CSS, dark/light theme support, and responsive design",
+        "files": [
+          "client/src/components/",
+          "client/src/layouts/",
+          "client/src/App.tsx",
+          "tailwind.config.ts"
+        ]
+      },
+      {
+        "name": "Validation System",
+        "description": "Comprehensive data validation with schema validation, form validation, and business rule enforcement",
+        "files": [
+          "server/validation/",
+          "server/validation.ts",
+          "client/src/hooks/useFormValidation.ts"
+        ]
+      },
+      {
+        "name": "Admin Panel",
+        "description": "Administrative interface for tenant management, user administration, and system configuration",
+        "files": [
+          "server/admin/",
+          "client/src/pages/Admin.tsx",
+          "client/src/components/admin/"
+        ]
+      },
+      {
+        "name": "Testing Infrastructure",
+        "description": "Comprehensive testing setup with unit tests, integration tests, and multi-tenant validation",
+        "files": [
+          "server/tests/",
+          "jest.config.js",
+          "jest.setup.js",
+          "testsprite_tests/"
+        ]
+      }
+    ]
+  }
+}

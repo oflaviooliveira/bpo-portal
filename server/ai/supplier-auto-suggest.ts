@@ -38,7 +38,6 @@ export interface SuggestedSupplierData {
   email?: string;
   phone?: string;
   address?: string;
-  notes?: string;
   canBeSupplier: boolean;
   canBeClient: boolean;
 }
@@ -190,7 +189,7 @@ export class SupplierAutoSuggest {
         email: supplier.email || '',
         phone: supplier.phone || '',
         address: supplier.address || '',
-        notes: supplier.notes || '',
+
         canBeSupplier: supplier.canBeSupplier,
         canBeClient: supplier.canBeClient
       };
@@ -205,7 +204,6 @@ export class SupplierAutoSuggest {
         email: '',
         phone: '',
         address: '',
-        notes: `Auto-detectado em ${new Date().toLocaleDateString('pt-BR')} (${detected.supplier.source})`,
         canBeSupplier: true,
         canBeClient: false
       };
@@ -224,7 +222,6 @@ export class SupplierAutoSuggest {
       documentType: supplier.cnpj ? 'CNPJ' : 'OUTROS',
       canBeSupplier: true,
       canBeClient: false,
-      notes: `Auto-detectado em ${new Date().toLocaleDateString('pt-BR')} (${supplier.source})`,
       tenantId: '' // Será preenchido no momento da criação
     };
   }

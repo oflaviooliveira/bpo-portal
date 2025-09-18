@@ -1,0 +1,99 @@
+{
+  "tech_stack": [
+    "TypeScript",
+    "React 18.3.1",
+    "Node.js",
+    "Express 4.21.2",
+    "PostgreSQL",
+    "Drizzle ORM 0.39.1",
+    "Vite",
+    "Tailwind CSS",
+    "Radix UI",
+    "TanStack React Query 5.60.5",
+    "Wouter 3.3.5",
+    "Passport.js",
+    "Multer 2.0.2",
+    "OpenAI 5.19.1",
+    "Tesseract.js 6.0.1",
+    "Supabase 2.57.4",
+    "Framer Motion 11.13.1",
+    "React Hook Form 7.55.0"
+  ],
+  "features": [
+    {
+      "name": "Authentication System",
+      "description": "Multi-tenant authentication with role-based access control (RBAC) supporting SUPER_ADMIN and CLIENT_USER roles",
+      "files": ["server/auth.ts", "server/index.ts", "client/src/pages/Login.tsx", "client/src/providers/AuthProvider.tsx"]
+    },
+    {
+      "name": "Document Management",
+      "description": "Complete document lifecycle management with upload, processing, validation, and status tracking",
+      "files": ["server/routes.ts", "server/document-processor.ts", "client/src/pages/Documents.tsx", "client/src/components/DocumentUpload.tsx"]
+    },
+    {
+      "name": "OCR Processing",
+      "description": "Advanced OCR text extraction with multiple strategies and confidence scoring using Tesseract.js",
+      "files": ["server/ocr.ts", "server/advanced-ocr.ts", "server/ocr/", "server/ocr-processor-advanced.ts"]
+    },
+    {
+      "name": "AI Integration",
+      "description": "Multi-provider AI analysis for document categorization, validation, and data extraction with OpenAI and GLM-4-Plus",
+      "files": ["server/ai.ts", "server/ai-multi-provider.ts", "server/ai/", "server/ai-validation-schema.ts"]
+    },
+    {
+      "name": "Multi-Tenant Architecture",
+      "description": "Complete tenant isolation with Row Level Security (RLS) ensuring data separation between clients",
+      "files": ["server/db/", "server/middleware/tenant-context.ts", "server/scripts/setup-multi-tenant.ts", "shared/schema.ts"]
+    },
+    {
+      "name": "Dashboard and Analytics",
+      "description": "Real-time operational dashboards with financial statistics, document metrics, and AI performance monitoring",
+      "files": ["client/src/pages/Dashboard.tsx", "server/admin/dashboard-stats.ts", "client/src/components/charts/"]
+    },
+    {
+      "name": "Financial Management",
+      "description": "Comprehensive financial document processing including expense tracking, cost centers, and supplier management",
+      "files": ["server/services/contraparte-service.ts", "client/src/pages/Suppliers.tsx", "client/src/pages/Clients.tsx"]
+    },
+    {
+      "name": "Document Workflow",
+      "description": "Automated status transitions and workflow management for document processing lifecycle",
+      "files": ["server/status-transitions.ts", "server/inconsistency-detector.ts", "client/src/components/DocumentStatus.tsx"]
+    },
+    {
+      "name": "File Storage",
+      "description": "Local and cloud storage integration with support for multiple document formats",
+      "files": ["server/storage.ts", "server/storage/", "server/upload-handler.ts"]
+    },
+    {
+      "name": "API Endpoints",
+      "description": "RESTful API with comprehensive endpoints for authentication, document management, and entity operations",
+      "files": ["server/routes.ts", "server/routes/files.ts", "server/index.ts"]
+    },
+    {
+      "name": "Database Schema",
+      "description": "Structured PostgreSQL schema with Drizzle ORM supporting multi-tenancy and complex relationships",
+      "files": ["shared/schema.ts", "server/db.ts", "drizzle.config.ts", "server/seed.ts"]
+    },
+    {
+      "name": "UI Components",
+      "description": "Modern React components with Radix UI, Tailwind CSS, dark/light theme support, and responsive design",
+      "files": ["client/src/components/", "client/src/layouts/", "client/src/App.tsx", "tailwind.config.ts"]
+    },
+    {
+      "name": "Validation System",
+      "description": "Comprehensive data validation with schema validation, form validation, and business rule enforcement",
+      "files": ["server/validation/", "server/validation.ts", "client/src/hooks/useFormValidation.ts"]
+    },
+    {
+      "name": "Admin Panel",
+      "description": "Administrative interface for tenant management, user administration, and system configuration",
+      "files": ["server/admin/", "client/src/pages/Admin.tsx", "client/src/components/admin/"]
+    },
+    {
+      "name": "Testing Infrastructure",
+      "description": "Comprehensive testing setup with unit tests, integration tests, and multi-tenant validation",
+      "files": ["server/tests/", "jest.config.js", "jest.setup.js", "testsprite_tests/"]
+    }
+  ]
+}

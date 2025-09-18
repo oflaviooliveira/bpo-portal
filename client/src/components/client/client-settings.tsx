@@ -9,7 +9,7 @@ import { useToast } from "@/hooks/use-toast";
 import { useAuth } from "@/hooks/use-auth";
 import { User, Lock, Bell, Mail, Phone, Building } from "lucide-react";
 import { Switch } from "@/components/ui/switch";
-import { queryClient } from "@/lib/query-client";
+import { queryClient } from "@/lib/queryClient";
 
 interface UserSettings {
   firstName: string;
